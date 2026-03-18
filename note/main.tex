@@ -557,8 +557,48 @@ Kantorovich 問題の最適値は Monge 問題の最適値以下である．
 したがって，Monge 問題とは異なり Kantorovich 問題は常に実行可能である．
 \end{remark}
 
-\begin{theorem}{最小値の存在}{kantorovich_existence}
-$X,Y$ をポーランド空間（完備可分距離空間）とし，
+\begin{definition}{距離空間}{metric_space}
+集合 $X$ 上の関数 $d\colon X\times X\to[0,\infty)$ が\textbf{距離}であるとは，
+任意の $x,y,z\in X$ に対し次を満たすことをいう：
+\begin{enumerate}
+  \item $d(x,y)=0 \Leftrightarrow x=y$，
+  \item $d(x,y)=d(y,x)$（対称性），
+  \item $d(x,z)\le d(x,y)+d(y,z)$（三角不等式）．
+\end{enumerate}
+組 $(X,d)$ を\textbf{距離空間}という．
+\end{definition}
+
+\begin{definition}{Cauchy列と完備性}{complete}
+距離空間 $(X,d)$ の点列 $\{x_n\}$ が\textbf{Cauchy列}であるとは，
+任意の $\varepsilon>0$ に対し，ある $N$ が存在して
+$n,m\ge N$ ならば $d(x_n,x_m)<\varepsilon$ が成り立つことをいう．
+距離空間が\textbf{完備}であるとは，任意のCauchy列が $X$ 内の点に収束することをいう．
+\end{definition}
+
+\begin{definition}{稠密と可分性}{separable}
+距離空間 $(X,d)$ の部分集合 $S$ が\textbf{稠密}であるとは，
+$X$ の任意の点 $x$ と任意の $\varepsilon>0$ に対し，
+$d(x,s)<\varepsilon$ を満たす $s\in S$ が存在することをいう．
+距離空間が\textbf{可分}であるとは，稠密な可算部分集合が存在することをいう．
+\end{definition}
+
+\begin{definition}{ポーランド空間}{polish_space}
+完備かつ可分な距離空間を\textbf{ポーランド空間}と呼ぶ．
+\end{definition}
+
+\begin{definition}{下半連続}{lsc}
+距離空間 $X$ 上の関数 $f\colon X\to(-\infty,\infty]$ が
+\textbf{下半連続}であるとは，
+任意の $x\in X$ と $x$ に収束する点列 $x_n\to x$ に対し
+\[
+  f(x) \le \liminf_{n\to\infty} f(x_n)
+\]
+が成り立つことをいう．
+直感的には，関数値が「下に跳ぶ」ことはあっても「下に落ちる」ことがないという条件である．
+\end{definition}
+
+\begin{theorem}{Kantorovich問題の最適解の存在}{kantorovich_existence}
+$X,Y$ をポーランド空間とし，
 $c\colon X\times Y\to[0,\infty]$ が下半連続であるとする．
 このとき Kantorovich 問題の下限は最小値として達成される．
 すなわち，ある $\pi^*\in\Pi(\mu,\nu)$ が存在して
