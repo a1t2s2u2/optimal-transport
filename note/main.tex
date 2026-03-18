@@ -620,6 +620,32 @@ $\mathcal{M}$ が\textbf{相対コンパクト}
 （任意の列が弱収束する部分列を持つ）であることは同値である．
 \end{theorem}
 
+\begin{proof}
+（相対コンパクト $\Rightarrow$ 緊密）
+対偶を示す．緊密でないと仮定すると，
+ある $\varepsilon>0$ が存在して，
+任意のコンパクト集合 $K$ に対し $\mu_K(X\setminus K)\ge\varepsilon$
+を満たす $\mu_K\in\mathcal{M}$ が取れる．
+ポーランド空間ではコンパクト集合の増大列 $K_1\subset K_2\subset\cdots$
+で $X=\bigcup_n K_n$ となるものが存在するので，
+$\mu_{K_n}(X\setminus K_n)\ge\varepsilon$ を満たす列 $\{\mu_{K_n}\}$ が得られる．
+この列の任意の部分列の弱収束先 $\mu$ に対しても
+$\mu(X\setminus K_n)\ge\varepsilon$ が任意の $n$ で成り立つことになり，
+$\mu(X)=\lim_{n\to\infty}\mu(K_n)\le 1-\varepsilon<1$ となって
+確率測度であることに矛盾する．
+よって相対コンパクトならば緊密である．
+
+（緊密 $\Rightarrow$ 相対コンパクト）
+$\mathcal{M}$ から任意の列 $\{\mu_n\}$ を取る．
+ポーランド空間は可分であるから，
+稠密な可算集合 $\{q_1,q_2,\ldots\}$ とそれらを中心とする
+有理数半径の開球全体という可算族が開集合の基底をなす．
+$\mu_n$ のこの可算族上での値に対角線論法を適用すると，
+すべての開球上で極限が定まる部分列 $\{\mu_{n_k}\}$ が取れる．
+緊密性により極限はBorel確率測度 $\mu$ を定め，
+$\mu_{n_k}$ は $\mu$ に弱収束する．
+\end{proof}
+
 \begin{theorem}{Kantorovich問題の最適解の存在}{kantorovich_existence}
 $X,Y$ をポーランド空間とし，
 $c\colon X\times Y\to[0,\infty]$ が下半連続であるとする．
