@@ -597,6 +597,29 @@ $d(x,s)<\varepsilon$ を満たす $s\in S$ が存在することをいう．
 直感的には，関数値が「下に跳ぶ」ことはあっても「下に落ちる」ことがないという条件である．
 \end{definition}
 
+\begin{definition}{測度の弱収束}{weak_convergence}
+ポーランド空間 $X$ 上のBorel確率測度の列 $\{\mu_n\}$ が
+$\mu$ に\textbf{弱収束}するとは，
+任意の有界連続関数 $f\colon X\to\mathbb{R}$ に対し
+\[
+  \lim_{n\to\infty}\int_X f\,d\mu_n = \int_X f\,d\mu
+\]
+が成り立つことをいう．
+\end{definition}
+
+\begin{definition}{緊密性}{tightness}
+ポーランド空間 $X$ 上のBorel確率測度の族 $\mathcal{M}$ が\textbf{緊密}（tight）であるとは，
+任意の $\varepsilon>0$ に対し，あるコンパクト集合 $K\subset X$ が存在して，
+すべての $\mu\in\mathcal{M}$ に対し $\mu(X\setminus K)<\varepsilon$ が成り立つことをいう．
+直感的には，測度が「無限遠に逃げない」ことを意味する．
+\end{definition}
+
+\begin{theorem}{Prokhorovの定理}{prokhorov}
+ポーランド空間上のBorel確率測度の族 $\mathcal{M}$ が緊密であることと，
+$\mathcal{M}$ が\textbf{相対コンパクト}
+（任意の列が弱収束する部分列を持つ）であることは同値である．
+\end{theorem}
+
 \begin{theorem}{Kantorovich問題の最適解の存在}{kantorovich_existence}
 $X,Y$ をポーランド空間とし，
 $c\colon X\times Y\to[0,\infty]$ が下半連続であるとする．
