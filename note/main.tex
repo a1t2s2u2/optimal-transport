@@ -53,6 +53,20 @@ Kantorovich (1942) による緩和とその双対理論までを展開する．
 一方を他方へ移すための最小費用を達成する写像を求めることが目標である．
 この問題を正確に記述するために，まず必要な概念を導入する．
 
+\begin{definition}{位相空間}{topological_space}
+集合 $X$ の部分集合族 $\mathcal{O}\subset 2^X$ が
+$X$ 上の\textbf{位相}（topology）であるとは，
+次の三条件を満たすことをいう：
+\begin{enumerate}
+  \item $\emptyset\in\mathcal{O}$ かつ $X\in\mathcal{O}$，
+  \item $O_1,O_2\in\mathcal{O}$ ならば $O_1\cap O_2\in\mathcal{O}$（有限交叉で閉じる），
+  \item $\{O_\lambda\}_{\lambda\in\Lambda}\subset\mathcal{O}$ ならば
+        $\bigcup_{\lambda\in\Lambda}O_\lambda\in\mathcal{O}$（任意合併で閉じる）．
+\end{enumerate}
+組 $(X,\mathcal{O})$ を\textbf{位相空間}と呼び，
+$\mathcal{O}$ の元を\textbf{開集合}という．
+\end{definition}
+
 \begin{definition}{$\sigma$加法族}{sigma_algebra}
 集合 $X$ の部分集合族 $\mathcal{A}\subset 2^X$ が
 \textbf{$\sigma$加法族}（$\sigma$-algebra）であるとは，
@@ -69,7 +83,79 @@ Kantorovich (1942) による緩和とその双対理論までを展開する．
 集合 $X$ とその上の $\sigma$加法族 $\mathcal{A}$ の組
 $(X,\mathcal{A})$ を\textbf{可測空間}と呼ぶ．
 $\mathcal{A}$ の元を\textbf{可測集合}という．
+特に，位相空間 $(X,\mathcal{O})$ に対し，
+開集合全体 $\mathcal{O}$ を部分集合として含む $\sigma$加法族のうち，
+最小のものを\textbf{Borel $\sigma$加法族}と呼び $\mathcal{B}(X)$ と記す．
+具体的には，$\mathcal{O}\subset\mathcal{F}$ を満たす
+$\sigma$加法族 $\mathcal{F}$ をすべて集めたとき，
+$\mathcal{B}(X)=\bigcap\mathcal{F}$ として得られる．
+$\mathcal{B}(X)$ の元を\textbf{Borel 集合}という．
 \end{definition}
+
+\begin{example}{$\mathbb{R}$ 上のBorel $\sigma$加法族}{borel_real}
+$X=\mathbb{R}$ の開集合は開区間やその合併（例：$(0,1)$，$(-\infty,3)\cup(5,7)$）である．
+$\mathcal{B}(\mathbb{R})$ はこれらの開集合を含む最小の $\sigma$加法族であり，
+$\sigma$加法族の性質から補集合や可算合併も含むため，
+閉集合（例：$[0,1]$），半開区間（例：$[0,1)$），一点集合 $\{x\}$，
+可算集合 $\mathbb{Q}$ なども Borel 集合である．
+\end{example}
+
+Borel 集合でない部分集合の典型例として\textbf{Vitali 集合}がある．
+これは $[0,1]$ 上で同値関係 $x\sim y \Leftrightarrow x-y\in\mathbb{Q}$
+を定め，各同値類から選択公理を用いて代表元を一つずつ選んで作る集合である．
+この集合に対しては，測度を矛盾なく割り当てることができない
+（平行移動不変性と $\sigma$加法性が両立しない）ため，
+Borel 集合に属さない．
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[>=Stealth, thick]
+  % 最外枠：2^R
+  \draw[rounded corners=10pt, gray!60, fill=gray!5]
+    (-5.0,-3.6) rectangle (5.0,4.0);
+  \node[gray!60, font=\bfseries] at (0,3.65) {$2^{\mathbb{R}}$（すべての部分集合）};
+
+  % Borel集合でない例（B(R)の外、2^Rの内）
+  \node[gray!70, font=\small, align=center] at (-3.5,-3.1)
+    {Vitali集合\\（選択公理で構成）};
+  \draw[gray!50, dashed, rounded corners=3pt]
+    (-4.6,-3.5) rectangle (-2.4,-2.7);
+
+  % B(R)
+  \draw[rounded corners=8pt, blue!60!black, fill=blue!5]
+    (-4.2,-2.6) rectangle (4.2,3.0);
+  \node[blue!60!black, font=\bfseries] at (0,2.65) {$\mathcal{B}(\mathbb{R})$（Borel集合）};
+
+  % 開集合の領域
+  \draw[rounded corners=6pt, red!60!black, fill=red!8]
+    (-3.8,-0.2) rectangle (-0.8,2.1);
+  \node[red!60!black, font=\small\bfseries] at (-2.3,1.8) {開集合};
+  \node[font=\small] at (-2.3,1.2) {$(0,1)$};
+  \node[font=\small] at (-2.3,0.6) {$(a,b)$};
+  \node[font=\small] at (-2.3,0.1) {$(-\infty,3)\cup(5,7)$};
+
+  % 閉集合の領域
+  \draw[rounded corners=6pt, green!50!black, fill=green!8]
+    (0.8,-0.2) rectangle (3.8,2.1);
+  \node[green!50!black, font=\small\bfseries] at (2.3,1.8) {閉集合};
+  \node[font=\small] at (2.3,1.2) {$[0,1]$};
+  \node[font=\small] at (2.3,0.6) {$\{x\}$（一点集合）};
+  \node[font=\small] at (2.3,0.1) {$\mathbb{Q}$（可算集合）};
+
+  % 矢印：補集合
+  \draw[->, red!60!black, dashed] (-0.7,0.95) -- node[above, font=\scriptsize] {補集合} (0.7,0.95);
+
+  % その他のBorel集合
+  \draw[rounded corners=6pt, orange!70!black, fill=orange!8]
+    (-3.0,-2.2) rectangle (3.0,-0.6);
+  \node[orange!70!black, font=\small\bfseries] at (0,-0.85) {可算合併・交叉でさらに広がる};
+  \node[font=\small] at (0,-1.55) {半開区間 $[0,1)$，$\mathbb{R}\setminus\mathbb{Q}$（無理数）など};
+\end{tikzpicture}
+\caption{$\mathcal{B}(\mathbb{R})$ の位置づけ．
+開集合から $\sigma$加法族の操作で広がるが，
+$2^{\mathbb{R}}$ 全体には届かない（Vitali集合などはBorel集合でない）．}
+\label{fig:borel_sigma}
+\end{figure}
 
 \begin{definition}{測度}{measure}
 可測空間 $(X,\mathcal{A})$ 上の\textbf{測度}とは，
@@ -86,38 +172,47 @@ $\mathcal{A}$ の元を\textbf{可測集合}という．
 \end{enumerate}
 組 $(X,\mathcal{A},\mu)$ を\textbf{測度空間}という．
 特に $\mu(X)=1$ を満たす測度を\textbf{確率測度}と呼ぶ．
+$\sigma$加法族として Borel $\sigma$加法族 $\mathcal{B}(X)$ を選んだ
+可測空間 $(X,\mathcal{B}(X))$ 上の確率測度を\textbf{Borel確率測度}という．
 \end{definition}
 
 \begin{definition}{可測写像}{measurable_map}
-$(X,\mathcal{A})$，$(Y,\mathcal{B})$ を可測空間とする．
+$(X,\mathcal{F})$，$(Y,\mathcal{G})$ を可測空間とする．
 写像 $T\colon X\to Y$ が\textbf{可測写像}であるとは，
-任意の $B\in\mathcal{B}$ に対し $T^{-1}(B)\in\mathcal{A}$ が成り立つことをいう．
+任意の $B\in\mathcal{G}$ に対し $T^{-1}(B)\in\mathcal{F}$ が成り立つことをいう．
 \end{definition}
 
 測度論では，集合の「大きさ」は $\sigma$加法族に属する集合に対してのみ定まる．
 写像 $T$ を通じて $Y$ 側の集合 $B$ を $X$ 側で扱うには，
 逆像 $T^{-1}(B)$ が $X$ の $\sigma$加法族 $\mathcal{A}$ に属する必要がある．
 
+\begin{definition}{Borel写像}{borel_map}
+$X$，$Y$ を位相空間とする．
+写像 $T\colon X\to Y$ が\textbf{Borel写像}（Borel可測写像）であるとは，
+$T$ が可測空間 $(X,\mathcal{B}(X))$ から $(Y,\mathcal{B}(Y))$ への可測写像であること，
+すなわち任意の $B\in\mathcal{B}(Y)$ に対し $T^{-1}(B)\in\mathcal{B}(X)$ が成り立つことをいう．
+\end{definition}
+
 \begin{figure}[ht]
 \centering
 \begin{tikzpicture}[>=Stealth, thick]
   % --- 左側：X ---
   \draw[blue!60!black] (0,0) ellipse (1.8 and 1.2);
-  \node[blue!60!black] at (0,1.5) {$(X,\mathcal{A})$};
+  \node[blue!60!black] at (0,1.5) {$(X,\mathcal{F})$};
   % T^{-1}(B)
   \fill[blue!15] (0.2,-0.1) ellipse (0.9 and 0.6);
   \draw[blue!50!black, dashed] (0.2,-0.1) ellipse (0.9 and 0.6);
   \node[blue!60!black] at (0.2,-0.1) {$T^{-1}(B)$};
-  \node[blue!60!black, font=\small] at (0.2,-0.95) {$\in\mathcal{A}$};
+  \node[blue!60!black, font=\small] at (0.2,-0.95) {$\in\mathcal{F}$};
 
   % --- 右側：Y ---
   \draw[green!50!black] (5.5,0) ellipse (1.8 and 1.2);
-  \node[green!50!black] at (5.5,1.5) {$(Y,\mathcal{B})$};
+  \node[green!50!black] at (5.5,1.5) {$(Y,\mathcal{G})$};
   % B
   \fill[green!15] (5.7,0.0) ellipse (0.8 and 0.55);
   \draw[green!50!black, dashed] (5.7,0.0) ellipse (0.8 and 0.55);
   \node[green!50!black] at (5.7,0.0) {$B$};
-  \node[green!50!black, font=\small] at (5.7,-0.8) {$\in\mathcal{B}$};
+  \node[green!50!black, font=\small] at (5.7,-0.8) {$\in\mathcal{G}$};
 
   % --- 矢印：T ---
   \draw[->, red!70!black, line width=1.2pt]
@@ -126,17 +221,17 @@ $(X,\mathcal{A})$，$(Y,\mathcal{B})$ を可測空間とする．
   \draw[<-, blue!60!black, dashed]
     (1.9,-0.4) -- node[below, font=\small] {$T^{-1}$} (3.6,-0.4);
 \end{tikzpicture}
-\caption{可測写像の概念図．$B\in\mathcal{B}$ の逆像
-$T^{-1}(B)$ が $\mathcal{A}$ に属する．}
+\caption{可測写像の概念図．$B\in\mathcal{G}$ の逆像
+$T^{-1}(B)$ が $\mathcal{F}$ に属する．}
 \label{fig:measurable_map}
 \end{figure}
 
 \begin{definition}{押し出し測度}{pushforward}
-$(X,\mathcal{A})$，$(Y,\mathcal{B})$ を可測空間，
-$\mu$ を $(X,\mathcal{A})$ 上の測度，$T\colon X\to Y$ を可測写像とする．
+$(X,\mathcal{F})$，$(Y,\mathcal{G})$ を可測空間，
+$\mu$ を $(X,\mathcal{F})$ 上の測度，$T\colon X\to Y$ を可測写像とする．
 $T$ による $\mu$ の\textbf{押し出し測度} $T_\#\mu$ を
 \[
-  T_\#\mu(B) \coloneqq \mu(T^{-1}(B)), \qquad B\in\mathcal{B}
+  T_\#\mu(B) \coloneqq \mu(T^{-1}(B)), \qquad B\in\mathcal{G}
 \]
 で定義する．
 \end{definition}
@@ -144,12 +239,13 @@ $T$ による $\mu$ の\textbf{押し出し測度} $T_\#\mu$ を
 押し出し測度を用いると，Monge の最適輸送問題は次のように定式化される．
 
 \begin{definition}{Monge 問題}{monge}
-$\mathbb{R}^d$ 上の確率測度 $\mu,\,\nu$ と
-コスト関数 $c\colon\mathbb{R}^d\times\mathbb{R}^d\to[0,\infty]$ が与えられたとする．
-\textbf{Monge 問題}は，$T_\#\mu=\nu$ を満たす可測写像
-$T\colon\mathbb{R}^d\to\mathbb{R}^d$（輸送写像）の中で
+$X$，$Y$ を位相空間とし，
+$\mu$，$\nu$ をそれぞれ $X$，$Y$ 上のBorel確率測度，
+$c\colon X\times Y\to[0,\infty]$ をBorel写像とする．
+\textbf{Monge 問題}は，$T_\#\mu=\nu$ を満たすBorel写像
+$T\colon X\to Y$（\textbf{輸送写像}）の中で
 \[
-  \inf_{T:\,T_\#\mu=\nu}\int_{\mathbb{R}^d} c\bigl(x,\,T(x)\bigr)\,d\mu(x)
+  \inf_{T:\,T_\#\mu=\nu}\int_{X} c\bigl(x,\,T(x)\bigr)\,d\mu(x)
 \]
 を達成するものを求める問題である．
 \end{definition}
@@ -183,6 +279,32 @@ $T\colon\mathbb{R}^d\to\mathbb{R}^d$（輸送写像）の中で
 \caption{Monge 問題の概念図．分布 $\mu$ を写像 $T$ によって分布 $\nu$ に移す．}
 \label{fig:monge_problem}
 \end{figure}
+
+\begin{example}{Monge 問題の具体例}{monge_example}
+$X=\{1,2,3\}$，$Y=\{a,b\}$ とし，
+$\mu(\{1\})=0.5$，$\mu(\{2\})=0.3$，$\mu(\{3\})=0.2$，
+$\nu(\{a\})=0.8$，$\nu(\{b\})=0.2$ とする．
+コスト関数を
+$c(1,a)=1$，$c(2,a)=2$，$c(3,b)=3$，$c(1,b)=4$，$c(2,b)=5$，$c(3,a)=6$
+とする．
+
+写像 $T_1(1)=a$，$T_1(2)=a$，$T_1(3)=b$ を考えると，
+\begin{align*}
+  T_{1\#}\mu(\{a\}) &= \mu(\{1,2\}) = 0.8 = \nu(\{a\}), \\
+  T_{1\#}\mu(\{b\}) &= \mu(\{3\}) = 0.2 = \nu(\{b\})
+\end{align*}
+より $T_{1\#}\mu=\nu$ が成り立ち，$T_1$ は輸送写像の制約を満たす．
+このときの輸送コストは
+$\int c(x,T_1(x))\,d\mu = 0.5\cdot 1 + 0.3\cdot 2 + 0.2\cdot 3 = 1.7$
+である．
+
+一方，$T_2(1)=a$，$T_2(2)=b$，$T_2(3)=a$ とすると，
+$T_{2\#}\mu(\{a\})=\mu(\{1,3\})=0.7\neq 0.8=\nu(\{a\})$ となり，
+$T_{2\#}\mu\neq\nu$ であるから $T_2$ は制約を満たさない．
+このように $T_\#\mu=\nu$ の条件は，
+輸送先での分布が $\nu$ にちょうど一致すること
+——過不足なく届けること——を保証する．
+\end{example}
 
 直感的には，$\mu$ が砂山の分布，$\nu$ が穴の分布を表し，
 コスト $c(x,y)$ は位置 $x$ の砂を位置 $y$ に運ぶ費用を意味する．
@@ -252,26 +374,28 @@ Kantorovich の着想は，
 Monge 問題の非可解性の問題を回避できる．
 
 \begin{definition}{輸送計画}{transport_plan}
-$\mu,\,\nu$ を $\mathbb{R}^d$ 上の確率測度とする．
-$\mathbb{R}^d\times\mathbb{R}^d$ 上の確率測度 $\pi$ が
+$X$，$Y$ を位相空間とし，
+$\mu$，$\nu$ をそれぞれ $X$，$Y$ 上のBorel確率測度とする．
+$X\times Y$ 上のBorel確率測度 $\pi$ が
 $\mu$ と $\nu$ の\textbf{輸送計画}であるとは，
 $\pi$ の周辺分布がそれぞれ $\mu$ と $\nu$ に一致すること，
-すなわち任意のボレル集合 $A,B\subset\mathbb{R}^d$ に対し
+すなわち任意の $A\in\mathcal{B}(X)$，$B\in\mathcal{B}(Y)$ に対し
 \[
-  \pi(A\times\mathbb{R}^d) = \mu(A), \qquad
-  \pi(\mathbb{R}^d\times B) = \nu(B)
+  \pi(A\times Y) = \mu(A), \qquad
+  \pi(X\times B) = \nu(B)
 \]
 が成り立つことをいう．
 $\mu$ と $\nu$ の輸送計画全体の集合を $\Pi(\mu,\nu)$ と記す．
 \end{definition}
 
 \begin{definition}{Kantorovich 問題}{kantorovich}
-$\mu,\,\nu$ を $\mathbb{R}^d$ 上の確率測度，
-$c\colon\mathbb{R}^d\times\mathbb{R}^d\to[0,\infty]$ をコスト関数とする．
+$X$，$Y$ を位相空間とし，
+$\mu$，$\nu$ をそれぞれ $X$，$Y$ 上のBorel確率測度，
+$c\colon X\times Y\to[0,\infty]$ をBorel可測なコスト関数とする．
 \textbf{Kantorovich 問題}は
 \[
   \inf_{\pi\in\Pi(\mu,\nu)}
-  \int_{\mathbb{R}^d\times\mathbb{R}^d} c(x,y)\,d\pi(x,y)
+  \int_{X\times Y} c(x,y)\,d\pi(x,y)
 \]
 を求める問題である．
 \end{definition}
@@ -289,13 +413,14 @@ Monge 問題とは異なり Kantorovich 問題は常に実行可能である．
 \end{remark}
 
 \begin{theorem}{最小値の存在}{kantorovich_existence}
-$c\colon\mathbb{R}^d\times\mathbb{R}^d\to[0,\infty]$ が下半連続であるとする．
+$X,Y$ をポーランド空間（完備可分距離空間）とし，
+$c\colon X\times Y\to[0,\infty]$ が下半連続であるとする．
 このとき Kantorovich 問題の下限は最小値として達成される．
 すなわち，ある $\pi^*\in\Pi(\mu,\nu)$ が存在して
 \[
-  \int_{\mathbb{R}^d\times\mathbb{R}^d} c(x,y)\,d\pi^*(x,y)
+  \int_{X\times Y} c(x,y)\,d\pi^*(x,y)
   = \inf_{\pi\in\Pi(\mu,\nu)}
-    \int_{\mathbb{R}^d\times\mathbb{R}^d} c(x,y)\,d\pi(x,y)
+    \int_{X\times Y} c(x,y)\,d\pi(x,y)
 \]
 が成り立つ．
 \end{theorem}
@@ -310,14 +435,15 @@ $\pi\mapsto\int c\,d\pi$ は弱収束に関して下半連続であり，
 \end{proof}
 
 \begin{theorem}{Kantorovich 双対定理}{kantorovich_duality}
-$c\colon\mathbb{R}^d\times\mathbb{R}^d\to[0,\infty]$ が下半連続とする．このとき
+$X,Y$ をポーランド空間とし，
+$c\colon X\times Y\to[0,\infty]$ が下半連続とする．このとき
 \[
   \inf_{\pi\in\Pi(\mu,\nu)}
-  \int_{\mathbb{R}^d\times\mathbb{R}^d} c(x,y)\,d\pi(x,y)
+  \int_{X\times Y} c(x,y)\,d\pi(x,y)
   = \sup_{(\varphi,\psi)\in\Phi_c}
   \left(
-    \int_{\mathbb{R}^d}\varphi(x)\,d\mu(x)
-    + \int_{\mathbb{R}^d}\psi(y)\,d\nu(y)
+    \int_{X}\varphi(x)\,d\mu(x)
+    + \int_{Y}\psi(y)\,d\nu(y)
   \right)
 \]
 が成り立つ．ここで
@@ -338,7 +464,7 @@ $\psi(y)$ を到着地 $y$ での荷降ろし価格と考えると，
 Kantorovich 問題の最適計画 $\pi^*$ が
 $\pi^*=({\rm id},T)_\#\mu$ の形に書ける（すなわちグラフ上に集中する）場合，
 $T$ は Monge 問題の最適写像でもある．
-例えば $c(x,y)=\|x-y\|^2$ かつ $\mu$ が絶対連続のとき，
+例えば $X=Y=\mathbb{R}^d$ で $c(x,y)=\|x-y\|^2$ かつ $\mu$ が絶対連続のとき，
 Brenier の定理により最適輸送写像 $T=\nabla\phi$
 （凸関数の勾配）の存在と一意性が保証される．
 \end{remark}
