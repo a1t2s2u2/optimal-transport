@@ -286,26 +286,140 @@ $\nu$ が $B$ に割り当てる測度がちょうど一致する，
 \label{fig:monge_problem}
 \end{figure}
 
-\begin{example}{Monge 問題の具体例}{monge_example}
-$X=\{1,2,3\}$，$Y=\{a,b\}$ とし，
-$\mu(\{1\})=0.5$，$\mu(\{2\})=0.3$，$\mu(\{3\})=0.2$，
-$\nu(\{a\})=0.8$，$\nu(\{b\})=0.2$ とする．
-コスト関数を
-$c(1,a)=1$，$c(2,a)=2$，$c(3,b)=3$，$c(1,b)=4$，$c(2,b)=5$，$c(3,a)=6$
-とする．
+\begin{definition}{Dirac測度}{dirac}
+$X$ を位相空間，$x_0\in X$ とする．
+任意のBorel集合 $B\in\mathcal{B}(X)$ に対し
+\[
+  \delta_{x_0}(B) \coloneqq
+  \begin{cases}
+    1 & (x_0\in B), \\
+    0 & (x_0\notin B)
+  \end{cases}
+\]
+で定まるBorel確率測度 $\delta_{x_0}$ を，
+$x_0$ に集中する\textbf{Dirac測度}という．
+\end{definition}
 
-写像 $T_1(1)=a$，$T_1(2)=a$，$T_1(3)=b$ を考えると，
+\begin{remark}{Dirac測度はBorel確率測度である}{dirac_is_borel}
+Dirac測度 $\delta_{x_0}$ はBorel確率測度であることを確認する．
+\begin{itemize}
+  \item $\delta_{x_0}(\emptyset)=0$：$x_0\notin\emptyset$ より成立．
+  \item $\sigma$加法性：互いに素なBorel集合の列 $B_1,B_2,\ldots\in\mathcal{B}(X)$ に対し，
+        $x_0$ はたかだか一つの $B_n$ にしか属さないので，
+        $\delta_{x_0}(\bigcup_n B_n)$ と $\sum_n\delta_{x_0}(B_n)$ は
+        ともに $x_0$ がいずれかの $B_n$ に属すれば $1$，そうでなければ $0$ で一致する．
+  \item $\delta_{x_0}(X)=1$：$x_0\in X$ より成立（確率測度の条件）．
+\end{itemize}
+したがって $\delta_{x_0}$ はBorel確率測度である．
+\end{remark}
+
+Dirac測度の重み付き和により，有限個の点に集中する確率測度を一つの式で表せる．
+例として，図~\ref{fig:dirac} のような確率測度を考える．
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[>=Stealth, thick]
+  % 数直線
+  \draw[->] (-1,0) -- (4.5,0);
+  \foreach \x in {0,1,2,3,4} {
+    \draw (\x,0.08) -- (\x,-0.08);
+    \node[below, font=\small] at (\x,-0.1) {$\x$};
+  }
+
+  % 重み付き Dirac の組み合わせ
+  \draw[blue!70!black, line width=2pt] (0,0) -- (0,1.5);
+  \fill[blue!70!black] (0,1.5) circle (3pt);
+  \node[blue!70!black, above, font=\small] at (0,1.55) {$0.5$};
+
+  \draw[blue!70!black, line width=2pt] (1,0) -- (1,0.9);
+  \fill[blue!70!black] (1,0.9) circle (3pt);
+  \node[blue!70!black, above, font=\small] at (1,0.95) {$0.3$};
+
+  \draw[blue!70!black, line width=2pt] (2,0) -- (2,0.6);
+  \fill[blue!70!black] (2,0.6) circle (3pt);
+  \node[blue!70!black, above, font=\small] at (2,0.65) {$0.2$};
+\end{tikzpicture}
+\caption{地点 $0,\,1,\,2$ に測度 $0.5,\,0.3,\,0.2$ を配置した確率測度．
+各棒の高さが対応する地点の測度を表す．}
+\label{fig:dirac}
+\end{figure}
+
+この分布をDirac測度を用いて書くと
+$\mu=0.5\,\delta_0 + 0.3\,\delta_1 + 0.2\,\delta_2$ となる．
+すなわち，任意のBorel集合 $B$ に対し
+\[
+  \mu(B) = 0.5\cdot\delta_0(B) + 0.3\cdot\delta_1(B) + 0.2\cdot\delta_2(B)
+\]
+である．各 $\delta$ が「その点が $B$ に含まれるか」を返すスイッチ，
+係数が配分量として機能する．$B=\{0,1\}$ のとき，
+\[
+  \mu(\{0,1\})
+  = 0.5\cdot\underbrace{\delta_0(\{0,1\})}_{=1}
+  + 0.3\cdot\underbrace{\delta_1(\{0,1\})}_{=1}
+  + 0.2\cdot\underbrace{\delta_2(\{0,1\})}_{=0}
+  = 0.8
+\]
+となる．
+
+\begin{example}{Monge 問題の具体例}{monge_example}
+$X=Y=\mathbb{R}$ とし，数直線上の3地点に確率測度を配置する．
+$\mu$ は地点 $0,\,1,\,2$ に集中し，
+$\nu$ は地点 $4,\,6$ に集中するとする：
+\[
+  \mu = 0.5\,\delta_0 + 0.3\,\delta_1 + 0.2\,\delta_2, \qquad
+  \nu = 0.8\,\delta_4 + 0.2\,\delta_6.
+\]
+コスト関数を距離 $c(x,y)=|x-y|$（遠くに運ぶほどコストが高い）とする．
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth, thick]
+  % 数直線
+  \draw[->] (-0.5,0) -- (7.5,0);
+  \foreach \x in {0,1,2,3,4,5,6,7} {
+    \draw (\x,0.08) -- (\x,-0.08);
+    \node[below, font=\small] at (\x,-0.1) {$\x$};
+  }
+
+  % mu の点
+  \fill[blue!70!black] (0,0) circle (3pt);
+  \fill[blue!70!black] (1,0) circle (3pt);
+  \fill[blue!70!black] (2,0) circle (3pt);
+  \node[blue!70!black, above, font=\small] at (0,0.15) {$0.5$};
+  \node[blue!70!black, above, font=\small] at (1,0.15) {$0.3$};
+  \node[blue!70!black, above, font=\small] at (2,0.15) {$0.2$};
+  \node[blue!70!black, above, font=\small] at (1,0.6) {$\mu$};
+
+  % nu の点
+  \fill[green!50!black] (4,0) circle (3pt);
+  \fill[green!50!black] (6,0) circle (3pt);
+  \node[green!50!black, above, font=\small] at (4,0.15) {$0.8$};
+  \node[green!50!black, above, font=\small] at (6,0.15) {$0.2$};
+  \node[green!50!black, above, font=\small] at (5,0.6) {$\nu$};
+
+  % T_1 の矢印
+  \draw[->, red!70!black] (0,0.5) .. controls (1.5,1.4) .. (4,0.5);
+  \draw[->, red!70!black] (1,0.5) .. controls (2.5,1.1) .. (4,0.5);
+  \draw[->, red!70!black] (2,0.5) .. controls (4,1.4) .. (6,0.5);
+  \node[red!70!black, font=\small] at (3,1.6) {$T_1$};
+\end{tikzpicture}
+\end{center}
+
+写像 $T_1$ を $T_1(0)=4$，$T_1(1)=4$，$T_1(2)=6$ と定めると，
 \begin{align*}
-  T_{1\#}\mu(\{a\}) &= \mu(\{1,2\}) = 0.8 = \nu(\{a\}), \\
-  T_{1\#}\mu(\{b\}) &= \mu(\{3\}) = 0.2 = \nu(\{b\})
+  T_{1\#}\mu(\{4\}) &= \mu(\{0,1\}) = 0.8 = \nu(\{4\}), \\
+  T_{1\#}\mu(\{6\}) &= \mu(\{2\}) = 0.2 = \nu(\{6\})
 \end{align*}
 より $T_{1\#}\mu=\nu$ が成り立ち，$T_1$ は輸送写像の制約を満たす．
 このときの輸送コストは
-$\int c(x,T_1(x))\,d\mu = 0.5\cdot 1 + 0.3\cdot 2 + 0.2\cdot 3 = 1.7$
+\[
+  \int |x-T_1(x)|\,d\mu
+  = 0.5\cdot|0-4| + 0.3\cdot|1-4| + 0.2\cdot|2-6|
+  = 2.0 + 0.9 + 0.8 = 3.7
+\]
 である．
 
-一方，$T_2(1)=a$，$T_2(2)=b$，$T_2(3)=a$ とすると，
-$T_{2\#}\mu(\{a\})=\mu(\{1,3\})=0.7\neq 0.8=\nu(\{a\})$ となり，
+一方，$T_2(0)=4$，$T_2(1)=6$，$T_2(2)=4$ とすると，
+$T_{2\#}\mu(\{4\})=\mu(\{0,2\})=0.7\neq 0.8=\nu(\{4\})$ となり，
 $T_{2\#}\mu\neq\nu$ であるから $T_2$ は制約を満たさない．
 このように $T_\#\mu=\nu$ の条件は，
 輸送先での分布が $\nu$ にちょうど一致すること
