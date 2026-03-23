@@ -473,6 +473,17 @@ $\pi$ の周辺分布がそれぞれ $\mu$ と $\nu$ に一致すること，
 $\mu$ と $\nu$ の輸送計画全体の集合を $\Pi(\mu,\nu)$ と記す．
 \end{definition}
 
+離散的な場合，$\pi$ を行列 $(\pi_{xy})$ で表すと
+各成分 $\pi_{xy}$ は「出発地 $x$ にある土を到達地 $y$ へ輸送する量」を意味する．
+\begin{itemize}
+  \item \textbf{行 $x$ の和}が $\mu(\{x\})$ に一致する条件は，
+        「出発地 $x$ から送り出す土の総量がちょうど供給量に等しい」ことを要請する．
+  \item \textbf{列 $y$ の和}が $\nu(\{y\})$ に一致する条件は，
+        「到達地 $y$ に受け取る土の総量がちょうど需要量に等しい」ことを要請する．
+  \item 対角成分 $\pi_{xx}$ はその場に\textbf{留まる}量，
+        非対角成分 $\pi_{xy}\ (x\ne y)$ は $x$ から $y$ へ\textbf{移動する}量に対応する．
+\end{itemize}
+
 \begin{center}
 \begin{tikzpicture}[>=Stealth, thick]
   % 行列風の表
@@ -556,6 +567,215 @@ Kantorovich 問題の最適値は Monge 問題の最適値以下である．
 よって $\pi\in\Pi(\mu,\nu)$ であり，$\Pi(\mu,\nu)$ は常に非空である．
 したがって，Monge 問題とは異なり Kantorovich 問題は常に実行可能である．
 \end{remark}
+
+\begin{example}{Kantorovich 問題の具体例（2点間の離散輸送）}{kantorovich_example}
+$X = Y = \{0, 1\}$ とし，
+\[
+  \mu = \tfrac{3}{4}\delta_0 + \tfrac{1}{4}\delta_1, \qquad
+  \nu  = \tfrac{2}{4}\delta_0 + \tfrac{2}{4}\delta_1, \qquad
+  c(x,y) = |x-y|
+\]
+とおく．
+2つの分布を棒グラフで示すと，$\mu$ と $\nu$ の確率質量の違いが視覚的にわかる．
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth]
+  \def\bw{0.28}  %% 棒の半幅
+  \def\yscale{3} %% y軸のスケール（高さ1=確率1に対応）
+
+  %% ---- 左パネル：μ ----
+  \begin{scope}[xshift=0cm]
+    \draw[->] (-0.4, 0) -- (2.6, 0) node[right, font=\small] {$x$};
+    \draw[->] (0, 0) -- (0, 1.1*\yscale) node[above, font=\small] {};
+
+    %% 目盛り
+    \foreach \v/\lbl in {0.25/$\tfrac{1}{4}$, 0.5/$\tfrac{2}{4}$, 0.75/$\tfrac{3}{4}$, 1.0/$1$}{
+      \draw[gray!50] (0.05, \v*\yscale) -- (-0.05, \v*\yscale)
+        node[left, font=\scriptsize, gray!70] {\lbl};
+      \draw[gray!20, dashed] (0, \v*\yscale) -- (2.3, \v*\yscale);
+    }
+
+    %% 棒：x=0, μ({0})=3/4
+    \fill[blue!40] (0.8-\bw, 0) rectangle (0.8+\bw, 0.75*\yscale);
+    \draw[blue!60!black] (0.8-\bw, 0) rectangle (0.8+\bw, 0.75*\yscale);
+    \node[below, font=\small] at (0.8, 0) {$0$};
+    \node[blue!70!black, above, font=\small] at (0.8, 0.75*\yscale) {$\tfrac{3}{4}$};
+
+    %% 棒：x=1, μ({1})=1/4
+    \fill[blue!40] (1.8-\bw, 0) rectangle (1.8+\bw, 0.25*\yscale);
+    \draw[blue!60!black] (1.8-\bw, 0) rectangle (1.8+\bw, 0.25*\yscale);
+    \node[below, font=\small] at (1.8, 0) {$1$};
+    \node[blue!70!black, above, font=\small] at (1.8, 0.25*\yscale) {$\tfrac{1}{4}$};
+
+    \node[font=\small\bfseries, blue!70!black] at (1.3, -0.7) {$\mu$（出発分布）};
+  \end{scope}
+
+  %% ---- 矢印 ----
+  \draw[->, thick, gray!70] (3.1, 1.3) -- (3.9, 1.3)
+    node[midway, above, font=\scriptsize, gray!60] {輸送};
+
+  %% ---- 右パネル：ν ----
+  \begin{scope}[xshift=4.3cm]
+    \draw[->] (-0.4, 0) -- (2.6, 0) node[right, font=\small] {$y$};
+    \draw[->] (0, 0) -- (0, 1.1*\yscale);
+
+    %% 目盛り
+    \foreach \v/\lbl in {0.25/$\tfrac{1}{4}$, 0.5/$\tfrac{2}{4}$, 0.75/$\tfrac{3}{4}$, 1.0/$1$}{
+      \draw[gray!50] (0.05, \v*\yscale) -- (-0.05, \v*\yscale)
+        node[left, font=\scriptsize, gray!70] {\lbl};
+      \draw[gray!20, dashed] (0, \v*\yscale) -- (2.3, \v*\yscale);
+    }
+
+    %% 棒：y=0, ν({0})=2/4
+    \fill[green!35!black!50] (0.8-\bw, 0) rectangle (0.8+\bw, 0.5*\yscale);
+    \draw[green!50!black] (0.8-\bw, 0) rectangle (0.8+\bw, 0.5*\yscale);
+    \node[below, font=\small] at (0.8, 0) {$0$};
+    \node[green!55!black, above, font=\small] at (0.8, 0.5*\yscale) {$\tfrac{2}{4}$};
+
+    %% 棒：y=1, ν({1})=2/4
+    \fill[green!35!black!50] (1.8-\bw, 0) rectangle (1.8+\bw, 0.5*\yscale);
+    \draw[green!50!black] (1.8-\bw, 0) rectangle (1.8+\bw, 0.5*\yscale);
+    \node[below, font=\small] at (1.8, 0) {$1$};
+    \node[green!55!black, above, font=\small] at (1.8, 0.5*\yscale) {$\tfrac{2}{4}$};
+
+    \node[font=\small\bfseries, green!55!black] at (1.3, -0.7) {$\nu$（目標分布）};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
+
+\medskip
+\textbf{輸送計画の行列表示．}
+$X\times Y=\{0,1\}^2$ は有限集合なので，
+$\pi$ は4点上の確率質量 $\pi_{xy}\coloneqq\pi(\{x\}\times\{y\})\ge0$ で完全に決まり，
+$2\times2$ 行列
+\[
+  \pi = \begin{pmatrix} \pi_{00} & \pi_{01} \\ \pi_{10} & \pi_{11} \end{pmatrix}
+\]
+で表せる．輸送計画の定義（定義~\ref{def:transport_plan}）の周辺分布条件
+$\pi(A\times Y)=\mu(A)$ および $\pi(X\times B)=\nu(B)$ を，
+$A$ と $B$ としてそれぞれ $\{0\}$ と $\{1\}$ に適用すると，
+\begin{align*}
+  \pi(\{0\}\times Y) &= \pi_{00}+\pi_{01} &&= \mu(\{0\}) = \tfrac{3}{4}, \\
+  \pi(\{1\}\times Y) &= \pi_{10}+\pi_{11} &&= \mu(\{1\}) = \tfrac{1}{4}, \\
+  \pi(X\times\{0\}) &= \pi_{00}+\pi_{10} &&= \nu(\{0\}) = \tfrac{2}{4}, \\
+  \pi(X\times\{1\}) &= \pi_{01}+\pi_{11} &&= \nu(\{1\}) = \tfrac{2}{4}.
+\end{align*}
+すなわち，「行の和が $\mu$，列の和が $\nu$ に一致する非負行列」が
+$\Pi(\mu,\nu)$ の元である．
+
+\medskip
+\textbf{最適計画の導出．}
+$c(x,y)=|x-y|$ は $x\ne y$ のとき $1$，$x=y$ のとき $0$ なので，
+輸送コストは
+\[
+  \int c\,d\pi
+  = 0\cdot\pi_{00} + 1\cdot\pi_{01} + 1\cdot\pi_{10} + 0\cdot\pi_{11}
+  = \pi_{01} + \pi_{10}
+\]
+と書ける．上の周辺分布条件から
+$\pi_{01} = \tfrac{3}{4} - \pi_{00}$，$\pi_{10} = \tfrac{2}{4} - \pi_{00}$
+なので，コストは
+\[
+  \pi_{01}+\pi_{10} = \tfrac{5}{4} - 2\pi_{00}
+\]
+となり，$\pi_{00}$ を最大化することで最小化される．
+$\pi_{00}\ge0$ かつ各周辺分布条件から
+$\pi_{00}\le\min\!\bigl(\tfrac{3}{4},\,\tfrac{2}{4}\bigr)=\tfrac{2}{4}$ なので，
+最適計画は $\pi_{00}=\tfrac{2}{4}$ で与えられ，
+\[
+  \pi^* = \begin{pmatrix} 2/4 & 1/4 \\ 0 & 1/4 \end{pmatrix},
+  \qquad
+  \inf_{\pi\in\Pi(\mu,\nu)}\int c\,d\pi
+  = \tfrac{5}{4} - 2\cdot\tfrac{2}{4} = \tfrac{1}{4}.
+\]
+
+\medskip
+$\pi^*$ は $X\times Y=\{0,1\}^2$ 上の同時分布であり，
+下の行列の各セルが確率質量 $\pi^*(x,y)$ を表す．
+行の和が $\mu$，列の和が $\nu$ に一致することが周辺分布条件に対応する．
+オレンジのセルだけが正のコスト（$c=1$）を持ち，
+輸送コスト全体への寄与は $\tfrac{1}{4}\times 1=\tfrac{1}{4}$ である．
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth, thick]
+  \def\s{2.2}
+
+  %% セルの塗りつぶし（色の濃さ ∝ π* の値）
+  \fill[blue!35]   (0,    \s)   rectangle (\s,   2*\s); %% π*(0,0) = 1/2
+  \fill[orange!35] (\s,   \s)   rectangle (2*\s, 2*\s); %% π*(0,1) = 1/4（コスト寄与）
+  \fill[gray!8]    (0,    0)    rectangle (\s,   \s);   %% π*(1,0) = 0
+  \fill[blue!18]   (\s,   0)    rectangle (2*\s, \s);   %% π*(1,1) = 1/4
+
+  %% グリッド
+  \draw[gray!45] (0,0) grid[step=\s] (2*\s, 2*\s);
+  \draw[black,line width=1pt] (0,0) rectangle (2*\s, 2*\s);
+
+  %% 各セルの確率質量（上段）とコスト（下段）
+  \node[font=\normalsize] at (0.5*\s, 1.5*\s+0.22) {$\dfrac{2}{4}$};
+  \node[font=\scriptsize, gray!60] at (0.5*\s, 1.5*\s-0.35) {$c(0,0)=0$};
+
+  \node[orange!70!black, font=\normalsize] at (1.5*\s, 1.5*\s+0.22) {$\dfrac{1}{4}$};
+  \node[orange!60!black, font=\scriptsize] at (1.5*\s, 1.5*\s-0.35) {$c(0,1)=1$};
+
+  \node[gray!45, font=\normalsize] at (0.5*\s, 0.5*\s+0.22) {$0$};
+  \node[font=\scriptsize, gray!60] at (0.5*\s, 0.5*\s-0.35) {$c(1,0)=1$};
+
+  \node[font=\normalsize] at (1.5*\s, 0.5*\s+0.22) {$\dfrac{1}{4}$};
+  \node[font=\scriptsize, gray!60] at (1.5*\s, 0.5*\s-0.35) {$c(1,1)=0$};
+
+  %% 列ヘッダ（y 値）
+  \node[font=\small, above] at (0.5*\s, 2*\s+0.08) {$y=0$};
+  \node[font=\small, above] at (1.5*\s, 2*\s+0.08) {$y=1$};
+
+  %% 行ヘッダ（x 値）
+  \node[font=\small, left] at (-0.08, 1.5*\s) {$x=0$};
+  \node[font=\small, left] at (-0.08, 0.5*\s) {$x=1$};
+
+  %% 行の和 → μ（右）
+  \draw[->, blue!65!black, line width=1.2pt]
+    (2*\s+0.15, 1.5*\s) -- (2*\s+0.6, 1.5*\s);
+  \node[blue!70!black, right, font=\small] at (2*\s+0.6, 1.5*\s)
+    {$\mu(\{0\})=\tfrac{3}{4}$};
+  \draw[->, blue!65!black, line width=1.2pt]
+    (2*\s+0.15, 0.5*\s) -- (2*\s+0.6, 0.5*\s);
+  \node[blue!70!black, right, font=\small] at (2*\s+0.6, 0.5*\s)
+    {$\mu(\{1\})=\tfrac{1}{4}$};
+  \node[blue!60!black, right, font=\bfseries\scriptsize] at (2*\s+0.6, -0.45)
+    {行の和 $=\mu$};
+
+  %% 列の和 → ν（下）
+  \draw[->, green!50!black, line width=1.2pt]
+    (0.5*\s, -0.15) -- (0.5*\s, -0.6);
+  \node[green!55!black, below, font=\small] at (0.5*\s, -0.6)
+    {$\nu(\{0\})=\tfrac{2}{4}$};
+  \draw[->, green!50!black, line width=1.2pt]
+    (1.5*\s, -0.15) -- (1.5*\s, -0.6);
+  \node[green!55!black, below, font=\small] at (1.5*\s, -0.6)
+    {$\nu(\{1\})=\tfrac{2}{4}$};
+  \node[green!50!black, below, font=\bfseries\scriptsize] at (\s, -1.3)
+    {列の和 $=\nu$};
+
+  %% タイトル
+  \node[font=\bfseries\small] at (\s, 2*\s+0.75) {最適輸送計画 $\pi^*$};
+\end{tikzpicture}
+\end{center}
+
+\medskip
+\textbf{Monge 問題との比較．}
+注意~\ref{rem:monge_kantorovich} より，
+$T_\#\mu=\nu$ を満たす Monge 写像 $T:\{0,1\}\to\{0,1\}$ が
+存在するか確認する．取りうる写像は4通りだが，いずれも $T_\#\mu\ne\nu$ となる：
+\[
+  \begin{array}{ll}
+    T\equiv 0: & T_\#\mu = \delta_0 \ne \nu, \\[2pt]
+    T\equiv 1: & T_\#\mu = \delta_1 \ne \nu, \\[2pt]
+    T(0)=0,\,T(1)=1: & T_\#\mu = \tfrac{3}{4}\delta_0+\tfrac{1}{4}\delta_1 = \mu \ne \nu, \\[2pt]
+    T(0)=1,\,T(1)=0: & T_\#\mu = \tfrac{1}{4}\delta_0+\tfrac{3}{4}\delta_1 \ne \nu.
+  \end{array}
+\]
+すなわち，この $(\mu,\nu)$ に対して Monge 問題は\textbf{実行不可能}であり，
+Kantorovich 緩和を用いて初めて輸送コストが定義できる．
+\end{example}
 
 \begin{definition}{距離空間}{metric_space}
 集合 $X$ 上の関数 $d\colon X\times X\to[0,\infty)$ が\textbf{距離}であるとは，
