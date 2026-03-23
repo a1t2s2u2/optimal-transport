@@ -7,7 +7,7 @@
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usepackage{tcolorbox}
-\tcbuselibrary{theorems}
+\tcbuselibrary{theorems,breakable}
 
 \newtcbtheorem[number within=section]{definition}{定義}{
   colback=blue!5, colframe=blue!40!black, fonttitle=\bfseries
@@ -22,7 +22,7 @@
   colback=yellow!5, colframe=yellow!40!black, fonttitle=\bfseries
 }{rem}
 \newtcbtheorem[use counter from=definition]{example}{例}{
-  colback=gray!5, colframe=gray!50!black, fonttitle=\bfseries
+  colback=gray!5, colframe=gray!50!black, fonttitle=\bfseries, breakable
 }{ex}
 \tcolorboxenvironment{proof}{
   colback=white, colframe=black!20,
@@ -686,7 +686,7 @@ $\pi_{00}\le\min\!\bigl(\tfrac{3}{4},\,\tfrac{2}{4}\bigr)=\tfrac{2}{4}$ なの�
   \pi^* = \begin{pmatrix} 2/4 & 1/4 \\ 0 & 1/4 \end{pmatrix},
   \qquad
   \inf_{\pi\in\Pi(\mu,\nu)}\int c\,d\pi
-  = \tfrac{5}{4} - 2\cdot\tfrac{2}{4} = \tfrac{1}{4}.
+  = \tfrac{5}{4} - \tfrac{4}{4} = \tfrac{1}{4}.
 \]
 
 \medskip
