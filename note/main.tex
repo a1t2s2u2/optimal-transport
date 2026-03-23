@@ -654,25 +654,25 @@ $2\times2$ 行列
 で表せる．輸送計画の定義（定義~\ref{def:transport_plan}）の周辺分布条件
 $\pi(A\times Y)=\mu(A)$ および $\pi(X\times B)=\nu(B)$ を，
 $A$ と $B$ としてそれぞれ $\{0\}$ と $\{1\}$ に適用すると，
-\begin{align*}
-  \pi(\{0\}\times Y) &= \pi_{00}+\pi_{01} = \mu(\{0\}) = \tfrac{3}{4}, \\
-  \pi(\{1\}\times Y) &= \pi_{10}+\pi_{11} = \mu(\{1\}) = \tfrac{1}{4}, \\
-  \pi(X\times\{0\}) &= \pi_{00}+\pi_{10} = \nu(\{0\}) = \tfrac{2}{4}, \\
-  \pi(X\times\{1\}) &= \pi_{01}+\pi_{11} = \nu(\{1\}) = \tfrac{2}{4}.
-\end{align*}
+\begin{align}
+  \pi(\{0\}\times Y) &= \pi_{00}+\pi_{01} = \mu(\{0\}) = \tfrac{3}{4}, \label{eq:marg_mu0}\\
+  \pi(\{1\}\times Y) &= \pi_{10}+\pi_{11} = \mu(\{1\}) = \tfrac{1}{4}, \label{eq:marg_mu1}\\
+  \pi(X\times\{0\}) &= \pi_{00}+\pi_{10} = \nu(\{0\}) = \tfrac{2}{4}, \label{eq:marg_nu0}\\
+  \pi(X\times\{1\}) &= \pi_{01}+\pi_{11} = \nu(\{1\}) = \tfrac{2}{4}. \label{eq:marg_nu1}
+\end{align}
 すなわち，「行の和が $\mu$，列の和が $\nu$ に一致する非負行列」が
 $\Pi(\mu,\nu)$ の元である．
 
 \medskip
 \textbf{最適計画の導出．}
-$c(x,y)=|x-y|$ は $x\ne y$ のとき $1$，$x=y$ のとき $0$ なので，
+$c(x,y)=|x-y|$ を各格子点で評価すると，
 輸送コストは
 \[
   \int c\,d\pi
   = 0\cdot\pi_{00} + 1\cdot\pi_{01} + 1\cdot\pi_{10} + 0\cdot\pi_{11}
   = \pi_{01} + \pi_{10}
 \]
-と書ける．上の周辺分布条件から
+と書ける．\eqref{eq:marg_mu0}，\eqref{eq:marg_nu0} から
 $\pi_{01} = \tfrac{3}{4} - \pi_{00}$，$\pi_{10} = \tfrac{2}{4} - \pi_{00}$
 なので，コストは
 \[
