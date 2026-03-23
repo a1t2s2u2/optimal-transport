@@ -1159,6 +1159,46 @@ $\varphi(x)+\psi(y)$ は $x\to y$ の輸送で仲介業者が受け取る\textbf
 もし超えるなら荷主は仲介業者を使わず自前で運んだほうが安いため，合理的な市場では成立しない条件である．
 双対問題はこの制約のもとで総収入 $\int_X\varphi\,d\mu+\int_Y\psi\,d\nu$ を最大化する手数料設定を求める問題である．
 
+\begin{center}
+\begin{tikzpicture}[>=Stealth]
+  %% 出発地・到着地ノード
+  \node[draw, circle, thick, minimum size=1.1cm, fill=blue!10,
+    font=\small] (X) at (0,0) {出発地 $x$};
+  \node[draw, circle, thick, minimum size=1.1cm, fill=orange!10,
+    font=\small] (Y) at (8,0) {到着地 $y$};
+
+  %% 直送ルート（上のアーチ）
+  \draw[->, very thick, gray!50]
+    (X.north) .. controls (1,2.0) and (7,2.0) .. (Y.north)
+    node[midway, above, font=\small, gray!60] {直送コスト $c(x,y)$};
+
+  %% 仲介業者ノード
+  \node[draw, rounded corners=4pt, thick, fill=green!15,
+    minimum width=1.8cm, minimum height=0.9cm,
+    font=\small] (I) at (4,-2.0) {仲介業者};
+
+  %% 積み込み手数料 φ(x)
+  \draw[->, thick, blue!70!black]
+    (X.south) .. controls (0.5,-1.2) and (2.2,-1.8) .. (I.west)
+    node[midway, above left, font=\small, blue!70!black]
+    {積み込み手数料 $\varphi(x)$};
+
+  %% 荷降ろし手数料 ψ(y)
+  \draw[->, thick, orange!70!black]
+    (I.east) .. controls (5.8,-1.8) and (7.5,-1.2) .. (Y.south)
+    node[midway, above right, font=\small, orange!70!black]
+    {荷降ろし手数料 $\psi(y)$};
+
+  %% 制約の注釈
+  \node[font=\small, green!40!black] at (4,-3.1)
+    {合計手数料 $\varphi(x)+\psi(y)$};
+  \node[font=\small, green!40!black] at (4,-3.55)
+    {$\le$ 直送コスト $c(x,y)$};
+  \node[font=\scriptsize, gray!60] at (4,-4.0)
+    {（超えると荷主は直送を選ぶ）};
+\end{tikzpicture}
+\end{center}
+
 なお，$L^1(\mu)$ とは $\mu$ に関して可積分な関数のクラス，
 すなわち $\int_X|f|\,d\mu < \infty$ を満たす関数 $f$ 全体を指す．
 $(\varphi,\psi)\in L^1(\mu)\times L^1(\nu)$ という条件は，
