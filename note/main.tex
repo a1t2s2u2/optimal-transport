@@ -934,6 +934,33 @@ $d(x,s)<\varepsilon$ を満たす $s\in S$ が存在することをいう．
 完備かつ可分な距離空間を\textbf{ポーランド空間}と呼ぶ．
 \end{definition}
 
+\begin{center}
+\begin{tikzpicture}[>=Stealth]
+  %% 完備の円
+  \draw[blue!60, fill=blue!10, thick] (-1.2,0) circle (2.4);
+  \node[blue!70!black, font=\small\bfseries] at (-2.2, 0) {完備};
+  \node[blue!60!black, font=\scriptsize] at (-2.5, -0.5) {例：$\ell^\infty$};
+
+  %% 可分の円
+  \draw[orange!70!black, fill=orange!10, thick] (1.2,0) circle (2.4);
+  \node[orange!70!black, font=\small\bfseries] at (2.2, 0) {可分};
+  \node[orange!60!black, font=\scriptsize] at (2.5, -0.5) {例：$\mathbb{Q}$};
+
+  %% 交差部分
+  \begin{scope}
+    \clip (-1.2,0) circle (2.4);
+    \fill[green!20, opacity=0.8] (1.2,0) circle (2.4);
+  \end{scope}
+  \draw[green!50!black, thick] (-1.2,0) circle (2.4);
+  \draw[green!50!black, thick] (1.2,0) circle (2.4);
+
+  %% ポーランド空間のラベル
+  \node[green!40!black, font=\small\bfseries] at (0, 0.4) {ポーランド};
+  \node[green!40!black, font=\small\bfseries] at (0, 0.0) {空間};
+  \node[green!40!black, font=\scriptsize] at (0, -0.5) {例：$\mathbb{R}^n$};
+\end{tikzpicture}
+\end{center}
+
 \begin{definition}{下半連続}{lsc}
 距離空間 $X$ 上の関数 $f\colon X\to(-\infty,\infty]$ が
 \textbf{下半連続}であるとは，
@@ -942,8 +969,48 @@ $d(x,s)<\varepsilon$ を満たす $s\in S$ が存在することをいう．
   f(x) \le \liminf_{n\to\infty} f(x_n)
 \]
 が成り立つことをいう．
-直感的には，関数値が「下に跳ぶ」ことはあっても「下に落ちる」ことがないという条件である．
 \end{definition}
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth, x=1.6cm, y=1.2cm]
+  %% 左: 下半連続 ✓ (step up, value at x0 is lower)
+  \begin{scope}[xshift=-3.2cm]
+    \draw[->] (-1.2,0) -- (1.8,0) node[right, font=\scriptsize] {$x$};
+    \draw[->] (0,-0.2) -- (0,2.6) node[above, font=\scriptsize] {$f(x)$};
+    %% f(x)=1 for x<0 (open right), f(0)=1, f(x)=2 for x>0 (open left)
+    \draw[blue!70!black, very thick] (-1.1,1) -- (0,1);
+    \fill[blue!70!black] (0,1) circle (2.5pt);
+    \draw[blue!70!black, very thick] (0.01,2) -- (1.5,2);
+    \draw[blue!70!black, very thick, fill=white] (0,2) circle (2.5pt);
+    %% dashed guide
+    \draw[gray!50, dashed] (0,0) -- (0,1);
+    \node[below, font=\scriptsize] at (0,0) {$x_0$};
+    \node[left, font=\scriptsize] at (0,1) {$a$};
+    \node[left, font=\scriptsize] at (0,2) {$b$};
+    %% annotation
+    \node[blue!70!black, font=\scriptsize] at (0.3,-0.6) {$f(x_0)=a \le a=\liminf f(x_n)$};
+    \node[font=\small, blue!60!black] at (0.3,-1.05) {下半連続 \checkmark};
+  \end{scope}
+  %% 右: 下半連続でない ✗ (step down, value at x0 is higher)
+  \begin{scope}[xshift=3.2cm]
+    \draw[->] (-1.2,0) -- (1.8,0) node[right, font=\scriptsize] {$x$};
+    \draw[->] (0,-0.2) -- (0,2.6) node[above, font=\scriptsize] {$f(x)$};
+    %% f(x)=2 for x<0, f(0)=2, f(x)=1 for x>0
+    \draw[red!70!black, very thick] (-1.1,2) -- (0,2);
+    \fill[red!70!black] (0,2) circle (2.5pt);
+    \draw[red!70!black, very thick] (0.01,1) -- (1.5,1);
+    \draw[red!70!black, very thick, fill=white] (0,1) circle (2.5pt);
+    %% dashed guide
+    \draw[gray!50, dashed] (0,0) -- (0,2);
+    \node[below, font=\scriptsize] at (0,0) {$x_0$};
+    \node[left, font=\scriptsize] at (0,1) {$a$};
+    \node[left, font=\scriptsize] at (0,2) {$b$};
+    %% annotation
+    \node[red!70!black, font=\scriptsize] at (0.3,-0.6) {$f(x_0)=b > a=\liminf f(x_n)$};
+    \node[font=\small, red!60!black] at (0.3,-1.05) {下半連続でない $\times$};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
 
 \begin{definition}{測度の弱収束}{weak_convergence}
 ポーランド空間 $X$ 上のBorel確率測度の列 $\{\mu_n\}$ が
@@ -959,8 +1026,46 @@ $\mu$ に\textbf{弱収束}するとは，
 ポーランド空間 $X$ 上のBorel確率測度の族 $\mathcal{M}$ が\textbf{緊密}（tight）であるとは，
 任意の $\varepsilon>0$ に対し，あるコンパクト集合 $K\subset X$ が存在して，
 すべての $\mu\in\mathcal{M}$ に対し $\mu(X\setminus K)<\varepsilon$ が成り立つことをいう．
-直感的には，測度が「無限遠に逃げない」ことを意味する．
 \end{definition}
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth]
+  %% 上段: 緊密 ✓
+  \begin{scope}[yshift=1.8cm]
+    \node[font=\small, green!50!black, left] at (-4.5, 0.5) {緊密 \checkmark};
+    \draw[->] (-4.3,0) -- (4.5,0) node[right, font=\scriptsize] {$x$};
+    %% コンパクト集合 K
+    \draw[green!60!black, thick] (-2,-0.12) -- (-2,0.12);
+    \draw[green!60!black, thick] (2,-0.12) -- (2,0.12);
+    \draw[green!60!black, thick] (-2,0) -- (2,0);
+    \node[green!50!black, font=\scriptsize, above] at (0,0.12) {$K$};
+    %% 3つの測度（全てKの内側に集中）
+    \foreach \cx/\col in {-0.8/blue!70, 0.2/orange!80!black, 1.0/purple!70}{
+      \draw[\col, thick, domain=-2:2, samples=50]
+        plot[smooth] (\x, {0.9*exp(-4.5*(\x-\cx)^2)});
+    }
+    \node[font=\scriptsize, gray] at (3.5, 0.5) {$\mu_1,\mu_2,\mu_3,\ldots$};
+  \end{scope}
+  %% 下段: 非緊密 ✗
+  \begin{scope}[yshift=-1.2cm]
+    \node[font=\small, red!60!black, left] at (-4.5, 0.5) {非緊密 $\times$};
+    \draw[->] (-4.3,0) -- (4.5,0) node[right, font=\scriptsize] {$x$};
+    %% 3つの測度が右に逃げていく
+    \draw[blue!70, thick, domain=-3.5:-1.0, samples=50]
+      plot[smooth] (\x, {0.9*exp(-4.5*(\x+2.2)^2)});
+    \draw[orange!80!black, thick, domain=-0.5:2.0, samples=50]
+      plot[smooth] (\x, {0.9*exp(-4.5*(\x-0.7)^2)});
+    \draw[purple!70, thick, domain=2.0:4.5, samples=50]
+      plot[smooth] (\x, {0.9*exp(-4.5*(\x-3.2)^2)});
+    %% 矢印: 無限遠方向
+    \draw[->, red!60, thick] (3.8,0.5) -- (4.8,0.5);
+    \node[red!60, font=\scriptsize, right] at (4.8,0.5) {$\infty$};
+    \node[font=\scriptsize, gray] at (-2.5, 0.55) {$\mu_1$};
+    \node[font=\scriptsize, gray] at (0.7, 0.55) {$\mu_2$};
+    \node[font=\scriptsize, gray] at (3.2, 0.55) {$\mu_3$};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
 
 \begin{theorem}{Prokhorovの定理}{prokhorov}
 ポーランド空間上のBorel確率測度の族 $\mathcal{M}$ が緊密であることと，
