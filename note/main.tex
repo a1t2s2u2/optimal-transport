@@ -1324,4 +1324,86 @@ Brenier の定理により最適輸送写像 $T=\nabla\phi$
 （凸関数の勾配）の存在と一意性が保証される．
 \end{remark}
 
+%% ==========================================================
+%%  Kantorovich 問題と凸解析
+%% ==========================================================
+
+\begin{remark}{Kantorovich 問題と凸解析}{kantorovich_convex}
+Kantorovich 問題
+\[
+  \inf_{\pi\in\Pi(\mu,\nu)}\int c\,d\pi
+\]
+は，その定義の時点で既に\textbf{無限次元線形計画問題}である：
+目的関数 $\int c\,d\pi$ は $\pi$ に関して線形であり，
+実行可能領域 $\Pi(\mu,\nu)$ は周辺分布条件という線形制約で定まる凸集合である．
+
+つまり Monge 問題を Kantorovich 問題へ緩和する操作は，
+「写像から測度へ変数を広げる」だけでなく，
+\textbf{最適輸送を凸解析の問題に埋め込む}ことを意味していた．
+Kantorovich 双対定理（定理~\ref{thm:kantorovich_duality}）は
+この凸性の帰結として，線形計画の双対定理の無限次元版として導かれる．
+その双対構造を記述する中心的な道具が，次に定義する $c$変換である．
+\end{remark}
+
+\begin{definition}{$c$変換と$c$凹関数}{c_transform}
+コスト関数 $c\colon X\times Y\to[0,\infty]$ に対し，
+関数 $\varphi\colon X\to\mathbb{R}\cup\{-\infty\}$ の
+\textbf{$c$変換}（$c$-transform）を
+\[
+  \varphi^c(y) \coloneqq \inf_{x\in X}\bigl[c(x,y)-\varphi(x)\bigr]
+\]
+と定義する．$\varphi = (\varphi^c)^c$ が成り立つとき，
+$\varphi$ を\textbf{$c$凹}（$c$-concave）であるという．
+\end{definition}
+
+$c$変換を用いると，双対問題の最適化変数を一つの関数に絞ることができる．
+任意の双対許容対 $(\varphi,\psi)\in\Phi_c$ に対し，
+定義から $\psi(y)\le c(x,y)-\varphi(x)$ が任意の $x$ で成り立つため
+$\psi(y)\le\varphi^c(y)$，したがって $\int\psi\,d\nu\le\int\varphi^c\,d\nu$．
+$\psi$ を $\varphi^c$ で置き換えても目的関数は悪化しないから，
+\[
+  \sup_{(\varphi,\psi)\in\Phi_c}
+  \Bigl(\int_X\varphi\,d\mu + \int_Y\psi\,d\nu\Bigr)
+  = \sup_{\varphi\in L^1(\mu)}
+  \Bigl(\int_X\varphi\,d\mu + \int_Y\varphi^c\,d\nu\Bigr).
+\]
+すなわち双対問題は，関数の対 $(\varphi,\psi)$ の最適化から
+一つの関数 $\varphi$ の最適化へと帰着する．
+これは凸解析における Legendre--Fenchel 変換が共役対 $(f,\,f^*)$ の最適化を
+$f$ 単体の最適化に帰着させるのと同じ仕組みである．
+
+\begin{remark}{Legendre--Fenchel 変換との類比}{legendre_fenchel}
+古典的な\textbf{Legendre--Fenchel 変換}（凸共役）は
+\[
+  f^*(y) \coloneqq \sup_{x\in X}\bigl[\langle x,y\rangle - f(x)\bigr]
+\]
+で定義される（$X=Y=\mathbb{R}^d$）．
+$c$変換は，双線型ペアリング $\langle x,y\rangle$ を一般のコスト $c(x,y)$ で置き換え，
+$\sup$ を $\inf$ に変えた「一般化 Legendre--Fenchel 変換」と見ることができる．
+
+この対応を並べると，最適輸送理論は凸解析と平行な構造を持つことが見えてくる：
+
+\medskip
+\begin{center}
+{\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{ll}
+  \hline
+  \textbf{通常の凸解析} & \textbf{$c$凸解析（最適輸送）} \\
+  \hline
+  凸関数 & $c$凹関数 \\
+  Legendre--Fenchel 変換 $f^*$ & $c$変換 $\varphi^c$ \\
+  Fenchel の双対定理 & Kantorovich 双対定理 \\
+  \hline
+\end{tabular}}
+\end{center}
+\medskip
+
+特に $c(x,y)=\tfrac{1}{2}\|x-y\|^2$ のとき，
+$c$凹関数 $\varphi$ は $\varphi(x)=\tfrac{1}{2}\|x\|^2-u(x)$
+（$u$ は凸関数）の形で書け，$\varphi$ の $c$変換は
+$u$ の Legendre--Fenchel 共役 $u^*$ を通じて $\varphi^c(y)=\tfrac{1}{2}\|y\|^2-u^*(y)$
+と表される．Brenier の定理（注意~\ref{rem:monge_from_kantorovich}）が述べる
+凸ポテンシャル $T=\nabla u$ は，この $c$凸解析の構造から自然に現れる．
+\end{remark}
+
 \end{document}
