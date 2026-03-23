@@ -1152,6 +1152,42 @@ $\pi\mapsto\int c\,d\pi$ は弱収束に関して下半連続であり，
 と表す．
 \end{definition}
 
+$\varphi(x)$ を「出発地 $x$ での積み込み価格」，$\psi(y)$ を「到着地 $y$ での荷降ろし価格」と解釈すると，
+制約 $\varphi(x)+\psi(y)\le c(x,y)$ は
+「2地点間の価格差が実際の輸送コストを超えない」という\textbf{裁定なし条件}を意味する．
+双対問題はこの制約のもとで総収入 $\int_X\varphi\,d\mu+\int_Y\psi\,d\nu$ を最大化する価格設定を求める問題である．
+
+なお，$L^1(\mu)$ とは $\mu$ に関して可積分な関数のクラス，
+すなわち $\int_X|f|\,d\mu < \infty$ を満たす関数 $f$ 全体を指す．
+$(\varphi,\psi)\in L^1(\mu)\times L^1(\nu)$ という条件は，
+総収入の積分 $\int\varphi\,d\mu$，$\int\psi\,d\nu$ が有限値として定まることを保証するための技術的な仮定である．
+
+\begin{example}{双対許容対の具体例}{dual_admissible_example}
+例\ref{ex:kantorovich_example} と同じ設定
+$X=Y=\{0,1\}$，$\mu=\tfrac{3}{4}\delta_0+\tfrac{1}{4}\delta_1$，
+$\nu=\tfrac{2}{4}\delta_0+\tfrac{2}{4}\delta_1$，$c(x,y)=|x-y|$ を考える．
+
+双対許容対の条件 $\varphi(x)+\psi(y)\le c(x,y)$ を $(x,y)$ の各組み合わせで書くと，
+\begin{align*}
+  \varphi(0)+\psi(0) &\le c(0,0) = 0, \\
+  \varphi(0)+\psi(1) &\le c(0,1) = 1, \\
+  \varphi(1)+\psi(0) &\le c(1,0) = 1, \\
+  \varphi(1)+\psi(1) &\le c(1,1) = 0.
+\end{align*}
+例えば $\varphi\equiv 0,\,\psi\equiv 0$ は制約を満たすが，総収入は $0$ である．
+
+一方，$\varphi(0)=0,\,\varphi(1)=-1,\,\psi(0)=0,\,\psi(1)=1$ とすると，
+4つの制約がすべて等号または余裕をもって成立することが確認でき（実際に代入せよ），
+総収入は
+\[
+  0\cdot\tfrac{3}{4}+(-1)\cdot\tfrac{1}{4}
+  +0\cdot\tfrac{2}{4}+1\cdot\tfrac{2}{4}
+  = -\tfrac{1}{4}+\tfrac{2}{4} = \tfrac{1}{4}
+\]
+となる．これは例\ref{ex:kantorovich_example} で求めた最適輸送コスト $\tfrac{1}{4}$ に一致しており，
+双対定理（強双対性）を具体的に確認できる．
+\end{example}
+
 \begin{theorem}{Kantorovich 双対定理}{kantorovich_duality}
 $X,Y$ をポーランド空間とし，
 $c\colon X\times Y\to[0,\infty]$ が下半連続とする．このとき
