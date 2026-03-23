@@ -975,39 +975,61 @@ $d(x,s)<\varepsilon$ を満たす $s\in S$ が存在することをいう．
 \begin{tikzpicture}[>=Stealth, x=1.6cm, y=1.2cm]
   %% 左: 下半連続 ✓ (step up, value at x0 is lower)
   \begin{scope}[xshift=-3.2cm]
-    \draw[->] (-1.2,0) -- (1.8,0) node[right, font=\scriptsize] {$x$};
-    \draw[->] (0,-0.2) -- (0,2.6) node[above, font=\scriptsize] {$f(x)$};
-    %% f(x)=1 for x<0 (open right), f(0)=1, f(x)=2 for x>0 (open left)
+    \draw[->] (-1.2,0) -- (1.9,0) node[right, font=\scriptsize] {$x$};
+    \draw[->] (0,-0.2) -- (0,2.7) node[above, font=\scriptsize] {$f(x)$};
+    %% f(x)=a for x<=0, f(x)=b for x>0
     \draw[blue!70!black, very thick] (-1.1,1) -- (0,1);
     \fill[blue!70!black] (0,1) circle (2.5pt);
-    \draw[blue!70!black, very thick] (0.01,2) -- (1.5,2);
+    \draw[blue!70!black, very thick] (0.02,2) -- (1.6,2);
     \draw[blue!70!black, very thick, fill=white] (0,2) circle (2.5pt);
-    %% dashed guide
+    %% x_n points approaching x0 from right (f(x_n)=b)
+    \foreach \xn/\lab in {1.2/$x_1$, 0.7/$x_2$, 0.35/$x_3$}{
+      \draw[gray!60, dashed] (\xn,0) -- (\xn,2);
+      \fill[orange!80!black] (\xn,2) circle (2pt);
+      \node[below, font=\tiny, gray!70] at (\xn,0) {\lab};
+    }
+    %% arrow showing x_n -> x0
+    \draw[->, orange!70!black, thick] (1.25,0.35) -- (0.1,0.35)
+      node[midway, above, font=\tiny, orange!70!black] {$x_n\to x_0$};
+    %% x0 and y labels
     \draw[gray!50, dashed] (0,0) -- (0,1);
-    \node[below, font=\scriptsize] at (0,0) {$x_0$};
+    \node[below, font=\scriptsize] at (0,-0.05) {$x_0$};
     \node[left, font=\scriptsize] at (0,1) {$a$};
     \node[left, font=\scriptsize] at (0,2) {$b$};
+    %% f(x_n) label
+    \node[orange!70!black, font=\tiny] at (1.75,2) {$f(x_n){=}b$};
     %% annotation
-    \node[blue!70!black, font=\scriptsize] at (0.3,-0.6) {$f(x_0)=a \le a=\liminf f(x_n)$};
-    \node[font=\small, blue!60!black] at (0.3,-1.05) {下半連続 \checkmark};
+    \node[blue!60!black, font=\scriptsize] at (0.3,-0.65) {$f(x_0)=a \le b=\liminf f(x_n)$};
+    \node[font=\small, blue!60!black] at (0.3,-1.1) {下半連続 \checkmark};
   \end{scope}
   %% 右: 下半連続でない ✗ (step down, value at x0 is higher)
   \begin{scope}[xshift=3.2cm]
-    \draw[->] (-1.2,0) -- (1.8,0) node[right, font=\scriptsize] {$x$};
-    \draw[->] (0,-0.2) -- (0,2.6) node[above, font=\scriptsize] {$f(x)$};
-    %% f(x)=2 for x<0, f(0)=2, f(x)=1 for x>0
+    \draw[->] (-1.2,0) -- (1.9,0) node[right, font=\scriptsize] {$x$};
+    \draw[->] (0,-0.2) -- (0,2.7) node[above, font=\scriptsize] {$f(x)$};
+    %% f(x)=b for x<=0, f(x)=a for x>0
     \draw[red!70!black, very thick] (-1.1,2) -- (0,2);
     \fill[red!70!black] (0,2) circle (2.5pt);
-    \draw[red!70!black, very thick] (0.01,1) -- (1.5,1);
+    \draw[red!70!black, very thick] (0.02,1) -- (1.6,1);
     \draw[red!70!black, very thick, fill=white] (0,1) circle (2.5pt);
-    %% dashed guide
+    %% x_n points approaching x0 from right (f(x_n)=a)
+    \foreach \xn/\lab in {1.2/$x_1$, 0.7/$x_2$, 0.35/$x_3$}{
+      \draw[gray!60, dashed] (\xn,0) -- (\xn,1);
+      \fill[orange!80!black] (\xn,1) circle (2pt);
+      \node[below, font=\tiny, gray!70] at (\xn,0) {\lab};
+    }
+    %% arrow showing x_n -> x0
+    \draw[->, orange!70!black, thick] (1.25,0.35) -- (0.1,0.35)
+      node[midway, above, font=\tiny, orange!70!black] {$x_n\to x_0$};
+    %% x0 and y labels
     \draw[gray!50, dashed] (0,0) -- (0,2);
-    \node[below, font=\scriptsize] at (0,0) {$x_0$};
+    \node[below, font=\scriptsize] at (0,-0.05) {$x_0$};
     \node[left, font=\scriptsize] at (0,1) {$a$};
     \node[left, font=\scriptsize] at (0,2) {$b$};
+    %% f(x_n) label
+    \node[orange!70!black, font=\tiny] at (1.75,1) {$f(x_n){=}a$};
     %% annotation
-    \node[red!70!black, font=\scriptsize] at (0.3,-0.6) {$f(x_0)=b > a=\liminf f(x_n)$};
-    \node[font=\small, red!60!black] at (0.3,-1.05) {下半連続でない $\times$};
+    \node[red!60!black, font=\scriptsize] at (0.3,-0.65) {$f(x_0)=b > a=\liminf f(x_n)$};
+    \node[font=\small, red!60!black] at (0.3,-1.1) {下半連続でない $\times$};
   \end{scope}
 \end{tikzpicture}
 \end{center}
