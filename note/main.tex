@@ -1219,7 +1219,58 @@ $\nu=\tfrac{2}{4}\delta_0+\tfrac{2}{4}\delta_1$，$c(x,y)=|x-y|$ を考える．
 例えば $\varphi\equiv 0,\,\psi\equiv 0$ は制約を満たすが，総収入は $0$ である．
 
 一方，$\varphi(0)=0,\,\varphi(1)=-1,\,\psi(0)=0,\,\psi(1)=1$ とすると，
-4つの制約がすべて等号または余裕をもって成立することが確認でき（実際に代入せよ），
+4つの制約は下の表のように全て成立する（緑＝等号，青＝余裕あり）．
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth, font=\small]
+  %% 列ヘッダ（ψ, y, ν）
+  \node at (1.4, 1.15) {$y=0$};
+  \node[gray!70, font=\scriptsize] at (1.4, 0.75) {$\nu(0)=\tfrac{2}{4}$};
+  \node[blue!60!black, font=\scriptsize] at (1.4, 0.35) {$\psi(0)=0$};
+
+  \node at (4.2, 1.15) {$y=1$};
+  \node[gray!70, font=\scriptsize] at (4.2, 0.75) {$\nu(1)=\tfrac{2}{4}$};
+  \node[blue!60!black, font=\scriptsize] at (4.2, 0.35) {$\psi(1)=1$};
+
+  %% 行ヘッダ（φ, x, μ）
+  \node at (-1.7, -0.75) {$x=0$};
+  \node[gray!70, font=\scriptsize] at (-1.7, -1.1) {$\mu(0)=\tfrac{3}{4}$};
+  \node[orange!70!black, font=\scriptsize] at (-1.7, -1.45) {$\varphi(0)=0$};
+
+  \node at (-1.7, -2.55) {$x=1$};
+  \node[gray!70, font=\scriptsize] at (-1.7, -2.9) {$\mu(1)=\tfrac{1}{4}$};
+  \node[orange!70!black, font=\scriptsize] at (-1.7, -3.25) {$\varphi(1)=-1$};
+
+  %% セル (x=0, y=0)：0+0=0 ≤ 0, tight
+  \fill[green!15] (0,0) rectangle (2.8,-1.8);
+  \draw[gray!60] (0,0) rectangle (2.8,-1.8);
+  \node at (1.4,-0.6) {$\varphi(0)+\psi(0)=0$};
+  \node at (1.4,-1.05) {$c(0,0)=0$};
+  \node[green!50!black, font=\scriptsize] at (1.4,-1.45) {$0\le 0$ \checkmark\ 等号};
+
+  %% セル (x=0, y=1)：0+1=1 ≤ 1, tight
+  \fill[green!15] (2.8,0) rectangle (5.6,-1.8);
+  \draw[gray!60] (2.8,0) rectangle (5.6,-1.8);
+  \node at (4.2,-0.6) {$\varphi(0)+\psi(1)=1$};
+  \node at (4.2,-1.05) {$c(0,1)=1$};
+  \node[green!50!black, font=\scriptsize] at (4.2,-1.45) {$1\le 1$ \checkmark\ 等号};
+
+  %% セル (x=1, y=0)：-1+0=-1 ≤ 1, slack
+  \fill[blue!8] (0,-1.8) rectangle (2.8,-3.6);
+  \draw[gray!60] (0,-1.8) rectangle (2.8,-3.6);
+  \node at (1.4,-2.4) {$\varphi(1)+\psi(0)=-1$};
+  \node at (1.4,-2.85) {$c(1,0)=1$};
+  \node[blue!60!black, font=\scriptsize] at (1.4,-3.25) {$-1\le 1$ \checkmark\ 余裕};
+
+  %% セル (x=1, y=1)：-1+1=0 ≤ 0, tight
+  \fill[green!15] (2.8,-1.8) rectangle (5.6,-3.6);
+  \draw[gray!60] (2.8,-1.8) rectangle (5.6,-3.6);
+  \node at (4.2,-2.4) {$\varphi(1)+\psi(1)=0$};
+  \node at (4.2,-2.85) {$c(1,1)=0$};
+  \node[green!50!black, font=\scriptsize] at (4.2,-3.25) {$0\le 0$ \checkmark\ 等号};
+\end{tikzpicture}
+\end{center}
+
 総収入は
 \[
   0\cdot\tfrac{3}{4}+(-1)\cdot\tfrac{1}{4}
