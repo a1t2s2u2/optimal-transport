@@ -1136,6 +1136,22 @@ $\pi\mapsto\int c\,d\pi$ は弱収束に関して下半連続であり，
 コンパクト集合上の下半連続関数は最小値を達成する．
 \end{proof}
 
+\begin{definition}{双対許容対}{dual_admissible}
+コスト関数 $c\colon X\times Y\to[0,\infty]$ に対し，
+関数対 $(\varphi,\psi)\in L^1(\mu)\times L^1(\nu)$ が
+\[
+  \varphi(x)+\psi(y)\le c(x,y)
+  \quad \text{($\mu$-a.e. $x$，$\nu$-a.e. $y$)}
+\]
+を満たすとき，$(\varphi,\psi)$ を\textbf{双対許容対}（dual admissible pair）という．
+双対許容対全体の集合を
+\[
+  \Phi_c = \bigl\{(\varphi,\psi)\in L^1(\mu)\times L^1(\nu)
+  \mid \varphi(x)+\psi(y)\le c(x,y)\bigr\}
+\]
+と表す．
+\end{definition}
+
 \begin{theorem}{Kantorovich 双対定理}{kantorovich_duality}
 $X,Y$ をポーランド空間とし，
 $c\colon X\times Y\to[0,\infty]$ が下半連続とする．このとき
@@ -1148,10 +1164,7 @@ $c\colon X\times Y\to[0,\infty]$ が下半連続とする．このとき
     + \int_{Y}\psi(y)\,d\nu(y)
   \right)
 \]
-が成り立つ．ここで
-$\Phi_c = \{(\varphi,\psi)\in L^1(\mu)\times L^1(\nu)
-: \varphi(x)+\psi(y)\le c(x,y)\}$
-は\textbf{双対許容対}の集合である．
+が成り立つ．
 \end{theorem}
 
 双対問題には明快な経済的解釈がある．
