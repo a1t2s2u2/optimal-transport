@@ -1216,7 +1216,17 @@ $\nu=\tfrac{2}{4}\delta_0+\tfrac{2}{4}\delta_1$，$c(x,y)=|x-y|$ を考える．
   \varphi(1)+\psi(0) &\le c(1,0) = 1, \\
   \varphi(1)+\psi(1) &\le c(1,1) = 0.
 \end{align*}
-例えば $\varphi\equiv 0,\,\psi\equiv 0$ は制約を満たすが，総収入は $0$ である．
+双対問題が最大化する\textbf{総収入}とは，$\int_X\varphi\,d\mu+\int_Y\psi\,d\nu$ のことである．
+離散分布の場合，積分はそれぞれの点への質量の重み付き和になるので，
+\[
+  \int_X\varphi\,d\mu+\int_Y\psi\,d\nu
+  = \varphi(0)\cdot\mu(\{0\})+\varphi(1)\cdot\mu(\{1\})
+    +\psi(0)\cdot\nu(\{0\})+\psi(1)\cdot\nu(\{1\}).
+\]
+これは「各地点の手数料 × その地点を通る質量」の総和，すなわち仲介業者の総取り分である．
+
+例えば $\varphi\equiv 0,\,\psi\equiv 0$ は制約を満たすが，
+総収入は $0\cdot\tfrac{3}{4}+0\cdot\tfrac{1}{4}+0\cdot\tfrac{2}{4}+0\cdot\tfrac{2}{4}=0$ である．
 
 一方，$\varphi(0)=0,\,\varphi(1)=-1,\,\psi(0)=0,\,\psi(1)=1$ とすると，
 4つの制約は下の表のように全て成立する（緑＝等号，青＝余裕あり）．
@@ -1273,8 +1283,9 @@ $\nu=\tfrac{2}{4}\delta_0+\tfrac{2}{4}\delta_1$，$c(x,y)=|x-y|$ を考える．
 
 総収入は
 \[
-  0\cdot\tfrac{3}{4}+(-1)\cdot\tfrac{1}{4}
-  +0\cdot\tfrac{2}{4}+1\cdot\tfrac{2}{4}
+  \underbrace{\varphi(0)\cdot\tfrac{3}{4}+\varphi(1)\cdot\tfrac{1}{4}}_{\int\varphi\,d\mu}
+  +\underbrace{\psi(0)\cdot\tfrac{2}{4}+\psi(1)\cdot\tfrac{2}{4}}_{\int\psi\,d\nu}
+  = 0\cdot\tfrac{3}{4}+(-1)\cdot\tfrac{1}{4}+0\cdot\tfrac{2}{4}+1\cdot\tfrac{2}{4}
   = -\tfrac{1}{4}+\tfrac{2}{4} = \tfrac{1}{4}
 \]
 となる．これは例\ref{ex:kantorovich_example} で求めた最適輸送コスト $\tfrac{1}{4}$ に一致しており，
