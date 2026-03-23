@@ -973,7 +973,7 @@ $d(x,s)<\varepsilon$ を満たす $s\in S$ が存在することをいう．
 
 \begin{center}
 \begin{tikzpicture}[>=Stealth, x=1.8cm, y=1.0cm]
-  %% 左: 下半連続 ✓ — f(x_n) が振動し，その lim inf >= f(x0)
+  %% 左: 下半連続 ✓ — f(x_n) が振動し，lim inf >= f(x0)
   \begin{scope}[xshift=-3.5cm]
     \draw[->] (-0.4,0) -- (2.1,0) node[right, font=\scriptsize] {$x$};
     \draw[->] (0,-0.3) -- (0,3.3) node[above, font=\scriptsize] {$f(x)$};
@@ -990,17 +990,16 @@ $d(x,s)<\varepsilon$ を満たす $s\in S$ が存在することをいう．
     \fill[blue!70!black] (0,0.6) circle (3pt);
     \draw[gray!50, dashed, thin] (0,0) -- (0,0.6);
     \node[below, font=\scriptsize] at (0,-0.05) {$x_0$};
-    \node[left, font=\scriptsize, blue!70!black] at (-0.05,0.6) {$f(x_0)$};
-    %% f(x0) と lim inf の比較矢印
-    \draw[<->, blue!60!black, thick] (-0.3,0.6) -- (-0.3,1.5)
-      node[midway, left, font=\small, blue!60!black] {$\le$};
+    \node[right, font=\scriptsize, blue!70!black] at (0.06,0.6) {$f(x_0)$};
     %% x_n -> x0 矢印
     \draw[->, orange!70!black] (1.5,-0.65) -- (0.1,-0.65)
       node[midway, below, font=\tiny, orange!70!black] {$x_n\to x_0$};
-    \node[font=\small, blue!60!black] at (0.85,-1.2) {下半連続 \checkmark};
+    \node[font=\scriptsize, blue!60!black] at (0.85,-1.1)
+      {$f(x_0)\le\liminf_{n} f(x_n)$};
+    \node[font=\small, blue!60!black] at (0.85,-1.65) {下半連続 \checkmark};
   \end{scope}
 
-  %% 右: 下半連続でない ✗ — f(x_n) が振動し，その lim inf < f(x0)
+  %% 右: 上半連続 ✓ — f(x_n) が振動し，lim sup <= f(x0)
   \begin{scope}[xshift=3.5cm]
     \draw[->] (-0.4,0) -- (2.1,0) node[right, font=\scriptsize] {$x$};
     \draw[->] (0,-0.3) -- (0,3.3) node[above, font=\scriptsize] {$f(x)$};
@@ -1010,21 +1009,20 @@ $d(x,s)<\varepsilon$ を満たす $s\in S$ が存在することをいう．
       \fill[orange!80!black] (\xn,\yn) circle (2.5pt);
       \node[below, font=\tiny, gray!60] at (\xn,0) {\lab};
     }
-    %% lim inf の水平線
-    \draw[green!50!black, dashed, thick] (-0.2,0.8) -- (1.95,0.8);
-    \node[right, font=\tiny, green!40!black] at (1.95,0.8) {$\liminf f(x_n)$};
+    %% lim sup の水平線
+    \draw[green!50!black, dashed, thick] (-0.2,1.6) -- (1.95,1.6);
+    \node[right, font=\tiny, green!40!black] at (1.95,1.6) {$\limsup f(x_n)$};
     %% f(x0)（孤立した高い点）
     \fill[red!70!black] (0,2.7) circle (3pt);
     \draw[gray!50, dashed, thin] (0,0) -- (0,2.7);
     \node[below, font=\scriptsize] at (0,-0.05) {$x_0$};
-    \node[left, font=\scriptsize, red!70!black] at (-0.05,2.7) {$f(x_0)$};
-    %% f(x0) と lim inf の比較矢印
-    \draw[<->, red!60!black, thick] (-0.3,0.8) -- (-0.3,2.7)
-      node[midway, left, font=\small, red!60!black] {$>$};
+    \node[right, font=\scriptsize, red!70!black] at (0.06,2.7) {$f(x_0)$};
     %% x_n -> x0 矢印
     \draw[->, orange!70!black] (1.5,-0.65) -- (0.1,-0.65)
       node[midway, below, font=\tiny, orange!70!black] {$x_n\to x_0$};
-    \node[font=\small, red!60!black] at (0.85,-1.2) {下半連続でない $\times$};
+    \node[font=\scriptsize, red!60!black] at (0.85,-1.1)
+      {$f(x_0)\ge\limsup_{n} f(x_n)$};
+    \node[font=\small, red!60!black] at (0.85,-1.65) {上半連続 \checkmark};
   \end{scope}
 \end{tikzpicture}
 \end{center}
