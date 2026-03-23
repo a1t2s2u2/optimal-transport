@@ -1,2 +1,4 @@
 note/out/
 *.pdf
+.venv/
+note/*.png
