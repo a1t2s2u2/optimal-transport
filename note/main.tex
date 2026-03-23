@@ -972,64 +972,59 @@ $d(x,s)<\varepsilon$ を満たす $s\in S$ が存在することをいう．
 \end{definition}
 
 \begin{center}
-\begin{tikzpicture}[>=Stealth, x=1.6cm, y=1.2cm]
-  %% 左: 下半連続 ✓ (step up, value at x0 is lower)
-  \begin{scope}[xshift=-3.2cm]
-    \draw[->] (-1.2,0) -- (1.9,0) node[right, font=\scriptsize] {$x$};
-    \draw[->] (0,-0.2) -- (0,2.7) node[above, font=\scriptsize] {$f(x)$};
-    %% f(x)=a for x<=0, f(x)=b for x>0
-    \draw[blue!70!black, very thick] (-1.1,1) -- (0,1);
-    \fill[blue!70!black] (0,1) circle (2.5pt);
-    \draw[blue!70!black, very thick] (0.02,2) -- (1.6,2);
-    \draw[blue!70!black, very thick, fill=white] (0,2) circle (2.5pt);
-    %% x_n points approaching x0 from right (f(x_n)=b)
-    \foreach \xn/\lab in {1.2/$x_1$, 0.7/$x_2$, 0.35/$x_3$}{
-      \draw[gray!60, dashed] (\xn,0) -- (\xn,2);
-      \fill[orange!80!black] (\xn,2) circle (2pt);
-      \node[below, font=\tiny, gray!70] at (\xn,0) {\lab};
+\begin{tikzpicture}[>=Stealth, x=1.8cm, y=1.0cm]
+  %% 左: 下半連続 ✓ — f(x_n) が振動し，その lim inf >= f(x0)
+  \begin{scope}[xshift=-3.5cm]
+    \draw[->] (-0.4,0) -- (2.1,0) node[right, font=\scriptsize] {$x$};
+    \draw[->] (0,-0.3) -- (0,3.3) node[above, font=\scriptsize] {$f(x)$};
+    %% xn 点列（振動しながら x0 へ近づく）
+    \foreach \xn/\yn/\lab in {1.6/2.2/$x_1$, 1.1/1.5/$x_2$, 0.6/2.0/$x_3$, 0.22/1.5/$x_4$}{
+      \draw[gray!40, dashed, thin] (\xn,0) -- (\xn,\yn);
+      \fill[orange!80!black] (\xn,\yn) circle (2.5pt);
+      \node[below, font=\tiny, gray!60] at (\xn,0) {\lab};
     }
-    %% arrow showing x_n -> x0
-    \draw[->, orange!70!black, thick] (1.25,0.35) -- (0.1,0.35)
-      node[midway, above, font=\tiny, orange!70!black] {$x_n\to x_0$};
-    %% x0 and y labels
-    \draw[gray!50, dashed] (0,0) -- (0,1);
+    %% lim inf の水平線
+    \draw[green!50!black, dashed, thick] (-0.2,1.5) -- (1.95,1.5);
+    \node[right, font=\tiny, green!40!black] at (1.95,1.5) {$\liminf f(x_n)$};
+    %% f(x0)（孤立した低い点）
+    \fill[blue!70!black] (0,0.6) circle (3pt);
+    \draw[gray!50, dashed, thin] (0,0) -- (0,0.6);
     \node[below, font=\scriptsize] at (0,-0.05) {$x_0$};
-    \node[left, font=\scriptsize] at (0,1) {$a$};
-    \node[left, font=\scriptsize] at (0,2) {$b$};
-    %% f(x_n) label
-    \node[orange!70!black, font=\tiny] at (1.75,2) {$f(x_n){=}b$};
-    %% annotation
-    \node[blue!60!black, font=\scriptsize] at (0.3,-0.65) {$f(x_0)=a \le b=\liminf f(x_n)$};
-    \node[font=\small, blue!60!black] at (0.3,-1.1) {下半連続 \checkmark};
+    \node[left, font=\scriptsize, blue!70!black] at (-0.05,0.6) {$f(x_0)$};
+    %% f(x0) と lim inf の比較矢印
+    \draw[<->, blue!60!black, thick] (-0.3,0.6) -- (-0.3,1.5)
+      node[midway, left, font=\small, blue!60!black] {$\le$};
+    %% x_n -> x0 矢印
+    \draw[->, orange!70!black] (1.5,-0.65) -- (0.1,-0.65)
+      node[midway, below, font=\tiny, orange!70!black] {$x_n\to x_0$};
+    \node[font=\small, blue!60!black] at (0.85,-1.2) {下半連続 \checkmark};
   \end{scope}
-  %% 右: 下半連続でない ✗ (step down, value at x0 is higher)
-  \begin{scope}[xshift=3.2cm]
-    \draw[->] (-1.2,0) -- (1.9,0) node[right, font=\scriptsize] {$x$};
-    \draw[->] (0,-0.2) -- (0,2.7) node[above, font=\scriptsize] {$f(x)$};
-    %% f(x)=b for x<=0, f(x)=a for x>0
-    \draw[red!70!black, very thick] (-1.1,2) -- (0,2);
-    \fill[red!70!black] (0,2) circle (2.5pt);
-    \draw[red!70!black, very thick] (0.02,1) -- (1.6,1);
-    \draw[red!70!black, very thick, fill=white] (0,1) circle (2.5pt);
-    %% x_n points approaching x0 from right (f(x_n)=a)
-    \foreach \xn/\lab in {1.2/$x_1$, 0.7/$x_2$, 0.35/$x_3$}{
-      \draw[gray!60, dashed] (\xn,0) -- (\xn,1);
-      \fill[orange!80!black] (\xn,1) circle (2pt);
-      \node[below, font=\tiny, gray!70] at (\xn,0) {\lab};
+
+  %% 右: 下半連続でない ✗ — f(x_n) が振動し，その lim inf < f(x0)
+  \begin{scope}[xshift=3.5cm]
+    \draw[->] (-0.4,0) -- (2.1,0) node[right, font=\scriptsize] {$x$};
+    \draw[->] (0,-0.3) -- (0,3.3) node[above, font=\scriptsize] {$f(x)$};
+    %% xn 点列（振動しながら x0 へ近づく）
+    \foreach \xn/\yn/\lab in {1.6/0.8/$x_1$, 1.1/1.6/$x_2$, 0.6/0.8/$x_3$, 0.22/1.3/$x_4$}{
+      \draw[gray!40, dashed, thin] (\xn,0) -- (\xn,\yn);
+      \fill[orange!80!black] (\xn,\yn) circle (2.5pt);
+      \node[below, font=\tiny, gray!60] at (\xn,0) {\lab};
     }
-    %% arrow showing x_n -> x0
-    \draw[->, orange!70!black, thick] (1.25,0.35) -- (0.1,0.35)
-      node[midway, above, font=\tiny, orange!70!black] {$x_n\to x_0$};
-    %% x0 and y labels
-    \draw[gray!50, dashed] (0,0) -- (0,2);
+    %% lim inf の水平線
+    \draw[green!50!black, dashed, thick] (-0.2,0.8) -- (1.95,0.8);
+    \node[right, font=\tiny, green!40!black] at (1.95,0.8) {$\liminf f(x_n)$};
+    %% f(x0)（孤立した高い点）
+    \fill[red!70!black] (0,2.7) circle (3pt);
+    \draw[gray!50, dashed, thin] (0,0) -- (0,2.7);
     \node[below, font=\scriptsize] at (0,-0.05) {$x_0$};
-    \node[left, font=\scriptsize] at (0,1) {$a$};
-    \node[left, font=\scriptsize] at (0,2) {$b$};
-    %% f(x_n) label
-    \node[orange!70!black, font=\tiny] at (1.75,1) {$f(x_n){=}a$};
-    %% annotation
-    \node[red!60!black, font=\scriptsize] at (0.3,-0.65) {$f(x_0)=b > a=\liminf f(x_n)$};
-    \node[font=\small, red!60!black] at (0.3,-1.1) {下半連続でない $\times$};
+    \node[left, font=\scriptsize, red!70!black] at (-0.05,2.7) {$f(x_0)$};
+    %% f(x0) と lim inf の比較矢印
+    \draw[<->, red!60!black, thick] (-0.3,0.8) -- (-0.3,2.7)
+      node[midway, left, font=\small, red!60!black] {$>$};
+    %% x_n -> x0 矢印
+    \draw[->, orange!70!black] (1.5,-0.65) -- (0.1,-0.65)
+      node[midway, below, font=\tiny, orange!70!black] {$x_n\to x_0$};
+    \node[font=\small, red!60!black] at (0.85,-1.2) {下半連続でない $\times$};
   \end{scope}
 \end{tikzpicture}
 \end{center}
