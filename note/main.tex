@@ -1649,6 +1649,174 @@ $\psi(y)$ を到着地 $y$ での荷降ろし価格と考えると，
 双対問題は，この裁定条件の下で仲介業者の総収入を最大化する問題であり，
 強双対性は最適輸送コストと最適価格設定による収入が一致することを述べている．
 
+\begin{example}{Kantorovich 双対定理の検証（設定（★）：LP 解法・相補性・$c$変換）}{duality_verification}
+設定（★）において Kantorovich 双対定理（定理~\ref{thm:kantorovich_duality}）を完全に検証する．
+例~\ref{ex:dual_admissible_example} では一組の双対許容対を示して総収入が $\tfrac{1}{4}$ になることを確認したが，
+ここではその対が全ての双対許容対の中で\textbf{最適}であることを系統的に証明する．
+
+\medskip
+\textbf{Step 1：双対問題を有限次元 LP として定式化する．}\par\nobreak
+$X=Y=\{0,1\}$ なので双対変数は $\varphi(0),\,\varphi(1),\,\psi(0),\,\psi(1)$ の4つである．
+双対問題は次の線形計画問題になる：
+\[
+  \max_{\varphi(0),\varphi(1),\psi(0),\psi(1)}
+  \underbrace{\tfrac{3}{4}\varphi(0)+\tfrac{1}{4}\varphi(1)
+  +\tfrac{2}{4}\psi(0)+\tfrac{2}{4}\psi(1)}_{\displaystyle\int\varphi\,d\mu+\int\psi\,d\nu}
+\]
+\vspace{-6pt}
+\begin{alignat*}{3}
+  \text{s.t.}\quad
+  & \varphi(0)+\psi(0) &&\le 0  &\quad& \text{(i):\ }c(0,0)=0 \\
+  & \varphi(0)+\psi(1) &&\le 1  &\quad& \text{(ii):\ }c(0,1)=1 \\
+  & \varphi(1)+\psi(0) &&\le 1  &\quad& \text{(iii):\ }c(1,0)=1 \\
+  & \varphi(1)+\psi(1) &&\le 0  &\quad& \text{(iv):\ }c(1,1)=0
+\end{alignat*}
+
+\medskip
+\textbf{Step 2：LP を系統的に解く．}\par\nobreak
+まず変数を減らす．制約 (i) より $\psi(0)\le -\varphi(0)$，
+制約 (iv) より $\psi(1)\le -\varphi(1)$ である．
+目的関数を大きくしたいので，$\psi(0),\psi(1)$ はそれぞれ上界で取るのが最適，すなわち
+\[
+  \psi(0) = -\varphi(0),\qquad \psi(1)=-\varphi(1)
+\]
+と置ける（制約 (i), (iv) を等号で達成）．代入すると残りの制約は
+\begin{align*}
+  \text{(ii)}' &\colon \varphi(0)-\varphi(1)\le 1, \\
+  \text{(iii)}' &\colon \varphi(1)-\varphi(0)\le 1.
+\end{align*}
+これらは $|\varphi(0)-\varphi(1)|\le 1$ と同値であり，$\varphi$ が $c=|\cdot|$ に関する
+1-Lipschitz 条件を満たすことに対応している．
+
+目的関数は $\psi(0)=-\varphi(0)$，$\psi(1)=-\varphi(1)$ を代入すると
+\begin{align*}
+  J(\varphi(0),\varphi(1))
+  &= \tfrac{3}{4}\varphi(0)+\tfrac{1}{4}\varphi(1)
+    +\tfrac{2}{4}\bigl(-\varphi(0)\bigr)+\tfrac{2}{4}\bigl(-\varphi(1)\bigr) \\
+  &= \bigl(\tfrac{3}{4}-\tfrac{2}{4}\bigr)\varphi(0)
+    +\bigl(\tfrac{1}{4}-\tfrac{2}{4}\bigr)\varphi(1)
+  = \tfrac{1}{4}\bigl(\varphi(0)-\varphi(1)\bigr).
+\end{align*}
+これを最大化するには $\varphi(0)-\varphi(1)$ を最大にすればよく，
+制約 (ii)$'$ より $\varphi(0)-\varphi(1)\le 1$ だから，
+最適値は $\varphi(0)-\varphi(1)=1$ のときに達成される．
+
+双対問題には平行移動の自由度がある（$\varphi\mapsto\varphi+\alpha$，$\psi\mapsto\psi-\alpha$ で
+目的関数は変わらない）ので，$\varphi(0)=0$ と正規化すると
+\[
+  \boxed{\varphi^*(0)=0,\quad \varphi^*(1)=-1,\quad
+  \psi^*(0)=0,\quad \psi^*(1)=1}
+\]
+を得る．最適双対値は $J^*=\tfrac{1}{4}\cdot 1=\tfrac{1}{4}$ であり，
+例~\ref{ex:kantorovich_example} で求めた主問題の最適値 $\tfrac{1}{4}$ に一致する：
+\[
+  \underbrace{\inf_{\pi\in\Pi(\mu,\nu)}\int c\,d\pi}_{=\,1/4}
+  \;=\;
+  \underbrace{\sup_{(\varphi,\psi)\in\Phi_c}
+  \Bigl(\int\varphi\,d\mu+\int\psi\,d\nu\Bigr)}_{=\,1/4}.
+\]
+これが Kantorovich 双対定理（定理~\ref{thm:kantorovich_duality}）の
+設定（★）における検証である．
+
+\medskip
+\textbf{Step 3：相補性条件の確認．}\par\nobreak
+主問題の最適計画
+$\pi^*=\bigl(\begin{smallmatrix}2/4 & 1/4\\0 & 1/4\end{smallmatrix}\bigr)$
+と最適双対対 $(\varphi^*,\psi^*)$ の間には，\textbf{相補性条件}（complementary slackness）
+\[
+  \pi^*_{xy}>0 \implies \varphi^*(x)+\psi^*(y)=c(x,y)
+\]
+が成り立つはずである（LP の強双対性の帰結）．各 $(x,y)$ で確認する：
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth, font=\small]
+  %% 見出し
+  \node[font=\bfseries] at (2.8, 1.6) {相補性条件の検証};
+
+  %% 列ヘッダ
+  \node at (1.4, 0.95) {$y=0$};
+  \node at (4.2, 0.95) {$y=1$};
+
+  %% 行ヘッダ
+  \node at (-0.7, -0.9) {$x=0$};
+  \node at (-0.7, -3.1) {$x=1$};
+
+  %% セル (0,0)：π=2/4>0, φ+ψ=0=c ✓
+  \fill[green!15] (0,0) rectangle (2.8,-1.8);
+  \draw[gray!60] (0,0) rectangle (2.8,-1.8);
+  \node at (1.4,-0.35) {$\pi^*_{00}=\tfrac{2}{4}>0$};
+  \node at (1.4,-0.80) {$\varphi^*(0)+\psi^*(0)=0$};
+  \node at (1.4,-1.20) {$c(0,0)=0$};
+  \node[green!50!black, font=\scriptsize] at (1.4,-1.55) {等号成立 \checkmark};
+
+  %% セル (0,1)：π=1/4>0, φ+ψ=0+1=1=c ✓
+  \fill[green!15] (2.8,0) rectangle (5.6,-1.8);
+  \draw[gray!60] (2.8,0) rectangle (5.6,-1.8);
+  \node at (4.2,-0.35) {$\pi^*_{01}=\tfrac{1}{4}>0$};
+  \node at (4.2,-0.80) {$\varphi^*(0)+\psi^*(1)=1$};
+  \node at (4.2,-1.20) {$c(0,1)=1$};
+  \node[green!50!black, font=\scriptsize] at (4.2,-1.55) {等号成立 \checkmark};
+
+  %% セル (1,0)：π=0, 制約に余裕だがπ=0なので問題なし
+  \fill[blue!8] (0,-1.8) rectangle (2.8,-3.6);
+  \draw[gray!60] (0,-1.8) rectangle (2.8,-3.6);
+  \node at (1.4,-2.15) {$\pi^*_{10}=0$};
+  \node at (1.4,-2.60) {$\varphi^*(1)+\psi^*(0)=-1$};
+  \node at (1.4,-3.00) {$c(1,0)=1$};
+  \node[blue!60!black, font=\scriptsize] at (1.4,-3.35) {$\pi^*=0$：条件は空 \checkmark};
+
+  %% セル (1,1)：π=1/4>0, φ+ψ=-1+1=0=c ✓
+  \fill[green!15] (2.8,-1.8) rectangle (5.6,-3.6);
+  \draw[gray!60] (2.8,-1.8) rectangle (5.6,-3.6);
+  \node at (4.2,-2.15) {$\pi^*_{11}=\tfrac{1}{4}>0$};
+  \node at (4.2,-2.60) {$\varphi^*(1)+\psi^*(1)=0$};
+  \node at (4.2,-3.00) {$c(1,1)=0$};
+  \node[green!50!black, font=\scriptsize] at (4.2,-3.35) {等号成立 \checkmark};
+\end{tikzpicture}
+\end{center}
+
+$\pi^*_{xy}>0$ となる3か所 $(0,0),\,(0,1),\,(1,1)$ では全て
+$\varphi^*(x)+\psi^*(y)=c(x,y)$ が等号で成立し，
+唯一 $\pi^*_{10}=0$ の箇所のみ $\varphi^*(1)+\psi^*(0)=-1<1=c(1,0)$ と余裕がある．
+これは「$\varphi^*+\psi^*<c$ となる経路には質量を流さない（仲介手数料が輸送コストに見合わない）」
+という経済的直観と整合している．
+
+逆向きの\textbf{双対相補性}も確認できる：
+\[
+  \varphi^*(x)+\psi^*(y) < c(x,y) \implies \pi^*_{xy}=0.
+\]
+$(x,y)=(1,0)$ で $-1<1$ かつ $\pi^*_{10}=0$ であり，これが唯一の該当箇所である．
+
+\medskip
+\textbf{Step 4：$c$変換との整合性．}\par\nobreak
+定義~\ref{def:c_transform} の $c$変換
+$\varphi^c(y)=\inf_{x\in X}[c(x,y)-\varphi(x)]$
+を最適な $\varphi^*$ に対して計算する：
+\begin{align*}
+  (\varphi^*)^c(0)
+  &= \min\bigl\{c(0,0)-\varphi^*(0),\;\; c(1,0)-\varphi^*(1)\bigr\}
+  = \min\{0-0,\;\; 1-(-1)\} = \min\{0,2\} = 0, \\
+  (\varphi^*)^c(1)
+  &= \min\bigl\{c(0,1)-\varphi^*(0),\;\; c(1,1)-\varphi^*(1)\bigr\}
+  = \min\{1-0,\;\; 0-(-1)\} = \min\{1,1\} = 1.
+\end{align*}
+したがって $(\varphi^*)^c(0)=0=\psi^*(0)$，$(\varphi^*)^c(1)=1=\psi^*(1)$，すなわち
+\[
+  \boxed{\psi^* = (\varphi^*)^c}
+\]
+が成り立つ．最適な双対対では $\psi$ が $\varphi$ の $c$変換で与えられるという，
+双対理論の一般的結果がこの具体例で確認できた．
+
+さらに $(\varphi^*)^c$ の各 $y$ での $\min$ を達成する $x$ を見ると：
+\begin{itemize}
+  \item $y=0$：$\min$ を達成するのは $x=0$（$c(0,0)-\varphi^*(0)=0$）．
+  \item $y=1$：$\min$ を達成するのは $x=0$ と $x=1$ の両方（ともに値 $1$）．
+\end{itemize}
+最適計画 $\pi^*$ で質量が乗る $(x,y)$ の組——$(0,0)$, $(0,1)$, $(1,1)$——は
+まさに $c$変換の $\inf$ が達成される $(x,y)$ の組に一致しており，
+これは「最適計画は $c$変換の $\inf$ を達成する点上に集中する」という一般原理の具現化である．
+\end{example}
+
 \begin{remark}{Monge 問題への回帰}{monge_from_kantorovich}
 Kantorovich 問題の最適計画 $\pi^*$ が
 $\pi^*=({\rm id},T)_\#\mu$ の形に書ける（すなわちグラフ上に集中する）場合，
