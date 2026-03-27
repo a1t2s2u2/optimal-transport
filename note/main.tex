@@ -1307,6 +1307,204 @@ $c\colon X\times Y\to[0,\infty]$ が下半連続とする．このとき
 が成り立つ．
 \end{theorem}
 
+以下では定理~\ref{thm:kantorovich_duality}を証明する．
+方針は次の通りである：
+(1) 弱双対性（$\ge$方向）を直接計算で示し，
+(2) コンパクトな場合にミニマックス定理を用いて強双対性を証明し，
+(3) 一般のポーランド空間・下半連続コストへ拡張する．
+
+\begin{proposition}{弱双対性}{weak_duality}
+任意の $\pi\in\Pi(\mu,\nu)$ と $(\varphi,\psi)\in\Phi_c$ に対し
+\[
+  \int_X\varphi\,d\mu + \int_Y\psi\,d\nu
+  \le \int_{X\times Y} c(x,y)\,d\pi(x,y)
+\]
+が成り立つ．
+\end{proposition}
+
+\begin{proof}
+$\pi$ の周辺分布が $\mu$，$\nu$ であることから
+\[
+  \int_X\varphi\,d\mu + \int_Y\psi\,d\nu
+  = \int_{X\times Y}\bigl[\varphi(x)+\psi(y)\bigr]\,d\pi(x,y).
+\]
+双対許容条件 $\varphi(x)+\psi(y)\le c(x,y)$ を被積分関数に適用すると
+\[
+  \int_{X\times Y}\bigl[\varphi(x)+\psi(y)\bigr]\,d\pi(x,y)
+  \le \int_{X\times Y} c(x,y)\,d\pi(x,y).
+\]
+\end{proof}
+
+弱双対性から直ちに
+$\sup_{(\varphi,\psi)\in\Phi_c}(\int\varphi\,d\mu+\int\psi\,d\nu)
+\le\inf_{\pi\in\Pi(\mu,\nu)}\int c\,d\pi$
+が従う．残る課題は逆向きの不等式（強双対性）の証明である．
+
+\begin{proposition}{下半連続関数の単調近似}{lsc_approx}
+距離空間 $(Z,d)$ 上の下半連続関数 $f\colon Z\to[0,\infty]$ に対し，
+有界連続関数の非減少列 $\{f_k\}_{k=1}^\infty$ で
+$0\le f_1\le f_2\le\cdots$ かつ $f_k(z)\uparrow f(z)$（各点収束）
+を満たすものが存在する．
+\end{proposition}
+
+\begin{proof}
+$f_k(z)\coloneqq\min\bigl(\inf_{w\in Z}[f(w)+k\,d(z,w)],\;k\bigr)$
+と定めれば，各 $f_k$ は $k$-Lipschitz 連続かつ $0\le f_k\le k$ で有界であり，
+$f_k\le f_{k+1}\le f$ は定義から明らかである．
+$f_k(z)\uparrow f(z)$ は $f$ の下半連続性から従う：
+任意の $\varepsilon>0$ に対し $f$ の下半連続性より
+$z$ の近傍で $f(w)>f(z)-\varepsilon$ が成り立ち，
+$k$ が十分大きければ $\inf_w[f(w)+k\,d(z,w)]\ge f(z)-\varepsilon$ を得る．
+\end{proof}
+
+強双対性の証明には，次のミニマックス定理を用いる．
+
+\begin{theorem}{ミニマックス定理（Fan, 1953）}{minimax}
+$V$ を局所凸位相ベクトル空間，$K\subset V$ をコンパクト凸集合，
+$L$ をベクトル空間の凸集合とする．
+関数 $F\colon K\times L\to\mathbb{R}$ が
+\begin{itemize}
+  \item 各 $\ell\in L$ に対し $k\mapsto F(k,\ell)$ が凸かつ下半連続，
+  \item 各 $k\in K$ に対し $\ell\mapsto F(k,\ell)$ が凹
+\end{itemize}
+であるとき，
+\[
+  \min_{k\in K}\sup_{\ell\in L} F(k,\ell)
+  = \sup_{\ell\in L}\min_{k\in K} F(k,\ell)
+\]
+が成り立つ（左辺の $\inf$ は $\min$ として達成される）．
+\end{theorem}
+
+\begin{proposition}{連続コストに対する双対性（コンパクトな場合）}{duality_compact}
+$X,Y$ を\textbf{コンパクトな}ポーランド空間，$c\in C(X\times Y)$，$c\ge 0$ とする．このとき
+\[
+  \min_{\pi\in\Pi(\mu,\nu)}\int c\,d\pi
+  = \sup_{\substack{\varphi\in C(X),\;\psi\in C(Y)\\
+    \varphi(x)+\psi(y)\le c(x,y)}}
+  \left(\int_X\varphi\,d\mu+\int_Y\psi\,d\nu\right).
+\]
+\end{proposition}
+
+\begin{proof}
+$X\times Y$ がコンパクトであるから，
+Borel確率測度の全体 $\mathcal{P}(X\times Y)$ は弱収束に関してコンパクトな凸集合である．
+ミニマックス定理（定理~\ref{thm:minimax}）を
+$K=\mathcal{P}(X\times Y)$，$L=C(X)\times C(Y)$ に対し，関数
+\[
+  \Psi(\gamma,(\varphi,\psi))
+  \coloneqq \int_{X\times Y}\bigl[c(x,y)-\varphi(x)-\psi(y)\bigr]\,d\gamma
+    + \int_X\varphi\,d\mu + \int_Y\psi\,d\nu
+\]
+に適用する．$\Psi$ は $\gamma$ に関して線形（凸）かつ弱収束に関して連続であり，
+$(\varphi,\psi)$ に関して線形（凹）である．よって
+\[
+  \min_{\gamma\in\mathcal{P}(X\times Y)}
+  \sup_{(\varphi,\psi)\in L}\Psi
+  = \sup_{(\varphi,\psi)\in L}
+  \min_{\gamma\in\mathcal{P}(X\times Y)}\Psi.
+\]
+
+\textbf{左辺の計算．}
+$\gamma$ の周辺分布を $\gamma_1=(p_1)_\#\gamma$，$\gamma_2=(p_2)_\#\gamma$ と書くと
+\[
+  \Psi(\gamma,(\varphi,\psi))
+  = \int c\,d\gamma
+    + \int\varphi\,d(\mu-\gamma_1)
+    + \int\psi\,d(\nu-\gamma_2).
+\]
+$\gamma\in\Pi(\mu,\nu)$（すなわち $\gamma_1=\mu$，$\gamma_2=\nu$）のとき
+$\sup_{(\varphi,\psi)}\Psi=\int c\,d\gamma$ である．
+$\gamma\notin\Pi(\mu,\nu)$ のとき，例えば $\gamma_1\neq\mu$ ならば
+$X$ がコンパクトであるから $\int\varphi\,d(\mu-\gamma_1)\neq 0$
+を満たす $\varphi\in C(X)$ が存在し，
+スカラー倍により $\sup_{(\varphi,\psi)}\Psi=+\infty$ となる．
+よって
+\[
+  \text{左辺}
+  = \min_{\gamma\in\Pi(\mu,\nu)}\int c\,d\gamma.
+\]
+
+\textbf{右辺の計算．}
+固定した $(\varphi,\psi)$ に対し，$\gamma$ に関して $\Psi$ を最小化する．
+$\Psi(\gamma,(\varphi,\psi))=\int[c-\varphi\oplus\psi]\,d\gamma + (\text{定数})$
+であるから，Dirac測度 $\gamma=\delta_{(x_0,y_0)}$ を
+$c(x,y)-\varphi(x)-\psi(y)$ の最小点（$X\times Y$ のコンパクト性で存在）に置けば
+\[
+  \min_\gamma\Psi
+  = \min_{(x,y)\in X\times Y}\bigl[c(x,y)-\varphi(x)-\psi(y)\bigr]
+    + \int\varphi\,d\mu + \int\psi\,d\nu.
+\]
+任意の $(\varphi,\psi)\in C(X)\times C(Y)$ に対し
+$m\coloneqq\min_{(x,y)}[c(x,y)-\varphi(x)-\psi(y)]$ とおき
+$\varphi'=\varphi+m$，$\psi'=\psi$ と定めると
+$\varphi'(x)+\psi'(y)\le c(x,y)$ が成り立ち，かつ
+\[
+  \int\varphi'\,d\mu+\int\psi'\,d\nu
+  = \int\varphi\,d\mu+\int\psi\,d\nu + m
+  = \min_\gamma\Psi(\gamma,(\varphi,\psi)).
+\]
+逆に $\varphi+\psi\le c$ ならば $m\ge 0$ なので
+$\min_\gamma\Psi\ge\int\varphi\,d\mu+\int\psi\,d\nu$．以上から
+\[
+  \text{右辺}
+  = \sup_{\substack{\varphi\in C(X),\;\psi\in C(Y)\\
+    \varphi(x)+\psi(y)\le c(x,y)}}
+  \Bigl(\int\varphi\,d\mu+\int\psi\,d\nu\Bigr).
+\]
+ミニマックス等式の左辺＝右辺から所望の等式を得る．
+\end{proof}
+
+命題~\ref{prop:duality_compact}はコンパクトなポーランド空間上の連続コストに対する結果であるが，
+一般のポーランド空間上の有界連続コスト $c\in C_b(X\times Y)$ に対しても
+同じ等式が成り立つ．これは $\mu,\nu$ の緊密性（ポーランド空間上の確率測度は常に緊密）を用いて
+$X,Y$ をコンパクト部分集合で内側から近似し，
+命題~\ref{prop:duality_compact}を各近似に適用したのち極限を取ることで示される
+（詳細は Villani,
+\textit{Optimal Transport: Old and New}, Theorem~5.10 を参照）．
+この事実を認めて，定理~\ref{thm:kantorovich_duality}を証明する．
+
+\begin{proof}[定理~\ref{thm:kantorovich_duality}の証明]
+$(\ge)$：弱双対性（命題~\ref{prop:weak_duality}）から直ちに従う．
+
+$(\le)$：命題~\ref{prop:lsc_approx}により，
+$0\le c_1\le c_2\le\cdots$ かつ $c_k\uparrow c$（各点収束）を満たす
+有界連続関数の列 $\{c_k\}\subset C_b(X\times Y)$ が存在する．
+各 $c_k$ に対し，上述の有界連続コストの双対性から
+\[
+  P_k\coloneqq\min_{\pi\in\Pi(\mu,\nu)}\int c_k\,d\pi
+  = \sup_{(\varphi,\psi)\in\Phi_{c_k}}
+  \Bigl(\int\varphi\,d\mu+\int\psi\,d\nu\Bigr)
+  \eqqcolon D_k
+\]
+が成り立つ．
+
+\textbf{$P_k\uparrow P$ の証明．}
+$c_k\le c$ から $P_k\le P\coloneqq\min_\pi\int c\,d\pi$ は明らかである．
+逆向きの評価のため，各 $P_k$ の最適計画を $\pi_k^*$ とする．
+$\Pi(\mu,\nu)$ のコンパクト性から部分列（同じ記号で書く）で
+$\pi_k^*\to\hat{\pi}\in\Pi(\mu,\nu)$（弱収束）となるものが取れる．
+任意の固定した $m$ に対し，$k\ge m$ のとき $c_m\le c_k$ であるから
+\[
+  \int c_m\,d\hat{\pi}
+  = \lim_{k\to\infty}\int c_m\,d\pi_k^*
+  \le \liminf_{k\to\infty}\int c_k\,d\pi_k^*
+  = \liminf_{k\to\infty} P_k.
+\]
+$m\to\infty$ で単調収束定理から $\int c\,d\hat{\pi}\le\liminf P_k$ を得る．
+$P\le\int c\,d\hat{\pi}$ であるから
+$P\le\liminf P_k\le\limsup P_k\le P$，
+よって $P_k\uparrow P$．
+
+\textbf{双対性の完成．}
+$c_k\le c$ から $\Phi_{c_k}\subset\Phi_c$，したがって
+$D_k\le D\coloneqq\sup_{\Phi_c}(\int\varphi\,d\mu+\int\psi\,d\nu)$ である．
+一方 $P_k=D_k$ であったから
+\[
+  P = \lim_{k\to\infty} P_k = \lim_{k\to\infty} D_k \le D.
+\]
+弱双対性 $P\ge D$ と合わせて $P=D$ を得る．
+\end{proof}
+
 双対問題には明快な経済的解釈がある．
 $\varphi(x)$ を出発地 $x$ での積み込み価格，
 $\psi(y)$ を到着地 $y$ での荷降ろし価格と考えると，
