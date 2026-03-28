@@ -1908,4 +1908,379 @@ $u$ の Legendre--Fenchel 共役 $u^*$ を通じて $\varphi^c(y)=\tfrac{1}{2}\|
 凸ポテンシャル $T=\nabla u$ は，この $c$凸解析の構造から自然に現れる．
 \end{remark}
 
+%% ==========================================================
+%%  第4節：離散最適輸送の計算：線形計画法
+%% ==========================================================
+\section{離散最適輸送の計算：線形計画法}
+
+有限離散分布に対する Kantorovich 問題は
+有限次元の\textbf{線形計画問題}（LP）に帰着する．
+注意~\ref{rem:kantorovich_convex}で見たように
+Kantorovich 問題は本質的に凸最適化であるが，
+離散の場合はさらに\textbf{線形}最適化になり，
+単体法という効率的なアルゴリズムで系統的に解くことができる．
+本節では LP としての構造を明示し，
+輸送問題に特化した\textbf{単体法}（simplex method）によって
+設定（★）を解く過程を追う．
+
+\begin{definition}{線形計画問題（標準形）}{lp}
+$c\in\mathbb{R}^n$，$A\in\mathbb{R}^{m\times n}$，$b\in\mathbb{R}^m$ とする．
+\textbf{線形計画問題}（LP）の標準形とは
+\[
+  \min_{x\in\mathbb{R}^n}\; c^\top x
+  \quad\text{s.t.}\quad Ax=b,\;\; x\ge 0
+\]
+をいう．
+実行可能集合 $\{x\in\mathbb{R}^n : Ax=b,\;x\ge 0\}$ は
+\textbf{凸多面体}（convex polyhedron）をなす．
+\end{definition}
+
+\begin{remark}{離散 Kantorovich 問題は LP である}{kantorovich_lp}
+有限集合 $X=\{x_1,\ldots,x_m\}$，$Y=\{y_1,\ldots,y_n\}$ 上の
+離散確率測度 $\mu$，$\nu$ に対し，
+$\mu_i\coloneqq\mu(\{x_i\})$，$\nu_j\coloneqq\nu(\{y_j\})$，
+$c_{ij}\coloneqq c(x_i,y_j)$ とおくと，
+Kantorovich 問題は $mn$ 個の変数 $\pi_{ij}$ に関する LP になる：
+\begin{alignat*}{2}
+  \min\quad & \textstyle\sum_{i,j} c_{ij}\,\pi_{ij} \\
+  \text{s.t.}\quad
+    & \textstyle\sum_{j=1}^{n}\pi_{ij} = \mu_i &\quad& (i=1,\ldots,m), \\
+    & \textstyle\sum_{i=1}^{m}\pi_{ij} = \nu_j &\quad& (j=1,\ldots,n), \\
+    & \pi_{ij}\ge 0 &\quad& (\forall\,i,j).
+\end{alignat*}
+$m+n$ 本の等式制約のうち1本は冗長である
+（$\sum_i\mu_i=\sum_j\nu_j=1$ から任意の1本が残りから従う）．
+したがって独立な制約は $m+n-1$ 本であり，
+基底実行可能解（定義~\ref{def:bfs}）は
+高々 $m+n-1$ 個の正成分を持つ．
+この形の LP は\textbf{輸送問題}（transportation problem）と呼ばれる．
+\end{remark}
+
+\begin{example}{設定（★）の LP 表示}{lp_star}
+設定（★）（$m=n=2$）では4つの変数 $\pi_{00},\pi_{01},\pi_{10},\pi_{11}$ に対し
+\begin{align*}
+  \min\quad & \pi_{01} + \pi_{10} \\
+  \text{s.t.}\quad
+    & \pi_{00} + \pi_{01} = \tfrac{3}{4}, \quad
+    \pi_{10} + \pi_{11} = \tfrac{1}{4}, \\
+    & \pi_{00} + \pi_{10} = \tfrac{2}{4}, \quad
+    \pi_{01} + \pi_{11} = \tfrac{2}{4}, \\
+    & \pi_{ij}\ge 0
+\end{align*}
+が得られる（$c(x,y)=|x-y|$ から $c_{00}=c_{11}=0$，$c_{01}=c_{10}=1$）．
+独立な等式制約は $m+n-1=3$ 本であり，自由度は $4-3=1$．
+例~\ref{ex:kantorovich_example} と同様に $\pi_{00}$ を自由変数にとると
+\[
+  \pi_{01}=\tfrac{3}{4}-\pi_{00},\quad
+  \pi_{10}=\tfrac{2}{4}-\pi_{00},\quad
+  \pi_{11}=\pi_{00}-\tfrac{1}{4},\quad
+  \text{コスト}=\tfrac{5}{4}-2\pi_{00}
+\]
+であり，非負制約から $\pi_{00}\in[\tfrac{1}{4},\,\tfrac{2}{4}]$ となる．
+実行可能領域は $\mathbb{R}^4$ 中の1次元線分であり，
+2つの端点が基底実行可能解（BFS）に対応する．
+コストは $\pi_{00}$ の狭義単調減少な一次関数だから，
+最小値は右端の BFS で達成される．
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth]
+  %% 数直線
+  \draw[->] (-0.3, 0) -- (5.2, 0) node[right, font=\small] {$\pi_{00}$};
+  %% 目盛り
+  \foreach \x/\lab in {0/$0$, 1.5/$\tfrac{1}{4}$, 3/$\tfrac{2}{4}$, 4.5/$\tfrac{3}{4}$} {
+    \draw (\x, -0.08) -- (\x, 0.08);
+    \node[below, font=\scriptsize] at (\x, -0.15) {\lab};
+  }
+  %% 非実行可能域（薄く）
+  \draw[gray!30, thick] (0, 0) -- (1.4, 0);
+  \draw[gray!30, thick] (3.1, 0) -- (4.5, 0);
+  %% 実行可能域
+  \draw[blue!50!black, line width=3pt] (1.5, 0) -- (3, 0);
+  %% BFS A（左端点）
+  \fill[red!60!black] (1.5, 0) circle (3.5pt);
+  \node[above, font=\small, red!60!black] at (1.5, 0.15) {コスト $\tfrac{3}{4}$};
+  %% BFS B（右端点）
+  \fill[green!50!black] (3, 0) circle (3.5pt);
+  \node[above, font=\small, green!50!black] at (3, 0.15) {コスト $\tfrac{1}{4}$};
+  %% 注釈
+  \draw[decorate, decoration={brace, amplitude=4pt, mirror}, blue!40!black]
+    (1.5, -0.5) -- (3, -0.5)
+    node[midway, below=5pt, font=\scriptsize, blue!40!black] {実行可能領域（端点が BFS）};
+\end{tikzpicture}
+\end{center}
+\end{example}
+
+\begin{definition}{基底実行可能解}{bfs}
+LP の制約行列 $A\in\mathbb{R}^{m\times n}$ に対し，
+$r=\operatorname{rank}(A)$ 本の列を選んで正則な部分行列 $B$ を作り，
+対応する変数（\textbf{基底変数}）を $x_B=B^{-1}b\ge 0$，
+残りの変数（\textbf{非基底変数}）を $x_N=0$ で定めた実行可能解を
+\textbf{基底実行可能解}（basic feasible solution, BFS）と呼ぶ．
+BFS は実行可能多面体の\textbf{頂点}に対応する．
+
+輸送問題では，BFS は高々 $m+n-1$ 個の正成分を持つ
+輸送計画であり，
+正の配分がある $(i,j)$ の集合を\textbf{基底}と呼ぶ．
+\end{definition}
+
+\begin{theorem}{LP の基本定理}{lp_fundamental}
+LP の実行可能領域が非空であり，目的関数が下に有界ならば，
+最適値は少なくとも一つの BFS で達成される．
+\end{theorem}
+
+直感的には，線形関数は凸多面体の内部で極値を取らないため，
+最適値は必ず頂点（BFS）に現れる．
+この定理により最適解の探索は有限個の BFS の比較に帰着する．
+\textbf{単体法}はこの BFS を効率的に巡回し，
+各ステップで目的関数値を改善（または維持）しながら最適解に到達するアルゴリズムである．
+
+\begin{algorithm}{alg:transport_simplex}
+\textbf{輸送単体法}（Transportation Simplex Method）
+
+\medskip
+\textbf{入力：}供給量 $\mu_1,\ldots,\mu_m$，需要量 $\nu_1,\ldots,\nu_n$，
+コスト行列 $(c_{ij})$．
+
+\medskip
+\textbf{Step 0}（初期 BFS）\textbf{：}
+初期 BFS $\{\pi_{ij}\}$ と基底 $\mathcal{B}$（$|\mathcal{B}|=m+n-1$）を構成する
+（例えば\textbf{北西角法}：セル $(1,1)$ から順に
+$\pi_{ij}=\min(\text{残余供給量},\,\text{残余需要量})$ を
+行・列の添字の小さい順に割り当てる）．
+
+\medskip
+\textbf{Step 1}（双対変数の計算）\textbf{：}
+$u_1=0$ と正規化し，基底セル $(i,j)\in\mathcal{B}$ に対する方程式
+\[
+  u_i + v_j = c_{ij}
+\]
+を解いて $u_1,\ldots,u_m$ と $v_1,\ldots,v_n$ を求める．
+
+\medskip
+\textbf{Step 2}（最適性判定）\textbf{：}
+非基底セルの\textbf{被約費用}（reduced cost）
+$\bar{c}_{ij} \coloneqq c_{ij} - u_i - v_j$
+を計算する．
+$\bar{c}_{ij}\ge 0$ が全ての非基底セルで成り立てば，
+現在の BFS は最適——\textbf{終了}．
+
+\medskip
+\textbf{Step 3}（ピボット操作）\textbf{：}
+$\bar{c}_{pq}<0$ となるセル $(p,q)$ を入基底セルとして選ぶ．
+$(p,q)$ と基底セルを交互に結ぶ\textbf{閉路}を見つけ，
+閉路上のセルに $+\theta$ と $-\theta$ を交互に加える
+（$(p,q)$ には $+\theta$）．
+$\theta=\min\{\pi_{ij}: (i,j) \text{ は閉路上で } {-\theta} \text{ が加わるセル}\}$
+とし，$\pi_{ij}=0$ となったセルを基底から除く．
+Step 1 に戻る．
+\end{algorithm}
+
+\begin{example}{設定（★）を輸送単体法で解く}{simplex_star}
+設定（★）に輸送単体法（Algorithm~\ref{alg:transport_simplex}）を適用する．
+
+\medskip
+\textbf{反復 0：初期 BFS．}
+基底 $\mathcal{B}=\{(0,0),(0,1),(1,0)\}$ に対応する以下の BFS から出発する：
+\[
+  \pi^{(0)} = \begin{pmatrix} 1/4 & 2/4 \\ 1/4 & 0 \end{pmatrix},
+  \qquad \text{コスト}=\pi_{01}+\pi_{10}=\tfrac{3}{4}.
+\]
+これは例~\ref{ex:lp_star} の BFS A（実行可能領域の左端 $\pi_{00}=\tfrac{1}{4}$）に相当する．
+
+\medskip
+\textbf{Step 1：双対変数の計算．}
+$u_0=0$ として基底セルの方程式 $u_i+v_j=c_{ij}$ を解く：
+\[
+  u_0+v_0=0 \;\Rightarrow\; v_0=0,\qquad
+  u_0+v_1=1 \;\Rightarrow\; v_1=1,\qquad
+  u_1+v_0=1 \;\Rightarrow\; u_1=1.
+\]
+
+\textbf{Step 2：被約費用の計算．}
+唯一の非基底セル $(1,1)$ に対し
+\[
+  \bar{c}_{11}=c_{11}-u_1-v_1=0-1-1=-2<0.
+\]
+$\bar{c}_{11}<0$ であるから現在の BFS は最適でない．
+セル $(1,1)$ を基底に加えることでコストが改善できる．
+
+\medskip
+\textbf{Step 3：ピボット操作．}
+入基底セル $(1,1)$ を含む閉路を構成する：
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth, thick]
+  \def\s{2.4}
+
+  %% 列ヘッダ
+  \node[font=\small, above] at (0.5*\s, 2*\s+0.05) {$y=0$};
+  \node[font=\small, above] at (1.5*\s, 2*\s+0.05) {$y=1$};
+  %% 行ヘッダ
+  \node[font=\small, left] at (-0.08, 1.5*\s) {$x=0$};
+  \node[font=\small, left] at (-0.08, 0.5*\s) {$x=1$};
+
+  %% セル背景
+  \fill[blue!12]   (0,    \s)   rectangle (\s,   2*\s);
+  \fill[orange!12] (\s,   \s)   rectangle (2*\s, 2*\s);
+  \fill[orange!12] (0,    0)    rectangle (\s,   \s);
+  \fill[green!15]  (\s,   0)    rectangle (2*\s, \s);
+
+  %% グリッド
+  \draw[gray!50] (0,0) grid[step=\s] (2*\s, 2*\s);
+  \draw[black, line width=0.8pt] (0,0) rectangle (2*\s, 2*\s);
+
+  %% セル内容
+  \node[font=\normalsize] at (0.5*\s, 1.65*\s) {$\tfrac{1}{4}$};
+  \node[blue!60!black, font=\small\bfseries] at (0.5*\s, 1.25*\s) {$+\theta$};
+
+  \node[font=\normalsize] at (1.5*\s, 1.65*\s) {$\tfrac{2}{4}$};
+  \node[orange!60!black, font=\small\bfseries] at (1.5*\s, 1.25*\s) {$-\theta$};
+
+  \node[font=\normalsize] at (0.5*\s, 0.65*\s) {$\tfrac{1}{4}$};
+  \node[orange!60!black, font=\small\bfseries] at (0.5*\s, 0.25*\s) {$-\theta$};
+
+  \node[green!40!black, font=\normalsize] at (1.5*\s, 0.65*\s) {$0$};
+  \node[green!40!black, font=\small\bfseries] at (1.5*\s, 0.25*\s) {$+\theta$};
+
+  %% 閉路の矢印（外周を時計回り）
+  \def\g{0.18}
+  \draw[->, red!50!black, line width=1.2pt]
+    (0.5*\s, 2*\s+\g) -- node[above, font=\scriptsize, red!40!black] {閉路}
+    (1.5*\s, 2*\s+\g);
+  \draw[->, red!50!black, line width=1.2pt]
+    (2*\s+\g, 1.5*\s) -- (2*\s+\g, 0.5*\s);
+  \draw[->, red!50!black, line width=1.2pt]
+    (1.5*\s, -\g) -- (0.5*\s, -\g);
+  \draw[->, red!50!black, line width=1.2pt]
+    (-\g, 0.5*\s) -- (-\g, 1.5*\s);
+
+  %% 入基底セルの注釈
+  \node[green!40!black, font=\scriptsize] at (1.5*\s, -0.6)
+    {入基底セル $\bar{c}_{11}=-2<0$};
+\end{tikzpicture}
+\end{center}
+
+閉路上で $-\theta$ が加わるセルは $(0,1)$ と $(1,0)$ であり，
+$\theta=\min(\pi_{01},\pi_{10})=\min(\tfrac{2}{4},\tfrac{1}{4})=\tfrac{1}{4}$．
+各セルの配分を更新する：
+\[
+  \pi^{(1)} = \begin{pmatrix} 1/4+1/4 & 2/4-1/4 \\ 1/4-1/4 & 0+1/4 \end{pmatrix}
+  = \begin{pmatrix} 2/4 & 1/4 \\ 0 & 1/4 \end{pmatrix}.
+\]
+$\pi_{10}=0$ となったので $(1,0)$ を基底から除き，$(1,1)$ を基底に加える．
+新しい基底は $\mathcal{B}'=\{(0,0),(0,1),(1,1)\}$，
+コストは $\tfrac{1}{4}+0=\tfrac{1}{4}$ に改善された
+（コストの減少分は $|\bar{c}_{11}|\times\theta=2\times\tfrac{1}{4}=\tfrac{1}{2}$）．
+
+\medskip
+\textbf{反復 1：最適性の確認．}
+新しい基底で Step 1--2 を行う：
+\[
+  u_0+v_0=0,\quad u_0+v_1=1,\quad u_1+v_1=0
+  \quad\Rightarrow\quad
+  u_0=0,\; v_0=0,\; v_1=1,\; u_1=-1.
+\]
+非基底セル $(1,0)$ の被約費用は
+$\bar{c}_{10}=c_{10}-u_1-v_0=1-(-1)-0=2\ge 0$．
+全ての被約費用が非負であるから $\pi^{(1)}$ は\textbf{最適}である．
+最適輸送コストは $\tfrac{1}{4}$ であり，
+例~\ref{ex:kantorovich_example} の結果と一致する．
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth, thick]
+  \def\s{2.2}
+
+  %% ===== 初期 BFS =====
+  \begin{scope}[xshift=0cm]
+    \node[font=\bfseries\small] at (\s, 2*\s+0.6) {初期 $\pi^{(0)}$（コスト $\tfrac{3}{4}$）};
+    %% セル背景
+    \fill[gray!8]    (0,    \s)   rectangle (\s,   2*\s);
+    \fill[orange!25] (\s,   \s)   rectangle (2*\s, 2*\s);
+    \fill[orange!25] (0,    0)    rectangle (\s,   \s);
+    \fill[gray!8]    (\s,   0)    rectangle (2*\s, \s);
+    %% グリッド
+    \draw[gray!50] (0,0) grid[step=\s] (2*\s, 2*\s);
+    \draw[black, line width=0.8pt] (0,0) rectangle (2*\s, 2*\s);
+    %% 値
+    \node at (0.5*\s, 1.5*\s) {$\tfrac{1}{4}$};
+    \node[orange!70!black] at (1.5*\s, 1.5*\s) {$\tfrac{2}{4}$};
+    \node[orange!70!black] at (0.5*\s, 0.5*\s) {$\tfrac{1}{4}$};
+    \node[gray!40] at (1.5*\s, 0.5*\s) {$0$};
+    %% ヘッダ
+    \node[font=\scriptsize, above] at (0.5*\s, 2*\s) {$y\!=\!0$};
+    \node[font=\scriptsize, above] at (1.5*\s, 2*\s) {$y\!=\!1$};
+    \node[font=\scriptsize, left] at (0, 1.5*\s) {$x\!=\!0$};
+    \node[font=\scriptsize, left] at (0, 0.5*\s) {$x\!=\!1$};
+  \end{scope}
+
+  %% ===== 矢印 =====
+  \draw[->, line width=1.5pt, gray!70] (2*\s+0.6, \s) -- (2*\s+1.8, \s)
+    node[midway, above, font=\scriptsize, gray!60] {ピボット}
+    node[midway, below, font=\scriptsize, gray!60] {$\theta=\tfrac{1}{4}$};
+
+  %% ===== 最適 BFS =====
+  \begin{scope}[xshift=7.2cm]
+    \node[font=\bfseries\small, green!40!black] at (\s, 2*\s+0.6) {最適 $\pi^{(1)}$（コスト $\tfrac{1}{4}$）};
+    %% セル背景
+    \fill[blue!15]   (0,    \s)   rectangle (\s,   2*\s);
+    \fill[orange!20] (\s,   \s)   rectangle (2*\s, 2*\s);
+    \fill[gray!8]    (0,    0)    rectangle (\s,   \s);
+    \fill[blue!10]   (\s,   0)    rectangle (2*\s, \s);
+    %% グリッド
+    \draw[gray!50] (0,0) grid[step=\s] (2*\s, 2*\s);
+    \draw[green!50!black, line width=1.2pt] (0,0) rectangle (2*\s, 2*\s);
+    %% 値
+    \node at (0.5*\s, 1.5*\s) {$\tfrac{2}{4}$};
+    \node[orange!70!black] at (1.5*\s, 1.5*\s) {$\tfrac{1}{4}$};
+    \node[gray!40] at (0.5*\s, 0.5*\s) {$0$};
+    \node at (1.5*\s, 0.5*\s) {$\tfrac{1}{4}$};
+    %% ヘッダ
+    \node[font=\scriptsize, above] at (0.5*\s, 2*\s) {$y\!=\!0$};
+    \node[font=\scriptsize, above] at (1.5*\s, 2*\s) {$y\!=\!1$};
+    \node[font=\scriptsize, left] at (0, 1.5*\s) {$x\!=\!0$};
+    \node[font=\scriptsize, left] at (0, 0.5*\s) {$x\!=\!1$};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
+\end{example}
+
+\begin{remark}{LP 双対と Kantorovich 双対}{lp_kantorovich_dual}
+輸送単体法で得られる双対変数 $(u_i, v_j)$ は，
+Kantorovich 双対（定理~\ref{thm:kantorovich_duality}）の
+最適双対対に対応する．
+具体的に，$\varphi(x_i)\coloneqq u_i$，$\psi(y_j)\coloneqq v_j$ とおくと：
+\begin{itemize}
+  \item \textbf{最適性条件} $\bar{c}_{ij}=c_{ij}-u_i-v_j\ge 0$ は
+    双対許容条件 $\varphi(x)+\psi(y)\le c(x,y)$（定義~\ref{def:dual_admissible}）に一致する．
+  \item \textbf{基底条件} $u_i+v_j=c_{ij}$（$\pi_{ij}>0$ のセル）は
+    相補性条件 $\pi_{ij}>0 \Rightarrow \varphi(x_i)+\psi(y_j)=c(x_i,y_j)$
+    （例~\ref{ex:duality_verification} の Step 3）に対応する．
+\end{itemize}
+実際，例~\ref{ex:simplex_star} で得た最適双対変数
+$(u_0,u_1,v_0,v_1)=(0,-1,0,1)$ は，
+例~\ref{ex:duality_verification} の最適双対対
+$\varphi^*(0)=0$，$\varphi^*(1)=-1$，$\psi^*(0)=0$，$\psi^*(1)=1$
+に完全に一致する．
+すなわち離散 Kantorovich 問題において，
+\textbf{輸送単体法は最適輸送計画と最適双対対を同時に求めるアルゴリズムである}．
+
+\medskip
+この対応を表にまとめると：
+
+\medskip
+\begin{center}
+{\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{ll}
+  \hline
+  \textbf{輸送単体法} & \textbf{Kantorovich 双対理論} \\
+  \hline
+  双対変数 $u_i,\,v_j$ & 双対関数 $\varphi(x_i),\,\psi(y_j)$ \\
+  被約費用 $\bar{c}_{ij}\ge 0$ & 双対許容条件 $\varphi+\psi\le c$ \\
+  基底条件 $u_i+v_j=c_{ij}$ & 相補性条件 \\
+  目的関数値 $\sum\mu_i u_i+\sum\nu_j v_j$ & 双対目的関数 $\int\varphi\,d\mu+\int\psi\,d\nu$ \\
+  \hline
+\end{tabular}}
+\end{center}
+\end{remark}
+
 \end{document}
