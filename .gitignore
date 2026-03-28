@@ -2,3 +2,11 @@ note/out/
 *.pdf
 .venv/
 note/*.png
+note/*.aux
+note/*.dvi
+note/*.log
+note/*.out
+note/*.toc
+note/*.synctex.gz
+note/*.fls
+note/*.fdb_latexmk
