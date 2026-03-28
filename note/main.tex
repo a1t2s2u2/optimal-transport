@@ -2,6 +2,8 @@
 \documentclass[uplatex, dvipdfmx]{jsarticle}
 
 \usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[dvipdfmx]{hyperref}
+\usepackage{pxjahyper}
 \usepackage{tikz}
 \usetikzlibrary{decorations.pathreplacing,calc,arrows.meta,patterns}
 \usepackage{pgfplots}
@@ -10,26 +12,27 @@
 \tcbuselibrary{theorems,breakable}
 
 \newtcbtheorem[number within=section]{definition}{定義}{
-  colback=blue!5, colframe=blue!40!black, fonttitle=\bfseries
+  colback=blue!5, colframe=blue!40!black, fonttitle=\bfseries, breakable
 }{def}
 \newtcbtheorem[use counter from=definition]{proposition}{命題}{
-  colback=green!5, colframe=green!35!black, fonttitle=\bfseries
+  colback=green!5, colframe=green!35!black, fonttitle=\bfseries, breakable
 }{prop}
 \newtcbtheorem[use counter from=definition]{theorem}{定理}{
-  colback=red!5, colframe=red!40!black, fonttitle=\bfseries
+  colback=red!5, colframe=red!40!black, fonttitle=\bfseries, breakable
 }{thm}
 \newtcbtheorem[use counter from=definition]{remark}{注意}{
-  colback=yellow!5, colframe=yellow!40!black, fonttitle=\bfseries
+  colback=yellow!5, colframe=yellow!40!black, fonttitle=\bfseries, breakable
 }{rem}
 \newtcbtheorem[use counter from=definition]{example}{例}{
   colback=gray!5, colframe=gray!50!black, fonttitle=\bfseries, breakable
 }{ex}
 \newtcbtheorem[use counter from=definition]{setting}{設定}{
-  colback=purple!5, colframe=purple!40!black, fonttitle=\bfseries
+  colback=purple!5, colframe=purple!40!black, fonttitle=\bfseries, breakable
 }{set}
 \tcolorboxenvironment{proof}{
   colback=white, colframe=black!20,
-  leftrule=2pt, rightrule=0pt, toprule=0pt, bottomrule=0pt
+  leftrule=2pt, rightrule=0pt, toprule=0pt, bottomrule=0pt,
+  breakable
 }
 
 \newcounter{algcounter}
@@ -39,11 +42,22 @@
   boxrule=0.8pt
 }
 
-\begin{document}
+\title{最適輸送理論：Monge 問題から Kantorovich 双対定理まで}
+\author{}
+\date{}
 
+\begin{document}
+\maketitle
+
+\begin{abstract}
 最適輸送理論は，ある確率分布を別の確率分布へ移すための最小コストを求める問題を扱う．
-本稿では，Monge (1781) による原初的な定式化から出発し，
-Kantorovich (1942) による緩和とその双対理論までを展開する．
+本稿では，Monge~\cite{Monge1781} による原初的な定式化から出発し，
+Kantorovich~\cite{Kantorovich1942} による緩和とその双対理論を展開した後，
+離散問題に対する線形計画法（単体法）による系統的な解法を示す．
+\end{abstract}
+
+\tableofcontents
+\newpage
 
 %% ==========================================================
 %%  第1節：Monge 問題
@@ -1424,7 +1438,7 @@ $k$ が十分大きければ $\inf_w[f(w)+k\,d(z,w)]\ge f(z)-\varepsilon$ を得
 
 強双対性の証明には，次のミニマックス定理を用いる．
 
-\begin{theorem}{ミニマックス定理（Fan, 1953）}{minimax}
+\begin{theorem}{ミニマックス定理（Fan~\cite{Fan1953}）}{minimax}
 $V$ を局所凸位相ベクトル空間，$K\subset V$ をコンパクト凸集合，
 $L$ をベクトル空間の凸集合とする．
 関数 $F\colon K\times L\to\mathbb{R}$ が
@@ -2392,6 +2406,37 @@ $W_1(\mu,\nu)=\tfrac{1}{4}$ を与える．
 Wasserstein 距離は確率分布の幾何学的な「近さ」を測る道具として，
 機械学習（生成モデル），統計学（分布の検定），偏微分方程式（勾配流）
 など広範な分野で中心的な役割を果たしている．
+最適輸送理論のさらなる展開については
+Villani~\cite{Villani2009} や Santambrogio~\cite{Santambrogio2015} を参照されたい．
 \end{remark}
+
+\begin{thebibliography}{99}
+\bibitem{Monge1781}
+G.~Monge,
+\textit{M\'{e}moire sur la th\'{e}orie des d\'{e}blais et des remblais},
+Histoire de l'Acad\'{e}mie Royale des Sciences de Paris, 1781.
+
+\bibitem{Kantorovich1942}
+L.~V.~Kantorovich,
+On the translocation of masses,
+\textit{Dokl.\ Akad.\ Nauk SSSR}, \textbf{37}(7--8), 227--229, 1942.
+
+\bibitem{Fan1953}
+K.~Fan,
+Minimax theorems,
+\textit{Proc.\ Natl.\ Acad.\ Sci.\ USA}, \textbf{39}(1), 42--47, 1953.
+
+\bibitem{Villani2009}
+C.~Villani,
+\textit{Optimal Transport: Old and New},
+Grundlehren der mathematischen Wissenschaften, vol.~338,
+Springer, 2009.
+
+\bibitem{Santambrogio2015}
+F.~Santambrogio,
+\textit{Optimal Transport for Applied Mathematicians},
+Progress in Nonlinear Differential Equations and Their Applications, vol.~87,
+Birkh\"{a}user, 2015.
+\end{thebibliography}
 
 \end{document}
