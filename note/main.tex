@@ -43,6 +43,7 @@
 }
 
 \title{最適輸送理論：Monge 問題から Wasserstein 距離まで}
+\author{}
 \date{}
 
 \begin{document}
@@ -2024,7 +2025,7 @@ $\varphi^c(y)=\inf_{x\in X}[c(x,y)-\varphi(x)]$
 
 \begin{remark}{Monge 問題への回帰}{monge_from_kantorovich}
 Kantorovich 問題の最適計画 $\pi^*$ が
-$\pi^*=({\rm id},T)_\#\mu$ の形に書ける（すなわちグラフ上に集中する）場合，
+$\pi^*=(\mathrm{id},T)_\#\mu$ の形に書ける（すなわちグラフ上に集中する）場合，
 $T$ は Monge 問題の最適写像でもある．
 例えば $X=Y=\mathbb{R}^d$ で $c(x,y)=\|x-y\|^2$ かつ $\mu$ が絶対連続のとき，
 Brenier の定理により最適輸送写像 $T=\nabla\phi$
@@ -2681,8 +2682,10 @@ $W_p(\mu_1,\mu_3)\le W_p(\mu_1,\mu_2)+W_p(\mu_2,\mu_3)$ を得る．
 \]
 を与える．
 また，例~\ref{ex:gauss_ot}のガウス分布間では
-$W_2\bigl(\mathcal{N}(m_1,\sigma_1^2),\,\mathcal{N}(m_2,\sigma_2^2)\bigr)
-= \sqrt{(m_1-m_2)^2+(\sigma_1-\sigma_2)^2}$
+\[
+  W_2\bigl(\mathcal{N}(m_1,\sigma_1^2),\,\mathcal{N}(m_2,\sigma_2^2)\bigr)
+  = \sqrt{(m_1-m_2)^2+(\sigma_1-\sigma_2)^2}
+\]
 であった．
 \end{example}
 
