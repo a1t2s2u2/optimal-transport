@@ -42,7 +42,7 @@
   boxrule=0.8pt
 }
 
-\title{最適輸送理論：Monge 問題から Kantorovich 双対定理まで}
+\title{最適輸送理論：Monge 問題から Wasserstein 距離まで}
 \date{}
 
 \begin{document}
@@ -53,6 +53,8 @@
 本稿では，Monge~\cite{Monge1781} による原初的な定式化から出発し，
 Kantorovich~\cite{Kantorovich1942} による緩和とその双対理論を展開した後，
 離散問題に対する線形計画法（単体法）による系統的な解法を示す．
+さらに，最適輸送コストが確率分布の空間上の距離（Wasserstein 距離）を定めることを証明し，
+エントロピー正則化に基づく Sinkhorn アルゴリズムの概要を述べる．
 \end{abstract}
 
 \tableofcontents
@@ -2779,11 +2781,32 @@ C.~Villani,
 Grundlehren der mathematischen Wissenschaften, vol.~338,
 Springer, 2009.
 
+\bibitem{Brenier1991}
+Y.~Brenier,
+Polar factorization and monotone rearrangement of vector-valued functions,
+\textit{Comm.\ Pure Appl.\ Math.}, \textbf{44}(4), 375--417, 1991.
+
 \bibitem{Santambrogio2015}
 F.~Santambrogio,
 \textit{Optimal Transport for Applied Mathematicians},
 Progress in Nonlinear Differential Equations and Their Applications, vol.~87,
 Birkh\"{a}user, 2015.
+
+\bibitem{Ambrosio2008}
+L.~Ambrosio, N.~Gigli, G.~Savar\'{e},
+\textit{Gradient Flows in Metric Spaces and in the Space of Probability Measures},
+Lectures in Mathematics ETH Z\"{u}rich, 2nd ed., Birkh\"{a}user, 2008.
+
+\bibitem{Cuturi2013}
+M.~Cuturi,
+Sinkhorn distances: Lightspeed computation of optimal transport,
+\textit{Advances in Neural Information Processing Systems (NeurIPS)}, vol.~26, 2013.
+
+\bibitem{PeyreCuturi2019}
+G.~Peyr\'{e}, M.~Cuturi,
+Computational optimal transport: With applications to data science,
+\textit{Foundations and Trends in Machine Learning},
+\textbf{11}(5--6), 355--607, 2019.
 \end{thebibliography}
 
 \end{document}
