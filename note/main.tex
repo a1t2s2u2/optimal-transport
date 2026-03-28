@@ -2561,28 +2561,130 @@ $\varphi^*(0)=0$，$\varphi^*(1)=-1$，$\psi^*(0)=0$，$\psi^*(1)=1$
 主問題の解法の副産物として自動的に算出することの具体的な確認である．
 \end{remark}
 
-\begin{remark}{Wasserstein 距離への展望}{wasserstein}
-コスト $c(x,y)=d(x,y)^p$（$d$ は距離，$p\ge 1$）に対する
-Kantorovich 問題の最適値の $p$ 乗根
+%% ==========================================================
+%%  第5節：Wasserstein 距離
+%% ==========================================================
+\section{Wasserstein 距離}
+
+Kantorovich 問題の最適値はそれ自体が確率分布間の「距離」を定める．
+本節ではこの Wasserstein 距離を定義し，
+距離の公理を満たすことを証明する．
+
+\begin{definition}{Wasserstein 距離}{wasserstein}
+$(X,d)$ をポーランド空間，$p\ge 1$ とする．
+有限 $p$ 次モーメントを持つBorel確率測度の空間を
+\[
+  \mathcal{P}_p(X) \coloneqq \left\{\mu\in\mathcal{P}(X) :
+  \int_X d(x,x_0)^p\,d\mu(x)<\infty\;\text{（ある $x_0\in X$ に対し）}\right\}
+\]
+と定める．$\mu,\nu\in\mathcal{P}_p(X)$ に対し，\textbf{$p$-Wasserstein 距離}を
 \[
   W_p(\mu,\nu)
   \coloneqq \left(\inf_{\pi\in\Pi(\mu,\nu)}
   \int_{X\times Y} d(x,y)^p\,d\pi(x,y)\right)^{1/p}
 \]
-は，$X$ 上の確率測度全体の空間 $\mathcal{P}(X)$ 上の\textbf{距離}を定める．
-これを\textbf{Wasserstein 距離}（$p$-Wasserstein distance）と呼ぶ．
-$W_p$ が距離の公理を満たすこと——特に三角不等式——は
-最適輸送計画の「貼り合わせ」（gluing lemma）によって証明される．
+で定義する．
+\end{definition}
 
-本稿で扱った設定~\ref{set:basic}では $c=|\cdot|$（$d=|\cdot|$，$p=1$）であるから，
-最適輸送コスト $\tfrac{1}{4}$ はそのまま
-$W_1(\mu,\nu)=\tfrac{1}{4}$ を与える．
+$W_p$ が距離の公理（非負性，同一律，対称性，三角不等式）を満たすことを示す．
+三角不等式の証明には次の「貼り合わせ補題」が鍵となる．
+
+\begin{proposition}{貼り合わせ補題（Gluing lemma）}{gluing}
+$(X,\mathcal{B}(X))$，$(Y,\mathcal{B}(Y))$，$(Z,\mathcal{B}(Z))$
+をポーランド空間とし，
+$\pi_{12}\in\Pi(\mu_1,\mu_2)$，$\pi_{23}\in\Pi(\mu_2,\mu_3)$ とする．
+このとき $X\times Y\times Z$ 上のBorel確率測度 $\gamma$ で，
+$(X\times Y)$ への周辺分布が $\pi_{12}$，
+$(Y\times Z)$ への周辺分布が $\pi_{23}$ であるものが存在する．
+\end{proposition}
+
+\begin{proof}
+$\mu_2$ の正則条件付き確率（分解定理）を用いて構成する．
+$\pi_{12}$ の $y\in Y$ を条件とする $X$ 上の条件付き分布を
+$\pi_{12}(\cdot|y)$，
+$\pi_{23}$ の $y\in Y$ を条件とする $Z$ 上の条件付き分布を
+$\pi_{23}(\cdot|y)$ と書く
+（ポーランド空間上の Borel 確率測度に対し，これらは正則版が存在する）．
+$\gamma$ を
+\[
+  \gamma(A\times B\times C)
+  \coloneqq \int_B \pi_{12}(A|y)\,\pi_{23}(C|y)\,d\mu_2(y)
+\]
+で定めると，
+$(X\times Y)$ への周辺分布は
+\[
+  \gamma(A\times B\times Z)
+  = \int_B \pi_{12}(A|y)\,d\mu_2(y) = \pi_{12}(A\times B)
+\]
+であり，同様に $(Y\times Z)$ への周辺分布は $\pi_{23}$ に一致する．
+\end{proof}
+
+\begin{theorem}{$W_p$ は距離である}{wasserstein_metric}
+$(X,d)$ をポーランド空間，$p\ge 1$ とする．
+$W_p$ は $\mathcal{P}_p(X)$ 上の距離を定める．
+\end{theorem}
+
+\begin{proof}
+\textit{非負性・同一律}：$d(x,y)\ge 0$ から $W_p\ge 0$ は明らかである．
+$\mu=\nu$ ならば $\pi=(\mathrm{id},\mathrm{id})_\#\mu$
+（対角線上に集中する測度）を取れば
+$\int d(x,y)^p\,d\pi=0$ であるから $W_p(\mu,\mu)=0$．
+逆に $W_p(\mu,\nu)=0$ ならば最適計画 $\pi^*$ のもとで
+$d(x,y)=0$ $\pi^*$-a.e.，すなわち $\pi^*$ は対角線上に集中し，
+$\mu=\nu$ を得る．
+
+\textit{対称性}：$(x,y)\mapsto(y,x)$ による $\pi$ の押し出しが
+$\Pi(\nu,\mu)$ と $\Pi(\mu,\nu)$ の間の全単射を与え，
+$d(x,y)=d(y,x)$ であるから $W_p(\mu,\nu)=W_p(\nu,\mu)$．
+
+\textit{三角不等式}：$\mu_1,\mu_2,\mu_3\in\mathcal{P}_p(X)$ とする．
+$\varepsilon>0$ を任意に取り，
+$W_p(\mu_1,\mu_2)^p+\varepsilon$ 以下のコストを達成する
+$\pi_{12}\in\Pi(\mu_1,\mu_2)$ と，
+$W_p(\mu_2,\mu_3)^p+\varepsilon$ 以下のコストを達成する
+$\pi_{23}\in\Pi(\mu_2,\mu_3)$ を選ぶ．
+貼り合わせ補題（命題~\ref{prop:gluing}）により，
+$X\times X\times X$ 上の測度 $\gamma$ で，
+$(x_1,x_2)$ への周辺が $\pi_{12}$，
+$(x_2,x_3)$ への周辺が $\pi_{23}$ であるものが存在する．
+$\gamma$ の $(x_1,x_3)$ への周辺分布を $\pi_{13}$ とおくと
+$\pi_{13}\in\Pi(\mu_1,\mu_3)$ であるから，
+\[
+  W_p(\mu_1,\mu_3)
+  \le \left(\int d(x_1,x_3)^p\,d\pi_{13}\right)^{1/p}
+  = \left(\int d(x_1,x_3)^p\,d\gamma\right)^{1/p}.
+\]
+Minkowski の不等式（$L^p$ 空間の三角不等式）と
+距離 $d$ の三角不等式 $d(x_1,x_3)\le d(x_1,x_2)+d(x_2,x_3)$ から
+\begin{align*}
+  \left(\int d(x_1,x_3)^p\,d\gamma\right)^{1/p}
+  &\le \left(\int d(x_1,x_2)^p\,d\gamma\right)^{1/p}
+     + \left(\int d(x_2,x_3)^p\,d\gamma\right)^{1/p} \\
+  &= \left(\int d(x_1,x_2)^p\,d\pi_{12}\right)^{1/p}
+     + \left(\int d(x_2,x_3)^p\,d\pi_{23}\right)^{1/p}.
+\end{align*}
+$\varepsilon\to 0$ として
+$W_p(\mu_1,\mu_3)\le W_p(\mu_1,\mu_2)+W_p(\mu_2,\mu_3)$ を得る．
+\end{proof}
+
+\begin{example}{設定~\ref{set:basic}における Wasserstein 距離}{wasserstein_star}
+本稿で扱った設定~\ref{set:basic}では $d=|\cdot|$（$p=1$）であるから，
+例~\ref{ex:kantorovich_example} の最適輸送コスト $\tfrac{1}{4}$ がそのまま
+\[
+  W_1(\mu,\nu) = \tfrac{1}{4}
+\]
+を与える．
+また，例~\ref{ex:gauss_ot}のガウス分布間では
+$W_2\bigl(\mathcal{N}(m_1,\sigma_1^2),\,\mathcal{N}(m_2,\sigma_2^2)\bigr)
+= \sqrt{(m_1-m_2)^2+(\sigma_1-\sigma_2)^2}$
+であった．
+\end{example}
+
 Wasserstein 距離は確率分布の幾何学的な「近さ」を測る道具として，
 機械学習（生成モデル），統計学（分布の検定），偏微分方程式（勾配流）
 など広範な分野で中心的な役割を果たしている．
 最適輸送理論のさらなる展開については
 Villani~\cite{Villani2009} や Santambrogio~\cite{Santambrogio2015} を参照されたい．
-\end{remark}
 
 \begin{thebibliography}{99}
 \bibitem{Monge1781}
