@@ -1,0 +1,789 @@
+
+\chapter{理論的基礎}\label{chap:theoretical}
+
+本章では最適輸送の数学的な基礎を構築する．
+まず確率分布の記述方法（ヒストグラムと測度）を整理した後，
+Monge 問題，Kantorovich 緩和，双対問題，Wasserstein 距離を順に導入し，
+最後に閉じた形の解が得られる特殊ケースを紹介する．
+
+読者は最初に離散的な設定（ヒストグラム間の輸送）を理解すれば，
+第\ref{chap:algorithmic}章・第\ref{chap:entropic}章のアルゴリズムに
+進むことができる．
+一般の測度に関する議論は，より進んだ話題（半離散問題など）の
+基盤として必要になった時に参照すればよい．
+
+
+% ============================================================
+\section{ヒストグラムと測度}\label{sec:histograms}
+
+最適輸送問題を定式化するためには，
+まず「確率分布」を数学的にどう表すかを明確にする必要がある．
+
+\subsection{ヒストグラム（確率ベクトル）}\label{subsec:histogram}
+
+最も単純な確率分布の表現はヒストグラムである．
+$n$ 個のビンを持つヒストグラムは，
+\textbf{確率単体} (probability simplex) の元として表される：
+\begin{equation}\label{eq:simplex}
+  \Sigma_n \defeq
+  \left\{
+    \mathbf{a} \in \R^n_+ \;:\; \sum_{i=1}^{n} \mathbf{a}_i = 1
+  \right\}.
+\end{equation}
+各成分 $\mathbf{a}_i \geq 0$ はビン $i$ の重み（確率）であり，
+総和が 1 になるという制約を満たす．
+
+\begin{example}{3ビンのヒストグラム}{histogram-3}
+$n=3$ のとき，$\mathbf{a} = (0.2,\; 0.5,\; 0.3) \in \Sigma_3$ は
+3つのカテゴリにそれぞれ 20\%, 50\%, 30\% の確率を割り当てるヒストグラムである．
+確率単体 $\Sigma_3$ は $\R^3$ の中の二次元三角形に対応する．
+\end{example}
+
+本稿の多くの部分では，
+送り元のヒストグラム $\mathbf{a} \in \Sigma_n$ と
+送り先のヒストグラム $\mathbf{b} \in \Sigma_m$ の間の
+最適輸送を考える．
+
+\subsection{離散測度}\label{subsec:discrete-measure}
+
+ヒストグラムは各ビンの「位置」の情報を持たない．
+ビンが空間上のどこにあるかを指定するには，
+重み $\mathbf{a}_i$ と位置 $x_i \in \mathcal{X}$ の組で
+\textbf{離散測度}を定義する：
+\begin{equation}\label{eq:discrete-measure}
+  \alpha = \sum_{i=1}^{n} \mathbf{a}_i \, \delta_{x_i}.
+\end{equation}
+ここで $\delta_{x_i}$ は点 $x_i$ に集中する \textbf{Dirac 測度}であり，
+$\delta_{x_i}(A) = 1$ ($x_i \in A$ のとき)，$0$ (それ以外) を満たす．
+
+離散測度に対する関数 $f$ の積分は単なる重み付き和になる：
+\[
+  \int_{\mathcal{X}} f(x)\, \mathrm{d}\alpha(x)
+  = \sum_{i=1}^{n} \mathbf{a}_i \, f(x_i).
+\]
+
+\begin{remark}{ヒストグラムと離散測度の違い}{hist-vs-discrete}
+ヒストグラム $\mathbf{a} \in \Sigma_n$ は
+重みベクトルのみの情報であり，
+ビンの番号 $\{1, \ldots, n\}$ で区別される．
+離散測度 $\alpha = \sum_i \mathbf{a}_i \delta_{x_i}$ は
+さらに各ビンの空間上の位置 $x_i$ を持つ．
+ヒストグラム間の輸送では，コスト行列 $\mathbf{C}$ を
+直接指定すればよいが，
+離散測度間の輸送では地上コスト関数 $c(x,y)$ から
+$\mathbf{C}_{i,j} = c(x_i, y_j)$ が決まる．
+\end{remark}
+
+\subsection{一般の測度}\label{subsec:general-measure}
+
+連続分布を扱うためには，
+より一般的な確率測度の概念が必要になる．
+空間 $\mathcal{X}$ 上の確率測度 $\alpha$ とは，
+$\alpha(\mathcal{X}) = 1$ を満たす非負の測度であり，
+\textbf{Radon 測度}の枠組みで統一的に扱われる．
+
+$\mathcal{X} = \R^d$ の場合，
+$\alpha$ が Lebesgue 測度に関する密度
+$\rho_\alpha$ を持つとき，
+\[
+  \mathrm{d}\alpha(x) = \rho_\alpha(x)\, \mathrm{d}x,
+  \qquad
+  \int_{\R^d} h(x)\, \mathrm{d}\alpha(x)
+  = \int_{\R^d} h(x)\, \rho_\alpha(x)\, \mathrm{d}x
+\]
+と書ける．離散測度・密度を持つ測度・それらの混合を，
+すべて同じ枠組みで扱えることが最適輸送の大きな利点である．
+
+以下では，確率測度の全体を
+$\mathcal{M}^1_+(\mathcal{X})$ と表す．
+
+
+% ============================================================
+\section{割当問題と Monge 問題}\label{sec:monge}
+
+\subsection{最適割当問題}\label{subsec:assignment}
+
+最も基本的な輸送問題は，同じ個数 $n$ の点を一対一に対応させる
+\textbf{最適割当問題} (optimal assignment problem) である．
+
+コスト行列 $\mathbf{C} \in \R^{n \times n}$ が与えられたとき，
+$n$ 個の要素の置換 $\sigma \in \mathrm{Perm}(n)$ の中から
+総コストを最小にするものを求める：
+\begin{equation}\label{eq:assignment}
+  \min_{\sigma \in \mathrm{Perm}(n)} \;
+  \frac{1}{n} \sum_{i=1}^{n} \mathbf{C}_{i,\sigma(i)}.
+\end{equation}
+$\mathrm{Perm}(n)$ の要素数は $n!$ であるため，
+全探索は $n$ がわずかに大きくなるだけで不可能になる
+（$n = 70$ で $n! > 10^{100}$）．
+効率的な解法については第\ref{chap:algorithmic}章で述べる．
+
+\begin{example}{2点の割当}{assign-2}
+$n=2$ で $\mathcal{X} = \mathcal{Y} = \{A, B\}$，
+コスト行列が
+\[
+  \mathbf{C} = \begin{pmatrix} 1 & 3 \\ 4 & 2 \end{pmatrix}
+\]
+の場合，置換は $\sigma = (1,2)$（恒等置換：$A \to A, B \to B$）
+と $\sigma = (2,1)$（$A \to B, B \to A$）の2通りだけである．
+前者のコストは $(1+2)/2 = 1.5$，後者は $(3+4)/2 = 3.5$ なので，
+恒等置換が最適である．
+\end{example}
+
+\subsection{押し出し測度}\label{subsec:pushforward}
+
+Monge 問題を定式化するために，
+写像による確率分布の変換を定式化する概念が必要になる．
+
+\begin{definition}{押し出し測度}{pushforward}
+写像 $T : \mathcal{X} \to \mathcal{Y}$ による
+$\alpha \in \mathcal{M}^1_+(\mathcal{X})$ の
+\textbf{押し出し測度} (push-forward) $\beta = T_\sharp \alpha$ とは，
+任意の可測集合 $B \subset \mathcal{Y}$ に対し
+\begin{equation}\label{eq:pushforward}
+  \beta(B) = \alpha\bigl(\{x \in \mathcal{X} : T(x) \in B\}\bigr)
+           = \alpha(T^{-1}(B))
+\end{equation}
+を満たす $\mathcal{Y}$ 上の確率測度である．
+同値な条件として，任意の連続関数 $h$ に対し
+\[
+  \int_{\mathcal{Y}} h(y)\, \mathrm{d}(T_\sharp \alpha)(y)
+  = \int_{\mathcal{X}} h(T(x))\, \mathrm{d}\alpha(x)
+\]
+が成り立つ．
+\end{definition}
+
+離散測度の場合，押し出しは単に各点の位置を移すことに対応する：
+$\alpha = \sum_i \mathbf{a}_i \delta_{x_i}$ に対して
+$T_\sharp \alpha = \sum_i \mathbf{a}_i \delta_{T(x_i)}$
+である．
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[>=Stealth, scale=0.85]
+  % Source
+  \fill[black!60] (0, 0) circle (6pt) node[above=6pt]{\small $x_1$};
+  \fill[black!60] (0.8, -1) circle (4pt) node[below=4pt]{\small $x_2$};
+  \fill[black!60] (-0.5, -1.5) circle (8pt) node[below=4pt]{\small $x_3$};
+  \node at (0, -2.5) {$\alpha$};
+  % Arrows
+  \draw[->, thick] (0.4, 0) -- (3.6, 0.3);
+  \draw[->, thick] (1.1, -1) -- (3.6, -0.5);
+  \draw[->, thick] (0.1, -1.5) -- (3.6, -1.2);
+  \node at (2, 0.6) {\small $T$};
+  % Target
+  \fill[black!30] (4, 0.3) circle (6pt) node[above=6pt]{\small $T(x_1)$};
+  \fill[black!30] (4.2, -0.5) circle (4pt) node[right=4pt]{\small $T(x_2)$};
+  \fill[black!30] (4.5, -1.2) circle (8pt) node[below=4pt]{\small $T(x_3)$};
+  \node at (4.3, -2.5) {$T_\sharp \alpha$};
+\end{tikzpicture}
+\caption{押し出し測度 $T_\sharp \alpha$：
+各点の位置が $T$ により移動し，重み（円の大きさ）はそのまま保存される．}
+\label{fig:pushforward}
+\end{figure}
+
+\subsection{Monge 問題}\label{subsec:monge-problem}
+
+Monge~\cite{Monge1781} の定式化は，
+写像 $T : \mathcal{X} \to \mathcal{Y}$ で
+$\alpha$ を $\beta$ に送るもののうち，
+輸送コストを最小化するものを求める：
+
+\begin{equation}\label{eq:monge}
+  \min_{T}\; \left\{
+    \int_{\mathcal{X}} c(x, T(x))\, \mathrm{d}\alpha(x)
+    \;:\; T_\sharp \alpha = \beta
+  \right\}.
+\end{equation}
+
+離散測度の場合，制約 $T_\sharp \alpha = \beta$ は，
+各送り先 $y_j$ が受け取る質量が $\mathbf{b}_j$ に等しいことを意味する：
+\[
+  \forall\, j, \quad
+  \sum_{i:\, T(x_i)=y_j} \mathbf{a}_i = \mathbf{b}_j.
+\]
+重みが一様（$\mathbf{a}_i = \mathbf{b}_j = 1/n$）な特殊ケースでは，
+$T$ は全単射となり，Monge 問題は割当問題~\eqref{eq:assignment}
+に帰着される．
+
+\paragraph{Monge 問題の困難さ.}
+Monge の定式化には二つの本質的な困難がある．
+\begin{enumerate}
+  \item \textbf{実行可能解の非存在}：
+    各 $x_i$ は一つの行き先にしか送れない（質量の分割ができない）ため，
+    $n < m$ の場合や重みの構造によっては
+    $T_\sharp \alpha = \beta$ を満たす $T$ が存在しないことがある．
+  \item \textbf{非凸性}：
+    $T_\sharp \alpha = \beta$ を満たす写像の集合は一般に非凸であり，
+    最適化が組合せ的に困難である．
+\end{enumerate}
+
+
+% ============================================================
+\section{Kantorovich 緩和}\label{sec:kantorovich}
+
+Kantorovich~\cite{Kantorovich1942} は，
+Monge の定式化が持つ困難を
+「\textbf{質量の分割を許す}」という着想で解消した．
+これは最適輸送理論において最も重要なブレークスルーの一つである．
+
+\subsection{決定的輸送から確率的輸送へ}\label{subsec:det-to-prob}
+
+Monge 問題では，各点 $x_i$ の質量は
+ただ一つの行き先 $T(x_i)$ に送られる（決定的輸送）．
+Kantorovich は，$x_i$ の質量を
+\textbf{複数の行き先に分割して送ること}を許した（確率的輸送）．
+
+この柔軟性は，置換 $\sigma$ や写像 $T$ の代わりに，
+\textbf{カップリング行列}（輸送計画）$\mathbf{P}$ で記述される．
+
+\begin{definition}{カップリングの集合}{coupling-set}
+ヒストグラム $\mathbf{a} \in \Sigma_n$，$\mathbf{b} \in \Sigma_m$
+に対し，\textbf{カップリングの集合}を
+\begin{equation}\label{eq:coupling-set}
+  \mathbf{U}(\mathbf{a}, \mathbf{b}) \defeq
+  \left\{
+    \mathbf{P} \in \R^{n \times m}_+
+    \;:\;
+    \mathbf{P}\, \mathbb{1}_m = \mathbf{a}
+    \;\;\text{かつ}\;\;
+    \mathbf{P}^\top \mathbb{1}_n = \mathbf{b}
+  \right\}
+\end{equation}
+と定義する．$\mathbf{P}_{i,j}$ は
+ビン $i$ からビン $j$ へ送られる質量を表す．
+\end{definition}
+
+行の和に関する制約 $\mathbf{P}\, \mathbb{1}_m = \mathbf{a}$ は，
+各ビン $i$ から出る質量の合計が $\mathbf{a}_i$ に等しいこと，
+列の和に関する制約 $\mathbf{P}^\top \mathbb{1}_n = \mathbf{b}$ は，
+各ビン $j$ に届く質量の合計が $\mathbf{b}_j$ に等しいことを意味する．
+
+\subsection{Kantorovich 問題}\label{subsec:kantorovich-problem}
+
+\begin{definition}{Kantorovich 問題（離散版）}{kantorovich}
+コスト行列 $\mathbf{C} \in \R^{n \times m}$ に対し，
+\textbf{Kantorovich の最適輸送問題}は
+\begin{equation}\label{eq:kantorovich}
+  \mathbf{L_C}(\mathbf{a}, \mathbf{b})
+  \defeq \min_{\mathbf{P} \in \mathbf{U}(\mathbf{a}, \mathbf{b})}
+  \inner{\mathbf{C}}{\mathbf{P}}
+  \defeq \min_{\mathbf{P} \in \mathbf{U}(\mathbf{a}, \mathbf{b})}
+  \sum_{i,j} \mathbf{C}_{i,j}\, \mathbf{P}_{i,j}
+\end{equation}
+で定義される．
+\end{definition}
+
+これは等式制約と非負制約の下での線形計画問題であり，
+Monge 問題と異なり常に最適解が存在する
+（$\mathbf{U}(\mathbf{a}, \mathbf{b})$ は有界閉凸集合であり，
+目的関数は連続な線形関数であるため）．
+
+\begin{example}{$2 \times 2$ の Kantorovich 問題}{kant-2x2}
+$\mathbf{a} = (0.7,\; 0.3)$，$\mathbf{b} = (0.4,\; 0.6)$，
+$\mathbf{C} = \bigl(\begin{smallmatrix} 1 & 2 \\ 3 & 1 \end{smallmatrix}\bigr)$
+とする．カップリング $\mathbf{P} = \bigl(\begin{smallmatrix} p_{11} & p_{12} \\ p_{21} & p_{22} \end{smallmatrix}\bigr)$ は
+\[
+  p_{11} + p_{12} = 0.7, \quad
+  p_{21} + p_{22} = 0.3, \quad
+  p_{11} + p_{21} = 0.4, \quad
+  p_{12} + p_{22} = 0.6
+\]
+を満たす．自由度は 1 で，$p_{11} = t$ とおくと
+$\mathbf{P} = \bigl(\begin{smallmatrix} t & 0.7-t \\ 0.4-t & t-0.1 \end{smallmatrix}\bigr)$
+であり，非負条件から $0.1 \leq t \leq 0.4$．
+コストは
+\[
+  \inner{\mathbf{C}}{\mathbf{P}} = t + 2(0.7-t) + 3(0.4-t) + (t-0.1)
+  = 2.5 - 3t
+\]
+となり $t$ に関して減少するから，$t = 0.4$ が最適で，
+\[
+  \mathbf{P}^\star = \begin{pmatrix} 0.4 & 0.3 \\ 0 & 0.3 \end{pmatrix},
+  \quad
+  \mathbf{L_C}(\mathbf{a}, \mathbf{b}) = 2.5 - 1.2 = 1.3.
+\]
+ビン 1 の質量 0.7 のうち 0.4 がビン 1 へ，0.3 がビン 2 へ
+分割して送られていることに注意されたい
+--- これはまさに Monge 写像では表現できない質量分割である．
+\end{example}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[>=Stealth, scale=0.9]
+  % Source bins
+  \node[draw, circle, minimum size=22pt, fill=black!15] (a1) at (0, 1) {$0.7$};
+  \node[draw, circle, minimum size=18pt, fill=black!15] (a2) at (0, -1) {$0.3$};
+  \node[left=8pt] at (a1.west) {$i{=}1$};
+  \node[left=8pt] at (a2.west) {$i{=}2$};
+  % Target bins
+  \node[draw, circle, minimum size=18pt, fill=black!35] (b1) at (5, 1) {$0.4$};
+  \node[draw, circle, minimum size=22pt, fill=black!35] (b2) at (5, -1) {$0.6$};
+  \node[right=8pt] at (b1.east) {$j{=}1$};
+  \node[right=8pt] at (b2.east) {$j{=}2$};
+  % Transport arrows with labels
+  \draw[->, thick] (a1) -- (b1) node[midway, above] {\small $0.4$};
+  \draw[->, thick] (a1) -- (b2) node[midway, above, sloped] {\small $0.3$};
+  \draw[->, thick] (a2) -- (b2) node[midway, below] {\small $0.3$};
+  % Labels
+  \node[below] at (0, -2) {$\mathbf{a}$};
+  \node[below] at (5, -2) {$\mathbf{b}$};
+\end{tikzpicture}
+\caption{例\ref{ex:kant-2x2}の最適輸送計画：
+$i=1$ の質量が $j=1$ と $j=2$ に分割して送られている．}
+\label{fig:kant-2x2}
+\end{figure}
+
+\subsection{Monge 問題との関係}\label{subsec:monge-kant-relation}
+
+Monge 問題の実行可能解は，各行に非零成分が一つだけの
+カップリング行列と見なせる．
+したがって Kantorovich 問題は Monge 問題の\textbf{緩和}であり，
+\[
+  \mathbf{L_C}(\mathbf{a}, \mathbf{b})
+  \leq \text{（Monge 問題の最適値）}
+\]
+が成り立つ．
+
+重要な事実として，
+一様なヒストグラム $\mathbf{a} = \mathbf{b} = \mathbb{1}_n / n$
+の場合には，Kantorovich 問題の最適解が必ず置換行列になり，
+Monge 問題と一致することが知られている．
+
+\begin{proposition}{割当問題に対する Kantorovich 緩和の厳密性}{kant-matching}
+$m = n$ かつ $\mathbf{a} = \mathbf{b} = \mathbb{1}_n / n$ のとき，
+Kantorovich 問題~\eqref{eq:kantorovich} の最適解として
+置換行列 $\mathbf{P}_{\sigma^\star}$ が存在する．
+すなわち，緩和は\textbf{厳密} (tight) である．
+\end{proposition}
+
+\begin{proof}
+$\mathbf{U}(\mathbb{1}_n/n,\, \mathbb{1}_n/n)$ は
+Birkhoff の定理により二重確率行列の集合であり，
+その端点はちょうど置換行列の全体である．
+線形計画の基本定理より，
+有界な多面体上の線形関数は端点で最小値を達成するから，
+最適解として置換行列が取れる．
+\end{proof}
+
+\subsection{一般の測度への拡張}\label{subsec:kantorovich-general}
+
+一般の確率測度 $\alpha, \beta$ に対しても，
+カップリングの概念を自然に拡張できる．
+$\mathcal{X} \times \mathcal{Y}$ 上の確率測度 $\pi$ が
+$\alpha$ と $\beta$ のカップリングであるとは，
+周辺分布に関する条件
+\begin{equation}\label{eq:coupling-general}
+  \mathcal{U}(\alpha, \beta) \defeq
+  \left\{
+    \pi \in \mathcal{M}^1_+(\mathcal{X} \times \mathcal{Y})
+    \;:\;
+    P_{\mathcal{X}\sharp}\, \pi = \alpha,\;\;
+    P_{\mathcal{Y}\sharp}\, \pi = \beta
+  \right\}
+\end{equation}
+を満たすことである．
+ここで $P_\mathcal{X}(x,y) = x$，$P_\mathcal{Y}(x,y) = y$
+は射影である．
+Kantorovich 問題は
+\begin{equation}\label{eq:kantorovich-general}
+  \mathcal{L}_c(\alpha, \beta)
+  \defeq \min_{\pi \in \mathcal{U}(\alpha, \beta)}
+  \int_{\mathcal{X} \times \mathcal{Y}} c(x, y)\, \mathrm{d}\pi(x, y)
+\end{equation}
+と一般化される．
+$(\mathcal{X}, \mathcal{Y})$ がコンパクトで $c$ が連続ならば，
+$\mathcal{U}(\alpha, \beta)$ は弱位相でコンパクトであり，
+最適解が必ず存在する．
+
+確率変数の言葉では，$(X, Y)$ を $\mathcal{X} \times \mathcal{Y}$
+上の同時分布が $\pi$ であるような確率変数の組とすると，
+\[
+  \mathcal{L}_c(\alpha, \beta)
+  = \min_{(X,Y):\, X \sim \alpha,\; Y \sim \beta}
+  \E\bigl[c(X, Y)\bigr]
+\]
+と等価である．すなわち，
+周辺分布を固定した上で輸送コストの期待値を最小にする
+同時分布を探す問題である．
+
+
+% ============================================================
+\section{Wasserstein 距離}\label{sec:wasserstein}
+
+最適輸送コストは，コスト関数が距離の冪で与えられるとき，
+確率分布間の距離を定める．
+
+\subsection{離散的な Wasserstein 距離}\label{subsec:wasserstein-discrete}
+
+\begin{definition}{$p$-Wasserstein 距離（離散版）}{wasserstein-discrete}
+$n = m$ とし，$\mathbf{D} \in \R^{n \times n}_+$ をビン間の距離行列
+（対称，$\mathbf{D}_{i,i}=0$，三角不等式を満たす）とする．
+コスト行列を $\mathbf{C} = \mathbf{D}^p$
+（$p \geq 1$，各成分の $p$ 乗）とするとき，
+\begin{equation}\label{eq:wasserstein-discrete}
+  \mathrm{W}_p(\mathbf{a}, \mathbf{b})
+  \defeq \mathbf{L}_{\mathbf{D}^p}(\mathbf{a}, \mathbf{b})^{1/p}
+\end{equation}
+は $\Sigma_n$ 上の距離を定め，
+\textbf{$p$-Wasserstein 距離}と呼ばれる．
+\end{definition}
+
+\begin{proposition}{Wasserstein 距離の距離公理}{wass-metric}
+$\mathrm{W}_p$ は $\Sigma_n$ 上の距離である．
+すなわち，
+\begin{enumerate}
+  \item $\mathrm{W}_p(\mathbf{a}, \mathbf{b}) \geq 0$，
+    等号は $\mathbf{a} = \mathbf{b}$ のとき，かつそのときに限る．
+  \item $\mathrm{W}_p(\mathbf{a}, \mathbf{b})
+    = \mathrm{W}_p(\mathbf{b}, \mathbf{a})$（対称性）．
+  \item $\mathrm{W}_p(\mathbf{a}, \mathbf{c})
+    \leq \mathrm{W}_p(\mathbf{a}, \mathbf{b})
+    + \mathrm{W}_p(\mathbf{b}, \mathbf{c})$（三角不等式）．
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+対称性は $\mathbf{D}$ の対称性から直ちに従う．
+非退化性は，$\mathbf{a} = \mathbf{b}$ なら
+$\mathbf{P}^\star = \diag(\mathbf{a})$ が最適で
+コスト 0 を達成し，
+$\mathbf{a} \neq \mathbf{b}$ なら
+$\mathbf{D}$ の正定値性から正のコストが必ず生じることによる．
+
+三角不等式の証明には\textbf{糊付け補題} (gluing lemma) を用いる．
+$\mathbf{P} \in \mathbf{U}(\mathbf{a}, \mathbf{b})$，
+$\mathbf{Q} \in \mathbf{U}(\mathbf{b}, \mathbf{c})$ を
+それぞれの最適カップリングとし，
+\[
+  \mathbf{S}_{i,k} \defeq
+  \sum_{j} \frac{\mathbf{P}_{i,j}\, \mathbf{Q}_{j,k}}{\tilde{\mathbf{b}}_j}
+\]
+と定義する（$\tilde{\mathbf{b}}_j = \mathbf{b}_j > 0$ のとき，
+$\mathbf{b}_j = 0$ なら $\tilde{\mathbf{b}}_j = 1$）．
+このとき $\mathbf{S} \in \mathbf{U}(\mathbf{a}, \mathbf{c})$ が
+確認でき，$\mathbf{S}$ の最適性と Minkowski の不等式から
+\[
+  \mathrm{W}_p(\mathbf{a}, \mathbf{c})
+  \leq \inner{\mathbf{D}^p}{\mathbf{S}}^{1/p}
+  \leq \mathrm{W}_p(\mathbf{a}, \mathbf{b})
+  + \mathrm{W}_p(\mathbf{b}, \mathbf{c})
+\]
+が得られる．
+\end{proof}
+
+\subsection{一般の Wasserstein 距離}\label{subsec:wasserstein-general}
+
+\begin{definition}{$p$-Wasserstein 距離（一般版）}{wasserstein-general}
+$\mathcal{X} = \mathcal{Y}$ を距離空間とし，
+$d$ をその距離関数とする．$p \geq 1$ に対し，
+\begin{equation}\label{eq:wasserstein-general}
+  \mathcal{W}_p(\alpha, \beta)
+  \defeq \mathcal{L}_{d^p}(\alpha, \beta)^{1/p}
+  = \left(
+    \min_{\pi \in \mathcal{U}(\alpha, \beta)}
+    \int d(x, y)^p\, \mathrm{d}\pi(x, y)
+  \right)^{1/p}
+\end{equation}
+を $\alpha, \beta \in \mathcal{M}^1_+(\mathcal{X})$ 間の
+\textbf{$p$-Wasserstein 距離}と呼ぶ．
+\end{definition}
+
+\begin{remark}{Wasserstein 距離と弱収束}{wass-weak}
+Wasserstein 距離の重要な性質として，
+$\mathcal{W}_p(\alpha_k, \alpha) \to 0$ は
+$\alpha_k$ の $\alpha$ への\textbf{弱収束}
+（$p$ 次モーメントの収束を加えたもの）と同値である．
+これは台の重なりを必要としないため，
+KL ダイバージェンス等の $f$-ダイバージェンスに比べて
+はるかに扱いやすい収束概念を与える．
+例えば，$\delta_x$ と $\delta_y$ の間の Wasserstein 距離は
+$\mathcal{W}_p(\delta_x, \delta_y) = d(x, y)$ であり，
+$x \to y$ のとき連続的に $0$ に収束する．
+\end{remark}
+
+
+% ============================================================
+\section{双対問題}\label{sec:dual}
+
+Kantorovich 問題は線形計画であるから，
+強い双対定理が適用でき，対応する\textbf{双対問題}が得られる．
+双対問題はアルゴリズムの設計においても，
+理論的な理解においても中心的な役割を果たす．
+
+\subsection{離散的な双対定式化}\label{subsec:dual-discrete}
+
+\begin{proposition}{Kantorovich 双対定理（離散版）}{kant-dual}
+Kantorovich 問題~\eqref{eq:kantorovich} の双対問題は
+\begin{equation}\label{eq:dual}
+  \mathbf{L_C}(\mathbf{a}, \mathbf{b})
+  = \max_{(\mathbf{f}, \mathbf{g}) \in \mathbf{R}(\mathbf{C})}
+  \inner{\mathbf{f}}{\mathbf{a}} + \inner{\mathbf{g}}{\mathbf{b}}
+\end{equation}
+であり，\textbf{強双対性}が成り立つ．
+ここで双対許容集合は
+\begin{equation}\label{eq:dual-feasible}
+  \mathbf{R}(\mathbf{C}) \defeq
+  \bigl\{
+    (\mathbf{f}, \mathbf{g}) \in \R^n \times \R^m
+    \;:\;
+    \forall\, (i,j),\;\;
+    \mathbf{f}_i + \mathbf{g}_j \leq \mathbf{C}_{i,j}
+  \bigr\}
+\end{equation}
+であり，$(\mathbf{f}, \mathbf{g})$ は
+\textbf{Kantorovich ポテンシャル}と呼ばれる．
+\end{proposition}
+
+\begin{proof}
+Kantorovich 問題~\eqref{eq:kantorovich}の
+Lagrangian を構成する．
+$\mathbf{f} \in \R^n$，$\mathbf{g} \in \R^m$ を
+それぞれ行和・列和の等式制約に対する Lagrange 乗数とすると，
+\begin{equation}\label{eq:lagrangian}
+  L(\mathbf{P}, \mathbf{f}, \mathbf{g})
+  = \inner{\mathbf{C}}{\mathbf{P}}
+  + \inner{\mathbf{a} - \mathbf{P}\, \mathbb{1}_m}{\mathbf{f}}
+  + \inner{\mathbf{b} - \mathbf{P}^\top \mathbb{1}_n}{\mathbf{g}}.
+\end{equation}
+$\mathbf{P} \geq 0$ の下で min と max を交換すると
+\[
+  \max_{\mathbf{f}, \mathbf{g}} \;
+  \inner{\mathbf{f}}{\mathbf{a}} + \inner{\mathbf{g}}{\mathbf{b}}
+  + \min_{\mathbf{P} \geq 0}
+  \inner{\mathbf{C} - \mathbf{f}\, \mathbb{1}_m^\top
+    - \mathbb{1}_n\, \mathbf{g}^\top}{\mathbf{P}}.
+\]
+$\mathbf{Q} \defeq \mathbf{C} - \mathbf{f} \oplus \mathbf{g}$
+として，
+$\min_{\mathbf{P} \geq 0} \inner{\mathbf{Q}}{\mathbf{P}}$
+は $\mathbf{Q} \geq 0$ のとき $0$，それ以外は $-\infty$
+であるから，制約 $\mathbf{f} \oplus \mathbf{g} \leq \mathbf{C}$
+の下での最大化問題が得られる．
+\end{proof}
+
+\subsection{倉庫と工場の比喩による直感的理解}\label{subsec:dual-intuition}
+
+双対問題の意味を，
+Kantorovich 問題を「倉庫から工場への資源輸送」として
+解釈することで理解しよう
+（原論文~\cite{PeyreCuturi2019} の Remark 2.10, 2.21 に基づく）．
+
+\paragraph{主問題（運送会社の視点）.}
+$n$ 個の倉庫と $m$ 個の工場がある．
+倉庫 $i$ には $\mathbf{a}_i$ 単位の資源が，
+工場 $j$ には $\mathbf{b}_j$ 単位の需要がある．
+倉庫 $i$ から工場 $j$ への輸送コストは
+$\mathbf{C}_{i,j}$ である．
+事業者は総コスト最小の輸送計画 $\mathbf{P}^\star$ を求め，
+$\inner{\mathbf{P}^\star}{\mathbf{C}}$ を運送会社に支払う．
+
+\paragraph{双対問題（外注業者の視点）.}
+事業者が輸送を外注業者に委託する場合を考える．
+外注業者は，倉庫 $i$ での集荷料 $\mathbf{f}_i$ と
+工場 $j$ への配送料 $\mathbf{g}_j$ を設定し，
+合計 $\inner{\mathbf{f}}{\mathbf{a}} + \inner{\mathbf{g}}{\mathbf{b}}$
+を事業者に請求する．
+
+事業者は各ルート $(i, j)$ について
+「外注料金 $\mathbf{f}_i + \mathbf{g}_j$ が
+直接の輸送コスト $\mathbf{C}_{i,j}$ を超えていないか？」
+を検証する．超えていれば自分で運ぶ方が安いので，
+外注業者の提案は却下される．
+
+したがって外注業者は，
+$\mathbf{f}_i + \mathbf{g}_j \leq \mathbf{C}_{i,j}$
+の制約の下で請求額を\textbf{最大化}する必要があり，
+これがまさに双対問題~\eqref{eq:dual}である．
+
+強双対性は，
+\textbf{外注業者が設定できる最大の料金}と
+\textbf{事業者が自分で運ぶ最小のコスト}が
+一致することを意味する．
+
+\subsection{相補性条件}\label{subsec:complementary-slackness}
+
+主問題と双対問題の最適解の間には，
+以下の\textbf{相補性条件} (complementary slackness) が成り立つ：
+\begin{equation}\label{eq:complementary}
+  \mathbf{P}^\star_{i,j} > 0
+  \quad \Longrightarrow \quad
+  \mathbf{f}^\star_i + \mathbf{g}^\star_j = \mathbf{C}_{i,j}.
+\end{equation}
+これは，質量が実際に流れるルートでは
+双対ポテンシャルの和がコストに\textbf{ぴったり等しく}なること，
+つまり「等しくないルートには質量は流れない」ことを意味する．
+
+倉庫・工場の比喩で言えば，
+実際に使われる輸送ルートでは
+外注業者の料金が直接輸送コストと完全に一致する
+ということである．
+
+\subsection{一般の測度への拡張}\label{subsec:dual-general}
+
+一般の確率測度に対しても，Kantorovich 双対は以下のように拡張される：
+\begin{equation}\label{eq:dual-general}
+  \mathcal{L}_c(\alpha, \beta)
+  = \sup_{(f, g) \in \mathcal{R}(c)}
+  \int_{\mathcal{X}} f\, \mathrm{d}\alpha
+  + \int_{\mathcal{Y}} g\, \mathrm{d}\beta
+\end{equation}
+ここで
+$\mathcal{R}(c) \defeq
+\{(f, g) \in \mathcal{C}(\mathcal{X}) \times \mathcal{C}(\mathcal{Y})
+: f(x) + g(y) \leq c(x, y)\}$
+は双対許容関数の集合であり，
+相補性条件は
+\[
+  \mathrm{Supp}(\pi^\star) \subset
+  \{(x, y) : f^\star(x) + g^\star(y) = c(x, y)\}
+\]
+と表される．
+
+
+% ============================================================
+\section{特殊ケース}\label{sec:special}
+
+最適輸送問題の一般的な計算量は
+$O(n^3 \log n)$（$n$ はサポート点数）であるが，
+いくつかの特殊なケースでは閉じた形の解が得られるか，
+はるかに効率的な計算が可能になる．
+
+\subsection{1次元の場合}\label{subsec:1d}
+
+$\mathcal{X} = \R$ 上の最適輸送は特に美しい構造を持つ．
+
+\begin{proposition}{1次元の閉形式解}{1d-formula}
+$\alpha, \beta$ を $\R$ 上の確率測度とし，
+累積分布関数をそれぞれ
+$\mathcal{C}_\alpha(x) = \alpha((-\infty, x])$，
+$\mathcal{C}_\beta(x) = \beta((-\infty, x])$
+とする．$p \geq 1$ に対し，
+\begin{equation}\label{eq:1d-formula}
+  \mathcal{W}_p(\alpha, \beta)^p
+  = \int_0^1
+  \bigl|\mathcal{C}_\alpha^{-1}(r) - \mathcal{C}_\beta^{-1}(r)\bigr|^p
+  \, \mathrm{d}r
+\end{equation}
+が成り立つ．ここで
+$\mathcal{C}_\alpha^{-1}(r) = \inf\{x : \mathcal{C}_\alpha(x) \geq r\}$
+は一般化逆関数（分位点関数）である．
+\end{proposition}
+
+直感的には，1次元ではソートが自然な対応を与えるため，
+最適写像は単調非減少関数
+$T = \mathcal{C}_\beta^{-1} \circ \mathcal{C}_\alpha$
+となる．
+
+\begin{example}{1次元経験分布間の Wasserstein 距離}{1d-empirical}
+同じ個数の点 $\alpha = \frac{1}{n}\sum_{i=1}^n \delta_{x_i}$，
+$\beta = \frac{1}{n}\sum_{i=1}^n \delta_{y_i}$
+（$x_1 \leq \cdots \leq x_n$，$y_1 \leq \cdots \leq y_n$ に
+ソート済み）に対しては，
+\[
+  \mathcal{W}_p(\alpha, \beta)^p
+  = \frac{1}{n}\sum_{i=1}^{n} |x_i - y_i|^p
+\]
+となる．つまり，ソートした順に一対一対応させるのが最適であり，
+計算量は $O(n \log n)$（ソートのコスト）で済む．
+\end{example}
+
+$p = 1$ の場合はさらに簡潔に，累積分布関数の
+$L^1$ ノルムで書ける：
+\[
+  \mathcal{W}_1(\alpha, \beta)
+  = \int_{\R}
+  \bigl|\mathcal{C}_\alpha(x) - \mathcal{C}_\beta(x)\bigr|
+  \, \mathrm{d}x.
+\]
+
+\subsection{ガウス分布の場合}\label{subsec:gaussian}
+
+$\R^d$ 上のガウス分布
+$\alpha = \mathcal{N}(\mathbf{m}_\alpha, \boldsymbol{\Sigma}_\alpha)$，
+$\beta = \mathcal{N}(\mathbf{m}_\beta, \boldsymbol{\Sigma}_\beta)$
+の間の $\mathcal{W}_2$ 距離には閉形式が存在する．
+
+\begin{theorem}{ガウス分布間の $\mathcal{W}_2$ 距離}{gaussian-w2}
+コスト $c(x, y) = \|x - y\|^2$ に対し，
+\begin{equation}\label{eq:gaussian-w2}
+  \mathcal{W}_2(\alpha, \beta)^2
+  = \|\mathbf{m}_\alpha - \mathbf{m}_\beta\|^2
+  + \mathcal{B}(\boldsymbol{\Sigma}_\alpha, \boldsymbol{\Sigma}_\beta)^2
+\end{equation}
+が成り立つ．ここで
+\begin{equation}\label{eq:bures}
+  \mathcal{B}(\boldsymbol{\Sigma}_\alpha, \boldsymbol{\Sigma}_\beta)^2
+  \defeq \tr\!\left(
+    \boldsymbol{\Sigma}_\alpha + \boldsymbol{\Sigma}_\beta
+    - 2\bigl(
+      \boldsymbol{\Sigma}_\alpha^{1/2}\,
+      \boldsymbol{\Sigma}_\beta\,
+      \boldsymbol{\Sigma}_\alpha^{1/2}
+    \bigr)^{1/2}
+  \right)
+\end{equation}
+は共分散行列間の \textbf{Bures 距離}である．
+最適 Monge 写像は
+$T(x) = \mathbf{m}_\beta + A(x - \mathbf{m}_\alpha)$，
+$A = \boldsymbol{\Sigma}_\alpha^{-1/2}
+\bigl(\boldsymbol{\Sigma}_\alpha^{1/2}
+\boldsymbol{\Sigma}_\beta
+\boldsymbol{\Sigma}_\alpha^{1/2}\bigr)^{1/2}
+\boldsymbol{\Sigma}_\alpha^{-1/2}$
+で与えられるアフィン写像である．
+\end{theorem}
+
+式~\eqref{eq:gaussian-w2}は，
+$\mathcal{W}_2$ 距離の2乗が
+平均の差のノルムと形状の違い（Bures 距離）に
+きれいに分解されることを示している．
+
+\begin{example}{1次元ガウス分布}{1d-gaussian}
+$d=1$ のとき $\boldsymbol{\Sigma}_\alpha = \sigma_\alpha^2$，
+$\boldsymbol{\Sigma}_\beta = \sigma_\beta^2$ なので，
+\[
+  \mathcal{W}_2(\alpha, \beta)^2
+  = (m_\alpha - m_\beta)^2 + (\sigma_\alpha - \sigma_\beta)^2.
+\]
+すなわち，1次元ガウスに関しては
+$(m, \sigma)$ 平面上のユークリッド距離が
+$\mathcal{W}_2$ 距離に一致する．
+\end{example}
+
+\subsection{Brenier の定理}\label{subsec:brenier}
+
+ガウス分布の閉形式解は，
+より一般的な Brenier の定理~\cite{Brenier1991} の
+特殊ケースとして理解できる．
+
+\begin{theorem}{Brenier の定理}{brenier}
+$\mathcal{X} = \mathcal{Y} = \R^d$，
+$c(x, y) = \|x - y\|^2$ とする．
+$\alpha$ が Lebesgue 測度に関して密度を持つならば，
+Kantorovich 問題~\eqref{eq:kantorovich-general}の
+最適カップリング $\pi^\star$ は一意であり，
+ある凸関数 $\varphi$ の勾配として表される
+Monge 写像 $T(x) = \nabla \varphi(x)$ のグラフ上に台を持つ：
+\[
+  \pi^\star = (\mathrm{Id}, \nabla \varphi)_\sharp \alpha.
+\]
+すなわち Kantorovich 緩和は厳密であり，
+最適写像は凸関数の勾配として一意に特徴づけられる．
+\end{theorem}
+
+この定理は「1次元では最適写像は単調非減少関数」
+という事実の多次元への一般化であり，
+凸関数の勾配が単調写像の高次元での正しい類似物であることを示している．
+
+\begin{remark}{Monge--Amp\`ere 方程式}{monge-ampere}
+Brenier の定理で現れる凸関数 $\varphi$ は，
+変数変換の公式~\eqref{eq:pushforward}を通じて
+非線形偏微分方程式
+\[
+  \det(\partial^2 \varphi(x))\, \rho_\beta(\nabla \varphi(x))
+  = \rho_\alpha(x)
+\]
+を満たす．これは \textbf{Monge--Amp\`ere 方程式}と呼ばれ，
+最適輸送と偏微分方程式の深い関係を象徴する等式である．
+\end{remark}
