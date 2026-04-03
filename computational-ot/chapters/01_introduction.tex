@@ -1,0 +1,344 @@
+
+\chapter{導入}\label{chap:introduction}
+
+% ============================================================
+\section{最適輸送とは何か}\label{sec:what-is-ot}
+
+最適輸送 (Optimal Transport; OT) の考え方は，
+身近な例を通じて直感的に理解できる．
+
+\begin{example}{砂山の移動}{sand}
+ある場所に砂山がある．
+この砂をすべて使って，別の場所に指定された形の砂山を作りたい．
+砂を運ぶにはコスト（距離や労力）がかかる．
+\textbf{総コストを最小にするように砂を移す方法}を求める問題が，
+最適輸送問題の原型である．
+\end{example}
+
+この問題を数学的に言い換えると，
+「ある確率分布 $\mu$ を別の確率分布 $\nu$ に変換する
+最もコストの低い方法を見つけよ」となる．
+
+\medskip
+
+一つの物を最短経路で運ぶのは容易であるが，
+\textbf{分布全体を同時に移す}場合は質的に異なる難しさがある．
+分布の各部分がどこへ向かうかを同時に決定しなければならず，
+全体としての最適性を考える必要があるからである．
+
+この問題の考察は18世紀の Monge~\cite{Monge1781} にまで遡り，
+以来 200 年以上にわたって数学の中心的な問題の一つであり続けてきた．
+近年では，確率分布間の「距離」としての側面や，
+効率的な計算手法の発展を通じて，
+機械学習やコンピュータビジョンの分野でも中核的なツールとなっている．
+
+% --- 簡単な図 ---
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[>=Stealth, scale=0.9]
+  % 左の分布
+  \foreach \x/\h in {0/1.2, 0.6/0.8, 1.2/1.6, 1.8/0.4} {
+    \fill[black!25] (\x, 0) rectangle (\x+0.5, \h);
+  }
+  \node[below] at (1.1, -0.3) {分布 $\mu$};
+
+  % 右の分布
+  \foreach \x/\h in {5/0.6, 5.6/1.4, 6.2/1.0, 6.8/1.0} {
+    \fill[black!50] (\x, 0) rectangle (\x+0.5, \h);
+  }
+  \node[below] at (6.1, -0.3) {分布 $\nu$};
+
+  % 矢印
+  \draw[->, thick, dashed] (2.6, 0.8) -- (4.7, 0.8)
+    node[midway, above] {\small 最小コストで輸送};
+\end{tikzpicture}
+\caption{最適輸送問題の概要：
+分布 $\mu$ の「質量」を分布 $\nu$ へ，総コスト最小で移す．}
+\label{fig:ot-overview}
+\end{figure}
+
+
+% ============================================================
+\section{歴史的背景}\label{sec:history}
+
+最適輸送の研究は，異なる時代・異なる分野で独立に発展してきた．
+以下にその流れを整理する．
+
+\subsection*{Monge の定式化（1781年）}
+
+フランスの数学者 Gaspard Monge は，
+土木工事における土砂の運搬問題として最適輸送を定式化した~\cite{Monge1781}．
+彼の問題は「各粒子をどこに送るか」を写像 $T$ で記述するもので，
+これが後に \textbf{Monge 問題}と呼ばれる．
+
+Monge の定式化は直感的だが，
+写像 $T$ の存在が保証されない場合があるなど，
+数学的に扱いづらい側面があった．
+
+\subsection*{ロジスティクスと経済学（1930--40年代）}
+
+Tolstoi~\cite{Tolstoi1930}（1930年）や
+Hitchcock~\cite{Hitchcock1941}（1941年）は，
+貨物輸送の最適化という実務的な動機から同種の問題を研究した．
+
+Kantorovich~\cite{Kantorovich1942}（1942年）は，
+Monge の写像 $T$ を\textbf{輸送計画}（カップリング）$\pi$
+に緩和するという画期的なアイデアを導入した．
+この緩和により問題は線形計画として定式化でき，
+双対理論を通じた豊かな数学的構造が明らかになった．
+Kantorovich はこの業績により1975年にノーベル経済学賞を受賞している．
+
+\subsection*{線形計画法との接続（1949年--）}
+
+Dantzig~\cite{Dantzig1951} が開発した単体法は，
+Kantorovich 緩和を数値的に解く最初の汎用的な手段を与えた．
+これにより最適輸送は，理論的な対象であると同時に
+\textbf{計算可能な}最適化問題となった．
+
+\subsection*{純粋数学への回帰（1990年代）}
+
+1990年代に入り，
+Brenier~\cite{Brenier1991} が凸性や偏微分方程式との
+深い関係を明らかにしたことで，
+最適輸送は純粋数学において大きな復興を遂げた．
+Villani による二つの教科書~\cite{Villani2003, Villani2009}
+がこの理論の体系化に大きく貢献している．
+
+\subsection*{計算手法の革新と応用の拡大（2000年代--）}
+
+2000年頃から，コンピュータビジョンの分野で
+最適輸送コストが \textbf{Earth Mover's Distance (EMD)}
+の名で注目を集めた~\cite{Rubner2000}．
+しかし，$n$ 点の離散分布に対する厳密解の計算量は $O(n^3 \log n)$ であり，
+大規模データへの適用は困難であった．
+
+この状況を劇的に変えたのが，
+Cuturi~\cite{Cuturi2013} による
+\textbf{エントロピー正則化}と \textbf{Sinkhorn アルゴリズム}の提案である．
+行列のスケーリング操作の反復のみで近似解が得られるため，
+GPU 上での並列計算とも相性がよく，
+計算量は $O(n^2)$ 程度にまで削減される．
+これを契機として，最適輸送は
+画像処理，自然言語処理，生成モデル，グラフ学習など
+データサイエンスの広範な領域で実用的なツールとなった．
+
+% --- タイムライン ---
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[>=Stealth, scale=0.85]
+  % 時間軸
+  \draw[->, thick] (-0.5, 0) -- (15.5, 0);
+  % 目盛りとラベル
+  \foreach \x/\yr/\lab in {
+    0/1781/{Monge},
+    2.5/1930/{Tolstoi},
+    3.8/1942/{Kantorovich},
+    5.5/1949/{Dantzig (LP)},
+    8/1991/{Brenier},
+    10.5/2000/{EMD},
+    13/2013/{Sinkhorn}%
+  } {
+    \fill (\x, 0) circle (2.5pt);
+    \node[below, font=\footnotesize] at (\x, -0.15) {\yr};
+    \node[above, font=\footnotesize, text width=2cm, align=center]
+      at (\x, 0.15) {\lab};
+  }
+\end{tikzpicture}
+\caption{最適輸送研究の主な転換点．}
+\label{fig:timeline}
+\end{figure}
+
+
+% ============================================================
+\section{なぜ最適輸送が重要か}\label{sec:why-ot}
+
+最適輸送が多くの分野で注目される理由は，
+それが確率分布間の「距離」として
+他の指標にはない優れた性質を持つことにある．
+
+\paragraph{(1) 台の幾何を反映する．}
+KL ダイバージェンスなどの $f$-ダイバージェンスは
+密度関数の比のみに基づくため，
+データが「空間のどこにあるか」という情報を直接には使わない．
+一方，最適輸送距離（Wasserstein 距離）は
+地点間のコスト $c(x, y)$ を通じて
+\textbf{台の幾何構造}を自然に取り込む．
+
+\begin{example}{離散分布の比較}{discrete-compare}
+$\mathcal{X} = \{0, 1, 2\}$ 上の3つの分布を考える：
+\begin{align*}
+  \mu &= (1,\ 0,\ 0), \\
+  \nu_1 &= (0,\ 1,\ 0), \\
+  \nu_2 &= (0,\ 0,\ 1).
+\end{align*}
+KL ダイバージェンスでは $\mathrm{KL}(\mu \| \nu_1)$
+も $\mathrm{KL}(\mu \| \nu_2)$ も（台が重ならないため）
+ともに $+\infty$ であり区別できない．
+しかし，コスト $c(x,y) = |x - y|$ のもとでの
+Wasserstein 距離では $W_1(\mu, \nu_1) = 1$ に対し
+$W_1(\mu, \nu_2) = 2$ となり，
+$\nu_2$ がより遠い分布であるという直感を正しく捉える．
+\end{example}
+
+\paragraph{(2) 弱収束と整合する．}
+Wasserstein 距離の収束は確率分布の弱収束と整合しており，
+生成モデル（GAN 等）の学習で
+勾配が消失しにくいという実用上の利点につながる．
+
+\paragraph{(3) 台の幾何的操作が自然に定義できる．}
+ユークリッド空間上の内挿・重心計算・勾配といった概念が，
+最適輸送の構造を通じて確率分布の空間上に自然に拡張される．
+これは画像のモーフィングやドメイン適応などで直接利用される．
+
+
+% ============================================================
+\section{本稿の構成と読み方}\label{sec:outline}
+
+本稿は，Peyré--Cuturi~\cite{PeyreCuturi2019} の全 10 章に対応する
+10 章構成である．各章の概要を以下にまとめる．
+
+\medskip
+
+\noindent
+\textbf{基礎理論}（第\ref{chap:introduction}--\ref{chap:theoretical}章）
+\begin{itemize}
+  \item \textbf{第\ref{chap:introduction}章}（本章）：
+    歴史的背景と動機，記号の導入．
+  \item \textbf{第\ref{chap:theoretical}章}：
+    ヒストグラムと測度，Monge 問題，Kantorovich 緩和，双対問題，
+    Wasserstein 距離の定義と基本性質．
+    本稿全体の数学的基盤を整える．
+\end{itemize}
+
+\medskip
+
+\noindent
+\textbf{離散問題の計算手法}（第\ref{chap:algorithmic}--\ref{chap:entropic}章）
+\begin{itemize}
+  \item \textbf{第\ref{chap:algorithmic}章}：
+    Kantorovich 問題の線形計画としての解法．
+    ネットワーク単体法，双対上昇法，オークションアルゴリズムなど，
+    厳密解を求めるアルゴリズムを扱う．
+  \item \textbf{第\ref{chap:entropic}章}：
+    エントロピー正則化と Sinkhorn アルゴリズム．
+    大規模問題に適用可能な近似計算の理論と実装を詳述する．
+\end{itemize}
+
+\medskip
+
+\noindent
+\textbf{連続と離散の接点}（第\ref{chap:semidiscrete}--\ref{chap:dynamic}章）
+\begin{itemize}
+  \item \textbf{第\ref{chap:semidiscrete}章}：
+    半離散最適輸送．連続分布から離散分布への輸送を扱い，
+    $c$変換や確率的最適化手法を紹介する．
+  \item \textbf{第\ref{chap:w1}章}：
+    $\mathcal{W}_1$ 最適輸送の特殊な構造と，
+    距離空間・ユークリッド空間・グラフ上での性質．
+  \item \textbf{第\ref{chap:dynamic}章}：
+    Benamou--Brenier の動的定式化．
+    最適輸送を時間発展する測度の経路として捉える視点を導入する．
+\end{itemize}
+
+\medskip
+
+\noindent
+\textbf{応用と拡張}（第\ref{chap:divergences}--\ref{chap:extensions}章）
+\begin{itemize}
+  \item \textbf{第\ref{chap:divergences}章}：
+    $\varphi$-ダイバージェンス，MMD など他の統計的距離との関係と比較．
+  \item \textbf{第\ref{chap:variational}章}：
+    Wasserstein 距離を損失関数として用いる最適化問題．
+    重心計算，勾配流，辞書学習などへの応用．
+  \item \textbf{第\ref{chap:extensions}章}：
+    多周辺問題，非均衡最適輸送，
+    スライス Wasserstein 距離，Gromov--Wasserstein 距離など，
+    OT の諸拡張．
+\end{itemize}
+
+\medskip
+
+各章は原則として独立に読めるように構成しているが，
+第\ref{chap:theoretical}章の基礎理論は他の章の前提となるため，
+最初に通読することを推奨する．
+第\ref{chap:entropic}章の Sinkhorn アルゴリズムは
+計算上の応用で繰り返し参照されるので，
+応用寄りの興味がある読者は第\ref{chap:theoretical}章のあとに
+直接進んでもよい．
+
+
+% ============================================================
+\section{記号一覧}\label{sec:notation}
+
+本稿で用いる主な記号をまとめる．
+初出時にも改めて説明するので，
+本節は必要に応じて参照すればよい．
+
+\subsection*{基本的な記号}
+
+\begin{tabular}{lp{28em}}
+  $[\![ n ]\!]$ & 整数の集合 $\{1, \ldots, n\}$ \\[3pt]
+  $\mathbb{1}_{n,m}$ & 成分がすべて $1$ の $n \times m$ 行列．
+    $\mathbb{1}_n$ は長さ $n$ の全 1 ベクトル \\[3pt]
+  $\mathbb{I}_n$ & $n \times n$ 単位行列 \\[3pt]
+  $\diag(u)$ & $u \in \R^n$ を対角成分に持つ対角行列 \\[3pt]
+  $\inner{\cdot}{\cdot}$ & ベクトルの内積．
+    行列に対しては Frobenius 内積
+    $\inner{A}{B} = \tr(A^\top B)$
+\end{tabular}
+
+\subsection*{確率分布と測度}
+
+\begin{tabular}{lp{28em}}
+  $\Sigma_n$ & $n$ 次元確率単体
+    $\bigl\{ \mathbf{a} \in \R^n_+ : \sum_i \mathbf{a}_i = 1 \bigr\}$ \\[3pt]
+  $(\mathbf{a}, \mathbf{b})$ & ヒストグラム（離散確率ベクトル），
+    $\mathbf{a} \in \Sigma_n,\ \mathbf{b} \in \Sigma_m$ \\[3pt]
+  $(\alpha, \beta)$ & 空間 $(\mathcal{X}, \mathcal{Y})$ 上の（一般の）確率測度 \\[3pt]
+  $\delta_x$ & 点 $x$ に集中する Dirac 測度 \\[3pt]
+  $\alpha = \sum_i \mathbf{a}_i \delta_{x_i}$ & 離散測度の表現 \\[3pt]
+  $\rho_\alpha = \frac{\mathrm{d}\alpha}{\mathrm{d}x}$ &
+    Lebesgue 測度に関する $\alpha$ の密度関数
+\end{tabular}
+
+\subsection*{最適輸送の基本量}
+
+\begin{tabular}{lp{28em}}
+  $c(x,y)$ & 地上コスト (ground cost)：$x$ から $y$ への輸送の単位コスト \\[3pt]
+  $\mathbf{C}_{i,j}$ & 離散的なコスト行列 $\mathbf{C}_{i,j} = c(x_i, y_j)$ \\[3pt]
+  $T : \mathcal{X} \to \mathcal{Y}$ & Monge 写像 \\[3pt]
+  $\pi$ & 輸送計画（カップリング測度） \\[3pt]
+  $\mathcal{U}(\alpha, \beta)$ &
+    $\alpha, \beta$ のカップリング全体の集合．
+    離散の場合は $\mathbf{U}(\mathbf{a}, \mathbf{b})$ \\[3pt]
+  $(f, g)$ & 双対ポテンシャル．離散の場合は $(\mathbf{f}, \mathbf{g})$ \\[3pt]
+  $\mathcal{L}_c(\alpha, \beta)$ &
+    コスト $c$ に関する最適輸送コスト．
+    離散の場合は $\mathbf{L_C}(\mathbf{a}, \mathbf{b})$ \\[3pt]
+  $\mathcal{W}_p(\alpha, \beta)$ &
+    $p$-Wasserstein 距離．
+    離散の場合は $\mathbf{W}_p(\mathbf{a}, \mathbf{b})$
+\end{tabular}
+
+\subsection*{エントロピー正則化}
+
+\begin{tabular}{lp{28em}}
+  $\varepsilon$ & 正則化パラメータ \\[3pt]
+  $\mathbf{K} \defeq e^{-\mathbf{C}/\varepsilon}$ &
+    Gibbs カーネル（Sinkhorn アルゴリズムの核） \\[3pt]
+  $(\mathbf{u}, \mathbf{v})$ &
+    Sinkhorn スケーリング変数
+    $(\mathbf{u}, \mathbf{v}) \defeq (e^{\mathbf{f}/\varepsilon},\, e^{\mathbf{g}/\varepsilon})$
+\end{tabular}
+
+\subsection*{その他の演算}
+
+\begin{tabular}{lp{28em}}
+  $f \oplus g$ & $(f \oplus g)(x,y) \defeq f(x) + g(y)$．
+    離散の場合 $\mathbf{f} \oplus \mathbf{g}
+    = \mathbf{f}\, \mathbb{1}_m^\top + \mathbb{1}_n\, \mathbf{g}^\top$ \\[3pt]
+  $\alpha \otimes \beta$ & 積測度：
+    $\int g\, \mathrm{d}(\alpha \otimes \beta)
+    = \int\!\!\int g(x,y)\, \mathrm{d}\alpha(x)\, \mathrm{d}\beta(y)$ \\[3pt]
+  $\mathbf{u} \odot \mathbf{v}$ & 成分ごとの積（Hadamard 積）
+\end{tabular}

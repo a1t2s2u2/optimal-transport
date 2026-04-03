@@ -10,3 +10,13 @@ note/*.toc
 note/*.synctex.gz
 note/*.fls
 note/*.fdb_latexmk
+computational-ot/*.aux
+computational-ot/*.dvi
+computational-ot/*.log
+computational-ot/*.out
+computational-ot/*.toc
+computational-ot/*.bbl
+computational-ot/*.blg
+computational-ot/*.synctex.gz
+computational-ot/*.fls
+computational-ot/*.fdb_latexmk

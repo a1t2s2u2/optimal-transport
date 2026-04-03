@@ -1,0 +1,42 @@
+
+\documentclass[uplatex, dvipdfmx]{jsreport}
+
+\input{preamble}
+
+\title{計算最適輸送についての解説\\
+\large Peyré--Cuturi~\cite{PeyreCuturi2019} に基づく}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+最適輸送 (Optimal Transport; OT) は，
+ある確率分布を別の確率分布へ最小コストで移す方法を求める理論であり，
+数学・経済学・データサイエンスにわたる幅広い応用を持つ．
+本稿は Peyré--Cuturi による総説論文
+\emph{Computational Optimal Transport}~\cite{PeyreCuturi2019}
+に基づき，理論的基礎から計算手法・応用までを解説する．
+原論文の構成に沿いつつも，具体例や直感的な説明を補い，
+数理最適化や機械学習の基礎を持つ読者が
+計算最適輸送の全体像を把握できることを目指す．
+\end{abstract}
+
+\tableofcontents
+
+\input{chapters/01_introduction}
+% \input{chapters/02_theoretical}
+% \input{chapters/03_algorithmic}
+% \input{chapters/04_entropic}
+% \input{chapters/05_semidiscrete}
+% \input{chapters/06_w1}
+% \input{chapters/07_dynamic}
+% \input{chapters/08_divergences}
+% \input{chapters/09_variational}
+% \input{chapters/10_extensions}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

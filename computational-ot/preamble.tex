@@ -1,0 +1,68 @@
+% ============================================================
+%  preamble.tex — Computational Optimal Transport 解説ノート共通設定
+% ============================================================
+
+% --- 基本パッケージ ---
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[dvipdfmx]{hyperref}
+\usepackage{pxjahyper}
+
+% --- 図・表 ---
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing,calc,arrows.meta,patterns,positioning}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+% --- 定理環境 (tcolorbox) ---
+\usepackage{tcolorbox}
+\tcbuselibrary{theorems,breakable}
+
+\newtcbtheorem[number within=section]{definition}{定義}{
+  colback=white, colframe=black, fonttitle=\bfseries, breakable
+}{def}
+\newtcbtheorem[use counter from=definition]{proposition}{命題}{
+  colback=white, colframe=black, fonttitle=\bfseries, breakable
+}{prop}
+\newtcbtheorem[use counter from=definition]{theorem}{定理}{
+  colback=white, colframe=black, fonttitle=\bfseries, breakable
+}{thm}
+\newtcbtheorem[use counter from=definition]{remark}{注意}{
+  colback=white, colframe=black, fonttitle=\bfseries, breakable
+}{rem}
+\newtcbtheorem[use counter from=definition]{example}{例}{
+  colback=white, colframe=black, fonttitle=\bfseries, breakable
+}{ex}
+\newtcbtheorem[use counter from=definition]{setting}{設定}{
+  colback=white, colframe=black, fonttitle=\bfseries, breakable
+}{set}
+\tcolorboxenvironment{proof}{
+  colback=white, colframe=black!20,
+  leftrule=2pt, rightrule=0pt, toprule=0pt, bottomrule=0pt,
+  breakable
+}
+
+% --- アルゴリズム環境 ---
+\newcounter{algcounter}[section]
+\newtcolorbox{algorithm}[1]{
+  colback=white, colframe=black!70,
+  fonttitle=\bfseries,
+  title={Algorithm~\refstepcounter{algcounter}\thealgcounter\label{#1}},
+  boxrule=0.8pt
+}
+
+% --- 便利マクロ ---
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\E}{\mathbb{E}}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\KL}{KL}
+\newcommand{\abs}[1]{\lvert #1 \rvert}
+\newcommand{\norm}[1]{\lVert #1 \rVert}
+\newcommand{\inner}[2]{\langle #1,\, #2 \rangle}
+\newcommand{\defeq}{\overset{\mathrm{def}}{=}}
+
+% --- 参考文献 ---
+\usepackage[numbers,sort&compress]{natbib}
