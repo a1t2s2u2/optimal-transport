@@ -1,3 +1,503 @@
 
 \chapter{アルゴリズム的基礎}\label{chap:algorithmic}
-% TODO: 執筆予定
+
+本章では，離散的な Kantorovich 問題を\textbf{厳密に}解くための
+アルゴリズムを扱う．
+主問題（線形計画）と双対問題の構造を活用する3つのアプローチ
+--- ネットワーク単体法，双対上昇法，オークションアルゴリズム ---
+を紹介する．
+
+これらのアルゴリズムの起源は第二次世界大戦前後に遡る．
+Dantzig~\cite{Dantzig1951} が単体法を開発した主な動機の一つが
+まさに輸送問題であり，最適輸送は線形計画法の発展と密接に関わってきた．
+
+
+% ============================================================
+\section{Kantorovich 問題の線形計画としての表現}\label{sec:kant-lp}
+
+第\ref{chap:theoretical}章で導入した Kantorovich 問題
+\[
+  \mathbf{L_C}(\mathbf{a}, \mathbf{b})
+  = \min_{\mathbf{P} \in \mathbf{U}(\mathbf{a}, \mathbf{b})}
+  \inner{\mathbf{C}}{\mathbf{P}}
+\]
+を標準的な線形計画の形に書き直そう．
+
+行列 $\mathbf{P} \in \R^{n \times m}$ を
+列ごとに縦に並べたベクトル $\mathbf{p} \in \R^{nm}$ に変換し，
+制約行列
+\[
+  \mathbf{A} =
+  \begin{bmatrix}
+    \mathbb{1}_n^\top \otimes \mathbb{I}_m \\
+    \mathbb{I}_n \otimes \mathbb{1}_m^\top
+  \end{bmatrix}
+  \in \R^{(n+m) \times nm}
+\]
+を用いると，Kantorovich 問題は標準形の線形計画
+\begin{equation}\label{eq:lp-standard}
+  \min_{\substack{\mathbf{p} \in \R^{nm}_+ \\
+  \mathbf{A}\mathbf{p} = \begin{bsmallmatrix} \mathbf{a} \\ \mathbf{b} \end{bsmallmatrix}}}
+  \mathbf{c}^\top \mathbf{p}
+\end{equation}
+と書ける．
+ここで $\mathbf{c} \in \R^{nm}$ は
+コスト行列 $\mathbf{C}$ を列ごとに並べたベクトルである．
+
+対応する双対問題は
+$\mathbf{h} = \bigl(\begin{smallmatrix} \mathbf{f} \\ \mathbf{g} \end{smallmatrix}\bigr) \in \R^{n+m}$ として
+\begin{equation}\label{eq:lp-dual}
+  \max_{\substack{\mathbf{h} \in \R^{n+m} \\
+  \mathbf{A}^\top \mathbf{h} \leq \mathbf{c}}}
+  \begin{bmatrix} \mathbf{a} \\ \mathbf{b} \end{bmatrix}^\top \mathbf{h}
+\end{equation}
+であり，第\ref{chap:theoretical}章の
+Kantorovich 双対（命題\ref{prop:kant-dual}）に一致する．
+
+\begin{remark}{制約の冗長性}{constraint-redundancy}
+行の和制約 $n$ 本と列の和制約 $m$ 本の計 $n+m$ 本のうち，
+1本は他の制約から導かれる
+（$\sum_i \mathbf{a}_i = \sum_j \mathbf{b}_j = 1$ であるため）．
+よって実質的な等式制約は $n+m-1$ 本である．
+この冗長性は，双対変数 $(\mathbf{f}, \mathbf{g})$ に
+定数の自由度が残ることに対応する．
+\end{remark}
+
+
+% ============================================================
+\section{$\mathbf{C}$変換}\label{sec:c-transform}
+
+双対問題の構造を活かして，
+変数の一方を固定したときに
+もう一方を最適に選ぶ操作を\textbf{$\mathbf{C}$変換}と呼ぶ．
+これは双対問題の解法やオークションアルゴリズムの
+基本的な構成要素となる．
+
+\begin{definition}{$\mathbf{C}$変換と $\bar{\mathbf{C}}$変換}{c-transform}
+双対ポテンシャル $\mathbf{f} \in \R^n$ に対し，
+その\textbf{$\mathbf{C}$変換} $\mathbf{f}^{\mathbf{C}} \in \R^m$ を
+\begin{equation}\label{eq:c-transform}
+  (\mathbf{f}^{\mathbf{C}})_j
+  \defeq \min_{i \in \{1,\ldots,n\}} \mathbf{C}_{i,j} - \mathbf{f}_i
+\end{equation}
+で定義する．
+同様に，$\mathbf{g} \in \R^m$ の
+$\bar{\mathbf{C}}$\textbf{変換} $\mathbf{g}^{\bar{\mathbf{C}}} \in \R^n$ を
+\begin{equation}\label{eq:cbar-transform}
+  (\mathbf{g}^{\bar{\mathbf{C}}})_i
+  \defeq \min_{j \in \{1,\ldots,m\}} \mathbf{C}_{i,j} - \mathbf{g}_j
+\end{equation}
+で定義する．
+\end{definition}
+
+$\mathbf{C}$変換の意味は明快である：
+$\mathbf{f}$ を固定したとき，双対制約
+$\mathbf{f}_i + \mathbf{g}_j \leq \mathbf{C}_{i,j}$
+をすべての $i$ について満たす $\mathbf{g}_j$ の最大値が
+$(\mathbf{f}^{\mathbf{C}})_j$ である．
+したがって，$\mathbf{f}$ に対する最良の相方として
+$\mathbf{g} = \mathbf{f}^{\mathbf{C}}$ を選ぶことで
+双対目的関数が改善される：
+\[
+  \inner{\mathbf{f}}{\mathbf{a}} + \inner{\mathbf{g}}{\mathbf{b}}
+  \leq
+  \inner{\mathbf{f}}{\mathbf{a}} + \inner{\mathbf{f}^{\mathbf{C}}}{\mathbf{b}}.
+\]
+
+$\mathbf{C}$変換と $\bar{\mathbf{C}}$変換を交互に適用すると
+双対目的関数は単調非減少になるが，有限回で不動点に到達する
+（3回の変換で安定する）：
+\[
+  \mathbf{f}^{\mathbf{C}\bar{\mathbf{C}}\mathbf{C}} = \mathbf{f}^{\mathbf{C}}.
+\]
+
+\begin{example}{$\mathbf{C}$変換の計算}{c-transform-example}
+$n = m = 2$，
+$\mathbf{C} = \bigl(\begin{smallmatrix} 1 & 3 \\ 4 & 2 \end{smallmatrix}\bigr)$，
+$\mathbf{f} = (0,\; 0)$ とする．
+\begin{align*}
+  (\mathbf{f}^{\mathbf{C}})_1
+  &= \min(1-0,\; 4-0) = 1, \\
+  (\mathbf{f}^{\mathbf{C}})_2
+  &= \min(3-0,\; 2-0) = 2.
+\end{align*}
+よって $\mathbf{f}^{\mathbf{C}} = (1, 2)$ であり，
+制約 $\mathbf{f}_i + \mathbf{g}_j \leq \mathbf{C}_{i,j}$
+はすべて満たされる（等号が成立するのは
+$(1,1)$: $0+1=1$ と $(2,2)$: $0+2=2$）．
+\end{example}
+
+
+% ============================================================
+\section{相補性条件と最適性判定}\label{sec:complementary}
+
+第\ref{chap:theoretical}章で述べた相補性条件を
+アルゴリズムの視点から整理する．
+
+\begin{definition}{相補性}{complementarity-def}
+行列 $\mathbf{P} \in \R^{n \times m}$ とベクトル対
+$(\mathbf{f}, \mathbf{g})$ がコスト行列 $\mathbf{C}$ に関して
+\textbf{相補的} (complementary) であるとは，
+\[
+  \mathbf{P}_{i,j} > 0
+  \quad \Longrightarrow \quad
+  \mathbf{f}_i + \mathbf{g}_j = \mathbf{C}_{i,j}
+\]
+がすべての $(i,j)$ について成り立つことをいう．
+\end{definition}
+
+\begin{proposition}{相補的な実行可能解は最適}{comp-optimal}
+$\mathbf{P} \in \mathbf{U}(\mathbf{a}, \mathbf{b})$ と
+$(\mathbf{f}, \mathbf{g}) \in \mathbf{R}(\mathbf{C})$ が
+相補的ならば，$\mathbf{P}$ は主問題の最適解，
+$(\mathbf{f}, \mathbf{g})$ は双対問題の最適解である．
+\end{proposition}
+
+\begin{proof}
+弱双対性より
+$\mathbf{L_C}(\mathbf{a}, \mathbf{b})
+\leq \inner{\mathbf{P}}{\mathbf{C}}$ かつ
+$\inner{\mathbf{f}}{\mathbf{a}} + \inner{\mathbf{g}}{\mathbf{b}}
+\leq \mathbf{L_C}(\mathbf{a}, \mathbf{b})$．
+相補性から
+\[
+  \inner{\mathbf{P}}{\mathbf{C}}
+  = \inner{\mathbf{P}}{\mathbf{f} \oplus \mathbf{g}}
+  = \inner{\mathbf{f}}{\mathbf{a}} + \inner{\mathbf{g}}{\mathbf{b}}
+\]
+が成り立つので，不等式が連鎖的に等号になり両方が最適である．
+\end{proof}
+
+この命題は，以下で述べるすべてのアルゴリズムの
+正当性の基盤となる：
+\textbf{実行可能かつ相補的な主・双対の組を見つければ，
+それが最適解}である．
+
+
+% ============================================================
+\section{輸送多面体の頂点構造}\label{sec:transport-polytope}
+
+カップリングの集合 $\mathbf{U}(\mathbf{a}, \mathbf{b})$ は
+$\R^{n \times m}$ の凸多面体（\textbf{輸送多面体}）である．
+線形計画の基本定理から，最適解はこの多面体の
+\textbf{頂点}（端点）で達成される．
+輸送多面体の頂点は，次の意味でスパースである．
+
+\begin{proposition}{頂点の木構造}{extremal-tree}
+$\mathbf{P}$ が $\mathbf{U}(\mathbf{a}, \mathbf{b})$ の
+頂点ならば，$\mathbf{P}_{i,j} > 0$ となるインデックスの集合
+$S(\mathbf{P}) = \{(i,j) : \mathbf{P}_{i,j} > 0\}$ を辺集合とする
+二部グラフ $G(\mathbf{P})$ は閉路を含まない（森である）．
+特に，非零成分の個数は高々 $n + m - 1$ 個である．
+\end{proposition}
+
+\begin{proof}
+背理法による．$G(\mathbf{P})$ が閉路を含むと仮定すると，
+閉路に沿って交互に $+\varepsilon$, $-\varepsilon$ を加えた
+2つのカップリング $\mathbf{Q}$, $\mathbf{R}$ が構成でき，
+$\mathbf{P} = (\mathbf{Q} + \mathbf{R})/2$ となるが，
+$\mathbf{Q} \neq \mathbf{R}$ であるから
+$\mathbf{P}$ が頂点であることに矛盾する．
+閉路のない $n + m$ 頂点のグラフの辺数は高々 $n + m - 1$ である．
+\end{proof}
+
+\begin{remark}{北西隅法}{nw-corner}
+輸送多面体の頂点を簡便に一つ求めるヒューリスティックとして
+\textbf{北西隅法} (North-West corner rule) がある．
+$\mathbf{P}_{1,1} = \min(\mathbf{a}_1, \mathbf{b}_1)$ と設定し，
+行または列の制約が飽和するごとにインデックスを進めて
+$\mathbf{P}_{n,m}$ まで値を決定する．
+得られる $\mathbf{P}$ は高々 $n + m - 1$ 個の非零成分を持ち，
+$\mathbf{U}(\mathbf{a}, \mathbf{b})$ の頂点になる．
+
+この解は最適とは限らないが，
+ネットワーク単体法の初期解として利用できる．
+\end{remark}
+
+\begin{example}{北西隅法}{nw-example}
+$\mathbf{a} = (0.2,\; 0.5,\; 0.3)$,
+$\mathbf{b} = (0.5,\; 0.1,\; 0.4)$ とする．
+
+\[
+  \mathbf{P}^{\mathrm{NW}} =
+  \begin{pmatrix}
+    0.2 & 0 & 0 \\
+    0.3 & 0.1 & 0.1 \\
+    0 & 0 & 0.3
+  \end{pmatrix}
+\]
+
+非零成分は 4 個であり，$n + m - 1 = 5$ 以下を満たす．
+\end{example}
+
+
+% ============================================================
+\section{ネットワーク単体法}\label{sec:network-simplex}
+
+\textbf{ネットワーク単体法}は，
+輸送問題の木構造を活用した単体法の特殊版であり，
+実用上最も広く使われる厳密解法の一つである．
+
+\subsection{アルゴリズムの概要}\label{subsec:ns-overview}
+
+アルゴリズムは以下のサイクルを繰り返す：
+
+\begin{enumerate}
+  \item \textbf{初期化}：
+    北西隅法等で頂点解 $\mathbf{P}$ を求め，
+    そのサポートグラフ $G(\mathbf{P})$（木）を構成する．
+  \item \textbf{双対変数の計算}：
+    $G(\mathbf{P})$ の辺 $(i,j)$ について
+    $\mathbf{f}_i + \mathbf{g}_j = \mathbf{C}_{i,j}$
+    を満たす $(\mathbf{f}, \mathbf{g})$ を求める．
+    木の適当な根を選び $\mathbf{f}_{\mathrm{root}} = 0$ として，
+    幅優先・深さ優先探索で順に値を決定する．
+  \item \textbf{最適性の判定}：
+    すべての $(i,j)$ について
+    $\mathbf{f}_i + \mathbf{g}_j \leq \mathbf{C}_{i,j}$
+    ならば最適であり，終了する．
+  \item \textbf{ピボット操作}：
+    $\mathbf{f}_i + \mathbf{g}_j > \mathbf{C}_{i,j}$ なる
+    違反辺 $(i,j)$ を $G$ に追加すると閉路ができる．
+    閉路に沿って流量を調整し，
+    流量がゼロになった辺を除去して再び木に戻す．
+\end{enumerate}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[>=Stealth,
+  box/.style={draw, rounded corners, minimum width=5em, minimum height=2em,
+              font=\small, align=center}]
+  \node[box] (init) at (0, 0) {初期化\\(北西隅法)};
+  \node[box] (dual) at (4, 0) {双対変数\\を計算};
+  \node[box] (check) at (8, 0) {最適性\\の判定};
+  \node[box] (pivot) at (8, -2) {ピボット\\操作};
+  \node[font=\small] (end) at (12, 0) {最適解};
+  \draw[->] (init) -- (dual);
+  \draw[->] (dual) -- (check);
+  \draw[->] (check) -- (end) node[midway, above]{\scriptsize Yes};
+  \draw[->] (check) -- (pivot) node[midway, right]{\scriptsize No};
+  \draw[->] (pivot) -| (dual);
+\end{tikzpicture}
+\caption{ネットワーク単体法の処理フロー．}
+\label{fig:network-simplex-flow}
+\end{figure}
+
+\subsection{ピボット操作の詳細}\label{subsec:ns-pivot}
+
+ステップ 4 の操作をもう少し詳しく説明する．
+
+$\mathbf{f}_i + \mathbf{g}_j > \mathbf{C}_{i,j}$ を満たす
+違反辺 $(i, j)$ を木 $G$ に追加すると，
+$G$ にちょうど一つの閉路ができる．
+この閉路上の辺を，$(i,j)$ を含む方向を「正の辺」，
+逆方向を「負の辺」と分類する．
+
+負の辺のうち流量が最小のもの
+$\theta = \min\{\mathbf{P}_{i',j'} : (i',j') \text{ は負の辺}\}$
+を見つけ，正の辺に $+\theta$，負の辺に $-\theta$ を加える．
+流量がゼロになった辺を $G$ から除去すると再び木に戻る．
+
+この操作により，主問題のコストは
+\[
+  \inner{\tilde{\mathbf{P}}}{\mathbf{C}} - \inner{\mathbf{P}}{\mathbf{C}}
+  = \theta \bigl(\mathbf{C}_{i,j} - (\mathbf{f}_i + \mathbf{g}_j)\bigr)
+  < 0
+\]
+と厳密に減少する（$\theta > 0$ のとき）．
+
+\subsection{計算量}\label{subsec:ns-complexity}
+
+ネットワーク単体法の多項式時間性は
+Orlin~(1997) により初めて証明された．
+その後の改良により，計算量は
+\[
+  O\bigl((n+m)\, nm\, \log(n+m)\, \log\bigl((n+m)\|\mathbf{C}\|_\infty\bigr)\bigr)
+\]
+に抑えられることが知られている．
+実用的には，後述のエントロピー正則化法より遅いが，
+\textbf{厳密解}が得られる利点がある．
+
+
+% ============================================================
+\section{双対上昇法}\label{sec:dual-ascent}
+
+ネットワーク単体法が主問題の頂点解を反復的に改善するのに対し，
+\textbf{双対上昇法}は
+双対実行可能解 $(\mathbf{f}, \mathbf{g})$ を
+反復的に改善して最適に到達する．
+
+\subsection{基本的な考え方}\label{subsec:da-idea}
+
+双対実行可能解 $(\mathbf{f}, \mathbf{g}) \in \mathbf{R}(\mathbf{C})$
+に対し，$\mathbf{f}_i + \mathbf{g}_j = \mathbf{C}_{i,j}$
+が等号で成立する辺の集合を\textbf{均衡辺} (balanced edge) と呼ぶ．
+それ以外の辺（$\mathbf{f}_i + \mathbf{g}_j < \mathbf{C}_{i,j}$）を
+\textbf{非活性辺}と呼ぶ．
+
+双対上昇法では，
+均衡辺のみを使って主制約を満たすカップリング $\mathbf{P}$
+が構成できるかどうかを判定し，
+構成できなければ $(\mathbf{f}, \mathbf{g})$ を修正して
+双対目的関数を増加させる．
+
+\subsection{最大流との関係}\label{subsec:da-maxflow}
+
+具体的には，均衡辺のみからなる二部グラフに
+仮想的な始点 $s$ と終点 $t$ を追加し，
+$s$ から各 $i$ に容量 $\mathbf{a}_i$ の辺を，
+各 $j$ から $t$ に容量 $\mathbf{b}_j$ の辺を張る．
+この容量付きグラフ上の\textbf{最大流}が 1（= 全質量）であれば，
+得られたフローがそのまま主問題の最適解 $\mathbf{P}$ を与える．
+
+最大流が 1 未満の場合は，
+Ford--Fulkerson のラベリングアルゴリズムにより
+飽和していないノードの集合 $S \subset \{1,\ldots,n\}$，
+$S' \subset \{1,\ldots,m\}$ が特定される．
+$\mathbf{f}$ の $S$ 成分を $\varepsilon$ だけ増やし，
+$\mathbf{g}$ の $S'$ 成分を $\varepsilon$ だけ減らす更新
+\[
+  (\tilde{\mathbf{f}}, \tilde{\mathbf{g}})
+  = (\mathbf{f}, \mathbf{g})
+  + \varepsilon(\mathbb{1}_S, -\mathbb{1}_{S'})
+\]
+を行う（$\varepsilon$ は双対実行可能性を保つ最大値）．
+この更新により双対目的関数は厳密に増加する．
+
+\subsection{Hungarian 法}\label{subsec:hungarian}
+
+一様な割当問題
+$\mathbf{a} = \mathbf{b} = \mathbb{1}_n / n$ の場合，
+上記の双対上昇法は
+\textbf{Hungarian 法}（Kuhn, 1955）に帰着される．
+その計算量は $O(n^3)$ であり，
+割当問題に対する最良の厳密解法の一つである．
+
+
+% ============================================================
+\section{オークションアルゴリズム}\label{sec:auction}
+
+\textbf{オークションアルゴリズム}
+（Bertsekas, 1981）は，
+割当問題に特化した双対上昇法であり，
+経済的なオークションの比喩で理解できる．
+
+\subsection{問題設定と直感}\label{subsec:auction-intuition}
+
+$n$ 人の入札者（$\alpha$ の点に対応）が
+$n$ 個の品物（$\beta$ の点に対応）を競り落とすことを考える．
+品物 $j$ には\textbf{価格} $\mathbf{g}_j$ が付いており，
+入札者 $i$ にとって品物 $j$ の正味の利得は
+$\mathbf{C}_{i,j} - \mathbf{g}_j$（小さいほど良い）である．
+
+\subsection{アルゴリズムの手順}\label{subsec:auction-steps}
+
+アルゴリズムは，
+未割当の入札者集合 $S$，部分割当 $\xi$，
+価格ベクトル $\mathbf{g}$ の三つ組を反復的に更新する．
+各反復で，未割当の入札者 $i \notin S$ が以下を行う：
+
+\begin{enumerate}
+  \item \textbf{入札}：
+    $i$ にとっての最良の品物 $j_i^1$ と次善の品物 $j_i^2$ を求める：
+    \[
+      j_i^1 \in \argmin_{j} \mathbf{C}_{i,j} - \mathbf{g}_j,
+      \quad
+      j_i^2 \in \argmin_{j \neq j_i^1} \mathbf{C}_{i,j} - \mathbf{g}_j.
+    \]
+
+  \item \textbf{価格更新}：
+    品物 $j_i^1$ の価格を，最良と次善のコスト差に
+    $\varepsilon$ を加えた分だけ引き下げる：
+    \begin{equation}\label{eq:auction-price}
+      \mathbf{g}_{j_i^1} \leftarrow
+      \mathbf{C}_{i,j_i^1} - (\mathbf{C}_{i,j_i^2} - \mathbf{g}_{j_i^2})
+      - \varepsilon.
+    \end{equation}
+
+  \item \textbf{割当更新}：
+    $i$ を $j_i^1$ に割り当てる．
+    既に $j_i^1$ が別の入札者 $i'$ に割り当てられていた場合は，
+    $i'$ を未割当に戻す．
+\end{enumerate}
+
+全員が割り当てられたら終了する．
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[>=Stealth, scale=0.85,
+  person/.style={draw, circle, minimum size=18pt, fill=black!10},
+  item/.style={draw, rectangle, minimum size=18pt, fill=black!25}]
+  % People
+  \node[person] (p1) at (0, 2) {\small $1$};
+  \node[person] (p2) at (0, 0) {\small $2$};
+  \node[person] (p3) at (0, -2) {\small $3$};
+  \node[left=4pt] at (0, 3) {入札者};
+  % Items
+  \node[item] (i1) at (5, 2) {\small $1$};
+  \node[item] (i2) at (5, 0) {\small $2$};
+  \node[item] (i3) at (5, -2) {\small $3$};
+  \node[right=4pt] at (5, 3) {品物};
+  % Current assignment
+  \draw[->, thick] (p1) -- (i2) node[midway, above, sloped]{\scriptsize 割当};
+  \draw[->, thick, dashed] (p2) -- (i2)
+    node[midway, below, sloped]{\scriptsize 入札};
+  \draw[->, thick] (p3) -- (i3) node[midway, above, sloped]{\scriptsize 割当};
+  % Price labels
+  \node[right=10pt] at (i1.east) {$\mathbf{g}_1$};
+  \node[right=10pt] at (i2.east) {$\mathbf{g}_2$};
+  \node[right=10pt] at (i3.east) {$\mathbf{g}_3$};
+\end{tikzpicture}
+\caption{オークションアルゴリズムの1ステップ：
+入札者 2 が品物 2 に入札し，現在の割当者（入札者 1）を追い出す．}
+\label{fig:auction}
+\end{figure}
+
+\subsection{$\varepsilon$-相補性条件}\label{subsec:eps-cs}
+
+パラメータ $\varepsilon > 0$ はアルゴリズムの精度と速度のトレードオフを制御する．
+各反復で以下の\textbf{$\varepsilon$-相補性条件} ($\varepsilon$-CS) が保たれる：
+\[
+  \forall\, i \in S, \quad
+  \mathbf{C}_{i,\xi_i} - \mathbf{g}_{\xi_i}
+  \leq \varepsilon + \min_{j} (\mathbf{C}_{i,j} - \mathbf{g}_j).
+\]
+これは「各入札者が最良の品物から $\varepsilon$ 以内のコストの品物に
+割り当てられている」ことを意味する．
+
+\begin{proposition}{オークションアルゴリズムの停止性と精度}{auction-stop}
+オークションアルゴリズムは高々
+$N = n \|\mathbf{C}\|_\infty / \varepsilon$ ステップで停止し，
+得られる割当のコストは最適値から $n\varepsilon$ 以内である．
+\end{proposition}
+
+$\varepsilon$\textbf{-スケーリング}と呼ばれる技法では，
+大きな $\varepsilon$ から開始して
+反復ごとに $\varepsilon$ を縮小していくことで，
+計算量を $O(n^3 \log \|\mathbf{C}\|_\infty)$ に改善できる．
+
+
+% ============================================================
+\section{アルゴリズムの比較}\label{sec:algo-comparison}
+
+本章で紹介した3つのアルゴリズムを比較する．
+
+\medskip
+\begin{center}
+\begin{tabular}{lccc}
+  & ネットワーク単体法 & 双対上昇法 & オークション \\
+  \hline
+  操作対象 & 主問題（$\mathbf{P}$） & 双対問題（$\mathbf{f}, \mathbf{g}$）
+    & 双対（$\mathbf{g}$）+ 割当 \\
+  解の種類 & 厳密解 & 厳密解 & $\varepsilon$-近似解 \\
+  対象 & 一般の $\mathbf{a}, \mathbf{b}$ &
+    一般の $\mathbf{a}, \mathbf{b}$ & 主に割当問題 \\
+  計算量の目安 & $O(n^3 \log n)$ & $O(n^3)$ & $O(n^3 \log n)$ \\
+  \hline
+\end{tabular}
+\end{center}
+\medskip
+
+いずれの手法も $n$ が大きい場合（数千点以上）では計算コストが大きく，
+大規模な問題には次章で述べるエントロピー正則化に基づく
+近似手法が必要となる．
