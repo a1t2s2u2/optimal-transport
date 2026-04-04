@@ -1,3 +1,267 @@
 
 \chapter{変分 Wasserstein 問題}\label{chap:variational}
-% TODO: 執筆予定
+
+本章では，Wasserstein 距離（またはその正則化版）を
+\textbf{損失関数}として用いた最適化問題を扱う．
+パラメータ推定・重心計算・勾配流など，
+データサイエンスにおける重要な応用がこの枠組みに含まれる．
+
+これらの問題に共通する技術的課題は，
+Wasserstein 距離の\textbf{勾配の計算}である．
+エントロピー正則化（第\ref{chap:entropic}章）による滑らかな近似と
+自動微分の組み合わせが，この課題の実用的な解決策を与える．
+
+
+% ============================================================
+\section{Wasserstein 損失の微分}\label{sec:diff-wasserstein}
+
+\subsection{問題設定}\label{subsec:fitting}
+
+観測データから得られる確率分布 $\beta$ に対し，
+パラメータ $\theta \in \Theta$ で記述されるモデル分布 $\alpha_\theta$ を
+当てはめる問題を考える：
+\begin{equation}\label{eq:fitting}
+  \min_{\theta \in \Theta}\; \mathcal{E}(\theta)
+  \defeq \mathcal{L}_c(\alpha_\theta, \beta).
+\end{equation}
+この問題を勾配降下法で解くには，
+$\theta$ に関する $\mathcal{E}$ の勾配が必要になる．
+
+\subsection{Euler 的離散化}\label{subsec:eulerian}
+
+モデル分布を固定された格子点上のヒストグラム
+$\alpha_\theta = \sum_i \mathbf{a}(\theta)_i \delta_{x_i}$
+として表現するアプローチ（\textbf{Euler 的離散化}）では，
+$\theta$ はヒストグラムの重み $\mathbf{a}(\theta) \in \Sigma_n$ を
+パラメータ化する．
+
+元の OT コスト $\mathbf{L_C}$ は $\mathbf{a}$ について凸だが
+微分不可能（LP なので区分線形）である．
+エントロピー正則化を用いると，
+\[
+  \mathcal{E}_E(\theta) \defeq
+  \mathbf{L}^\varepsilon_{\mathbf{C}}(\mathbf{a}(\theta), \mathbf{b})
+\]
+は $\mathbf{a}$ について滑らかかつ凸になり，
+その勾配は双対ポテンシャル $(\mathbf{f}^\star, \mathbf{g}^\star)$ で与えられる：
+\[
+  \nabla_{\mathbf{a}} \mathbf{L}^\varepsilon_{\mathbf{C}}
+  = \mathbf{f}^\star.
+\]
+連鎖律により
+$\nabla_\theta \mathcal{E}_E = [\partial \mathbf{a}(\theta)]^\top \mathbf{f}^\star$
+が得られる．
+
+\subsection{Lagrange 的離散化}\label{subsec:lagrangian}
+
+モデル分布の重みを一様に固定し，
+サポート点の位置 $x(\theta) = (x(\theta)_i)_{i=1}^n$ を
+パラメータとするアプローチ（\textbf{Lagrange 的離散化}）も重要である：
+\[
+  \alpha_\theta = \frac{1}{n}\sum_{i=1}^n \delta_{x(\theta)_i}.
+\]
+この場合，コスト行列 $\mathbf{C}(x(\theta))_{i,j} = c(x(\theta)_i, y_j)$
+自体が $\theta$ に依存する．
+正則化コスト $\mathbf{L}^\varepsilon_{\mathbf{C}(x)}$ の
+コスト行列に関する勾配は最適カップリング $\mathbf{P}^\star$ で与えられ：
+\[
+  \nabla_{\mathbf{C}} \mathbf{L}^\varepsilon_{\mathbf{C}} = \mathbf{P}^\star,
+\]
+連鎖律と合わせると
+\[
+  \nabla_{x_i} \mathcal{F}(x)
+  = \sum_{j=1}^m \mathbf{P}^\star_{i,j}\, \nabla_1 c(x_i, y_j)
+\]
+が得られる．$c(x,y) = \|x - y\|^2$ の場合は
+\[
+  \nabla_{x_i} \mathcal{F}(x)
+  = \frac{2}{n}\left(x_i - \sum_j n \mathbf{P}^\star_{i,j}\, y_j\right),
+\]
+すなわち各点 $x_i$ を，カップリングに基づく
+$y_j$ の重み付き平均へ向かわせる力が働く．
+
+\subsection{自動微分}\label{subsec:autodiff}
+
+Sinkhorn 反復の有限回打ち切りによる近似を
+Sinkhorn ダイバージェンス $\mathfrak{D}^{(L)}_{\mathbf{C}}$
+として用いる場合，
+Sinkhorn の各反復ステップ（行列・ベクトル積と成分ごとの除算）は
+すべて微分可能な操作であるため，
+\textbf{逆モード自動微分}（バックプロパゲーション）を直接適用できる．
+
+この方法は，収束した双対ポテンシャルを用いた勾配公式と
+同じ計算量で勾配を得られ，
+PyTorch・JAX 等の深層学習フレームワークと自然に統合できる．
+メモリ消費が反復数に比例して増加する点が唯一の欠点だが，
+チェックポイント技法で緩和可能である．
+
+
+% ============================================================
+\section{Wasserstein 重心}\label{sec:barycenter}
+
+\subsection{Fr\'echet 平均}\label{subsec:frechet}
+
+$S$ 個のヒストグラム $\mathbf{b}_1, \ldots, \mathbf{b}_S \in \Sigma_m$ と
+重み $\lambda \in \Sigma_S$ が与えられたとき，
+\textbf{Wasserstein 重心}（Fr\'echet 平均）は
+\begin{equation}\label{eq:barycenter}
+  \min_{\mathbf{a} \in \Sigma_n}
+  \sum_{s=1}^S \lambda_s\, \mathbf{L}_{\mathbf{C}_s}(\mathbf{a}, \mathbf{b}_s)
+\end{equation}
+で定義される．
+$\mathbf{C}_s = \mathbf{D}^p$ とすれば
+Wasserstein 距離に基づく重心が得られる．
+
+この問題は $\mathbf{a}$ について\textbf{凸}であり
+（各 $\mathbf{L}_{\mathbf{C}_s}$ が $\mathbf{a}$ について凸であるため），
+大域的最適解が存在する．
+
+\begin{remark}{$k$-means との関係}{kmeans}
+入力 $\beta_s$ が1つの分布 $\beta$ のみのとき，
+サポートサイズ $k$ 以下の離散分布の中で
+$\mathcal{L}_c(\alpha, \beta)$ を最小化する問題は，
+$c(x,y) = \|x-y\|^2$ の場合に
+通常の \textbf{$k$-means クラスタリング}に一致する．
+重心の各サポート点が重心点に，重みが各クラスタの割合に対応する．
+\end{remark}
+
+\subsection{エントロピー正則化による計算}\label{subsec:entropic-barycenter}
+
+正則化版
+\begin{equation}\label{eq:entropic-barycenter}
+  \min_{\mathbf{a} \in \Sigma_n}
+  \sum_{s=1}^S \lambda_s\, \mathbf{L}^\varepsilon_{\mathbf{C}_s}(\mathbf{a}, \mathbf{b}_s)
+\end{equation}
+は滑らかな凸問題であり，KL 射影の形に書き直すことで
+一般化 Sinkhorn 反復（第\ref{chap:entropic}章 §\ref{sec:generalized-sinkhorn}）
+が適用できる．
+
+具体的には，$S$ 組のスケーリングベクトル
+$(\mathbf{u}_s, \mathbf{v}_s)_{s=1}^S$ を同時に更新する：
+\begin{align}
+  \mathbf{v}_s^{(\ell+1)} &= \frac{\mathbf{b}_s}
+    {\mathbf{K}_s^\top \mathbf{u}_s^{(\ell)}}, \label{eq:bary-v} \\
+  \mathbf{u}_s^{(\ell+1)} &= \frac{\mathbf{a}^{(\ell+1)}}
+    {\mathbf{K}_s \mathbf{v}_s^{(\ell+1)}}, \label{eq:bary-u} \\
+  \text{ただし}\quad
+  \mathbf{a}^{(\ell+1)} &= \prod_{s=1}^S
+    (\mathbf{K}_s \mathbf{v}_s^{(\ell+1)})^{\lambda_s}. \label{eq:bary-a}
+\end{align}
+重心 $\mathbf{a}$ の更新~\eqref{eq:bary-a}は
+$S$ 個のベクトルの\textbf{重み付き幾何平均}であり，
+Sinkhorn の構造を自然に拡張している．
+
+\subsection{ガウス分布間の重心}\label{subsec:gaussian-barycenter}
+
+入力がすべてガウス分布
+$\beta_s = \mathcal{N}(\mathbf{m}_s, \boldsymbol{\Sigma}_s)$
+のとき，$c(x,y) = \|x-y\|^2$ に対する重心もまた
+ガウス分布 $\alpha^\star = \mathcal{N}(\mathbf{m}^\star, \boldsymbol{\Sigma}^\star)$
+である．平均は入力の重み付き平均
+$\mathbf{m}^\star = \sum_s \lambda_s \mathbf{m}_s$ であり，
+共分散は Bures 距離の重み付き和を最小化する不動点方程式
+\[
+  \boldsymbol{\Sigma}^\star = \Psi(\boldsymbol{\Sigma}^\star),
+  \quad
+  \Psi(\boldsymbol{\Sigma}) \defeq
+  \sum_s \lambda_s
+  \bigl(\boldsymbol{\Sigma}^{1/2} \boldsymbol{\Sigma}_s \boldsymbol{\Sigma}^{1/2}\bigr)^{1/2}
+\]
+の解として与えられる．
+反復 $\boldsymbol{\Sigma}^{(\ell+1)} = \Psi(\boldsymbol{\Sigma}^{(\ell)})$
+は収束することが知られている．
+
+
+% ============================================================
+\section{勾配流}\label{sec:gradient-flow}
+
+Wasserstein 距離を用いた最適化は，
+確率測度の空間上の\textbf{勾配流} (gradient flow) として
+偏微分方程式の理論と結びつく．
+
+\subsection{離散的な勾配流}\label{subsec:discrete-gf}
+
+ヒストグラムの空間 $\Sigma_n$ 上の
+滑らかなエネルギー関数 $F : \Sigma_n \to \R$ に対し，
+通常のユークリッド的な勾配降下は
+\[
+  \mathbf{a}^{(\ell+1)} = \mathbf{a}^{(\ell)} - \tau \nabla F(\mathbf{a}^{(\ell)})
+\]
+であるが，$\ell^2$ ノルムの代わりに Wasserstein 距離を用いた
+\textbf{暗黙的スキーム}（\textbf{JKO ステップ}）
+\begin{equation}\label{eq:jko}
+  \mathbf{a}^{(\ell+1)}
+  = \argmin_{\mathbf{a} \in \Sigma_n}\;
+  \mathrm{W}_p(\mathbf{a}, \mathbf{a}^{(\ell)})^p + \tau F(\mathbf{a})
+\end{equation}
+を考えることができる．
+この反復は，Wasserstein 空間の幾何に沿って
+$F$ を最小化する方向に測度を「輸送」するステップと解釈される．
+
+\subsection{連続的な勾配流と偏微分方程式}\label{subsec:continuous-gf}
+
+$\mathcal{X} = \R^d$，$p = 2$ のとき，
+JKO ステップ~\eqref{eq:jko}の
+連続極限（$\tau \to 0$）は偏微分方程式
+\begin{equation}\label{eq:wasserstein-pde}
+  \frac{\partial \alpha_t}{\partial t}
+  = \mathrm{div}\bigl(\alpha_t \nabla (F'(\alpha_t))\bigr)
+\end{equation}
+を与える．ここで $F'(\alpha)$ は
+$F$ の $\alpha$ に関する第一変分である．
+
+\begin{example}{熱方程式}{heat-eq}
+$F(\alpha) = -H(\alpha) = \int \rho_\alpha \log \rho_\alpha\, \mathrm{d}x$
+（負エントロピー）のとき，$F'(\alpha) = \log \rho_\alpha$ であり，
+\eqref{eq:wasserstein-pde}は\textbf{熱方程式}
+\[
+  \frac{\partial \alpha_t}{\partial t} = \Delta \alpha_t
+\]
+に帰着される．
+すなわち，拡散現象は
+Wasserstein 空間上でのエントロピーの勾配流として理解できる．
+\end{example}
+
+この視点は Jordan--Kinderlehrer--Otto (JKO, 1998) の
+画期的な研究に端を発し，
+多孔質媒体方程式，全変動流，量子ドリフトなど
+多くの非線形 PDE の解析に応用されてきた．
+
+\subsection{粒子系による離散化}\label{subsec:particle-gf}
+
+Lagrange 的離散化（§\ref{subsec:lagrangian}）の観点から，
+経験測度 $\alpha_t = \frac{1}{n}\sum_i \delta_{x_i(t)}$ の
+各粒子 $x_i(t)$ を
+\[
+  x_i^{(\ell+1)} = x_i^{(\ell)} - \tau \nabla \mathcal{F}(X^{(\ell)})
+\]
+で更新するスキームは，
+ステップサイズ $\tau$ が十分小さければ
+Wasserstein 勾配流のユークリッド的勾配降下と一致する
+（$\mathcal{W}_2(\alpha_t, \alpha_{t'}) \approx \|X(t) - X(t')\|$
+が成り立つため）．
+これにより，ODE 系を通じて Wasserstein 勾配流を
+シミュレートできる．
+
+
+% ============================================================
+\section{最小 Kantorovich 推定量}\label{sec:min-kantorovich}
+
+$\mathcal{W}_p$ を損失関数としたパラメータ推定
+\[
+  \hat{\theta} = \argmin_{\theta \in \Theta}\;
+  \mathcal{W}_p(\alpha_\theta, \hat{\beta}_n)
+\]
+は\textbf{最小 Kantorovich 推定量}と呼ばれる．
+最尤推定量が $\KL$ を損失とするのに対応し，
+こちらは Wasserstein を損失とする推定量である．
+
+最尤推定と比較した利点は，
+モデル $\alpha_\theta$ と経験分布 $\hat{\beta}_n$ の台が
+重ならなくても損失が有限値を取ることであり，
+生成モデルの学習（GAN 等）での利用に適している．
+ただし，第\ref{chap:divergences}章で述べた
+次元の呪い（$\mathcal{W}_p$ の標本複雑度 $O(n^{-1/d})$）は
+推定量の収束レートにも影響するため，
+エントロピー正則化によるバイアス・分散のトレードオフが
+実用上重要になる．
