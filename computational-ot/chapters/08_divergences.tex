@@ -1,3 +1,289 @@
 
 \chapter{統計的ダイバージェンス}\label{chap:divergences}
-% TODO: 執筆予定
+
+本章では，Wasserstein 距離を他の確率分布間の距離・ダイバージェンスと
+比較し，それぞれの統計的性質を論じる．
+具体的には，密度比に基づく\textbf{$\varphi$-ダイバージェンス}，
+判別関数の族に基づく\textbf{積分確率距離} (IPM)，
+カーネル法に基づく\textbf{MMD} を紹介し，
+Wasserstein 空間の非ヒルベルト性や
+経験分布による推定の標本複雑度を議論する．
+
+
+% ============================================================
+\section{$\varphi$-ダイバージェンス}\label{sec:phi-div}
+
+\subsection{定義}\label{subsec:phi-div-def}
+
+$\varphi$-ダイバージェンスは，
+二つの分布を\textbf{密度の比}を通じて点ごとに比較する量である．
+
+\begin{definition}{$\varphi$-ダイバージェンス}{phi-divergence}
+$\varphi : \R \to \R \cup \{+\infty\}$ を
+下半連続な凸関数で $\mathrm{dom}\, \varphi \subset [0, \infty[$，
+$\varphi(1) = 0$ を満たすもの（\textbf{エントロピー関数}）とする．
+$\alpha, \beta \in \mathcal{M}^1_+(\mathcal{X})$ に対し，
+\textbf{$\varphi$-ダイバージェンス}を
+\begin{equation}\label{eq:phi-div}
+  \mathcal{D}_\varphi(\alpha | \beta)
+  \defeq \int_{\mathcal{X}} \varphi\!\left(\frac{\mathrm{d}\alpha}{\mathrm{d}\beta}\right)
+  \mathrm{d}\beta
+  + \varphi'_\infty\, \alpha^\perp(\mathcal{X})
+\end{equation}
+で定義する．ここで $\frac{\mathrm{d}\alpha}{\mathrm{d}\beta}$ は
+$\alpha$ の $\beta$ に関する Radon--Nikodym 微分，
+$\alpha^\perp$ は $\beta$ に対する $\alpha$ の特異部分，
+$\varphi'_\infty = \lim_{s \to +\infty} \varphi(s)/s$ は
+$\varphi$ の漸近的な増大速度である．
+\end{definition}
+
+$\varphi$-ダイバージェンスは凸・1次斉次・弱$*$下半連続であり，
+$\mathcal{D}_\varphi(\alpha|\beta) \geq 0$，
+等号は $\alpha = \beta$ のとき，かつそのときに限る．
+ただし対称性や三角不等式は一般には成り立たない．
+
+\subsection{代表的な $\varphi$-ダイバージェンス}\label{subsec:phi-examples}
+
+\begin{example}{KL ダイバージェンス}{kl-div}
+$\varphi_{\mathrm{KL}}(s) = s \log s - s + 1$ $( s > 0)$ とすると，
+\[
+  \KL(\alpha|\beta) = \int \frac{\mathrm{d}\alpha}{\mathrm{d}\beta}
+  \log \frac{\mathrm{d}\alpha}{\mathrm{d}\beta}\, \mathrm{d}\beta.
+\]
+$\varphi'_\infty = +\infty$ であるため，
+$\alpha$ が $\beta$ に関して絶対連続でなければ $\KL = +\infty$．
+離散の場合は $\KL(\mathbf{a}|\mathbf{b})
+= \sum_i \mathbf{a}_i \log(\mathbf{a}_i / \mathbf{b}_i)$．
+\end{example}
+
+\begin{example}{全変動距離}{tv}
+$\varphi_{\mathrm{TV}}(s) = |s - 1|$ とすると，
+\[
+  \mathrm{TV}(\alpha|\beta) = \|\alpha - \beta\|_{\mathrm{TV}}
+  = \int |\mathrm{d}\alpha - \mathrm{d}\beta|.
+\]
+$\mathrm{TV}$ は（$\varphi$-ダイバージェンスとしては珍しく）
+対称であり，距離を定める．
+ただし，台の重ならない離散分布間では常に最大値 2 をとり，
+分布間の「近さ」を細かく区別できないという弱点がある．
+\end{example}
+
+\begin{example}{Hellinger 距離}{hellinger}
+$\varphi_H(s) = |\sqrt{s} - 1|^2$ とすると，
+$\mathfrak{h}(\alpha, \beta) = \mathcal{D}_{\varphi_H}^{1/2}$
+は\textbf{Hellinger 距離}を定める．
+密度を持つ場合は
+$\mathfrak{h}(\alpha, \beta) = \|\sqrt{\rho_\alpha} - \sqrt{\rho_\beta}\|_{L^2}$．
+\end{example}
+
+\begin{example}{$\chi^2$ ダイバージェンス}{chi2}
+$\varphi_{\chi^2}(s) = |s-1|^2$ とすると，
+離散の場合
+$\chi^2(\alpha|\beta) = \sum_i (\mathbf{a}_i - \mathbf{b}_i)^2 / \mathbf{b}_i$
+が得られる．
+\end{example}
+
+これらのダイバージェンス間には以下の大小関係が成り立つ：
+\[
+  \mathrm{TV} \leq \sqrt{\KL/2}
+  \leq \sqrt{\chi^2},
+  \qquad
+  \mathrm{TV} \leq \mathfrak{h} \leq \sqrt{2\, \mathrm{TV}}.
+\]
+
+\subsection{$\varphi$-ダイバージェンスの限界}\label{subsec:phi-limitation}
+
+$\varphi$-ダイバージェンスの最大の弱点は，
+\textbf{台の幾何を無視する}ことにある．
+密度比 $\mathrm{d}\alpha / \mathrm{d}\beta$ のみに依存するため，
+データ点が空間上のどこにあるかという情報は反映されない．
+また，台が重ならない場合（離散分布の経験分布同士など）に
+$\KL$ や $\chi^2$ が $+\infty$ になるという実用上の問題もある．
+これらの限界が，Wasserstein 距離や次節の IPM が注目される理由である．
+
+
+% ============================================================
+\section{積分確率距離}\label{sec:ipm}
+
+\subsection{双対ノルム}\label{subsec:dual-norm}
+
+測度の比較には，対称凸集合 $B$ に属する判別関数の族を用いる
+\textbf{積分確率距離} (Integral Probability Metric; IPM) が有用である：
+
+\begin{definition}{積分確率距離}{ipm}
+$\mathcal{C}(\mathcal{X})$ の対称凸部分集合 $B$ に対し，
+\begin{equation}\label{eq:ipm}
+  \|\alpha\|_B \defeq \max_{f \in B}
+  \int_{\mathcal{X}} f(x)\, \mathrm{d}\alpha(x).
+\end{equation}
+$\|\alpha - \beta\|_B$ が $\alpha$ と $\beta$ の間の IPM を定める．
+\end{definition}
+
+$B$ の選び方により様々な距離が得られる：
+
+\begin{itemize}
+  \item $B = \{f : \|f\|_\infty \leq 1\}$ → 全変動距離 $\mathrm{TV}$
+  \item $B = \{f : \mathrm{Lip}(f) \leq 1\}$ → $\mathcal{W}_1$
+    （第\ref{chap:w1}章の Kantorovich--Rubinstein 公式）
+  \item $B = \{f : \|\nabla f\|_\infty \leq 1,\; \|f\|_\infty \leq 1\}$
+    → フラットノルム（弱収束を距離化）
+  \item $B$ が RKHS の単位球 → MMD（次節）
+\end{itemize}
+
+$B$ が大きいほど強い距離（分布を細かく区別できる）が得られるが，
+推定の標本複雑度は悪化する --- この\textbf{識別力と推定効率のトレードオフ}は
+本章の中心テーマである．
+
+\subsection{最大平均差異 (MMD)}\label{subsec:mmd}
+
+\textbf{再生核ヒルベルト空間} (RKHS) に基づく IPM は
+\textbf{MMD} (Maximum Mean Discrepancy) と呼ばれ，
+カーネル法の枠組みで計算できる．
+
+\begin{definition}{MMD}{mmd}
+対称正定値カーネル $k : \mathcal{X} \times \mathcal{X} \to \R$ に対し，
+\begin{equation}\label{eq:mmd}
+  \|\alpha\|_k^2 \defeq
+  \int_{\mathcal{X} \times \mathcal{X}} k(x, y)\,
+  \mathrm{d}\alpha(x)\, \mathrm{d}\alpha(y)
+  = \E_{X, X' \sim \alpha}[k(X, X')]
+\end{equation}
+とする．二つの分布間の MMD は
+\begin{equation}\label{eq:mmd-distance}
+  \|\alpha - \beta\|_k^2
+  = \E[k(X,X')] + \E[k(Y,Y')] - 2\E[k(X,Y)]
+\end{equation}
+で計算される（$X, X' \sim \alpha$，$Y, Y' \sim \beta$，独立）．
+\end{definition}
+
+カーネル $k$ が\textbf{普遍的} (universal) であれば
+（例：ガウスカーネル $k(x,y) = e^{-\|x-y\|^2/(2\sigma^2)}$），
+$\|\alpha - \beta\|_k = 0$ と $\alpha = \beta$ が同値になる．
+
+離散分布の場合，MMD は行列演算で容易に計算できる：
+カーネル行列 $\mathbf{k}_{i,i'} = k(x_i, x_{i'})$ を用いて
+$\|\alpha - \beta\|_k^2 = \inner{\mathbf{k}(\mathbf{a} - \mathbf{b})}{\mathbf{a} - \mathbf{b}}$．
+
+
+% ============================================================
+\section{Wasserstein 空間の非ヒルベルト性}\label{sec:not-hilbertian}
+
+1次元では $\mathcal{W}_p$ はヒルベルト的であった
+（分位点関数への写像が $L^p$ 空間への等長埋め込みを与える；
+第\ref{chap:theoretical}章 §\ref{subsec:1d}）．
+しかし高次元ではこの性質は失われる．
+
+\begin{definition}{ヒルベルト距離}{hilbertian}
+距離空間 $(\mathcal{Z}, d)$ が\textbf{ヒルベルト的} (Hilbertian) であるとは，
+あるヒルベルト空間 $\mathcal{H}$ と写像
+$\phi : \mathcal{Z} \to \mathcal{H}$ が存在して
+$d(z, z') = \|\phi(z) - \phi(z')\|_{\mathcal{H}}$
+が成り立つことをいう．
+\end{definition}
+
+\begin{proposition}{ヒルベルト性の特徴づけ}{hilbertian-char}
+距離 $d$ がヒルベルト的であることと，
+$d^2$ が負定値カーネルであること（すなわち
+$\sum_{i,j} r_i r_j d(z_i, z_j)^2 \leq 0$
+が $\sum_i r_i = 0$ を満たすすべての $r$ について成立すること）は同値である．
+\end{proposition}
+
+\begin{proposition}{Wasserstein 距離の非ヒルベルト性}{wass-not-hilbert}
+$\mathcal{X} = \R^d$（$d \geq 2$），$d(x,y) = \|x - y\|_2$ のとき，
+$p$-Wasserstein 距離は $p = 1, 2$ のいずれに対しても
+ヒルベルト的でない．
+\end{proposition}
+
+この事実は，Wasserstein 距離をそのまま
+カーネル法（正定値カーネルを要求する手法）に
+利用することができないことを意味する．
+ヒルベルト空間への低歪み埋め込みも，
+$d \geq 2$ では必然的に大きな歪みを伴うことが知られている．
+
+
+% ============================================================
+\section{経験分布による推定：標本複雑度}\label{sec:sample-complexity}
+
+実用上，分布 $\alpha, \beta$ は未知であり，
+それぞれからの i.i.d.\ サンプル
+$(x_i)_{i=1}^n \sim \alpha$，$(y_j)_{j=1}^m \sim \beta$
+のみが利用可能であることが多い．
+経験分布
+$\hat{\alpha}_n = \frac{1}{n}\sum_i \delta_{x_i}$，
+$\hat{\beta}_m = \frac{1}{m}\sum_j \delta_{y_j}$
+を用いた推定の精度（\textbf{標本複雑度}）は，
+距離の種類によって大きく異なる．
+
+\subsection{Wasserstein 距離の標本複雑度}\label{subsec:ot-rate}
+
+$\mathcal{X} = \R^d$（有界領域），$1 \leq p < +\infty$ のとき，
+\begin{equation}\label{eq:ot-rate}
+  \E\bigl[|\mathcal{W}_p(\hat{\alpha}_n, \hat{\beta}_n) - \mathcal{W}_p(\alpha, \beta)|\bigr]
+  = O(n^{-1/d}).
+\end{equation}
+この収束レートは $d$ に対して指数的に悪化する
+（\textbf{次元の呪い}）．
+すなわち，高次元では経験分布からの
+Wasserstein 距離の推定に膨大なサンプルが必要になる．
+
+\subsection{MMD の標本複雑度}\label{subsec:mmd-rate}
+
+対照的に，MMD の標本複雑度は
+\begin{equation}\label{eq:mmd-rate}
+  \E\bigl[|\|\hat{\alpha}_n - \hat{\beta}_n\|_k
+  - \|\alpha - \beta\|_k|\bigr]
+  = O(n^{-1/2})
+\end{equation}
+であり，\textbf{次元 $d$ に依存しない}．
+これは MMD の大きな利点であるが，
+代償として MMD は台の幾何を Wasserstein ほど精密には捉えない
+（カーネルの帯域幅 $\sigma$ に依存した「ぼやけた」比較になる）．
+
+\subsection{$\varphi$-ダイバージェンスの標本複雑度}\label{subsec:phi-rate}
+
+$\varphi$-ダイバージェンス（KL, TV 等）は経験分布から直接推定できない．
+台が重ならない離散経験分布間の $\KL$ は $+\infty$ になるためである．
+推定にはカーネル密度推定などの平滑化が必要であり，
+帯域幅パラメータの選択が追加の課題となる．
+
+\medskip
+\begin{center}
+\begin{tabular}{lccc}
+  & $\varphi$-div (KL等) & Wasserstein & MMD \\
+  \hline
+  台の幾何 & 無視 & 反映 & 部分的 \\
+  経験分布で推定可 & 不可 & 可 & 可 \\
+  標本複雑度 & --- & $O(n^{-1/d})$ & $O(n^{-1/2})$ \\
+  ヒルベルト性 ($d \geq 2$) & --- & なし & あり \\
+  \hline
+\end{tabular}
+\end{center}
+
+% ============================================================
+\section{エントロピー正則化：OT と MMD の間}\label{sec:ot-mmd}
+
+第\ref{chap:entropic}章で導入した Sinkhorn ダイバージェンス
+$\mathfrak{P}^\varepsilon_{\mathbf{C}}$ は，
+正則化パラメータ $\varepsilon$ を通じて
+OT と MMD を\textbf{内挿}する量と見なせる．
+
+$\mathbf{C}_{i,j} = d(x_i, y_j)^p$ とするとき，
+$\mathcal{W}_{p,\varepsilon}(\alpha, \beta)^p
+\defeq \mathfrak{P}^\varepsilon_{\mathbf{C}}(\mathbf{a}, \mathbf{b})$
+は正則化 Wasserstein コストを定める．
+
+\begin{itemize}
+  \item $\varepsilon \to 0$：$\mathcal{W}_{p,\varepsilon} \to \mathcal{W}_p$
+    （非正則化 OT）．次元の呪いを受ける．
+  \item $\varepsilon \to +\infty$：Gibbs カーネル
+    $\mathbf{K} = e^{-\mathbf{C}/\varepsilon}$ が
+    平坦になり，MMD 的な振る舞いに近づく．
+    標本複雑度が改善する．
+\end{itemize}
+
+すなわち，$\varepsilon$ を適切に選ぶことで
+「台の幾何を反映しつつ，次元の呪いを緩和する」
+バランスの取れた距離指標が得られる．
+これが，エントロピー正則化 OT が
+機械学習の損失関数として実用的に優れている
+統計的な根拠の一つである．
