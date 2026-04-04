@@ -1,0 +1,9 @@
+[project]
+name = "optimal-transport"
+version = "0.1.0"
+description = "計算最適輸送の解説と実装"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "matplotlib",
+]
