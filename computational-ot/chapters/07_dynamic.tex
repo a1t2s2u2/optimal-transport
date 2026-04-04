@@ -1,3 +1,268 @@
 
 \chapter{動的定式化}\label{chap:dynamic}
-% TODO: 執筆予定
+
+これまでの章では，最適輸送を
+「分布 $\alpha$ から分布 $\beta$ への最小コストのマッピング」
+として\textbf{静的}に定式化してきた．
+本章では，最適輸送を
+「時刻 $t = 0$ の分布 $\alpha_0$ から
+時刻 $t = 1$ の分布 $\alpha_1$ への最短経路」
+として\textbf{動的}に定式化する
+Benamou--Brenier~\cite{BenamouBrenier2000} のアプローチを紹介する．
+
+動的な視点は，分布間の内挿（モーフィング）や
+流体力学との関係を自然に与え，
+低次元の正則格子上では効率的な数値計算手法にもつながる．
+
+
+% ============================================================
+\section{連続定式化：Benamou--Brenier 公式}\label{sec:bb-formula}
+
+\subsection{連続の方程式}\label{subsec:continuity-eq}
+
+$\mathcal{X} = \R^d$，$c(x,y) = \|x - y\|^2$ とする．
+時間区間 $[0, 1]$ 上で
+測度の経路 $(\alpha_t)_{t \in [0,1]}$ と速度場 $v_t : \R^d \to \R^d$ を考え，
+質量保存を表す\textbf{連続の方程式}
+\begin{equation}\label{eq:continuity}
+  \frac{\partial \alpha_t}{\partial t} + \mathrm{div}(\alpha_t v_t) = 0,
+  \qquad \alpha_{t=0} = \alpha_0,\;\; \alpha_{t=1} = \alpha_1
+\end{equation}
+を課す．直感的には，時刻 $t$ における密度 $\alpha_t$ が
+速度場 $v_t$ に沿って移流されることを表している．
+
+\subsection{Benamou--Brenier の定式化}\label{subsec:bb-formulation}
+
+Benamou--Brenier~\cite{BenamouBrenier2000} は，
+$\mathcal{W}_2$ 距離が以下の\textbf{最小経路長問題}
+として特徴づけられることを示した：
+
+\begin{theorem}{Benamou--Brenier 公式}{bb}
+\begin{equation}\label{eq:bb}
+  \mathcal{W}_2(\alpha_0, \alpha_1)^2
+  = \min_{(\alpha_t, v_t)_t}
+  \int_0^1 \int_{\R^d} \|v_t(x)\|^2\, \mathrm{d}\alpha_t(x)\, \mathrm{d}t
+\end{equation}
+ここで最小化は連続の方程式~\eqref{eq:continuity}を満たす
+すべての $(\alpha_t, v_t)_t$ にわたる．
+\end{theorem}
+
+被積分関数 $\int \|v_t\|^2 \mathrm{d}\alpha_t$ は
+時刻 $t$ における\textbf{運動エネルギー}であり，
+$\mathcal{W}_2^2$ はこの運動エネルギーの
+時間積分を最小化する経路として解釈される．
+すなわち，$\mathcal{W}_2$ は確率測度の空間上の
+\textbf{測地線距離}に他ならない．
+
+\subsection{運動量変数による凸化}\label{subsec:momentum}
+
+式~\eqref{eq:bb}は $\alpha_t v_t$ の非線形性のため
+$(\alpha_t, v_t)$ に関して非凸である．
+しかし，\textbf{運動量} (momentum) $J_t \defeq \alpha_t v_t$ を
+新たな変数として導入すると，問題は凸化できる．
+
+凸関数
+\[
+  \theta(a, b) =
+  \begin{cases}
+    \|b\|^2 / a & \text{if } a > 0, \\
+    0 & \text{if } (a, b) = (0, 0), \\
+    +\infty & \text{otherwise}
+  \end{cases}
+\]
+を用いると，Benamou--Brenier 公式は
+\begin{equation}\label{eq:bb-convex}
+  \mathcal{W}_2(\alpha_0, \alpha_1)^2
+  = \min_{(\alpha_t, J_t)_t \in \mathcal{C}(\alpha_0, \alpha_1)}
+  \int_0^1 \int_{\R^d} \theta(\alpha_t(x), J_t(x))\, \mathrm{d}x\, \mathrm{d}t
+\end{equation}
+と書ける．ここで制約集合は
+\[
+  \mathcal{C}(\alpha_0, \alpha_1) \defeq
+  \left\{(\alpha_t, J_t) :
+  \frac{\partial \alpha_t}{\partial t} + \mathrm{div}(J_t) = 0,\;
+  \alpha_{t=0} = \alpha_0,\; \alpha_{t=1} = \alpha_1
+  \right\}
+\]
+であり，$\theta$ と制約の両方が凸であるため，
+全体として\textbf{凸最適化問題}になる．
+
+\subsection{McCann の変位内挿}\label{subsec:mccann}
+
+$\alpha_0$ から $\alpha_1$ への最適 Monge 写像 $T$ が存在するとき
+（Brenier の定理の条件下），
+Benamou--Brenier 問題の最適経路は
+\textbf{McCann の変位内挿} (displacement interpolation) で与えられる：
+\begin{equation}\label{eq:mccann}
+  \alpha_t = \bigl((1-t)\, \mathrm{Id} + t\, T\bigr)_\sharp \alpha_0.
+\end{equation}
+各粒子が出発点 $x$ から目標点 $T(x)$ へ等速直線運動する描像であり，
+中間時刻 $t$ の位置は $(1-t)x + t T(x)$ である．
+
+
+% ============================================================
+\section{一様格子上の離散化}\label{sec:discretization}
+
+Benamou--Brenier 公式を数値的に解くには，
+時間と空間を離散化する必要がある．
+
+\subsection{スタッガード格子}\label{subsec:staggered}
+
+$d = 2$ の場合を考える．
+時間を $T$ ステップに離散化し $t_k = k/T$，
+空間を $n_1 \times n_2$ の一様格子上に離散化する．
+
+数値流体力学で標準的な\textbf{スタッガード格子}を用いる：
+\begin{itemize}
+  \item 密度 $\mathbf{a} \in \R^{(T+1) \times n_1 \times n_2}$
+    は格子点（整数格子）上に定義，
+  \item 運動量 $\mathbf{J} = (\mathbf{J}_1, \mathbf{J}_2)$ は
+    各次元の半格子点上に定義．
+\end{itemize}
+
+離散的な時間微分と空間発散は
+\begin{align*}
+  (\partial_t \mathbf{a})_{k,i} &= \mathbf{a}_{k+1,i} - \mathbf{a}_{k,i}, \\
+  \mathrm{div}(\mathbf{J})_{k,i_1,i_2}
+  &= \mathbf{J}^1_{k,i_1+1,i_2} - \mathbf{J}^1_{k,i_1,i_2}
+  + \mathbf{J}^2_{k,i_1,i_2+1} - \mathbf{J}^2_{k,i_1,i_2}
+\end{align*}
+で定義される．
+離散化された問題は
+\begin{equation}\label{eq:bb-discrete}
+  \min_{(\mathbf{a}, \mathbf{J}) \in \mathbf{C}(\mathbf{a}_0, \mathbf{a}_1)}
+  \Theta(\tilde{\mathbf{a}}, \tilde{\mathbf{J}})
+  \defeq \sum_{k,i} \theta(\tilde{\mathbf{a}}_{k,i}, \tilde{\mathbf{J}}_{k,i})
+\end{equation}
+となる．ここで $\tilde{\mathbf{a}}$, $\tilde{\mathbf{J}}$ は
+格子点と半格子点の間の補間である．
+制約は $\partial_t \mathbf{a} + \mathrm{div}(\mathbf{J}) = 0$ および
+境界条件 $\mathbf{a}_0, \mathbf{a}_1$ の指定である．
+
+
+% ============================================================
+\section{近接分裂法による数値解法}\label{sec:proximal-solver}
+
+離散化問題~\eqref{eq:bb-discrete}は
+$\theta$ の非滑らかさ（$a = 0$ での特異性）のため，
+標準的な滑らかな最適化手法は直接適用できない．
+
+\subsection{Douglas--Rachford 分裂法}\label{subsec:dr}
+
+この問題は $\min_x F(x) + G(x)$ の形に書ける：
+\begin{itemize}
+  \item $F$: 目的関数 $\Theta$ と連続の方程式の制約の指示関数の和，
+  \item $G$: 補間演算子に関する制約の指示関数．
+\end{itemize}
+
+\textbf{Douglas--Rachford (DR) 法}は，
+$F$ と $G$ それぞれの\textbf{近接作用素}
+\[
+  \mathrm{Prox}_{\tau F}(x) \defeq
+  \argmin_{x'} \frac{1}{2}\|x - x'\|^2 + \tau F(x')
+\]
+を交互に計算することで最適解に収束する分裂法である．
+
+具体的な反復は以下の通りである：
+\begin{enumerate}
+  \item $\mathrm{Prox}_{\tau F}$：
+    各格子点での3次方程式の求解（$\theta$ に由来）と，
+    連続の方程式制約へのアフィン射影
+    （Poisson 方程式の求解，FFT で $O(N \log N)$）．
+  \item $\mathrm{Prox}_{\tau G}$：
+    線形な補間制約への射影（小規模線形系の求解）．
+\end{enumerate}
+
+各ステップが閉じた形で計算でき，
+FFT を活用すれば格子点数 $N$ に対して
+$O(N \log N)$/反復 の計算量で済む．
+
+
+% ============================================================
+\section{動的非均衡最適輸送}\label{sec:dynamic-unbalanced}
+
+標準的な Benamou--Brenier 定式化は
+全質量が保存される（$\alpha_0(\mathcal{X}) = \alpha_1(\mathcal{X})$）
+ことを前提としている．
+全質量が異なる場合（\textbf{非均衡}設定）には，
+連続の方程式にソース項 $s_t$ を追加して
+\[
+  \frac{\partial \alpha_t}{\partial t} + \mathrm{div}(J_t) = s_t
+\]
+とし，$s_t$ のコストをペナルティとして加える．
+
+\textbf{Wasserstein--Fisher--Rao (WFR) 距離}は，
+輸送コスト $\theta(\alpha_t, J_t)$ に
+質量の生成・消滅コスト $\tau \theta(\alpha_t, s_t)$ を加えた
+\begin{equation}\label{eq:wfr}
+  \mathrm{WFR}^2(\alpha_0, \alpha_1)
+  = \min_{(\alpha_t, J_t, s_t)_t}
+  \int_0^1 \int_{\R^d}
+  \bigl(\theta(\alpha_t, J_t) + \tau\, \theta(\alpha_t, s_t)\bigr)
+  \, \mathrm{d}x\, \mathrm{d}t
+\end{equation}
+として定義される．パラメータ $\tau > 0$ は
+輸送と質量変化のトレードオフを制御する：
+\begin{itemize}
+  \item $\tau \to 0$：質量変化のコストが消え，
+    古典的な $\mathcal{W}_2$ に帰着（全質量が等しい場合）．
+  \item $\tau \to \infty$：輸送より質量変化が支配的になり，
+    密度の Hellinger 距離に収束する．
+\end{itemize}
+
+WFR 距離は §7.3 と同様の近接分裂法で数値的に計算できる．
+
+
+% ============================================================
+\section{経路空間上の動的定式化}\label{sec:paths-space}
+
+最適輸送の動的定式化は，
+空間 $\mathcal{X}$ 上の\textbf{経路}（曲線）
+$\gamma : [0, 1] \to \mathcal{X}$
+の集合 $\bar{\mathcal{X}}$ 上の確率分布として
+より抽象的に定式化することもできる．
+
+\subsection{経路空間上の OT}\label{subsec:ot-paths}
+
+$\bar{\mathcal{X}}$ 上の確率測度
+$\bar{\pi} \in \mathcal{M}^1_+(\bar{\mathcal{X}})$ であって，
+始点・終点の分布が $\alpha_0, \alpha_1$ に一致するもの全体を
+$\bar{\mathcal{U}}(\alpha_0, \alpha_1)$ と書くと，
+\begin{equation}\label{eq:ot-paths}
+  \mathcal{W}_2(\alpha_0, \alpha_1)^2
+  = \min_{\bar{\pi} \in \bar{\mathcal{U}}(\alpha_0, \alpha_1)}
+  \int_{\bar{\mathcal{X}}} \mathcal{L}(\gamma)^2\, \mathrm{d}\bar{\pi}(\gamma)
+\end{equation}
+が成り立つ．ここで
+$\mathcal{L}(\gamma) = \int_0^1 \|\gamma'(s)\|^2\, \mathrm{d}s$
+は経路の運動エネルギーである．
+
+最適な $\bar{\pi}^\star$ は測地線上にのみ質量を置き，
+各測地線に沿って時刻 $t$ の位置を集めると
+McCann の変位内挿~\eqref{eq:mccann}が復元される．
+
+\subsection{Schr\"{o}dinger 橋とエントロピー正則化}\label{subsec:schrodinger}
+
+経路空間上の OT にエントロピー正則化を加えると，
+\textbf{Schr\"{o}dinger 橋問題}が得られる：
+\begin{equation}\label{eq:schrodinger}
+  \min_{\bar{\pi} \in \bar{\mathcal{U}}(\alpha_0, \alpha_1)}
+  \KL(\bar{\pi} \| \bar{\mathcal{K}}).
+\end{equation}
+ここで $\bar{\mathcal{K}}$ は
+可逆ブラウン運動（Wiener 過程）の分布であり，
+$\varepsilon \to 0$ で Schr\"{o}dinger 橋は測地線に収束する．
+
+離散的な設定では，最適カップリング
+$\mathbf{P}^\star_\varepsilon$ を Sinkhorn アルゴリズムで求めた後，
+各ペア $(x_i, y_j)$ 間を\textbf{ブラウン橋}で結び，
+\[
+  \alpha_{\varepsilon, t}
+  = \sum_{i,j} \mathbf{P}^\star_{\varepsilon, i,j}\,
+  \mathcal{G}_{t(1-t)\varepsilon^2}(\cdot - \gamma_{x_i, y_j}(t))
+\]
+とすることで，エントロピー正則化された動的内挿が得られる
+（$\mathcal{G}_\sigma$ は分散 $\sigma$ のガウスカーネル，
+$\gamma_{x,y}(t) = (1-t)x + ty$ は測地線）．
+$\varepsilon \to 0$ でブラウン橋は測地線に収束し，
+McCann の変位内挿が復元される．
