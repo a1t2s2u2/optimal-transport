@@ -1,0 +1,238 @@
+
+\chapter{応用：Sinkhorn Autoencoder}\label{chap:application}
+
+本章では，第\ref{chap:entropic}章の Sinkhorn アルゴリズムと
+第\ref{chap:variational}章の Wasserstein 損失の理論を組み合わせ，
+画像再構成への応用を具体的に展開する．
+入力画像と再構成画像の\textbf{両方を確率分布}として扱い，
+正則化 Kantorovich コストを損失関数とする
+Autoencoder（\textbf{Sinkhorn Autoencoder}）を定式化する．
+
+
+% ============================================================
+\section{画像の確率分布表現}\label{sec:image-dist}
+
+\subsection{画素グリッド上の離散測度}
+
+$H \times W$ 画素のグレースケール画像を，
+画素位置の集合 $\mathcal{X} = \{x_1, \ldots, x_N\}$（$N = HW$）上の
+離散確率測度として表現する．
+各画素 $k$ の位置を $x_k = (r_k, c_k) \in \R^2$，
+輝度値を $p_k \geq 0$ とするとき，正規化して
+\[
+  a_k \defeq \frac{p_k + \delta}{\sum_{k'=1}^N (p_{k'} + \delta)},
+  \qquad \delta > 0 \text{（微小正則化）}
+\]
+とすれば $\mathbf{a} = (a_1, \ldots, a_N) \in \Sigma_N$ が得られ，
+対応する離散測度は
+\begin{equation}\label{eq:image-measure}
+  \alpha = \sum_{k=1}^N a_k\, \delta_{x_k}
+\end{equation}
+である．$a_k$ は画素 $x_k$ に置かれた「質量」を表し，
+明るい画素ほど大きな質量を持つ．
+
+\subsection{コスト行列}\label{subsec:cost-matrix}
+
+画素位置間のコストとして，ユークリッド距離の2乗を用いる：
+\begin{equation}\label{eq:pixel-cost}
+  C_{k,l} = \|x_k - x_l\|^2.
+\end{equation}
+位置を $[0, 1]^2$ に正規化すれば $C_{k,l} \in [0, 2]$ である．
+このコスト行列は，質量を「空間的に遠くへ動かすほど高コスト」
+という自然な幾何構造を Kantorovich 問題に与える．
+
+
+% ============================================================
+\section{Sinkhorn Autoencoder の定式化}\label{sec:sinkhorn-ae}
+
+\subsection{構造}
+
+Autoencoder は Encoder $E_\theta$ と Decoder $D_\theta$ からなり，
+入力分布 $\mathbf{a} \in \Sigma_N$ を潜在表現 $\mathbf{z}$ を経由して
+再構成分布 $\mathbf{q} \in \Sigma_N$ に写す：
+\[
+  \mathbf{z} = E_\theta(\mathbf{a}),
+  \qquad
+  \mathbf{q} = \mathrm{softmax}(D_\theta(\mathbf{z})).
+\]
+Encoder・Decoder は ReLU 活性化関数を持つ全結合層であり，
+出力層の softmax が $\mathbf{q} \in \Sigma_N$ を保証する．
+
+\begin{setting}{Sinkhorn Autoencoder}{sinkhorn-ae}
+\begin{itemize}
+  \item \textbf{入力}: 画像の確率分布 $\mathbf{a} \in \Sigma_N$
+  \item \textbf{出力}: 再構成分布 $\mathbf{q} = \mathrm{softmax}(D_\theta(E_\theta(\mathbf{a}))) \in \Sigma_N$
+  \item \textbf{損失}: $\mathbf{a}$ と $\mathbf{q}$ の間の正則化 Kantorovich コスト
+  \item \textbf{目標}: 出力分布 $\mathbf{q}$ を入力分布 $\mathbf{a}$ に近づける（自己再構成）
+\end{itemize}
+\end{setting}
+
+\subsection{損失関数}\label{subsec:loss}
+
+入力分布 $\mathbf{a}$ と出力分布 $\mathbf{q}$ の間の
+\textbf{正則化 Kantorovich コスト}を損失とする：
+\begin{equation}\label{eq:ae-loss}
+  \mathcal{L}(\theta)
+  = \mathbf{L}^\varepsilon_{\mathbf{C}}(\mathbf{a}, \mathbf{q}_\theta)
+  = \min_{\mathbf{P} \in \mathbf{U}(\mathbf{a}, \mathbf{q}_\theta)}
+    \inner{\mathbf{C}}{\mathbf{P}} - \varepsilon\, \mathbf{H}(\mathbf{P}).
+\end{equation}
+ここで $\mathbf{U}(\mathbf{a}, \mathbf{q})$ は
+周辺分布が $\mathbf{a}$ と $\mathbf{q}$ に一致するカップリングの集合
+（第\ref{chap:theoretical}章），
+$\mathbf{C}$ は式~\eqref{eq:pixel-cost}のコスト行列，
+$\varepsilon > 0$ はエントロピー正則化パラメータである．
+
+この損失は，入力分布 $\mathbf{a}$ から出力分布 $\mathbf{q}$ への
+\textbf{最適輸送コスト}そのものであり，
+$\mathbf{a} = \mathbf{q}$ のとき最小値 $0$ を取る．
+
+\begin{remark}{MSE との比較}{mse-comparison}
+平均二乗誤差 $\|\mathbf{a} - \mathbf{q}\|^2 = \sum_k (a_k - q_k)^2$ は
+各画素を独立に比較するため，画像の空間構造を無視する．
+一方，Sinkhorn 損失は質量の\textbf{移動距離}を考慮する：
+画像が1画素ずれたとき MSE は大きいが，
+$\mathbf{L}^\varepsilon_{\mathbf{C}}$ は小さい
+（質量の移動距離が短いため）．
+\end{remark}
+
+
+% ============================================================
+\section{勾配の計算}\label{sec:gradient}
+
+\subsection{Kantorovich ポテンシャルによる勾配}
+
+第\ref{chap:entropic}章の命題より，
+$\varepsilon > 0$ のとき $\mathbf{L}^\varepsilon_{\mathbf{C}}$ は
+第二引数について滑らかであり，その勾配は
+Kantorovich ポテンシャルで与えられる：
+\begin{equation}\label{eq:grad-potential}
+  \nabla_{\mathbf{q}} \mathbf{L}^\varepsilon_{\mathbf{C}}(\mathbf{a}, \mathbf{q})
+  = \mathbf{g}^\star,
+\end{equation}
+ここで $\mathbf{g}^\star$ は Sinkhorn アルゴリズムの収束時に得られる
+双対変数（スケーリング変数 $\mathbf{v}^\star$ との関係は
+$\mathbf{g}^\star = \varepsilon \log \mathbf{v}^\star$）である．
+
+\subsection{Softmax を通した逆伝播}
+
+出力 $\mathbf{q} = \mathrm{softmax}(\mathbf{z})$ について，
+合成関数の連鎖律を適用すると：
+\begin{equation}\label{eq:softmax-grad}
+  \frac{\partial \mathcal{L}}{\partial z_k}
+  = q_k \left( g^\star_k - \inner{\mathbf{g}^\star}{\mathbf{q}} \right).
+\end{equation}
+これは softmax の Jacobian
+$\frac{\partial q_j}{\partial z_k} = q_j(\delta_{jk} - q_k)$
+と式~\eqref{eq:grad-potential}から導かれる．
+
+\begin{remark}{勾配スケーリング}{grad-scaling}
+$N = HW$ 次元上の softmax は $q_k \approx 1/N$ を出力するため，
+式~\eqref{eq:softmax-grad}は $O(1/N)$ のオーダーとなり
+勾配が極めて小さくなる．
+実装では $N$ 倍のスケーリングを施して補正する：
+\[
+  \tilde{\delta}_k = N \cdot q_k \left( g^\star_k - \inner{\mathbf{g}^\star}{\mathbf{q}} \right).
+\]
+\end{remark}
+
+\subsection{全体の勾配フロー}
+
+パラメータ $\theta$ に関する損失の勾配は，以下の経路で逆伝播される：
+\[
+  \mathbf{g}^\star
+  \xrightarrow{\text{softmax}}
+  \tilde{\boldsymbol{\delta}}
+  \xrightarrow{\text{Decoder 逆伝播}}
+  \nabla_{\mathbf{z}} \mathcal{L}
+  \xrightarrow{\text{Encoder 逆伝播}}
+  \nabla_\theta \mathcal{L}.
+\]
+Sinkhorn で得た $\mathbf{g}^\star$ を起点として，
+通常のニューラルネットワークの逆伝播がそのまま適用できる．
+
+
+% ============================================================
+\section{変位内挿による可視化}\label{sec:interpolation}
+
+最適カップリング $\mathbf{P}^\star \in \mathbf{U}(\mathbf{a}, \mathbf{b})$ は
+2つの分布間の質量移動を記述する．
+この輸送の経路を可視化するために，\textbf{McCann 変位内挿}を用いる．
+
+\begin{definition}{変位内挿}{mccann}
+2つの離散測度 $\alpha = \sum_k a_k \delta_{x_k}$，
+$\beta = \sum_l b_l \delta_{y_l}$ と
+最適カップリング $\mathbf{P}^\star$ に対し，
+時刻 $t \in [0, 1]$ における\textbf{変位内挿}を
+\begin{equation}\label{eq:mccann}
+  \mu_t = \sum_{k,l} P^\star_{k,l}\, \delta_{(1-t)x_k + t\, y_l}
+\end{equation}
+で定義する．
+\end{definition}
+
+$t = 0$ で $\mu_0 = \alpha$，$t = 1$ で $\mu_1 = \beta$ であり，
+中間の $t$ では2つの分布を最適に補間した分布が得られる．
+これは Wasserstein 空間における
+$\alpha$ と $\beta$ を結ぶ\textbf{測地線}に対応する．
+
+Autoencoder の文脈では，入力分布 $\mathbf{a}$ と
+再構成分布 $\mathbf{q}$ の間の変位内挿を計算することで，
+「質量がどのように移動して再構成が形成されるか」を可視化できる．
+
+
+% ============================================================
+\section{アルゴリズム}\label{sec:ae-algorithm}
+
+\begin{algorithm}{alg:sinkhorn-ae}
+\textbf{Sinkhorn Autoencoder の訓練}
+
+\medskip
+\textbf{入力}: 訓練画像 $\{I_1, \ldots, I_M\}$，
+コスト行列 $\mathbf{C} \in \R^{N \times N}$，
+正則化 $\varepsilon > 0$，学習率 $\eta > 0$
+
+\textbf{事前計算}: Gibbs kernel $\mathbf{K}_{k,l} = e^{-C_{k,l}/\varepsilon}$
+
+\medskip
+\textbf{for} epoch $= 1, 2, \ldots$ \textbf{do}
+
+\quad \textbf{for} ミニバッチ $\mathcal{B} \subset \{1, \ldots, M\}$ \textbf{do}
+
+\qquad 1. 各画像を分布に変換:
+$\mathbf{a}_i = \mathrm{normalize}(I_i + \delta)$
+
+\qquad 2. 順伝播:
+$\mathbf{q}_i = \mathrm{softmax}(D_\theta(E_\theta(\mathbf{a}_i)))$
+
+\qquad 3. Sinkhorn 反復（バッチ版）:
+
+\qquad\quad $\mathbf{v} \leftarrow \mathbb{1}$
+
+\qquad\quad \textbf{repeat}
+$\;
+\mathbf{u} \leftarrow \mathbf{a} \oslash (\mathbf{v}\, \mathbf{K}^\top),
+\;\;
+\mathbf{v} \leftarrow \mathbf{q} \oslash (\mathbf{u}\, \mathbf{K})
+$
+
+\qquad 4. Kantorovich ポテンシャル:
+$\mathbf{g}^\star = \varepsilon \log \mathbf{v}$
+
+\qquad 5. 逆伝播:
+$\tilde{\boldsymbol{\delta}} = N \cdot \mathbf{q} \odot
+(\mathbf{g}^\star - \inner{\mathbf{g}^\star}{\mathbf{q}}\, \mathbb{1})$
+
+\qquad 6. パラメータ更新:
+$\theta \leftarrow \theta - \eta\, \nabla_\theta \mathcal{L}$
+（$\tilde{\boldsymbol{\delta}}$ から逆伝播）
+
+\quad \textbf{end for}
+
+\textbf{end for}
+\end{algorithm}
+
+計算量はミニバッチあたり
+$O(L \cdot B \cdot N^2)$（$L$: Sinkhorn 反復数，$B$: バッチサイズ，$N$: 画素数）
+であり，Gibbs kernel $\mathbf{K}$ との行列積が支配的である．
+$\mathbf{K}$ は全サンプルで共有されるため事前計算が可能で，
+BLAS による効率的な行列積が活用できる．
