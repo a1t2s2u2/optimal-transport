@@ -1,3 +1,281 @@
 
 \chapter{拡張}\label{chap:extensions}
-% TODO: 執筆予定
+
+本章では，標準的な2分布間の最適輸送を
+様々な方向に拡張した問題を概観する．
+これらの拡張は，実応用の多様な要求に応えるために開発されてきたものであり，
+多くの場合にエントロピー正則化と Sinkhorn 型アルゴリズムが適用できる．
+
+
+% ============================================================
+\section{多周辺問題}\label{sec:multimarginal}
+
+標準的な OT は2つの分布間のカップリングを求めるが，
+$S$ 個のヒストグラム $\mathbf{a}_1 \in \Sigma_{n_1}, \ldots, \mathbf{a}_S \in \Sigma_{n_S}$
+を同時にカップリングする\textbf{多周辺問題} (multimarginal OT) も定式化できる．
+
+\begin{definition}{多周辺最適輸送}{multimarginal}
+$S$ 個のヒストグラムの多周辺 OT は
+\begin{equation}\label{eq:multimarginal}
+  \min_{\mathbf{P} \in \mathbf{U}(\mathbf{a}_s)_s}
+  \inner{\mathbf{C}}{\mathbf{P}}
+  \defeq \sum_{i_1, \ldots, i_S}
+  \mathbf{C}_{i_1, \ldots, i_S}\, \mathbf{P}_{i_1, \ldots, i_S}
+\end{equation}
+で定義される．ここで $\mathbf{P} \in \R^{n_1 \times \cdots \times n_S}_+$ は
+$S$ 次テンソルであり，各周辺和が対応するヒストグラムに一致する：
+$\sum_{\ell \neq s} \sum_{i_\ell} \mathbf{P}_{i_1, \ldots, i_S}
+= \mathbf{a}_{s, i_s}$（すべての $s$ について）．
+\end{definition}
+
+エントロピー正則化を加えると，
+最適テンソルは2周辺の場合と同様のスケーリング形
+$\mathbf{P}_i = \mathbf{K}_i \prod_{s=1}^S \mathbf{u}_{s, i_s}$
+を持ち，$S$ 個のスケーリングベクトルを巡回的に更新する
+Sinkhorn 型反復で計算できる．
+
+\begin{remark}{重心問題との関係}{barycenter-multimarginal}
+第\ref{chap:variational}章の Wasserstein 重心問題~\eqref{eq:barycenter}は，
+入力 $(\alpha_s)_{s=1}^S$ と重心 $\alpha$ の $(S+1)$ 周辺 OT として
+再定式化できる．
+$c(x,y) = \|x - y\|^2$ の場合，
+$S+1$ 変数のコスト関数は
+$c(x_1, \ldots, x_S, x) = \sum_s \lambda_s \|x_s - x\|^2$
+となり，最終変数 $x$ についての最適化は
+重み付き平均 $x = \sum_s \lambda_s x_s$（重心写像）を与える．
+\end{remark}
+
+多周辺 OT の典型的な応用として，
+量子化学における密度汎関数理論がある．
+$S$ 個の電子の同時分布を求める問題は，
+Coulomb 相互作用コスト
+$c(x_1, \ldots, x_S) = \sum_{i \neq j} \|x_i - x_j\|^{-1}$
+を持つ多周辺 OT として定式化される．
+
+
+% ============================================================
+\section{非均衡最適輸送}\label{sec:unbalanced}
+
+標準的な OT は $\alpha(\mathcal{X}) = \beta(\mathcal{Y})$
+（全質量が等しい）ことを前提とするが，
+実応用ではこの仮定が満たされないことが多い
+（ノイズ，正規化の不自然さ等）．
+
+\textbf{非均衡 OT} (unbalanced OT) は，
+周辺制約を $\varphi$-ダイバージェンスによるペナルティに緩和する：
+
+\begin{definition}{非均衡最適輸送}{unbalanced-ot}
+\begin{equation}\label{eq:unbalanced}
+  \mathbf{L}^\tau_{\mathbf{C}}(\mathbf{a}, \mathbf{b})
+  = \min_{\mathbf{P} \in \R^{n \times m}_+}
+  \inner{\mathbf{C}}{\mathbf{P}}
+  + \tau_1 \mathbf{D}_\varphi(\mathbf{P}\mathbb{1}_m | \mathbf{a})
+  + \tau_2 \mathbf{D}_\varphi(\mathbf{P}^\top \mathbb{1}_n | \mathbf{b}).
+\end{equation}
+ここで $\mathbf{D}_\varphi$ は $\varphi$-ダイバージェンス（第\ref{chap:divergences}章），
+$(\tau_1, \tau_2) > 0$ は輸送と質量変化のトレードオフを制御する．
+\end{definition}
+
+\paragraph{極限的な振る舞い.}
+\begin{itemize}
+  \item $\tau_1 = \tau_2 \to +\infty$：
+    周辺制約が厳密になり，
+    古典的な OT（$\sum_i \mathbf{a}_i = \sum_j \mathbf{b}_j$ の場合）に帰着．
+  \item $\mathbf{D}_\varphi = \KL$，$\tau = \tau_1 = \tau_2 \to 0$：
+    Hellinger 距離
+    $\mathfrak{h}^2(\mathbf{a}, \mathbf{b})
+    = \sum_i (\sqrt{\mathbf{a}_i} - \sqrt{\mathbf{b}_i})^2$
+    に収束（質量の生成・消滅のみで輸送なし）．
+\end{itemize}
+
+エントロピー正則化を加えた非均衡 OT に対しても，
+一般化 Sinkhorn 反復（第\ref{chap:entropic}章 §\ref{sec:generalized-sinkhorn}）
+が適用できる．スケーリングの更新則は
+\begin{equation}\label{eq:unbalanced-sinkhorn}
+  \mathbf{u} \leftarrow
+  \left(\frac{\mathbf{a}}{\mathbf{K}\mathbf{v}}\right)^{\tau_1/(\tau_1+\varepsilon)},
+  \qquad
+  \mathbf{v} \leftarrow
+  \left(\frac{\mathbf{b}}{\mathbf{K}^\top \mathbf{u}}\right)^{\tau_2/(\tau_2+\varepsilon)}
+\end{equation}
+となり，指数 $\tau/(\tau+\varepsilon)$ が
+周辺制約の「硬さ」を連続的に制御する
+（$\tau \to \infty$ で通常の Sinkhorn に一致）．
+
+
+% ============================================================
+\section{カップリングへの追加制約}\label{sec:extra-constraints}
+
+カップリング $\pi \in \mathcal{U}(\alpha, \beta)$ に
+追加の制約集合 $\mathcal{C}$ を課した問題
+\[
+  \min_{\pi \in \mathcal{U}(\alpha, \beta)}
+  \left\{\int c\, \mathrm{d}\pi \;:\; \pi \in \mathcal{C}\right\}
+\]
+も重要な拡張である．代表的な2つの制約を紹介する．
+
+\paragraph{容量制約.}
+$\mathcal{C} = \{\pi : \rho_\pi \leq \kappa\}$
+（カップリングの密度に上界を課す）とすると，
+Monge 写像のような特異なカップリングが排除される．
+エントロピー正則化と Dykstra のアルゴリズムを組み合わせて
+近似的に解くことができる．
+
+\paragraph{マルチンゲール制約.}
+$\mathcal{X} = \mathcal{Y} = \R^d$ のとき，
+\[
+  \mathcal{C} = \left\{\pi \;:\;
+  \forall\, x,\;\;
+  \int y\, \frac{\mathrm{d}\pi(x,y)}{\mathrm{d}\alpha(x)}\, \mathrm{d}\beta(y) = x
+  \right\}
+\]
+はカップリングの条件付き期待値が恒等写像になることを要求する．
+これは金融数学における\textbf{マルチンゲール輸送問題}
+の中核をなす制約であり，
+$\alpha$ と $\beta$ が凸順序の関係にあるときに実行可能解が存在する．
+
+
+% ============================================================
+\section{スライス Wasserstein 距離}\label{sec:sliced}
+
+$\R^d$ 上の高次元 OT の計算量を回避するため，
+1次元 OT（閉じた形の解を持つ；§\ref{subsec:1d}）を活用する
+\textbf{スライス Wasserstein 距離}が提案されている．
+
+\begin{definition}{スライス Wasserstein 距離}{sliced-wasserstein}
+\begin{equation}\label{eq:sliced}
+  \mathrm{SW}(\alpha, \beta)^2
+  \defeq \int_{\mathbf{S}^d}
+  \mathcal{W}_2(P_{\theta\sharp}\alpha,\; P_{\theta\sharp}\beta)^2\,
+  \mathrm{d}\theta
+\end{equation}
+ここで $\mathbf{S}^d = \{\theta \in \R^d : \|\theta\| = 1\}$ は単位球面，
+$P_\theta : x \mapsto \inner{x}{\theta} \in \R$ は
+方向 $\theta$ への射影である．
+\end{definition}
+
+直感的には，すべての方向への1次元射影の OT を集約した量である．
+$n$ 点の経験分布間の計算は，各方向について $O(n \log n)$（ソート），
+$K$ 方向のサンプリングで全体 $O(Kn \log n)$ であり，
+$O(n^3 \log n)$ の標準 OT と比べてはるかに高速である．
+
+\paragraph{スライス Wasserstein の利点.}
+\begin{itemize}
+  \item 1次元 OT はヒルベルト的（§\ref{subsec:1d}）であるから，
+    $\mathrm{SW}$ もヒルベルト的であり，
+    正定値カーネルを構成できる
+    （$\mathcal{W}_2$ 自体は $d \geq 2$ で非ヒルベルト的；
+    §\ref{sec:not-hilbertian}）．
+  \item 確率的勾配降下と自然に組み合わせられる
+    （方向 $\theta$ をランダムにサンプルすればよい）．
+\end{itemize}
+
+
+% ============================================================
+\section{ベクトル値・行列値測度の輸送}\label{sec:vector-matrix}
+
+スカラー値の測度 $\alpha \in \mathcal{M}(\mathcal{X})$ を
+ベクトル値 $\alpha \in \mathcal{M}(\mathcal{X}; \mathbb{V})$
+（$\mathbb{V} = \R^d$ など）に拡張することも考えられる．
+
+正の値を取る測度に対しては OT の概念を拡張できるが，
+符号を持つ（正負両方の値を取る）ベクトル値測度に対しては
+一般に困難であり，
+§\ref{sec:ipm} の双対ノルム（$\mathcal{W}_1$, フラットノルム, MMD 等）が
+自然な比較基準となる．
+
+\paragraph{正定値行列値測度.}
+ヒストグラム $\mathbf{a} \in \Sigma_n$ を
+正定値行列 $A \in \mathcal{S}^+_n$（$\tr(A) = 1$）に置き換えると，
+固有値が重みの役割，固有ベクトルの回転が追加の構造を担う．
+Bures 距離（第\ref{chap:theoretical}章 §\ref{subsec:gaussian}）は
+Hellinger 距離の正定値行列への一般化と見なすことができ，
+行列間の KL ダイバージェンスは
+$\KL(A|B) = \tr(A \log A - A \log B - A + B)$
+と定義される．
+この設定での Sinkhorn 型アルゴリズムも研究されている．
+
+
+% ============================================================
+\section{Gromov--Wasserstein 距離}\label{sec:gromov-wasserstein}
+
+標準的な OT は，2つの分布が\textbf{同じ空間}上に定義されている
+（または空間間のコスト $c(x,y)$ が定義できる）ことを前提とする．
+\textbf{Gromov--Wasserstein (GW) 距離}は，
+\textbf{異なる距離空間}上の分布を
+空間内の相対的な距離構造のみに基づいて比較する手法である．
+
+\subsection{Hausdorff 距離と Gromov--Hausdorff 距離}\label{subsec:hausdorff}
+
+集合 $A, B$ 間の Hausdorff 距離
+$\mathcal{H}(A, B) = \max(\sup_{a \in A} \inf_{b \in B} d(a,b),\;
+\sup_{b \in B} \inf_{a \in A} d(a,b))$
+はコンパクト集合間の距離を定める．
+
+\textbf{Gromov--Hausdorff (GH) 距離}は，
+2つの距離空間 $(\mathcal{X}, d_\mathcal{X})$，$(\mathcal{Y}, d_\mathcal{Y})$ の
+「等長性からのずれ」を測る：
+\[
+  \mathcal{GH}(d_\mathcal{X}, d_\mathcal{Y})
+  \defeq \inf_{\mathcal{Z}, f, g}
+  \mathcal{H}_\mathcal{Z}(f(\mathcal{X}),\, g(\mathcal{Y}))
+\]
+ここで inf は共通の距離空間 $\mathcal{Z}$ への
+等長埋め込み $f, g$ にわたる．
+
+\subsection{Gromov--Wasserstein 距離}\label{subsec:gw-distance}
+
+GH 距離を「重み付き集合」（確率測度付き距離空間）に
+一般化したものが GW 距離である．
+
+\begin{definition}{Gromov--Wasserstein 距離}{gw}
+距離行列 $\mathbf{D} \in \R^{n \times n}$，$\mathbf{D}' \in \R^{m \times m}$ と
+ヒストグラム $\mathbf{a} \in \Sigma_n$，$\mathbf{b} \in \Sigma_m$ に対し，
+\begin{equation}\label{eq:gw}
+  \mathrm{GW}((\mathbf{a}, \mathbf{D}),\, (\mathbf{b}, \mathbf{D}'))^2
+  \defeq \min_{\mathbf{P} \in \mathbf{U}(\mathbf{a}, \mathbf{b})}
+  \mathcal{E}_{\mathbf{D}, \mathbf{D}'}(\mathbf{P})
+\end{equation}
+ここで
+$\mathcal{E}_{\mathbf{D}, \mathbf{D}'}(\mathbf{P})
+\defeq \sum_{i,i',j,j'}
+|\mathbf{D}_{i,i'} - \mathbf{D}'_{j,j'}|^2\,
+\mathbf{P}_{i,j}\, \mathbf{P}_{i',j'}$．
+\end{definition}
+
+直感的には，「$\mathcal{X}$ 内の距離関係 $\mathbf{D}_{i,i'}$ と
+$\mathcal{Y}$ 内の距離関係 $\mathbf{D}'_{j,j'}$ が
+対応するペア間でなるべく一致するように」カップリングを選ぶ問題である．
+GW 距離は等長変換（距離を保つ全単射）に関して不変であり，
+形状マッチングなど空間の絶対的な位置が意味を持たない応用に適している．
+
+\subsection{計算手法}\label{subsec:gw-computation}
+
+GW 問題~\eqref{eq:gw}は $\mathbf{P}$ に関して\textbf{非凸}
+（目的関数が $\mathbf{P}$ の4次式）であるため，
+大域的最適解の保証は困難であり，NP困難でもある．
+
+実用的には，エントロピー正則化を加えた
+\begin{equation}\label{eq:gw-entropic}
+  \min_{\mathbf{P} \in \mathbf{U}(\mathbf{a}, \mathbf{b})}
+  \mathcal{E}_{\mathbf{D}, \mathbf{D}'}(\mathbf{P})
+  - \varepsilon \mathbf{H}(\mathbf{P})
+\end{equation}
+に対し，目的関数を $\mathbf{P}$ について線形化して
+Sinkhorn を内側ループとする反復を行う
+\textbf{ミラー降下法}が用いられる：
+\[
+  \mathbf{P}^{(\ell+1)}
+  = \argmin_{\mathbf{P} \in \mathbf{U}(\mathbf{a}, \mathbf{b})}
+  \inner{\mathbf{C}^{(\ell)}}{\mathbf{P}} - \varepsilon \mathbf{H}(\mathbf{P}),
+  \quad
+  \mathbf{C}^{(\ell)} = \nabla \mathcal{E}_{\mathbf{D}, \mathbf{D}'}(\mathbf{P}^{(\ell)})
+  = -\mathbf{D}\, \mathbf{P}^{(\ell)}\, \mathbf{D}'.
+\]
+各反復は通常の正則化 OT（コスト $\mathbf{C}^{(\ell)}$）の
+Sinkhorn 解を求めるだけであり，実装が容易である．
+
+GW 距離は
+形状マッチング，クロスリンガル単語埋め込み，
+グラフ間の対応付けなど，
+空間構造のみから分布を比較したい応用で活用されている．
