@@ -1,22 +1,34 @@
-"""可視化��数"""
+"""可視化関数（すべてファイルに保存）"""
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from .data import image_to_dist
 
+OUTPUT_DIR = "figures"
 
-def plot_distributions(X, y, title="MNIST distributions"):
+
+def _save(fig, name):
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    path = os.path.join(OUTPUT_DIR, name)
+    fig.savefig(path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  -> {path}")
+
+
+def plot_distributions(X, y, label_names=None, title="distributions"):
     fig, axes = plt.subplots(2, 5, figsize=(14, 6))
-    for digit in range(10):
-        ax = axes[digit // 5, digit % 5]
-        idx = np.where(y == digit)[0][0]
+    for cls in range(10):
+        ax = axes[cls // 5, cls % 5]
+        idx = np.where(y == cls)[0][0]
         dist = image_to_dist(X[idx])
         ax.imshow(dist.reshape(28, 28), cmap="hot")
-        ax.set_title(f"digit {digit}", fontsize=10)
+        name = label_names[cls] if label_names else str(cls)
+        ax.set_title(name, fontsize=10)
         ax.axis("off")
     plt.suptitle(title, fontsize=13)
     plt.tight_layout()
-    plt.show()
+    _save(fig, "distributions.png")
 
 
 def plot_transport(a, b, P, pos, label_a="source", label_b="target"):
@@ -49,10 +61,11 @@ def plot_transport(a, b, P, pos, label_a="source", label_b="target"):
     ax.set_title("transport field", fontsize=12)
     ax.axis("off")
     plt.tight_layout()
-    plt.show()
+    _save(fig, "transport.png")
 
 
-def plot_interpolation(P, pos, n_steps=7, title="displacement interpolation"):
+def plot_interpolation(P, pos, n_steps=7, title="displacement interpolation",
+                       filename="interpolation.png"):
     I, J = np.where(P > 1e-10)
     masses = P[I, J]
 
@@ -69,10 +82,10 @@ def plot_interpolation(P, pos, n_steps=7, title="displacement interpolation"):
         axes[idx].axis("off")
     plt.suptitle(title, fontsize=13)
     plt.tight_layout()
-    plt.show()
+    _save(fig, filename)
 
 
-def plot_reconstructions(model, X_te, y_te, n_show=8):
+def plot_reconstructions(model, X_te, y_te, label_names=None, n_show=8):
     test_input = X_te[:n_show]
     test_output = model.forward(test_input)
 
@@ -80,7 +93,8 @@ def plot_reconstructions(model, X_te, y_te, n_show=8):
     for i in range(n_show):
         axes[0, i].imshow(test_input[i].reshape(28, 28), cmap="hot")
         axes[0, i].axis("off")
-        axes[0, i].set_title(f"digit {y_te[i]}", fontsize=10)
+        name = label_names[y_te[i]] if label_names else str(y_te[i])
+        axes[0, i].set_title(name, fontsize=10)
 
         axes[1, i].imshow(test_output[i].reshape(28, 28), cmap="hot")
         axes[1, i].axis("off")
@@ -95,7 +109,7 @@ def plot_reconstructions(model, X_te, y_te, n_show=8):
     axes[2, 0].set_ylabel("q - a", fontsize=11, rotation=0, labelpad=50)
     plt.suptitle("Sinkhorn Autoencoder reconstruction", fontsize=13)
     plt.tight_layout()
-    plt.show()
+    _save(fig, "reconstructions.png")
 
 
 def plot_latent_space(model, X_te, y_te, n_vis=1000):
@@ -107,7 +121,7 @@ def plot_latent_space(model, X_te, y_te, n_vis=1000):
     _, _, Vt = np.linalg.svd(centered, full_matrices=False)
     pca_2d = centered @ Vt[:2].T
 
-    plt.figure(figsize=(8, 6))
+    fig = plt.figure(figsize=(8, 6))
     for digit in range(10):
         mask = labels == digit
         plt.scatter(
@@ -119,15 +133,15 @@ def plot_latent_space(model, X_te, y_te, n_vis=1000):
     plt.ylabel("PC2")
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.show()
+    _save(fig, "latent_space.png")
 
 
 def plot_training_curve(history, epochs):
-    plt.figure(figsize=(8, 4))
+    fig = plt.figure(figsize=(8, 4))
     plt.plot(range(1, epochs + 1), history, "b-o")
     plt.xlabel("Epoch")
     plt.ylabel("Sinkhorn loss")
     plt.title("Training loss (regularized Kantorovich cost)")
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.show()
+    _save(fig, "training_curve.png")

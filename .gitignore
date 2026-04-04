@@ -16,7 +16,8 @@ out/
 
 # Python
 __pycache__/
-mnist_data/
+*_data/
+figures/*.png
 
 # Archive 内のビルド成果物
 archive/note/out/
