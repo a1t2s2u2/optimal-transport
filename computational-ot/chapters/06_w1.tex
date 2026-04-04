@@ -1,3 +1,225 @@
 
 \chapter{$\mathcal{W}_1$ 最適輸送}\label{chap:w1}
-% TODO: 執筆予定
+
+本章では，地上コストが距離そのもの $c(x,y) = d(x,y)$ である場合，
+すなわち $p = 1$ の Wasserstein 距離 $\mathcal{W}_1$ を扱う．
+$\mathcal{W}_1$ は Monge が 1781 年に提起した
+原初的な設定に対応する距離であり，
+コンピュータビジョンでは
+\textbf{Earth Mover's Distance}~\cite{Rubner2000}
+の名で広く知られている．
+
+$\mathcal{W}_2$（2乗コスト）と比較して，
+$\mathcal{W}_1$ には以下の特徴がある：
+\begin{itemize}
+  \item 双対問題が \textbf{Lipschitz 制約}に帰着され，
+    簡潔で美しい形を持つ．
+  \item 符号付き測度（正とは限らない）に対しても定義でき，
+    \textbf{ノルム}を定める．
+  \item 最適カップリングの一意性が一般には成り立たないため，
+    Monge 写像の構造理論は $\mathcal{W}_2$ より複雑になる．
+  \item グラフ上では\textbf{最小費用流問題}に帰着され，
+    効率的なアルゴリズムが利用できる．
+\end{itemize}
+
+
+% ============================================================
+\section{距離空間上の $\mathcal{W}_1$}\label{sec:w1-metric}
+
+\subsection{Kantorovich--Rubinstein 双対性}\label{subsec:kr-duality}
+
+$\mathcal{X} = \mathcal{Y}$ を距離空間，
+$d$ をその距離関数とする．
+$c(x, y) = d(x, y)$ のとき，
+Kantorovich 双対問題（式~\eqref{eq:dual-general}）は
+$c$変換の性質により顕著に簡略化される．
+
+関数 $f \in \mathcal{C}(\mathcal{X})$ の
+\textbf{Lipschitz 定数}を
+\[
+  \mathrm{Lip}(f) \defeq
+  \sup_{\substack{x, y \in \mathcal{X} \\ x \neq y}}
+  \frac{|f(x) - f(y)|}{d(x, y)}
+\]
+で定義する．
+
+\begin{proposition}{$c$変換と Lipschitz 条件}{c-transform-lip}
+$c(x, y) = d(x, y)$ のとき，
+$f = g^c$ ならば $\mathrm{Lip}(f) \leq 1$ であり，
+逆に $\mathrm{Lip}(f) \leq 1$ ならば $f^c = -f$ が成り立つ．
+\end{proposition}
+
+\begin{proof}
+$f = g^c$ とすると，
+$f(x) = \inf_{z} d(x, z) - g(z)$ であるから，
+任意の $x, y$ に対し
+\begin{align*}
+  |f(x) - f(y)|
+  &= \left|\inf_z d(x,z) - g(z) - \inf_z d(y,z) + g(z)\right| \\
+  &\leq \sup_z |d(x,z) - d(y,z)| \leq d(x,y)
+\end{align*}
+より $\mathrm{Lip}(f) \leq 1$．
+
+逆に $\mathrm{Lip}(f) \leq 1$ のとき，$g = -f$ とおくと
+$f(y) - d(x,y) \leq f(x) \leq f(y) + d(x,y)$ から
+$f^c(y) = \inf_x d(x,y) - f(x) = -f(y)$ が確認できる．
+\end{proof}
+
+この命題から，双対問題を単一変数 $f$ で書くと
+次の\textbf{Kantorovich--Rubinstein 公式}が得られる：
+
+\begin{theorem}{Kantorovich--Rubinstein 双対性}{kr-duality}
+\begin{equation}\label{eq:kr-dual}
+  \mathcal{W}_1(\alpha, \beta)
+  = \max_{f}\; \left\{
+    \int_{\mathcal{X}} f(x)\, (\mathrm{d}\alpha(x) - \mathrm{d}\beta(x))
+    \;:\; \mathrm{Lip}(f) \leq 1
+  \right\}.
+\end{equation}
+\end{theorem}
+
+この公式は，$\mathcal{W}_1$ が
+\textbf{1-Lipschitz 関数全体を判別関数とするときの}
+$\alpha$ と $\beta$ の最大期待値差であることを示している．
+
+\subsection{$\mathcal{W}_1$ はノルムを定める}\label{subsec:w1-norm}
+
+式~\eqref{eq:kr-dual}の右辺は $\alpha - \beta$
+（符号付き測度）の線形汎関数の上限であるから，
+$\mathcal{W}_1(\alpha, \beta) = \|\alpha - \beta\|_{\mathcal{W}_1}$
+と書ける．すなわち $\mathcal{W}_1$ は（全質量が等しい）
+符号付き測度の空間上の\textbf{ノルム}を定める．
+この性質は $p > 1$ の $\mathcal{W}_p$ にはなく，
+$\mathcal{W}_1$ に特有の構造である．
+
+\subsection{離散的な定式化}\label{subsec:w1-discrete}
+
+離散測度
+$\alpha - \beta = \sum_k \mathbf{m}_k \delta_{z_k}$
+（$\sum_k \mathbf{m}_k = 0$）に対し，
+式~\eqref{eq:kr-dual}は有限次元の最適化問題になる：
+\begin{equation}\label{eq:w1-discrete}
+  \mathcal{W}_1(\alpha, \beta)
+  = \max_{(\mathbf{f}_k)_k} \left\{
+    \sum_k \mathbf{f}_k \mathbf{m}_k
+    \;:\;
+    \forall\, (k, \ell),\;\;
+    |\mathbf{f}_k - \mathbf{f}_\ell| \leq d(z_k, z_\ell)
+  \right\}.
+\end{equation}
+これは二次錐制約（$|\cdot| \leq \cdot$）を持つ凸計画であり，
+内点法や近接法で解ける．
+
+
+% ============================================================
+\section{ユークリッド空間上の $\mathcal{W}_1$}\label{sec:w1-euclidean}
+
+$\mathcal{X} = \mathcal{Y} = \R^d$，$d(x,y) = \|x - y\|$ のとき，
+Lipschitz 制約はポテンシャル $f$ の\textbf{勾配ノルム}の制約に局所化できる：
+
+\begin{equation}\label{eq:w1-gradient}
+  \mathcal{W}_1(\alpha, \beta)
+  = \max_f\; \left\{
+    \int_{\R^d} f(x)\, (\mathrm{d}\alpha - \mathrm{d}\beta)(x)
+    \;:\; \|\nabla f\|_\infty \leq 1
+  \right\}.
+\end{equation}
+
+この双対問題に対応する主問題は，
+\textbf{Beckmann の定式化}と呼ばれる
+ベクトル場 $s : \R^d \to \R^d$ に関する最適化問題である：
+
+\begin{equation}\label{eq:beckmann}
+  \mathcal{W}_1(\alpha, \beta)
+  = \min_s\; \left\{
+    \int_{\R^d} \|s(x)\|_2\, \mathrm{d}x
+    \;:\; \mathrm{div}(s) = \alpha - \beta
+  \right\}.
+\end{equation}
+
+ここでベクトル場 $s(x)$ は質量の局所的な移動方向と速度を表し，
+発散条件 $\mathrm{div}(s) = \alpha - \beta$ は質量の保存を保証する．
+$\alpha$ の台の外で $\mathrm{div}(s) = 0$ であるから，
+$s$ はソース（$\alpha$）からシンク（$\beta$）へ質量を流す
+\textbf{流れ場}と解釈できる．
+
+Beckmann の定式化は非滑らか凸最適化問題であり，
+有限要素法で離散化した後，
+Douglas--Rachford 分裂法や ADMM 等の一階法で解かれる．
+
+
+% ============================================================
+\section{グラフ上の $\mathcal{W}_1$}\label{sec:w1-graph}
+
+$\mathcal{X}$ がグラフ $(\{1, \ldots, n\}, \mathcal{E})$ で
+辺重み $\mathbf{w}_{i,j} > 0$ を持つとき，
+ユークリッド空間の勾配・発散の概念をグラフ上に離散化することで，
+$\mathcal{W}_1$ を最小費用流問題として定式化できる．
+
+\subsection{グラフ上の勾配と発散}\label{subsec:graph-operators}
+
+グラフの\textbf{勾配作用素} $\nabla : \R^n \to \R^{\mathcal{E}}$ を
+\[
+  \forall\, (i, j) \in \mathcal{E}, \quad
+  (\nabla \mathbf{f})_{i,j} \defeq \mathbf{f}_i - \mathbf{f}_j
+\]
+で定義する．その随伴作用素（\textbf{発散}）
+$\mathrm{div} : \R^{\mathcal{E}} \to \R^n$ は
+\[
+  \forall\, i, \quad
+  \mathrm{div}(\mathbf{s})_i \defeq
+  \sum_{j:\, (i,j) \in \mathcal{E}} (\mathbf{s}_{i,j} - \mathbf{s}_{j,i})
+\]
+で定義される．
+
+\subsection{主問題と双対問題}\label{subsec:w1-graph-formulation}
+
+式~\eqref{eq:w1-gradient}と~\eqref{eq:beckmann}の
+グラフ上での対応は以下のようになる．
+
+\paragraph{双対問題（Lipschitz 制約）.}
+\begin{equation}\label{eq:w1-graph-dual}
+  \mathrm{W}_1(\mathbf{a}, \mathbf{b})
+  = \max_{\mathbf{f} \in \R^n}\; \left\{
+    \sum_{i=1}^n \mathbf{f}_i (\mathbf{a}_i - \mathbf{b}_i)
+    \;:\; \forall\, (i,j) \in \mathcal{E},\;\;
+    |(\nabla \mathbf{f})_{i,j}| \leq \mathbf{w}_{i,j}
+  \right\}.
+\end{equation}
+
+\paragraph{主問題（最小費用流）.}
+\begin{equation}\label{eq:w1-graph-primal}
+  \mathrm{W}_1(\mathbf{a}, \mathbf{b})
+  = \min_{\mathbf{s} \in \R^{\mathcal{E}}_+}\; \left\{
+    \sum_{(i,j) \in \mathcal{E}}
+    \mathbf{w}_{i,j}\, \mathbf{s}_{i,j}
+    \;:\; \mathrm{div}(\mathbf{s}) = \mathbf{a} - \mathbf{b}
+  \right\}.
+\end{equation}
+
+式~\eqref{eq:w1-graph-primal}は
+\textbf{最小費用流問題} (minimum-cost flow) そのものであり，
+辺 $(i,j)$ を通る流量 $\mathbf{s}_{i,j}$ の
+重み付き総量を最小化する．
+この問題には専用の高効率ソルバーが存在し，
+一般の LP ソルバーを使う Kantorovich 問題より高速に解ける．
+
+\begin{remark}{$n \times n$ のカップリング行列が不要}{no-coupling}
+グラフ上の $\mathcal{W}_1$ の計算では，
+$n \times n$ のカップリング行列 $\mathbf{P}$ を
+陽に構成する必要がない．
+辺の数 $|\mathcal{E}|$ に比例するサイズのフロー $\mathbf{s}$ を
+最適化すればよく，
+スパースなグラフ（$|\mathcal{E}| \ll n^2$）では
+大幅な計算量の削減につながる．
+\end{remark}
+
+\begin{example}{パスグラフ上の $\mathrm{W}_1$}{w1-path}
+$\mathcal{X} = \{1, 2, 3, 4\}$ が
+$1$---$2$---$3$---$4$ のパスグラフ（辺重み全て $1$）である場合を考える．
+$\mathbf{a} = (1, 0, 0, 0)$，$\mathbf{b} = (0, 0, 0, 1)$ とすると，
+質量 $1$ をノード $1$ からノード $4$ へ送る必要がある．
+最小費用流は $\mathbf{s}_{1,2} = \mathbf{s}_{2,3} = \mathbf{s}_{3,4} = 1$
+（3辺を通過）であり，$\mathrm{W}_1 = 3$．
+これはグラフ上の最短経路距離 $d(1, 4) = 3$ に一致する．
+\end{example}
