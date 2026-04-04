@@ -57,3 +57,26 @@ def sinkhorn_batch(a, b, K, CK, eps, max_iter=50):
     g = eps * np.log(v + 1e-300)
     cost = np.sum(u * (v @ CK.T), axis=1)
     return cost, g
+
+
+def sinkhorn_loss_batch(a, b, K, eps, max_iter=50):
+    """
+    バッチ版の正則化 OT 値と、その第2引数 b に関する勾配を返す。
+
+    Returns: value (B,), g (B, N)
+      value は双対目的 a·f + b·g による正則化 OT 値
+      g は b に関する Kantorovich ポテンシャル
+    """
+    B, N = a.shape
+    v = np.ones((B, N))
+
+    for _ in range(max_iter):
+        u = a / (v @ K.T + 1e-300)
+        u = np.clip(u, 0, 1e10)
+        v = b / (u @ K + 1e-300)
+        v = np.clip(v, 0, 1e10)
+
+    f = eps * np.log(u + 1e-300)
+    g = eps * np.log(v + 1e-300)
+    value = np.sum(a * f, axis=1) + np.sum(b * g, axis=1)
+    return value, g

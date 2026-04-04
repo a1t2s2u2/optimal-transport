@@ -11,7 +11,7 @@ Sinkhorn Autoencoder — エントリポイント
 import numpy as np
 from tqdm import tqdm, trange
 from src import load_dataset, image_to_dist, build_pixel_cost, downsample
-from src import sinkhorn_log, sinkhorn_batch
+from src import sinkhorn_log, sinkhorn_batch, sinkhorn_loss_batch
 from src import SinkhornAutoencoder
 from src.visualize import (
     plot_distributions,
@@ -47,17 +47,19 @@ def train_autoencoder(X_tr, C_pixel, eps_schedule, n_train, batch_size, epochs, 
     """
     Sinkhorn Autoencoder を単純な SGD で訓練
 
+    損失には entropic OT の自己バイアスを打ち消す
+    Sinkhorn divergence を用いる。
+
     eps_schedule: [(eps, n_epochs), ...] ε-スケーリング
       大きい ε → 強い勾配で粗く学習 → 小さい ε → 精密化
     """
     n_pixels = X_tr.shape[1]
-    model = SinkhornAutoencoder([n_pixels, 64, 16, 64, n_pixels], lr=lr)
+    model = SinkhornAutoencoder([n_pixels, 128, 32, 128, n_pixels], lr=lr)
     history = []
     epoch_count = 0
 
     for eps, n_ep in eps_schedule:
         K = np.exp(-C_pixel / eps)
-        CK = C_pixel * K
         tqdm.write(f"  --- eps = {eps} ({n_ep} epochs) ---")
 
         for _ in trange(n_ep, desc=f"eps={eps}", leave=False):
@@ -70,15 +72,21 @@ def train_autoencoder(X_tr, C_pixel, eps_schedule, n_train, batch_size, epochs, 
                 a_batch = X_tr[perm[start:end]]
 
                 q_batch = model.forward(a_batch)
-                cost, g = sinkhorn_batch(a_batch, q_batch, K, CK, eps)
-                model.backward(g)
+                loss_ab, g_ab = sinkhorn_loss_batch(a_batch, q_batch, K, eps)
+                loss_aa, _ = sinkhorn_loss_batch(a_batch, a_batch, K, eps)
+                loss_qq, g_qq = sinkhorn_loss_batch(q_batch, q_batch, K, eps)
 
-                epoch_loss += cost.mean()
+                loss = loss_ab - 0.5 * loss_aa - 0.5 * loss_qq
+                model.backward(g_ab - g_qq)
+
+                epoch_loss += loss.mean()
                 n_batch += 1
 
             avg_loss = epoch_loss / n_batch
             history.append(avg_loss)
-            tqdm.write(f"  Epoch {epoch_count:2d} | loss = {avg_loss:.6f} (eps={eps})")
+            tqdm.write(
+                f"  Epoch {epoch_count:2d} | Sinkhorn div = {avg_loss:.6f} (eps={eps})"
+            )
 
     return model, history
 
@@ -87,10 +95,11 @@ def main():
     np.random.seed(42)
 
     N_TRAIN = 10000
-    BATCH_SIZE = 64
-    LR = 0.5
-    # ε-スケーリング: 大→小で勾配を安定化
-    EPS_SCHEDULE = [(1.0, 15), (0.3, 15), (0.1, 15)]
+    BATCH_SIZE = 128
+    LR = 0.15
+    # ε-スケーリング: 勾配が十分大きい範囲でのみ段階的に絞る
+    # ε=1.0 は K が拡散しすぎて g≈0 → 学習しないため除外
+    EPS_SCHEDULE = [(0.5, 10), (0.2, 20), (0.1, 100)]
 
     # ── データ読み込み ─────────────────────────
     print(f"[1/4] データ読み込み ({DATASET}, {IMG_SIZE}x{IMG_SIZE})")
