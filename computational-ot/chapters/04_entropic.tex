@@ -1,3 +1,453 @@
 
 \chapter{エントロピー正則化}\label{chap:entropic}
-% TODO: 執筆予定
+
+前章で見たように，Kantorovich 問題の厳密解法は
+$O(n^3 \log n)$ 程度の計算量を要し，大規模問題への適用が困難である．
+本章では，\textbf{エントロピー正則化}を加えることで
+計算量を劇的に削減する手法 --- Sinkhorn アルゴリズム --- を導入する．
+
+Cuturi~\cite{Cuturi2013} によって
+データサイエンスの文脈で再発見されたこの手法は，
+行列とベクトルの積の反復のみで近似解が得られるため，
+GPU 上での並列計算と極めて相性がよく，
+現在の計算最適輸送の中核を成している．
+
+
+% ============================================================
+\section{エントロピー正則化の定義}\label{sec:entropic-def}
+
+\subsection{離散エントロピー}\label{subsec:discrete-entropy}
+
+カップリング行列 $\mathbf{P}$ の\textbf{離散エントロピー}を
+\begin{equation}\label{eq:entropy}
+  \mathbf{H}(\mathbf{P})
+  \defeq -\sum_{i,j} \mathbf{P}_{i,j}(\log \mathbf{P}_{i,j} - 1)
+\end{equation}
+で定義する（$\mathbf{P}_{i,j} = 0$ のとき $0 \cdot (\log 0 - 1) = 0$ と約束する）．
+$\mathbf{H}$ は凹関数であり，
+$\mathbf{P}$ が密な（質量が一様に広がった）行列のとき大きな値を取る．
+
+\subsection{正則化された最適輸送問題}\label{subsec:regularized-ot}
+
+正則化パラメータ $\varepsilon > 0$ を導入し，
+Kantorovich 問題にエントロピーのペナルティ項を加えた
+\textbf{正則化問題}を定義する：
+\begin{equation}\label{eq:regularized-ot}
+  \mathbf{L}^\varepsilon_{\mathbf{C}}(\mathbf{a}, \mathbf{b})
+  \defeq \min_{\mathbf{P} \in \mathbf{U}(\mathbf{a}, \mathbf{b})}
+  \inner{\mathbf{C}}{\mathbf{P}} - \varepsilon\, \mathbf{H}(\mathbf{P}).
+\end{equation}
+
+目的関数は $\varepsilon$-強凸であるため，
+\textbf{最適解 $\mathbf{P}_\varepsilon$ は一意}に存在する．
+
+\paragraph{なぜエントロピーを加えるのか？}
+直感的には，$-\varepsilon \mathbf{H}(\mathbf{P})$ の項が
+「カップリングがスパースすぎる」ことにペナルティを課す．
+正則化なしの最適カップリングは高々 $n+m-1$ 個の非零成分しか持たないが
+（第\ref{chap:algorithmic}章），
+正則化を加えると\textbf{全成分が正}のカップリングが得られる．
+この密な構造が，後述の Sinkhorn アルゴリズムの効率性につながる．
+
+\subsection{$\varepsilon$ の効果と収束}\label{subsec:eps-effect}
+
+$\varepsilon$ は解のスパース性と元の問題への近さを制御する：
+
+\begin{proposition}{$\varepsilon \to 0$ での収束}{eps-convergence}
+$\varepsilon \to 0$ のとき，正則化問題の解
+$\mathbf{P}_\varepsilon$ は
+Kantorovich 問題の最適解のうち\textbf{最大エントロピーを持つもの}に収束する：
+\[
+  \mathbf{P}_\varepsilon \xrightarrow{\varepsilon \to 0}
+  \argmin_{\mathbf{P}}
+  \{-\mathbf{H}(\mathbf{P}) :
+  \mathbf{P} \in \mathbf{U}(\mathbf{a}, \mathbf{b}),\;
+  \inner{\mathbf{C}}{\mathbf{P}} = \mathbf{L_C}(\mathbf{a}, \mathbf{b})\}.
+\]
+特に，$\mathbf{L}^\varepsilon_{\mathbf{C}}(\mathbf{a}, \mathbf{b})
+\to \mathbf{L_C}(\mathbf{a}, \mathbf{b})$．
+逆に $\varepsilon \to \infty$ のとき，
+$\mathbf{P}_\varepsilon \to \mathbf{a}\mathbf{b}^\top$
+（独立カップリング）に収束する．
+\end{proposition}
+
+すなわち，小さい $\varepsilon$ ほど元の問題に近い解が得られるが，
+後述するように計算上の困難（数値的不安定性，収束の遅さ）も増す．
+
+\subsection{KL 射影としての解釈}\label{subsec:kl-projection}
+
+\textbf{Gibbs カーネル}
+$\mathbf{K}_{i,j} \defeq e^{-\mathbf{C}_{i,j}/\varepsilon}$
+を導入すると，
+正則化問題~\eqref{eq:regularized-ot}は
+カップリングの集合 $\mathbf{U}(\mathbf{a}, \mathbf{b})$
+への \textbf{KL 射影}として再定式化できる：
+\begin{equation}\label{eq:kl-projection}
+  \mathbf{P}_\varepsilon
+  = \argmin_{\mathbf{P} \in \mathbf{U}(\mathbf{a}, \mathbf{b})}
+  \KL(\mathbf{P} \| \mathbf{K}),
+\end{equation}
+ここで $\KL(\mathbf{P}\|\mathbf{K})
+= \sum_{i,j} \mathbf{P}_{i,j} \log(\mathbf{P}_{i,j}/\mathbf{K}_{i,j})
+- \mathbf{P}_{i,j} + \mathbf{K}_{i,j}$ は
+KL ダイバージェンスである．
+この見方は，Sinkhorn アルゴリズムの
+Bregman 射影としての理解につながる．
+
+
+% ============================================================
+\section{Sinkhorn アルゴリズム}\label{sec:sinkhorn}
+
+\subsection{最適解のスケーリング構造}\label{subsec:scaling-structure}
+
+正則化問題の最適解は，特殊な分解形を持つ．
+
+\begin{proposition}{最適カップリングのスケーリング形}{scaling-form}
+正則化問題~\eqref{eq:regularized-ot}の最適解
+$\mathbf{P}_\varepsilon$ は
+\begin{equation}\label{eq:scaling-form}
+  (\mathbf{P}_\varepsilon)_{i,j} = \mathbf{u}_i\, \mathbf{K}_{i,j}\, \mathbf{v}_j
+\end{equation}
+の形を持つ．ここで $(\mathbf{u}, \mathbf{v}) \in \R^n_{+} \times \R^m_{+}$
+は\textbf{スケーリングベクトル}と呼ばれる．
+行列の形では $\mathbf{P}_\varepsilon = \diag(\mathbf{u})\, \mathbf{K}\, \diag(\mathbf{v})$．
+\end{proposition}
+
+\begin{proof}
+Lagrangian
+$\mathcal{E} = \inner{\mathbf{C}}{\mathbf{P}} - \varepsilon \mathbf{H}(\mathbf{P})
+- \inner{\mathbf{f}}{\mathbf{P}\mathbb{1}_m - \mathbf{a}}
+- \inner{\mathbf{g}}{\mathbf{P}^\top \mathbb{1}_n - \mathbf{b}}$
+の $\mathbf{P}_{i,j}$ に関する一次条件は
+$\mathbf{C}_{i,j} + \varepsilon \log \mathbf{P}_{i,j} - \mathbf{f}_i - \mathbf{g}_j = 0$
+であり，これを解くと
+$\mathbf{P}_{i,j} = e^{\mathbf{f}_i/\varepsilon}\,
+e^{-\mathbf{C}_{i,j}/\varepsilon}\, e^{\mathbf{g}_j/\varepsilon}$
+を得る．$\mathbf{u}_i = e^{\mathbf{f}_i/\varepsilon}$，
+$\mathbf{v}_j = e^{\mathbf{g}_j/\varepsilon}$ とおけばよい．
+\end{proof}
+
+\subsection{スケーリング方程式と Sinkhorn 反復}\label{subsec:sinkhorn-iterations}
+
+スケーリング形の $\mathbf{P}_\varepsilon$ が
+周辺制約 $\mathbf{P}_\varepsilon \mathbb{1}_m = \mathbf{a}$，
+$\mathbf{P}_\varepsilon^\top \mathbb{1}_n = \mathbf{b}$ を満たすためには，
+$(\mathbf{u}, \mathbf{v})$ が以下の非線形方程式を満たす必要がある：
+\begin{equation}\label{eq:scaling-equations}
+  \mathbf{u} \odot (\mathbf{K}\mathbf{v}) = \mathbf{a},
+  \qquad
+  \mathbf{v} \odot (\mathbf{K}^\top \mathbf{u}) = \mathbf{b}.
+\end{equation}
+
+Sinkhorn アルゴリズムは，
+この方程式を交互に満たすように
+$\mathbf{u}$ と $\mathbf{v}$ を更新する
+\textbf{交互射影法}である：
+
+\begin{algorithm}{alg:sinkhorn}
+\textbf{Sinkhorn アルゴリズム} \\[4pt]
+\textbf{入力}: $\mathbf{a} \in \Sigma_n$，$\mathbf{b} \in \Sigma_m$，
+$\mathbf{C} \in \R^{n \times m}$，$\varepsilon > 0$ \\
+\textbf{初期化}: $\mathbf{v}^{(0)} = \mathbb{1}_m$ \\[2pt]
+$\ell = 0, 1, 2, \ldots$ に対して以下を収束まで反復する：
+\[
+  \mathbf{u}^{(\ell+1)} = \frac{\mathbf{a}}{\mathbf{K}\mathbf{v}^{(\ell)}},
+  \qquad
+  \mathbf{v}^{(\ell+1)} = \frac{\mathbf{b}}{\mathbf{K}^\top \mathbf{u}^{(\ell+1)}}
+\]
+（除算は成分ごと） \\[2pt]
+\textbf{出力}: $\mathbf{P}_\varepsilon \approx
+\diag(\mathbf{u}^{(\ell)})\, \mathbf{K}\, \diag(\mathbf{v}^{(\ell)})$
+\end{algorithm}
+
+各反復のコストは行列・ベクトル積 $\mathbf{K}\mathbf{v}$ と
+$\mathbf{K}^\top \mathbf{u}$ がそれぞれ $O(nm)$ であり，
+全体で $O(nm)$/反復 である．
+
+\begin{example}{Sinkhorn 反復の実行例}{sinkhorn-example}
+$\mathbf{a} = (0.5,\; 0.5)$，$\mathbf{b} = (0.3,\; 0.7)$，
+$\mathbf{C} = \bigl(\begin{smallmatrix} 1 & 2 \\ 3 & 1 \end{smallmatrix}\bigr)$，
+$\varepsilon = 1$ とする．
+Gibbs カーネルは
+$\mathbf{K} = \bigl(\begin{smallmatrix} e^{-1} & e^{-2} \\ e^{-3} & e^{-1} \end{smallmatrix}\bigr)
+\approx \bigl(\begin{smallmatrix} 0.368 & 0.135 \\ 0.050 & 0.368 \end{smallmatrix}\bigr)$．
+
+$\mathbf{v}^{(0)} = (1, 1)$ から出発すると：
+\begin{align*}
+  \mathbf{K}\mathbf{v}^{(0)} &= (0.503,\; 0.418), \\
+  \mathbf{u}^{(1)} &= (0.994,\; 1.196), \\
+  \mathbf{K}^\top \mathbf{u}^{(1)} &= (0.426,\; 0.574), \\
+  \mathbf{v}^{(1)} &= (0.704,\; 1.220).
+\end{align*}
+さらに数回の反復で $\mathbf{u}$，$\mathbf{v}$ は急速に収束し，
+$\mathbf{P}_\varepsilon = \diag(\mathbf{u})\, \mathbf{K}\, \diag(\mathbf{v})$
+が周辺制約をほぼ完全に満たすようになる．
+\end{example}
+
+\subsection{収束の保証}\label{subsec:convergence}
+
+Sinkhorn アルゴリズムの収束は，
+正行列による縮小写像の理論（Hilbert 射影距離）を用いて示される．
+
+正の行列 $\mathbf{K} \in \R^{n \times m}_{+,*}$ に対し，
+\textbf{Birkhoff 縮小率}を
+\[
+  \lambda(\mathbf{K})
+  \defeq \frac{\sqrt{\eta(\mathbf{K})} - 1}{\sqrt{\eta(\mathbf{K})} + 1}
+  < 1,
+  \quad \text{ただし}\quad
+  \eta(\mathbf{K})
+  \defeq \max_{i,j,k,\ell}
+  \frac{\mathbf{K}_{i,k}\, \mathbf{K}_{j,\ell}}
+       {\mathbf{K}_{j,k}\, \mathbf{K}_{i,\ell}}
+\]
+と定義する．
+
+\begin{theorem}{Sinkhorn の線形収束}{sinkhorn-convergence}
+Sinkhorn 反復のスケーリングベクトルは
+（射影距離の意味で）\textbf{線形収束}する：
+\[
+  d_H(\mathbf{u}^{(\ell)}, \mathbf{u}^\star)
+  = O(\lambda(\mathbf{K})^{2\ell}),
+  \qquad
+  d_H(\mathbf{v}^{(\ell)}, \mathbf{v}^\star)
+  = O(\lambda(\mathbf{K})^{2\ell}).
+\]
+ここで $d_H(\mathbf{u}, \mathbf{u}')
+= \norm{\log \mathbf{u} - \log \mathbf{u}'}_{\mathrm{var}}$
+（$\norm{\cdot}_{\mathrm{var}} = \max - \min$）は
+Hilbert 射影距離である．
+\end{theorem}
+
+ただし $\varepsilon \to 0$ のとき
+$\eta(\mathbf{K}) \to \infty$ であるため
+$\lambda(\mathbf{K}) \to 1$ となり，
+収束が遅くなる．小さな $\varepsilon$ での高精度計算には
+多くの反復が必要になる．
+
+
+% ============================================================
+\section{Sinkhorn 反復の高速化}\label{sec:speedup}
+
+各 Sinkhorn 反復のボトルネックは
+$\mathbf{K}\mathbf{v}$ と $\mathbf{K}^\top \mathbf{u}$ の
+行列・ベクトル積（$O(nm)$）である．
+以下のケースではこれを大幅に高速化できる．
+
+\subsection{GPU 並列化}\label{subsec:gpu}
+
+Sinkhorn 反復は行列・ベクトル積と成分ごとの除算のみで構成されるため，
+GPU 上での並列計算と極めて相性がよい．
+さらに，$N$ 組のヒストグラム対
+$(\mathbf{a}_1, \mathbf{b}_1), \ldots, (\mathbf{a}_N, \mathbf{b}_N)$
+に対する正則化 OT を同時に計算する場合は，
+スケーリングベクトルを $n \times N$ 行列と $m \times N$ 行列に
+まとめることで，行列・\textbf{行列}積として並列化できる：
+\[
+  \mathbf{U}^{(\ell+1)} = \frac{\mathbf{A}}{\mathbf{K}\mathbf{V}^{(\ell)}},
+  \qquad
+  \mathbf{V}^{(\ell+1)} = \frac{\mathbf{B}}{\mathbf{K}^\top \mathbf{U}^{(\ell+1)}}.
+\]
+
+\subsection{分離可能カーネル}\label{subsec:separable}
+
+コスト関数が加法的に分離する場合，
+すなわち $\mathbf{C}_{i,j} = \sum_{k=1}^d \mathbf{C}^k_{i_k, j_k}$
+（$d$ 次元格子上の指標 $i = (i_1, \ldots, i_d)$）のとき，
+Gibbs カーネルも積に分離する：
+$\mathbf{K}_{i,j} = \prod_{k=1}^d \mathbf{K}^k_{i_k, j_k}$．
+$\mathbf{K}\mathbf{v}$ の計算を各次元の
+小さな行列積に分解でき，
+計算量は $O(n^2)$ から $O(n^{1+1/d})$ に削減される
+（$n = n_1 \cdots n_d$ が格子点の総数のとき）．
+
+これは画像処理などの正則格子上の問題で特に有効であり，
+数百万点規模の分布に対しても
+Sinkhorn アルゴリズムを適用可能にする．
+
+
+% ============================================================
+\section{数値安定性と log-domain 計算}\label{sec:log-domain}
+
+\subsection{数値的な問題}\label{subsec:numerical-issue}
+
+$\varepsilon$ が小さいとき，
+$\mathbf{K}_{i,j} = e^{-\mathbf{C}_{i,j}/\varepsilon}$ の成分は
+$0$ に極めて近くなり（アンダーフロー），
+$\mathbf{K}\mathbf{v}$ の計算で $0$ 除算が発生しうる．
+これは実用上の深刻な問題である．
+
+\subsection{正則化双対問題}\label{subsec:entropic-dual}
+
+この問題を解決する鍵は，
+スケーリング変数 $(\mathbf{u}, \mathbf{v})$ ではなく
+双対変数 $(\mathbf{f}, \mathbf{g})$
+で計算を行うことにある．
+
+\begin{proposition}{エントロピー正則化の双対問題}{entropic-dual}
+\begin{equation}\label{eq:entropic-dual}
+  \mathbf{L}^\varepsilon_{\mathbf{C}}(\mathbf{a}, \mathbf{b})
+  = \max_{\mathbf{f} \in \R^n,\, \mathbf{g} \in \R^m}
+  \inner{\mathbf{f}}{\mathbf{a}} + \inner{\mathbf{g}}{\mathbf{b}}
+  - \varepsilon \inner{e^{\mathbf{f}/\varepsilon}}{\mathbf{K}\, e^{\mathbf{g}/\varepsilon}}.
+\end{equation}
+最適な $(\mathbf{f}, \mathbf{g})$ とスケーリング
+$(\mathbf{u}, \mathbf{v})$ の関係は
+$(\mathbf{u}, \mathbf{v}) = (e^{\mathbf{f}/\varepsilon},\, e^{\mathbf{g}/\varepsilon})$
+である．
+\end{proposition}
+
+この双対問題に対するブロック座標上昇を
+$(\mathbf{f}, \mathbf{g})$ で書き下すと，
+\textbf{log-domain Sinkhorn} が得られる．
+
+\subsection{log-domain Sinkhorn}\label{subsec:log-domain-sinkhorn}
+
+\textbf{soft-minimum} 演算子
+\begin{equation}\label{eq:softmin}
+  \min_\varepsilon\, \mathbf{z}
+  \defeq -\varepsilon \log \sum_j e^{-\mathbf{z}_j / \varepsilon}
+\end{equation}
+を導入する．$\varepsilon \to 0$ で $\min_\varepsilon \mathbf{z} \to \min \mathbf{z}$
+であり，$\min$ の微分可能な近似と見なせる．
+
+log-domain での Sinkhorn 反復は以下のようになる：
+
+\begin{algorithm}{alg:log-sinkhorn}
+\textbf{log-domain Sinkhorn} \\[4pt]
+\textbf{入力}: $\mathbf{a}, \mathbf{b}, \mathbf{C}, \varepsilon$ \\
+\textbf{初期化}: $\mathbf{g}^{(0)} = \mathbf{0}_m$ \\[2pt]
+$\ell = 0, 1, 2, \ldots$ に対して：
+\begin{align*}
+  \mathbf{f}^{(\ell+1)}_i &=
+  \min_\varepsilon\, (\mathbf{C}_{i,j} - \mathbf{g}^{(\ell)}_j)_j
+  + \varepsilon \log \mathbf{a}_i, \\
+  \mathbf{g}^{(\ell+1)}_j &=
+  \min_\varepsilon\, (\mathbf{C}_{i,j} - \mathbf{f}^{(\ell+1)}_i)_i
+  + \varepsilon \log \mathbf{b}_j.
+\end{align*}
+\textbf{出力}: $(\mathbf{P}_\varepsilon)_{i,j}
+= \exp\bigl(\frac{\mathbf{f}_i + \mathbf{g}_j - \mathbf{C}_{i,j}}{\varepsilon}\bigr)$
+\end{algorithm}
+
+\paragraph{安定化の仕組み.}
+soft-minimum の計算では
+\textbf{log-sum-exp 安定化}を用いる：
+$\underline{z} = \min_j \mathbf{z}_j$ として
+\[
+  \min_\varepsilon\, \mathbf{z}
+  = \underline{z} - \varepsilon \log \sum_j e^{-(\mathbf{z}_j - \underline{z})/\varepsilon}.
+\]
+指数関数の引数が常に非正になるため，
+オーバーフローが回避される．
+
+log-domain 版は通常の Sinkhorn と数学的に等価だが，
+任意の $\varepsilon > 0$ に対して数値的に安定である．
+代償として，soft-minimum の計算は行列・ベクトル積より遅く，
+GPU での並列化も困難になる点に注意が必要である．
+
+
+% ============================================================
+\section{正則化 OT コストの近似品質}\label{sec:approximation}
+
+\subsection{Sinkhorn ダイバージェンス}\label{subsec:sinkhorn-divergence}
+
+正則化コスト $\mathbf{L}^\varepsilon_{\mathbf{C}}$ を
+そのまま OT コストの近似として使うと，
+$\varepsilon$ に起因するバイアスが生じる．
+実用上は，以下の主・双対ベースの近似量が利用される．
+
+\begin{definition}{Sinkhorn ダイバージェンス}{sinkhorn-div}
+最適な $(\mathbf{f}^\star, \mathbf{g}^\star, \mathbf{P}^\star)$ を用いて，
+\textbf{主 Sinkhorn ダイバージェンス}と
+\textbf{双対 Sinkhorn ダイバージェンス}を
+\begin{align*}
+  \mathfrak{P}^\varepsilon_{\mathbf{C}}(\mathbf{a}, \mathbf{b})
+  &\defeq \inner{\mathbf{C}}{\mathbf{P}^\star}
+  = \inner{e^{\mathbf{f}^\star/\varepsilon}}{(\mathbf{K} \odot \mathbf{C})\,
+    e^{\mathbf{g}^\star/\varepsilon}}, \\
+  \mathfrak{D}^\varepsilon_{\mathbf{C}}(\mathbf{a}, \mathbf{b})
+  &\defeq \inner{\mathbf{f}^\star}{\mathbf{a}}
+  + \inner{\mathbf{g}^\star}{\mathbf{b}}
+\end{align*}
+と定義する．
+\end{definition}
+
+\begin{proposition}{Sinkhorn ダイバージェンスの挟み撃ち}{sinkhorn-bounds}
+\[
+  \mathfrak{D}^\varepsilon_{\mathbf{C}}(\mathbf{a}, \mathbf{b})
+  \leq \mathbf{L}^\varepsilon_{\mathbf{C}}(\mathbf{a}, \mathbf{b})
+  \leq \mathfrak{P}^\varepsilon_{\mathbf{C}}(\mathbf{a}, \mathbf{b}).
+\]
+また，両者のギャップは正則化によるエントロピー項の大きさに等しい：
+$\mathfrak{P}^\varepsilon - \mathfrak{D}^\varepsilon
+= \varepsilon(\mathbf{H}(\mathbf{P}^\star) + 1)$．
+\end{proposition}
+
+実用的には，$\varepsilon$ が十分小さければ
+$\mathfrak{D}^\varepsilon$ は
+$\mathbf{L_C}(\mathbf{a}, \mathbf{b})$ の良い近似であり，
+有限回の Sinkhorn 反復で双対実行可能な下界が得られるため，
+近似精度の管理が容易である．
+
+\subsection{微分可能性と損失関数としての利用}\label{subsec:differentiability}
+
+\begin{proposition}{正則化コストの滑らかさ}{smooth-loss}
+$\varepsilon > 0$ のとき，
+$\mathbf{L}^\varepsilon_{\mathbf{C}}(\mathbf{a}, \mathbf{b})$ は
+$\mathbf{a}, \mathbf{b}$ について同時凸かつ滑らかであり，
+その勾配は
+\[
+  \nabla_{\mathbf{a}} \mathbf{L}^\varepsilon_{\mathbf{C}}
+  = \mathbf{f}^\star,
+  \qquad
+  \nabla_{\mathbf{b}} \mathbf{L}^\varepsilon_{\mathbf{C}}
+  = \mathbf{g}^\star
+\]
+で与えられる（$\mathbf{f}^\star, \mathbf{g}^\star$ の和が $0$ となる正規化のもとで）．
+\end{proposition}
+
+元の $\mathbf{L_C}$ は微分不可能であるが，
+正則化版は滑らかなため，
+機械学習における損失関数として自動微分と組み合わせて利用できる．
+これは Wasserstein 距離を
+勾配ベースの最適化に組み込む上での大きな利点である．
+
+
+% ============================================================
+\section{一般化 Sinkhorn}\label{sec:generalized-sinkhorn}
+
+正則化 OT 問題~\eqref{eq:regularized-ot}の
+周辺制約を等式からより一般のペナルティに緩和した問題
+\begin{equation}\label{eq:generalized-ot}
+  \min_{\mathbf{P}} \;
+  \sum_{i,j} \mathbf{C}_{i,j} \mathbf{P}_{i,j}
+  - \varepsilon\, \mathbf{H}(\mathbf{P})
+  + F(\mathbf{P}\, \mathbb{1}_m)
+  + G(\mathbf{P}^\top \mathbb{1}_n)
+\end{equation}
+を考える．ここで $F, G$ は凸関数である．
+$F = \iota_{\{\mathbf{a}\}}$，$G = \iota_{\{\mathbf{b}\}}$
+（指示関数）とすれば標準的な正則化 OT に帰着される．
+
+この一般化問題に対しても，
+KL ダイバージェンスの\textbf{近接作用素}
+\[
+  \mathrm{Prox}^{\KL}_F(\mathbf{u})
+  = \argmin_{\mathbf{u}' \in \R^N_+}
+  \KL(\mathbf{u}' \| \mathbf{u}) + F(\mathbf{u}')
+\]
+を用いた Sinkhorn 型の反復
+\[
+  \mathbf{u} \leftarrow
+  \frac{\mathrm{Prox}^{\KL}_F(\mathbf{K}\mathbf{v})}{\mathbf{K}\mathbf{v}},
+  \qquad
+  \mathbf{v} \leftarrow
+  \frac{\mathrm{Prox}^{\KL}_G(\mathbf{K}^\top \mathbf{u})}
+       {\mathbf{K}^\top \mathbf{u}}
+\]
+が定式化でき，線形収束が示される．
+この枠組みは，
+非均衡最適輸送（第\ref{chap:extensions}章）や
+重心計算（第\ref{chap:variational}章）など，
+OT の多くの変種に統一的に適用できる．
