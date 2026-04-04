@@ -1,3 +1,254 @@
 
 \chapter{半離散最適輸送}\label{chap:semidiscrete}
-% TODO: 執筆予定
+
+これまでの章では，両方の分布が離散（ヒストグラム）である場合を
+主に扱ってきた．
+本章では，一方が連続分布（密度を持つ測度 $\alpha$），
+もう一方が離散分布（$\beta = \sum_j \mathbf{b}_j \delta_{y_j}$）である
+\textbf{半離散} (semidiscrete) 設定を考える．
+
+この設定は，たとえば連続空間上のデータ分布を
+有限個の代表点で近似する問題（量子化，クラスタリング）や，
+連続密度から離散サンプルへの最適輸送の計算などで自然に現れる．
+
+半離散問題の大きな特長は，
+双対変数がわずか $m$ 個のベクトル $\mathbf{g} \in \R^m$ に帰着され，
+\textbf{有限次元の凹最大化問題}として解けることである．
+
+
+% ============================================================
+\section{$c$変換と $\bar{c}$変換}\label{sec:c-transform-cont}
+
+第\ref{chap:algorithmic}章の $\mathbf{C}$変換を
+連続空間上の関数に拡張する．
+
+\begin{definition}{$c$変換と $\bar{c}$変換}{c-transform-cont}
+コスト関数 $c : \mathcal{X} \times \mathcal{Y} \to \R$ に対し，
+関数 $f : \mathcal{X} \to \R$ の\textbf{$c$変換}
+$f^c : \mathcal{Y} \to \R$ を
+\begin{equation}\label{eq:c-transform-cont}
+  f^c(y) \defeq \inf_{x \in \mathcal{X}}\, c(x, y) - f(x),
+\end{equation}
+関数 $g : \mathcal{Y} \to \R$ の\textbf{$\bar{c}$変換}
+$g^{\bar{c}} : \mathcal{X} \to \R$ を
+\begin{equation}\label{eq:cbar-transform-cont}
+  g^{\bar{c}}(x) \defeq \inf_{y \in \mathcal{Y}}\, c(x, y) - g(y)
+\end{equation}
+と定義する．
+\end{definition}
+
+離散の $\mathbf{C}$変換~\eqref{eq:c-transform}は，
+$\mathcal{X} = \{x_1, \ldots, x_n\}$ 上の inf を
+$\min$ に置き換えたものに対応する．
+
+$c$変換は双対目的関数を改善する操作であり，
+離散の場合と同様に
+$f^{c\bar{c}c} = f^c$ が成り立つ（1回の「改善」で不動点に到達する）．
+この性質を使って，Kantorovich 双対問題を
+一つの変数のみの最大化問題に書き直すことができる：
+\begin{equation}\label{eq:dual-single}
+  \mathcal{L}_c(\alpha, \beta)
+  = \sup_{g \in \mathcal{C}(\mathcal{Y})}
+  \int_{\mathcal{X}} g^{\bar{c}}(x)\, \mathrm{d}\alpha(x)
+  + \int_{\mathcal{Y}} g(y)\, \mathrm{d}\beta(y).
+\end{equation}
+
+\begin{remark}{Legendre 変換との関係}{legendre}
+$\mathcal{X} = \mathcal{Y} = \R^d$，$c(x, y) = \|x - y\|^p$ のとき，
+$c$変換は $-f$ と $\|\cdot\|^p$ の\textbf{下方畳み込み}
+(inf-convolution) に一致し，
+$p = 2$ の場合は Legendre 変換と本質的に同一の操作になる．
+\end{remark}
+
+
+% ============================================================
+\section{半離散定式化}\label{sec:semidiscrete-formulation}
+
+$\beta = \sum_{j=1}^m \mathbf{b}_j \delta_{y_j}$ が離散のとき，
+$\bar{c}$変換を離散的な最小化に帰着できる．
+
+\subsection{離散的な $\bar{c}$変換}\label{subsec:discrete-cbar}
+
+双対ベクトル $\mathbf{g} \in \R^m$ に対して，
+\begin{equation}\label{eq:discrete-cbar}
+  \mathbf{g}^{\bar{c}}(x) = \min_{j \in \{1,\ldots,m\}} c(x, y_j) - \mathbf{g}_j
+\end{equation}
+と定義する．これは連続関数 $\mathbf{g}^{\bar{c}} : \mathcal{X} \to \R$ を与える．
+
+\subsection{Laguerre セル}\label{subsec:laguerre}
+
+$\bar{c}$変換に付随して，空間 $\mathcal{X}$ の分割が自然に定まる．
+
+\begin{definition}{Laguerre セル}{laguerre-cell}
+双対ベクトル $\mathbf{g} \in \R^m$ に対し，
+点 $y_j$ の\textbf{Laguerre セル}を
+\begin{equation}\label{eq:laguerre}
+  \mathbb{L}_j(\mathbf{g}) \defeq
+  \bigl\{x \in \mathcal{X} :
+  \forall\, j' \neq j,\;
+  c(x, y_j) - \mathbf{g}_j \leq c(x, y_{j'}) - \mathbf{g}_{j'}\bigr\}
+\end{equation}
+と定義する．
+\end{definition}
+
+Laguerre セルは $\mathcal{X}$ の互いに素な分割
+$\mathcal{X} = \bigcup_j \mathbb{L}_j(\mathbf{g})$ を与える．
+直感的には，$\mathbb{L}_j(\mathbf{g})$ は
+「$y_j$ に送られるのが最も安い点の集合」であり，
+双対変数 $\mathbf{g}_j$ による補正が加わっている．
+
+\paragraph{Voronoi 分割との関係.}
+$\mathbf{g} = \mathbf{0}$ のとき，Laguerre セルは
+通常の\textbf{Voronoi 分割}に一致する
+（各点 $x$ を最も近い $y_j$ に割り当てる）．
+$\mathbf{g} \neq \mathbf{0}$ の場合は，
+$\mathbf{g}_j$ が大きい $y_j$ ほどセルが広がる
+--- すなわち双対変数が「各セルの大きさ」を制御する重みの役割を果たす．
+
+$c(x, y) = \|x - y\|^2$ のとき，
+Laguerre セルは多面体（power diagram）になり，
+計算幾何学のアルゴリズムで効率的に計算できる．
+
+\subsection{有限次元の最大化問題}\label{subsec:finite-dim}
+
+半離散問題の双対は，$\mathbf{g} \in \R^m$ のみの
+有限次元最大化問題に帰着される：
+\begin{equation}\label{eq:semidiscrete-dual}
+  \mathcal{L}_c(\alpha, \beta) = \max_{\mathbf{g} \in \R^m}\,
+  \mathcal{E}(\mathbf{g})
+  \defeq \int_{\mathcal{X}} \mathbf{g}^{\bar{c}}(x)\, \mathrm{d}\alpha(x)
+  + \inner{\mathbf{g}}{\mathbf{b}}.
+\end{equation}
+
+Laguerre セルを用いると，この目的関数は
+\begin{equation}\label{eq:energy-laguerre}
+  \mathcal{E}(\mathbf{g})
+  = \sum_{j=1}^m \int_{\mathbb{L}_j(\mathbf{g})}
+  \bigl(c(x, y_j) - \mathbf{g}_j\bigr)\, \mathrm{d}\alpha(x)
+  + \inner{\mathbf{g}}{\mathbf{b}}
+\end{equation}
+と書ける．$\mathcal{E}$ は凹関数であり，その勾配は
+\begin{equation}\label{eq:energy-gradient}
+  \nabla \mathcal{E}(\mathbf{g})_j
+  = -\int_{\mathbb{L}_j(\mathbf{g})} \mathrm{d}\alpha(x) + \mathbf{b}_j
+  = -\alpha(\mathbb{L}_j(\mathbf{g})) + \mathbf{b}_j.
+\end{equation}
+勾配がゼロになる条件 $\alpha(\mathbb{L}_j(\mathbf{g}^\star)) = \mathbf{b}_j$
+は，\textbf{各 Laguerre セルに含まれる $\alpha$ の質量が
+ちょうど $\mathbf{b}_j$ に等しくなる}ことを意味する．
+
+\subsection{最適輸送写像}\label{subsec:semidiscrete-map}
+
+最適な $\mathbf{g}^\star$ が得られたとき，
+連続分布 $\alpha$ から離散分布 $\beta$ への最適輸送写像は
+\begin{equation}\label{eq:semidiscrete-map}
+  T(x) = y_j \quad \text{if}\quad x \in \mathbb{L}_j(\mathbf{g}^\star)
+\end{equation}
+で与えられる区分定数関数である．
+すなわち，同じ Laguerre セル内のすべての点が
+同一の目標点 $y_j$ に送られる．
+
+
+% ============================================================
+\section{エントロピー正則化された半離散定式化}\label{sec:entropic-semidiscrete}
+
+エントロピー正則化を加えると，
+$\bar{c}$変換は\textbf{滑らかな $\bar{c}$変換}に置き換わる：
+\begin{equation}\label{eq:smoothed-cbar}
+  \mathbf{g}^{\bar{c},\varepsilon}(x)
+  \defeq -\varepsilon \log \left(
+    \sum_{j=1}^m e^{(-c(x, y_j) + \mathbf{g}_j)/\varepsilon}\, \mathbf{b}_j
+  \right).
+\end{equation}
+$\varepsilon \to 0$ で $\mathbf{g}^{\bar{c},\varepsilon} \to \mathbf{g}^{\bar{c}}$
+（hard な最小値に収束する）．
+
+正則化された半離散問題も
+$\mathbf{g} \in \R^m$ の有限次元最大化に帰着される：
+\begin{equation}\label{eq:entropic-semidiscrete}
+  \max_{\mathbf{g} \in \R^m}\,
+  \mathcal{E}^\varepsilon(\mathbf{g})
+  \defeq \int_{\mathcal{X}} \mathbf{g}^{\bar{c},\varepsilon}(x)\, \mathrm{d}\alpha(x)
+  + \inner{\mathbf{g}}{\mathbf{b}}.
+\end{equation}
+
+この目的関数の勾配は
+\[
+  \nabla \mathcal{E}^\varepsilon(\mathbf{g})_j
+  = -\int_{\mathcal{X}} \chi^\varepsilon_j(x)\, \mathrm{d}\alpha(x) + \mathbf{b}_j,
+\]
+ここで $\chi^\varepsilon_j(x)$ は Laguerre セルの\textbf{滑らかな指示関数}：
+\[
+  \chi^\varepsilon_j(x)
+  = \frac{e^{(-c(x,y_j) + \mathbf{g}_j)/\varepsilon}}
+         {\sum_\ell e^{(-c(x,y_\ell) + \mathbf{g}_\ell)/\varepsilon}}.
+\]
+これは softmax 関数であり，
+$\varepsilon \to 0$ で Laguerre セルの（硬い）指示関数に収束する．
+
+\begin{remark}{ロジスティック回帰との関係}{logistic}
+正則化半離散問題~\eqref{eq:entropic-semidiscrete}の最適化は，
+\textbf{多クラスロジスティック回帰}と本質的に同じ構造を持つ．
+滑らかな指示関数 $\chi^\varepsilon_j(x)$ が
+各クラスの「所属確率」に対応し，
+$\mathcal{E}^\varepsilon$ のヘシアンは $1/\varepsilon$ で
+上から抑えられるため，
+Newton 法や L-BFGS が二次収束する．
+\end{remark}
+
+
+% ============================================================
+\section{確率的最適化手法}\label{sec:stochastic}
+
+半離散定式化~\eqref{eq:semidiscrete-dual}および
+その正則化版~\eqref{eq:entropic-semidiscrete}の目的関数は
+$\alpha$ に関する\textbf{期待値}として書ける：
+\[
+  \mathcal{E}^\varepsilon(\mathbf{g})
+  = \E_{X \sim \alpha}\bigl[E^\varepsilon(\mathbf{g}, X)\bigr]
+  + \inner{\mathbf{g}}{\mathbf{b}},
+\]
+ここで $E^\varepsilon(\mathbf{g}, x) = \mathbf{g}^{\bar{c},\varepsilon}(x)$．
+この構造を利用すると，$\alpha$ からのサンプリングのみで
+最適化を行う\textbf{確率的最適化}が可能になる．
+
+\subsection{確率的勾配降下法}\label{subsec:sgd}
+
+各反復 $\ell$ で $\alpha$ から独立に点 $x_\ell$ をサンプルし，
+勾配の不偏推定量
+\[
+  \nabla_\mathbf{g} E^\varepsilon(\mathbf{g}^{(\ell)}, x_\ell)
+  = \bigl(\chi^\varepsilon_j(x_\ell) - \mathbf{b}_j\bigr)_{j=1}^m
+\]
+を用いて $\mathbf{g}$ を更新する：
+\begin{equation}\label{eq:sgd-update}
+  \mathbf{g}^{(\ell+1)} = \mathbf{g}^{(\ell)}
+  + \tau_\ell \nabla_\mathbf{g} E^\varepsilon(\mathbf{g}^{(\ell)}, x_\ell).
+\end{equation}
+ステップサイズ $\tau_\ell = \tau_0 / (1 + \ell/\ell_0)$ により，
+$\mathcal{E}^\varepsilon(\mathbf{g}^\star) - \E[\mathcal{E}^\varepsilon(\mathbf{g}^{(\ell)})]
+= O(1/\sqrt{\ell})$ の収束が保証される．
+
+\subsection{平均化を用いた確率的勾配降下法}\label{subsec:sga}
+
+収束を加速するために，
+補助変数 $\tilde{\mathbf{g}}^{(\ell)}$ で SGD を走らせ，
+出力としてその\textbf{累積平均}を用いる方法がある：
+\[
+  \mathbf{g}^{(\ell+1)}
+  = \frac{1}{\ell+1}\, \tilde{\mathbf{g}}^{(\ell+1)}
+  + \frac{\ell}{\ell+1}\, \mathbf{g}^{(\ell)}.
+\]
+この平均化確率的勾配法 (SGA) は，
+$\mathcal{E}^\varepsilon$ の局所的な強凹性に適応し，
+SGD より高速に収束することが知られている．
+
+\subsection{確率的手法の利点}\label{subsec:stochastic-advantage}
+
+確率的最適化の最大の利点は，
+\textbf{連続分布 $\alpha$ を離散化する必要がない}ことである．
+$\alpha$ からサンプルを引ければよいので，
+高次元の問題でも適用可能であり，
+連続分布同士の OT（§5.4 の Remark 5.3 に対応）にも
+ニューラルネットワークと組み合わせることで拡張できる．
+
