@@ -13,15 +13,14 @@ class SinkhornAutoencoder:
         self.lr = lr
         self.n_layers = len(sizes) - 1
         self.n_encoder = self.n_layers // 2
-        self.W = []
-        self.b = []
+        self.W, self.b = [], []
         for i in range(self.n_layers):
             scale = np.sqrt(2.0 / sizes[i])
             self.W.append(np.random.randn(sizes[i], sizes[i + 1]) * scale)
             self.b.append(np.zeros(sizes[i + 1]))
 
     def forward(self, X):
-        """入力 → ReLU 層 → Softmax（確率分布を出力）"""
+        """入力 → ReLU 層 → ReLU+正規化（確率分布を出力）"""
         self.act = [X]
         self.pre = []
         h = X
@@ -30,18 +29,23 @@ class SinkhornAutoencoder:
             self.pre.append(z)
             h = np.maximum(z, 0)
             self.act.append(h)
+        # 出力層: ReLU + 正規化 → 確率分布（スパースな出力が可能）
         z = h @ self.W[-1] + self.b[-1]
         self.pre.append(z)
-        e = np.exp(z - z.max(axis=1, keepdims=True))
-        q = e / e.sum(axis=1, keepdims=True)
+        r = np.maximum(z, 0) + 1e-8
+        q = r / r.sum(axis=1, keepdims=True)
         self.act.append(q)
         return q
 
     def backward(self, grad_q):
         """逆伝播: grad_q = g* (Kantorovich ポテンシャル)"""
         q = self.act[-1]
-        N = q.shape[1]
-        delta = N * q * (grad_q - (grad_q * q).sum(axis=1, keepdims=True))
+        z_out = self.pre[-1]
+        # ReLU+正規化の勾配: delta_k = (z_k > 0) / S * (g_k - <g, q>)
+        mask = (z_out > 0).astype(np.float64)
+        S = (np.maximum(z_out, 0) + 1e-8).sum(axis=1, keepdims=True)
+        gq = (grad_q * q).sum(axis=1, keepdims=True)
+        delta = mask / S * (grad_q - gq)
 
         for i in range(self.n_layers - 1, -1, -1):
             B = delta.shape[0]

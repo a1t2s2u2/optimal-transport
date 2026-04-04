@@ -35,7 +35,7 @@ def sinkhorn_log(a, b, C, eps, max_iter=100, tol=1e-6):
     return P, f, g
 
 
-def sinkhorn_batch(a, b, K, CK, eps, max_iter=30):
+def sinkhorn_batch(a, b, K, CK, eps, max_iter=50):
     """
     バッチ標準 Sinkhorn（Gibbs kernel K = exp(-C/eps) を事前計算）
 

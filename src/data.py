@@ -69,6 +69,16 @@ def load_dataset(name="fashion"):
     return X_train, y_train, X_test, y_test, ds["labels"]
 
 
+def downsample(images, factor=2):
+    """画像を factor x factor の平均プーリングでダウンサンプル"""
+    n = images.shape[0]
+    h = int(np.sqrt(images.shape[1]))
+    new_h = h // factor
+    imgs = images.reshape(n, h, h)
+    imgs = imgs.reshape(n, new_h, factor, new_h, factor).mean(axis=(2, 4))
+    return imgs.reshape(n, new_h * new_h)
+
+
 def image_to_dist(img, reg=1e-6):
     """画像を確率分布に変換"""
     p = img + reg
