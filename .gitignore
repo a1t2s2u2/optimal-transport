@@ -3,7 +3,6 @@
 .python-version
 
 # LaTeX ビルド成果物
-out/
 *.aux
 *.dvi
 *.log
@@ -16,8 +15,22 @@ out/
 
 # Python
 __pycache__/
-*_data/
-figures/*.png
+data/*
+!data/.gitkeep
+!data/mnist/
+!data/fashion/
+data/mnist/*
+!data/mnist/.gitkeep
+data/fashion/*
+!data/fashion/.gitkeep
+artifacts/*
+!artifacts/.gitkeep
+!artifacts/figures/
+!artifacts/latex/
+artifacts/figures/*
+!artifacts/figures/.gitkeep
+artifacts/latex/*
+!artifacts/latex/.gitkeep
 
 # Archive 内のビルド成果物
 archive/note/out/

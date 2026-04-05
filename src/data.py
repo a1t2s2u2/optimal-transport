@@ -6,6 +6,8 @@ import gzip
 import os
 import urllib.request
 
+from .paths import DATA_DIR
+
 DATASETS = {
     "mnist": {
         "url": "https://ossci-datasets.s3.amazonaws.com/mnist/",
@@ -60,7 +62,7 @@ def load_dataset(name="fashion"):
     Returns: X_train, y_train, X_test, y_test, label_names
     """
     ds = DATASETS[name]
-    path = f"./{name}_data"
+    path = DATA_DIR / name
     _download(ds["url"], path)
     X_train = _load_images(os.path.join(path, _FILES[0]))
     y_train = _load_labels(os.path.join(path, _FILES[1]))

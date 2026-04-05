@@ -1,16 +1,16 @@
 """可視化関数（すべてファイルに保存）"""
 
-import os
 import numpy as np
 import matplotlib.pyplot as plt
 from .data import image_to_dist
+from .paths import FIGURES_DIR
 
-OUTPUT_DIR = "figures"
+OUTPUT_DIR = FIGURES_DIR
 
 
 def _save(fig, name):
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-    path = os.path.join(OUTPUT_DIR, name)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    path = OUTPUT_DIR / name
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"  -> {path}")
