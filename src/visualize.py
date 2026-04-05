@@ -193,3 +193,41 @@ def plot_training_curve(history, epochs):
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     _save(fig, "training_curve.png")
+
+
+def plot_cuturi_runtime(sizes, times, quad_ref, lp_ref, slope):
+    fig = plt.figure(figsize=(7, 4.5))
+    plt.loglog(sizes, times, "o-", lw=2, label=f"Sinkhorn runtime (slope={slope:.2f})")
+    plt.loglog(sizes, quad_ref, "--", lw=1.8, label=r"$O(n^2)$ reference")
+    plt.loglog(sizes, lp_ref, ":", lw=2.0, label=r"$O(n^3 \log n)$ reference")
+    plt.xlabel("support size n")
+    plt.ylabel("seconds")
+    plt.title("Cuturi: runtime scaling of Sinkhorn")
+    plt.grid(True, which="both", alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+    _save(fig, "cuturi_runtime.png")
+
+
+def plot_cuturi_smoothness(ts, exact, entropic, exact_grad, entropic_grad):
+    fig, axes = plt.subplots(2, 1, figsize=(8, 7), sharex=True)
+
+    axes[0].plot(ts, exact, color="black", lw=2.4, label="exact OT on a 1D path")
+    for eps, values in entropic.items():
+        axes[0].plot(ts, values, lw=2, label=fr"entropic OT ($\varepsilon={eps:.2f}$)")
+    axes[0].set_ylabel("loss")
+    axes[0].set_title("Cuturi: smoothness induced by entropy regularization")
+    axes[0].grid(True, alpha=0.3)
+    axes[0].legend()
+
+    axes[1].plot(ts, exact_grad, color="black", lw=2.4, label="finite diff. of exact OT")
+    for eps, values in entropic_grad.items():
+        axes[1].plot(ts, values, lw=2, label=fr"finite diff. ($\varepsilon={eps:.2f}$)")
+    axes[1].axhline(0.0, color="0.7", lw=1)
+    axes[1].set_xlabel("path parameter t")
+    axes[1].set_ylabel(r"$dL/dt$")
+    axes[1].grid(True, alpha=0.3)
+    axes[1].legend()
+
+    plt.tight_layout()
+    _save(fig, "cuturi_smoothness.png")

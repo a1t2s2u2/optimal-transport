@@ -35,6 +35,13 @@ def sinkhorn_log(a, b, C, eps, max_iter=100, tol=1e-6):
     return P, f, g
 
 
+def sinkhorn_value_log(a, b, C, eps, max_iter=100, tol=1e-6):
+    """単一ペアの正則化 OT 値とポテンシャルを返す"""
+    _, f, g = sinkhorn_log(a, b, C, eps, max_iter=max_iter, tol=tol)
+    value = np.dot(a, f) + np.dot(b, g)
+    return value, f, g
+
+
 def sinkhorn_batch(a, b, K, CK, eps, max_iter=50):
     """
     バッチ標準 Sinkhorn（Gibbs kernel K = exp(-C/eps) を事前計算）

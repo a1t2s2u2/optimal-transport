@@ -13,7 +13,10 @@ from tqdm import tqdm, trange
 from src import load_dataset, image_to_dist, build_pixel_cost, downsample
 from src import sinkhorn_log, sinkhorn_batch, sinkhorn_loss_batch
 from src import SinkhornAutoencoder
+from src import benchmark_sinkhorn_scaling, smoothness_profile
 from src.visualize import (
+    plot_cuturi_runtime,
+    plot_cuturi_smoothness,
     plot_distributions,
     plot_transport,
     plot_interpolation,
@@ -23,7 +26,30 @@ from src.visualize import (
 )
 
 DATASET = "mnist"
-IMG_SIZE = 7  # 28x28 → 7x7 にダウンサンプル
+IMG_SIZE = 14  # 28x28 → 14x14 にダウンサンプル
+
+
+def demo_cuturi_motivation():
+    """Cuturi の主要な利点を小さな合成実験で可視化"""
+    runtime = benchmark_sinkhorn_scaling()
+    plot_cuturi_runtime(
+        runtime["sizes"],
+        runtime["times"],
+        runtime["quad_ref"],
+        runtime["lp_ref"],
+        runtime["slope"],
+    )
+    print(f"  Sinkhorn 実測スケーリング指数: {runtime['slope']:.2f}")
+
+    smooth = smoothness_profile()
+    plot_cuturi_smoothness(
+        smooth["ts"],
+        smooth["exact"],
+        smooth["entropic"],
+        smooth["exact_grad"],
+        smooth["entropic_grad"],
+    )
+    print("  exact OT は折れ線、entropic OT は滑らかな曲線として確認")
 
 
 def demo_image_ot(X, y, C_pixel, pos, label_names, cls_a=3, cls_b=8):
@@ -54,7 +80,7 @@ def train_autoencoder(X_tr, C_pixel, eps_schedule, n_train, batch_size, epochs, 
       大きい ε → 強い勾配で粗く学習 → 小さい ε → 精密化
     """
     n_pixels = X_tr.shape[1]
-    model = SinkhornAutoencoder([n_pixels, 128, 32, 128, n_pixels], lr=lr)
+    model = SinkhornAutoencoder([n_pixels, 64, 16, 64, n_pixels], lr=lr)
     history = []
     epoch_count = 0
 
@@ -94,15 +120,19 @@ def train_autoencoder(X_tr, C_pixel, eps_schedule, n_train, batch_size, epochs, 
 def main():
     np.random.seed(42)
 
+    print("[1/5] Cuturi の動機: 計算量と滑らかさ")
+    demo_cuturi_motivation()
+
+    # モデルは単純に保ちつつ、学習量で再構成を改善する
     N_TRAIN = 10000
-    BATCH_SIZE = 128
-    LR = 0.15
+    BATCH_SIZE = 64
+    LR = 0.12
     # ε-スケーリング: 勾配が十分大きい範囲でのみ段階的に絞る
     # ε=1.0 は K が拡散しすぎて g≈0 → 学習しないため除外
-    EPS_SCHEDULE = [(0.5, 10), (0.2, 20), (0.1, 100)]
+    EPS_SCHEDULE = [(0.5, 8), (0.2, 16), (0.1, 64)]
 
     # ── データ読み込み ─────────────────────────
-    print(f"[1/4] データ読み込み ({DATASET}, {IMG_SIZE}x{IMG_SIZE})")
+    print(f"\n[2/5] データ読み込み ({DATASET}, {IMG_SIZE}x{IMG_SIZE})")
     X_train, y_train, X_test, y_test, label_names = load_dataset(DATASET)
     X_train = downsample(X_train, 28 // IMG_SIZE)
     X_test = downsample(X_test, 28 // IMG_SIZE)
@@ -114,13 +144,13 @@ def main():
 
     # ── 画像間の最適輸送 ───────────────────────
     cls_a, cls_b = 3, 8
-    print(f"\n[2/4] 画像間の最適輸送 ({label_names[cls_a]} → {label_names[cls_b]})")
+    print(f"\n[3/5] 画像間の最適輸送 ({label_names[cls_a]} → {label_names[cls_b]})")
     demo_image_ot(X_train, y_train, C_pixel, pos, label_names, cls_a, cls_b)
 
     # ── Autoencoder 訓練 ───────────────────────
     eps_str = " -> ".join(f"{e}" for e, _ in EPS_SCHEDULE)
     total_epochs = sum(n for _, n in EPS_SCHEDULE)
-    print(f"\n[3/4] Autoencoder 訓練 (SGD, lr={LR}, eps: {eps_str})")
+    print(f"\n[4/5] Autoencoder 訓練 (SGD, lr={LR}, eps: {eps_str})")
     X_tr = np.array([image_to_dist(x) for x in tqdm(X_train[:N_TRAIN], desc="Preparing")])
     X_te = np.array([image_to_dist(x) for x in X_test[:1000]])
 
@@ -134,7 +164,7 @@ def main():
 
     # ── 再構成の輸送経路 ───────────────────────
     label = label_names[y_test[0]]
-    print(f"\n[4/4] 再構成の輸送経路 ({label})")
+    print(f"\n[5/5] 再構成の輸送経路 ({label})")
     a_s = X_te[0]
     q_s = model.forward(a_s.reshape(1, -1))[0]
     P_r, _, _ = sinkhorn_log(a_s, q_s, C_pixel, eps=0.05, max_iter=200)
