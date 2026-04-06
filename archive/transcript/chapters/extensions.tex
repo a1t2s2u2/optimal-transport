@@ -1,139 +1,141 @@
 % !TEX root = ../ComputationalOTFnT.tex
 
-\chapter{Extensions of Optimal Transport}
+\chapter{最適輸送の拡張}
 \label{c-extensions}
 
-This chapter details several variational problems that are related to (and share the same structure of) the Kantorovich formulation of optimal transport. The goal is to extend optimal transport to more general settings: several input histograms and measures, unnormalized ones, more general classes of measures, and optimal transport between measures that focuses on local regularities (points nearby in the source measure should be mapped onto points nearby in the target measure) rather than a total transport cost, including cases where these two measures live in different metric spaces.
+この章では、最適輸送のKantorovich定式化に関連する（そして同じ構造を共有する）いくつかの変分問題を詳述する。目標は、最適輸送をより一般的な設定に拡張することである：複数の入力ヒストグラムおよび測度、正規化されていないもの、より一般的な測度のクラス、そして総輸送コストではなく局所的な正則性（ソース測度の近くの点がターゲット測度の近くの点に写像されるべき）に着目した測度間の最適輸送を含み、これら二つの測度が異なる距離空間に存在する場合も扱う。
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Multimarginal Problems}
+\section{多重周辺問題}
 \label{sec-multimarginal}
 
-Instead of coupling two input histograms using the Kantorovich formulation~\eqref{eq-mk-discr}, one can couple $S$ histograms $(\a_s)_{s=1}^S$, where $\a_s \in \simplex_{n_s}$, by solving the following multimarginal problem:
+Kantorovich定式化~\eqref{eq-mk-discr}を用いて二つの入力ヒストグラムを結合する代わりに、$S$個のヒストグラム$(\a_s)_{s=1}^S$（ただし$\a_s \in \simplex_{n_s}$）を以下の多重周辺問題を解くことにより結合することができる：
 \eql{\label{eq-multimarginal-discr}
 	\umin{\P \in \CouplingsD(\a_s)_s}
 		\dotp{\C}{\P} \eqdef \sum_s \sum_{i_s=1}^{n_s} \C_{i_1,\ldots,i_S} \P_{i_1,\ldots,i_S},
 }
-where the set of valid couplings is
+ここで有効なカップリングの集合は
 \eq{
 	\CouplingsD(\a_s)_s = \enscond{\P \in \RR^{n_1 \times \ldots \times n_S}}{
 		\foralls s, \foralls i_s, \sum_{\ell \neq s} \sum_{i_\ell=1}^{n_\ell}  \P_{i_1,\ldots,i_S} = \a_{s,i_s}
 	}.
-} 
-The entropic regularization scheme~\eqref{eq-regularized-discr} naturally extends to this setting
+}
+エントロピー正則化スキーム~\eqref{eq-regularized-discr}はこの設定に自然に拡張され
 \eq{
 	\umin{\P \in \CouplingsD(\a_s)_s}
-		\dotp{\P}{\C} - \varepsilon \HD(\P), 
+		\dotp{\P}{\C} - \varepsilon \HD(\P),
 }
-and one can then apply Sinkhorn's algorithm to compute the optimal $\P$ in scaling form, where each entry indexed by a multi-index vector $i=(i_1,\ldots,i_S)$
-\eq{	
+Sinkhornアルゴリズムを適用して最適な$\P$をスケーリング形式で計算できる。ここで各エントリはマルチインデックスベクトル$i=(i_1,\ldots,i_S)$によりインデックスされる
+\eq{
 		\P_i = \K_i \prod_{s=1}^S \uD_{s,i_s}
 		\qwhereq
-		\K \eqdef e^{-\frac{\C}{\varepsilon}}, 
+		\K \eqdef e^{-\frac{\C}{\varepsilon}},
 }
-where $\uD_s \in \RR_+^{n_s}$ are (unknown) scaling vectors, which are iteratively updated, by cycling repeatedly through $s=1,\ldots,S$, 
+ここで$\uD_s \in \RR_+^{n_s}$は（未知の）スケーリングベクトルであり、$s=1,\ldots,S$を繰り返し巡回することにより反復的に更新される、
 \eql{\label{eq-sinkh-multimarg}
-	\uD_{s,i_s} \leftarrow 
+	\uD_{s,i_s} \leftarrow
 	\frac{ \a_{s,i_s} }{
 		\sum_{\ell \neq s} \sum_{i_\ell=1}^{n_\ell}  \K_i \prod_{r \neq s} \uD_{\ell,i_r}
 	}
 }.
 
 %%%%%%%%%%%%%%%%%%%%%
-\begin{rem2}{General measures}
-The discrete multimarginal problem~\eqref{eq-multimarginal-discr} is generalized to measures $(\al_s)_s$ on spaces $(\X_1,\ldots,\X_S)$ by computing a coupling measure 
+\begin{rem2}{一般の測度}
+離散多重周辺問題~\eqref{eq-multimarginal-discr}は、空間$(\X_1,\ldots,\X_S)$上の測度$(\al_s)_s$に対してカップリング測度を計算することにより一般化される
 \eql{\label{eq-multi-marginal-generic}
 	\umin{\pi \in \Couplings(\al_s)_s} \int_{\X_1 \times \ldots \times \X_S} c(x_1,\ldots,x_S) \d\pi(x_1,\ldots,x_S),
 }
-where the set of couplings is 
+ここでカップリングの集合は
 \eq{
 	\Couplings(\al_s)_s \eqdef \enscond{ \pi \in \Mm_+^1(\X_1 \times \ldots \times \X_S) }{
 		\foralls s=1,\ldots,S, P_{s,\sharp} \pi = \al_s,
 	}
 }
-where $P_s : \X_1 \times \ldots \times \X_S \rightarrow \X_s$ is the projection on the $s$th component, $P_s(x_1,\ldots,x_S)=x_s$; see, for instance,~\citep{GangboSciech}.
+ただし$P_s : \X_1 \times \ldots \times \X_S \rightarrow \X_s$は第$s$成分への射影であり、$P_s(x_1,\ldots,x_S)=x_s$である；例えば~\citep{GangboSciech}を参照。
 %
-We refer to~\citep{PassMultiReview,PassMultiMarginalStructure} for a review of the main properties of the multimarginal OT problem. 
+多重周辺OT問題の主要な性質のレビューについては~\citep{PassMultiReview,PassMultiMarginalStructure}を参照されたい。
 %
-A typical application of multimarginal OT is to compute approximation of solutions to quantum chemistry problems, and in particular, in density functional theory~\citep{CotarDFT,GorSeiVig,BuDePGor}. This problem is obtained when considering the singular Coulomb interaction cost
+多重周辺OTの典型的な応用は、量子化学問題の解の近似計算であり、特に密度汎関数理論~\citep{CotarDFT,GorSeiVig,BuDePGor}における応用がある。この問題は特異なCoulomb相互作用コスト
 \eq{
-	c(x_1,\ldots,x_S) = \sum_{i \neq j} \frac{1}{\norm{x_i-x_j}}. 
+	c(x_1,\ldots,x_S) = \sum_{i \neq j} \frac{1}{\norm{x_i-x_j}}.
 }
+を考える場合に得られる。
 \end{rem2}
 %%%%%%%%%%%%%%%%%%%%%
 
 
 
 %%%%%%%%%%%%%%%%%%%%%
-\begin{rem2}{Multimarginal formulation of the barycenter}\label{eq-multimarg-bary}
-	It is pos\-si\-ble to recast the linear program optimization~\eqref{eq-barycenter-generic} as an optimization over a single coupling over $\X^{S+1}$ where the last marginal is the barycenter and the other ones are the input measure $(\al_s)_{s=1}^S$
+\begin{rem2}{重心の多重周辺定式化}\label{eq-multimarg-bary}
+	線形計画最適化~\eqref{eq-barycenter-generic}を、$\X^{S+1}$上の単一のカップリングに関する最適化として再定式化することが可能である。ここで最後の周辺分布が重心であり、他のものは入力測度$(\al_s)_{s=1}^S$である
 	\eql{\label{eq-bary-multi-full}
-		\umin{ \bar \pi \in \Mm_+^1(X^{S+1}) } 
+		\umin{ \bar \pi \in \Mm_+^1(X^{S+1}) }
 			\int_{\X^{S+1}} \sum_{s=1}^S \la_s c(x,x_s) \d\bar\pi(x_1,\ldots,x_s,x)
 	}
 	\eq{
 		\text{subject to} \quad
 				\foralls s=1,\ldots,S, \quad P_{s,\sharp}\bar\pi=\al_s.
 	}
-	This stems from the ``gluing lemma,'' which states that given couplings $(\pi_s)_{s=1}^S$ where $\pi_s \in \Couplings(\al_s,\al)$, one can construct a higher-dimensional coupling $\bar \pi \in \Mm_+^1(X^{S+1})$ with marginals $\pi_s$, \ie such that $Q_{s\sharp}\bar\pi=\pi_s$, where $Q_s(x_1,\ldots,x_S,x) \eqdef (x_s,x) \in \X^2$.
+	これは「貼り合わせ補題」に由来する。この補題は、カップリング$(\pi_s)_{s=1}^S$（ただし$\pi_s \in \Couplings(\al_s,\al)$）が与えられたとき、周辺分布として$\pi_s$を持つ高次元カップリング$\bar \pi \in \Mm_+^1(X^{S+1})$を構成できる、すなわち$Q_{s\sharp}\bar\pi=\pi_s$（ただし$Q_s(x_1,\ldots,x_S,x) \eqdef (x_s,x) \in \X^2$）が成り立つことを述べている。
 	\todoK{also relate this to celebrated result in graphical model, see book of Wainright/Jordan}
-	% 
-	By explicitly minimizing in~\eqref{eq-bary-multi-full} with respect to the last marginal (associated to $x \in \X$), one obtains that solutions $\al$ of the barycenter problem~\eqref{eq-barycenter-generic} can be computed as $\al = A_{\la,\sharp} \pi$, where $A_\la$ is the ``barycentric map'' defined as
+	%
+	~\eqref{eq-bary-multi-full}において最後の周辺分布（$x \in \X$に対応する）に関して明示的に最小化することにより、重心問題~\eqref{eq-barycenter-generic}の解$\al$は$\al = A_{\la,\sharp} \pi$として計算できることが得られる。ここで$A_\la$は以下のように定義される「重心写像」である
 	\eq{
-		A_\la : (x_1,\ldots,x_S) \in \X^S \mapsto 
+		A_\la : (x_1,\ldots,x_S) \in \X^S \mapsto
 		\uargmin{x \in \X} \sum_s \la_s c(x,x_s)
 	}
-	(assuming this map is single-valued), where $\pi$ is any solution of the multimarginal problem~\eqref{eq-multi-marginal-generic} with cost
+	（この写像が一価であると仮定する）、ここで$\pi$はコスト
 	\eql{\label{eq-cost-bary-multi}
 		c(x_1,\ldots,x_S) = \sum_\ell \la_\ell c(x_\ell, A_\la(x_1,\ldots,x_S)).
 	}
-	For instance, for $c(x,y)=\norm{x-y}^2$, one has, removing the constant squared terms, 
+	を持つ多重周辺問題~\eqref{eq-multi-marginal-generic}の任意の解である。
+	例えば、$c(x,y)=\norm{x-y}^2$の場合、定数の二乗項を除くと、
 	\eq{
 		c(x_1,\ldots,x_S) = -\sum_{r \leq s} \la_r \la_s \dotp{x_r}{x_s},
-	} 
-	which is a problem studied in~\citet{GangboSciech}.
+	}
+	となり、これは~\citet{GangboSciech}で研究された問題である。
 	%
-	We refer to~\citet{Carlier_wasserstein_barycenter} for more details.
+	詳細については~\citet{Carlier_wasserstein_barycenter}を参照されたい。
 	%
-	This formula shows that if all the input measures are discrete $\be_s = \sum_{i_s=1}^{n_s} \a_{s,i_s} \de_{x_{s,i_s}}$, 
-	then the barycenter $\al$ is also discrete and is obtained using the formula
+	この公式は、すべての入力測度が離散的$\be_s = \sum_{i_s=1}^{n_s} \a_{s,i_s} \de_{x_{s,i_s}}$である場合、
+	重心$\al$もまた離散的であり、次の公式を用いて得られることを示す
 	\eq{
 		\al = \sum_{(i_1,\ldots,i_S)} \P_{(i_1,\ldots,i_S)}
-			\de_{ A_\la(x_{i_1},\ldots,x_{i_S}) }, 
+			\de_{ A_\la(x_{i_1},\ldots,x_{i_S}) },
 	}
-	where $\P$ is an optimal solution of~\eqref{eq-multimarginal-discr} with cost matrix $\C_{i_1,\ldots,i_S} = c(x_{i_1},\ldots,x_{i_S})$
-	as defined in~\eqref{eq-cost-bary-multi}. Since $\P$ is a nonnegative tensor of $\prod_s n_s$ dimensions obtained as the solution of a linear program with $\sum_s n_s-S+1$ equality constraints, an optimal solution $\P$ with up to $\sum_s n_s-S+1$ nonzero values can be obtained. A barycenter $\al$ with a support of up to $\sum_s n_s-S+1$ points can therefore be obtained. This result and other considerations in the discrete case can be found in~\citet{anderes2016discrete}.
+	ここで$\P$はコスト行列$\C_{i_1,\ldots,i_S} = c(x_{i_1},\ldots,x_{i_S})$
+	（~\eqref{eq-cost-bary-multi}で定義される）を持つ~\eqref{eq-multimarginal-discr}の最適解である。$\P$は$\sum_s n_s-S+1$個の等式制約を持つ線形計画問題の解として得られる$\prod_s n_s$次元の非負テンソルであるから、最大$\sum_s n_s-S+1$個の非零値を持つ最適解$\P$を得ることができる。したがって、最大$\sum_s n_s-S+1$個の点からなる台を持つ重心$\al$を得ることができる。この結果と離散の場合に関する他の考察は~\citet{anderes2016discrete}に見出すことができる。
 \end{rem2}
 %%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%
-\begin{rem2}{Relaxation of Euler equations}
-A convex relaxation of Euler equations of incompressible fluid dynamics has been proposed by~\citeauthor{BrenierGeneralized} (\citeyear{BrenierEulerAMS}, \citeyear{BrenierEulerARMA}, \citeyear{BrenierEulerCPAM}, \citeyear{BrenierGeneralized}) and \citep{AmbrosioFigalliEuler}.
+\begin{rem2}{Euler方程式の緩和}
+非圧縮流体力学のEuler方程式の凸緩和が~\citeauthor{BrenierGeneralized}（\citeyear{BrenierEulerAMS}, \citeyear{BrenierEulerARMA}, \citeyear{BrenierEulerCPAM}, \citeyear{BrenierGeneralized}）および\citep{AmbrosioFigalliEuler}によって提案されている。
 %
-Similarly to the setting exposed in~\S\ref{sec-entropic-dynamic}, it corresponds to the problem of finding a probability distribution $\bar\pi \in \Mm_+^1(\bar\Xx)$ over the set $\bar\Xx$ of all paths $\ga : [0,1] \rightarrow \Xx$, which describes the movement of particules in the fluid.
+~\S\ref{sec-entropic-dynamic}で述べた設定と同様に、これはすべての経路$\ga : [0,1] \rightarrow \Xx$の集合$\bar\Xx$上の確率分布$\bar\pi \in \Mm_+^1(\bar\Xx)$を見出す問題に対応する。この確率分布は流体中の粒子の運動を記述する。
 %
-This is a relaxed version of the initial partial differential equation model because, as in the Kantorovich formulation of OT, mass can be split. The evolution with time does not necessarily define a diffemorphism of the underlying space $\X$. 
+これは初期の偏微分方程式モデルの緩和版である。なぜなら、OTのKantorovich定式化と同様に、質量を分割できるからである。時間に伴う発展は、基礎空間$\X$の微分同相写像を必ずしも定義しない。
 %
-The dynamic of the fluid is obtained by minimizing as in~\eqref{eq-ot-pathsspace} the energy $\int_0^1 \norm{\ga'(t)}^2 \d t$ of each path. 
+流体の力学は、~\eqref{eq-ot-pathsspace}と同様に各経路のエネルギー$\int_0^1 \norm{\ga'(t)}^2 \d t$を最小化することにより得られる。
 %
-The difference with OT over the space of paths is the additional incompressibilty of the fluid.
-This incompressibilty is taken care of by imposing that the density of particules should be uniform at any time $t \in [0,1]$ (and not just imposed at initial and final times $t \in \{0,1\}$ as in classical OT). Assuming $\X$ is compact and denoting $\rho_{\Xx}$ the uniform distribution on $\Xx$, this reads $\bar P_{t,\sharp} \bar\pi = \rho_{\Xx}$ where $\bar P_t : \ga \in \bar\X \rightarrow \ga(t) \in \X$.
+経路空間上のOTとの違いは、流体の追加的な非圧縮性にある。
+この非圧縮性は、粒子の密度が任意の時刻$t \in [0,1]$において一様であるべきことを課すことで処理される（古典的なOTのように初期時刻と最終時刻$t \in \{0,1\}$においてのみ課されるのではない）。$\X$がコンパクトであると仮定し、$\rho_{\Xx}$を$\Xx$上の一様分布とすると、これは$\bar P_{t,\sharp} \bar\pi = \rho_{\Xx}$と書ける。ここで$\bar P_t : \ga \in \bar\X \rightarrow \ga(t) \in \X$である。
 %
-One can discretize this problem by replacing a continuous path $(\ga(t))_{t \in [0,1]}$ by a sequence of $S$ points $(x_{i_1}, x_{i_2},\ldots,x_{i_S})$ on a grid $(x_k)_{k=1}^n \subset \X$, and $\bar\Pi$ is represented by an $S$-way coupling $\P \in \RR^{n^S} \in \Couplings(\a_s)_s$, where the marginals are uniform $\a_s=n^{-1} \ones_n$. 
+この問題は、連続経路$(\ga(t))_{t \in [0,1]}$を格子$(x_k)_{k=1}^n \subset \X$上の$S$個の点の列$(x_{i_1}, x_{i_2},\ldots,x_{i_S})$で置き換えることにより離散化でき、$\bar\Pi$は$S$方向カップリング$\P \in \RR^{n^S} \in \Couplings(\a_s)_s$で表現される。ここで周辺分布は一様$\a_s=n^{-1} \ones_n$である。
 %
-The cost of the corresponding multimarginal problem is then
+対応する多重周辺問題のコストは
 \eql{\label{eq-separable-euler}
 	\C_{i_1,\ldots,i_S} = \sum_{s=1}^{S-1} \norm{x_{i_s}-x_{i_{s+1}}}^2 + R \norm{x_{\sigma(i_1)}-x_{i_{S}}}^2.
 }
-Here $R$ is a large enough penalization constant, which is here to enforce the movement of particules between initial and final times, which is prescribed by a permutation $\sigma : \range{n} \rightarrow \range{n}$.
+ここで$R$は十分大きなペナルティ定数であり、初期時刻と最終時刻の間の粒子の運動を強制するためのものである。この運動は置換$\sigma : \range{n} \rightarrow \range{n}$により規定される。
 %
-This resulting multimarginal problem is implemented efficiently in conjunction with Sinkhorn iterations~\eqref{eq-sinkh-multimarg} using the special structure of the cost, as detailed in~\citep{2015-benamou-cisc}.
+この結果として得られる多重周辺問題は、コストの特殊な構造を利用してSinkhorn反復~\eqref{eq-sinkh-multimarg}と組み合わせて効率的に実装される。これは~\citep{2015-benamou-cisc}で詳述されている。
 %
-Indeed, in place of the $O(n^S)$ cost required to compute the denominator appearing in~\eqref{eq-sinkh-multimarg}, one can decompose it as a succession of $S$ matrix-vector multiplications, hence with a low cost $Sn^2$.
+実際、~\eqref{eq-sinkh-multimarg}に現れる分母の計算に必要な$O(n^S)$のコストの代わりに、$S$回の行列--ベクトル積の連鎖に分解でき、したがって低コスト$Sn^2$で計算できる。
 %
-Note that other solvers have been proposed, for instance, using the semidiscrete framework shown in~\S\ref{s-semidiscrete}; see~\citep{deGoes2015,gallouet2017lagrangian}.
+他のソルバーも提案されており、例えば~\S\ref{s-semidiscrete}で示された半離散の枠組みを用いたものがある；~\citep{deGoes2015,gallouet2017lagrangian}を参照。
 \end{rem2}
 %%%%%%%%%%%%
 
@@ -141,29 +143,29 @@ Note that other solvers have been proposed, for instance, using the semidiscrete
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Unbalanced Optimal Transport}
+\section{非均衡最適輸送}
 \label{sec-unbalanced}
 
-A major bottleneck of optimal transport in its usual form is that it requires the two input measures $(\al,\be)$ to have the same total mass. While many workarounds have been proposed (including renormalizing the input measure, or using dual norms such as detailed in \S~\ref{sec-dual-norms}), it is only recently that satisfying unifying theories have been developed. We only sketch here a simple but important particular case. 
+通常の形の最適輸送の主要なボトルネックは、二つの入力測度$(\al,\be)$が同じ総質量を持つことを要求する点にある。多くの回避策が提案されているが（入力測度の正規化や、\S~\ref{sec-dual-norms}で詳述されたような双対ノルムの使用を含む）、満足のいく統一理論が開発されたのは最近のことである。ここでは単純だが重要な特殊ケースのみを概説する。
 
-Following~\citet{LieroMielkeSavareLong}, to account for arbitrary positive histograms $(\a,\b) \in \RR_+^n \times \RR_+^m$, the initial Kantorovich formulation~\eqref{eq-mk-discr} is ``relaxed'' by only penalizing marginal deviation using some divergence $\DivergmD_\phi$, defined in~\eqref{eq-discr-diverg}. This equivalently corresponds to minimizing an OT distance between approximate measures
+\citet{LieroMielkeSavareLong}に従い、任意の正のヒストグラム$(\a,\b) \in \RR_+^n \times \RR_+^m$を扱うために、元のKantorovich定式化~\eqref{eq-mk-discr}は、~\eqref{eq-discr-diverg}で定義されたダイバージェンス$\DivergmD_\phi$を用いて周辺分布の逸脱のみをペナルティすることにより「緩和」される。これは同等に、近似的な測度間のOT距離を最小化することに対応する
 \begin{align}\label{eq-unbalanced-pbm}
 	\MKD_{\C}^\tau(\a,\b) &= \umin{\tilde\a,\tilde\b} \MKD_{\C}(\a,\b) + \tau_1 \DivergmD_\phi(\a,\tilde \a) + \tau_2 \DivergmD_\phi(\b,\tilde\b) \\
-		&= \umin{\P \in \RR_+^{n \times m}} \dotp{\C}{\P} + \tau_1\DivergmD_\phi(\P\ones_m|\a) + \tau_2\DivergmD_\phi(\P^\top\ones_m|\b), 
+		&= \umin{\P \in \RR_+^{n \times m}} \dotp{\C}{\P} + \tau_1\DivergmD_\phi(\P\ones_m|\a) + \tau_2\DivergmD_\phi(\P^\top\ones_m|\b),
 \end{align}
-where $(\tau_1,\tau_2)$ controls how much mass variations are penalized as opposed to transportation of the mass. In the limit $\tau_1=\tau_2 \rightarrow +\infty$, assuming $\sum_i \a_i=\sum_j \b_j$ (the ``balanced'' case), one recovers the original optimal transport formulation with hard marginal constraint~\eqref{eq-mk-discr}. 
+ここで$(\tau_1,\tau_2)$は質量の輸送に対して質量変動をどの程度ペナルティするかを制御する。$\tau_1=\tau_2 \rightarrow +\infty$の極限において、$\sum_i \a_i=\sum_j \b_j$（「均衡」の場合）を仮定すると、ハードな周辺制約を持つ元の最適輸送定式化~\eqref{eq-mk-discr}が回復される。
 
-This formalism recovers many different previous works, for instance introducing for $\DivergmD_\phi$ an $\ell^2$ norm~\citep{benamou2003numerical} or an $\ell^1$ norm as in partial transport~\citep{FigalliPartial,CaffarelliMcCannPartial}. 
+この定式化は多くの先行研究を回復する。例えば$\DivergmD_\phi$として$\ell^2$ノルム~\citep{benamou2003numerical}や部分輸送~\citep{FigalliPartial,CaffarelliMcCannPartial}における$\ell^1$ノルムを導入する場合である。
 %
-A case of particular importance is when using $\DivergmD_\phi=\KLD$ the Kulback--Leibler divergence, as detailed in Remark~\ref{rem-wfr-static}.
+特に重要なケースは、注意~\ref{rem-wfr-static}で詳述されるようにKullback--Leiblerダイバージェンスとして$\DivergmD_\phi=\KLD$を用いる場合である。
 %
-For this cost, in the limit $\tau=\tau_1=\tau_2 \rightarrow 0$, one obtains the so-called squared Hellinger distance (see also Example~\ref{exmp-hellinger})
+このコストに対して、$\tau=\tau_1=\tau_2 \rightarrow 0$の極限において、いわゆるHellinger距離の二乗（例~\ref{exmp-hellinger}も参照）が得られる
 \eq{
 	\MKD_{\C}^\tau(\a,\b) \overset{\tau \rightarrow 0}{\longrightarrow}
 	\Hellinger^2(\a,\b) = \sum_i ( \sqrt{\a_i}-\sqrt{\b_i} )^2.
 }
 
-Sinkhorn's iterations~\eqref{eq-sinkhorn} can be adapted to this problem by making use of the generalized algorithm detailed in~\S\ref{sec-generalized}. The solution has the form~\eqref{eq-scaling-form} and the scalings are updated as
+Sinkhorn反復~\eqref{eq-sinkhorn}は、~\S\ref{sec-generalized}で詳述された一般化アルゴリズムを利用することにより、この問題に適応できる。解は~\eqref{eq-scaling-form}の形を持ち、スケーリングは以下のように更新される
 \eql{\label{eq-iterate-gen-sinkh}
 	\uD \leftarrow \pa{ \frac{\a}{\K \vD} }^{\frac{\tau_1}{\tau_1+\varepsilon}}
 	\qandq
@@ -171,34 +173,35 @@ Sinkhorn's iterations~\eqref{eq-sinkhorn} can be adapted to this problem by maki
 }
 
 %%%%%%%%%%%%%%%%%%%%%
-\begin{rem2}{Generic measure}
-For $(\al,\be)$ two arbitrary measures, the unbalanced version (also called ``log-entropic'') of~\eqref{eq-mk-generic} reads
+\begin{rem2}{一般の測度}
+$(\al,\be)$を二つの任意の測度とすると、~\eqref{eq-mk-generic}の非均衡版（「対数エントロピー」版とも呼ばれる）は次のようになる
 \begin{align*}
-	\MK_\c^\tau(\al,\be) \eqdef 
+	\MK_\c^\tau(\al,\be) \eqdef
 	&\umin{\pi \in \Mm_+(\X \times \Y)}
 		\int_{\X \times \Y} \c(x,y) \d\pi(x,y) \\
 		&+ \tau \Divergm_\phi(P_{1,\sharp}\pi|\al)
 		+ \tau \Divergm_\phi(P_{2,\sharp}\pi|\be),
 \end{align*}
-where divergences $\Divergm_\phi$ between measures are defined in~\eqref{eq-phi-div}.
+ここで測度間のダイバージェンス$\Divergm_\phi$は~\eqref{eq-phi-div}で定義される。
 %
-In the special case $c(x,y) = \norm{x-y}^2$, $\Divergm_\phi=\KL$, $\MK_\c^\tau(\al,\be)^{1/2}$ is the Gaussian--Hellinger distance~\citep{LieroMielkeSavareLong}, and it is shown to be a distance on $\Mm_+^1(\RR^d)$. 
+特殊ケース$c(x,y) = \norm{x-y}^2$、$\Divergm_\phi=\KL$において、$\MK_\c^\tau(\al,\be)^{1/2}$はGauss--Hellinger距離~\citep{LieroMielkeSavareLong}であり、$\Mm_+^1(\RR^d)$上の距離であることが示される。
 \end{rem2}
 %%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%
 \begin{rem2}{Wasserstein--Fisher--Rao}\label{rem-wfr-static}
-For the particular choice of cost
+特定のコストの選択
 \eq{
 	c(x,y) = -\log \cos(\min(\dist(x,y)/\kappa,\pi/2)),
 }
-where $\kappa$ is some cutoff distance, and using $\Divergm_\phi=\KL$, then
+ここで$\kappa$はあるカットオフ距離であり、$\Divergm_\phi=\KL$を用いると、
 \eq{
 	\WFR(\al,\be) \eqdef \MK_\c^\tau(\al,\be)^{\frac{1}{2}}
-} 
-is the so-called Wasserstein--Fisher--Rao or Hellinger--Kantorovich distance. 
+}
+はいわゆるWasserstein--Fisher--Rao距離またはHellinger--Kantorovich距離である。
 %
-In the special case $\X=\RR^d$, this static (Kantorovich-like) formulation matches its dynamical counterparts~\eqref{eq-wfr-dynamic}, as proved independently by~\citet{LieroMielkeSavareLong,2015-chizat-unbalanced}. This dynamical formulation is detailed in~\S\ref{dynamic-unbalanced}.
+%
+特殊ケース$\X=\RR^d$において、この静的な（Kantorovich型の）定式化は、~\citet{LieroMielkeSavareLong,2015-chizat-unbalanced}によって独立に証明されたように、その動的な対応物~\eqref{eq-wfr-dynamic}と一致する。この動的定式化は~\S\ref{dynamic-unbalanced}で詳述される。
 %
 %It is a distance on $\Mm_+^1(\X)$. In the special case $\X=\RR^d$, it also has a dynamic interpretation, which in some sense shows that it is the canonical extension of the $\Wass_2$ to the unbalanced case. It generalizes the initial Benamou-Brenier dynamical formulation~\eqref{eq-bb-convex} by introducing a source term $s_t(x)$ which is a scalar valued measure
 %\begin{align*}
@@ -208,182 +211,182 @@ In the special case $\X=\RR^d$, this static (Kantorovich-like) formulation match
 %\end{align*}
 %and the continuity equation reads
 %\eq{
-%	\bar\BBConstr(\al_0,\al_1) \eqdef 
+%	\bar\BBConstr(\al_0,\al_1) \eqdef
 %	\enscond{ (\al_t,\Moment_t,s_t) }{
-%		\pd{\al_t}{t} + \diverg(\Moment_t) = s_t, 
+%		\pd{\al_t}{t} + \diverg(\Moment_t) = s_t,
 %		\al_{t=0,1}=\al_{0,1}
 %	}.
 %}
-%It can be solved using very similar methods to those detailed in Chapter~\ref{c-dynamic}. 
+%It can be solved using very similar methods to those detailed in Chapter~\ref{c-dynamic}.
 \end{rem2}
 %%%%%%%%%%%%%%%%%%%%%
 
-The barycenter problem~\eqref{eq-barycenter-generic} can be generalized to handle an unbalanced setting by replacing $\MK_{\c}$ with $\MK_\c^\tau$. 
+重心問題~\eqref{eq-barycenter-generic}は、$\MK_{\c}$を$\MK_\c^\tau$で置き換えることにより非均衡の設定を扱えるように一般化できる。
 %
-Figure~\ref{fig-interpolation-static} shows the resulting interpolation, providing a good illustration of the usefulness of the relaxation parameter $\tau$. 
+図~\ref{fig-interpolation-static}は結果として得られる補間を示しており、緩和パラメータ$\tau$の有用性を良く示している。
 %
-The input measures are mixtures of two Gaussians with unequal mass. Classical OT requires the leftmost bump to be split in two and gives a nonregular interpolation. In sharp contrast, unbalanced OT allows the mass to vary during interpolation, so that the bumps are not split and local modes of the distributions are smoothly matched.
+入力測度は不等質量の二つのGauss分布の混合である。古典的なOTでは最も左のバンプを二つに分割する必要があり、非正則な補間を与える。対照的に、非均衡OTでは補間中に質量を変化させることができるため、バンプは分割されず、分布の局所的なモードが滑らかにマッチングされる。
 %
-Using finite values for $\tau$ (recall that OT is equivalent to $\tau=\infty)$ is thus important to prevent irregular interpolations that arise because of mass splitting, which happens because of a ``hard'' mass conservation constraint.
+有限の$\tau$値を用いること（OTは$\tau=\infty$に等しいことを思い出されたい）は、「ハードな」質量保存制約のために生じる質量分割による不規則な補間を防ぐために重要である。
 %
-The resulting optimization problem can be tackled numerically using entropic regularization and the generalized Sinkhorn algorithm detailed in~\S\ref{sec-generalized}. 
+結果として得られる最適化問題は、エントロピー正則化と~\S\ref{sec-generalized}で詳述された一般化Sinkhornアルゴリズムを用いて数値的に取り扱うことができる。
 
-In practice, unbalanced OT techniques seem to outperform classical OT for applications (such as in imaging or machine learning) where the input data is noisy or not perfectly known. They are also crucial when the signal strength of a measure, as measured by its total mass, must be accounted for, or when normalization is not meaningful. This was the original motivation of~\citet{FrognerNIPS}, whose goal was to compare sets of word labels used to describe images. Unbalanced OT and the corresponding Sinkhorn iterations have also been used for applications to the dynamics of cells in~\citep{schiebinger2017reconstruction}.
+実際のところ、非均衡OT技法は、入力データがノイジーであるか完全には既知でない応用（画像処理や機械学習など）において古典的なOTを上回る性能を示すようである。また、総質量によって測定される測度の信号強度を考慮に入れるべき場合や、正規化が意味を持たない場合にも重要である。これは~\citet{FrognerNIPS}の元々の動機であり、彼らの目標は画像を記述するために用いられる単語ラベルの集合を比較することであった。非均衡OTと対応するSinkhorn反復は、~\citep{schiebinger2017reconstruction}における細胞のダイナミクスへの応用にも用いられている。
 
 \begin{figure}[h!]
 \centering
 \begin{tabular}{@{}c@{\hspace{10mm}}c@{}}
-\includegraphics[width=.4\linewidth]{unbalanced/ot-1} & 
+\includegraphics[width=.4\linewidth]{unbalanced/ot-1} &
 \includegraphics[width=.4\linewidth]{unbalanced/unbal-1} \\
-\includegraphics[width=.4\linewidth]{unbalanced/ot-2} & 
+\includegraphics[width=.4\linewidth]{unbalanced/ot-2} &
 \includegraphics[width=.4\linewidth]{unbalanced/unbal-2} \\
-\includegraphics[width=.4\linewidth]{unbalanced/ot-3} & 
+\includegraphics[width=.4\linewidth]{unbalanced/ot-3} &
 \includegraphics[width=.4\linewidth]{unbalanced/unbal-3} \\
-\includegraphics[width=.4\linewidth]{unbalanced/ot-4} & 
+\includegraphics[width=.4\linewidth]{unbalanced/ot-4} &
 \includegraphics[width=.4\linewidth]{unbalanced/unbal-4} \\
-\includegraphics[width=.4\linewidth]{unbalanced/ot-5} & 
+\includegraphics[width=.4\linewidth]{unbalanced/ot-5} &
 \includegraphics[width=.4\linewidth]{unbalanced/unbal-5} \\
 Classical OT ($\tau=+\infty$) & Ubalanced OT ($\tau=1$)
 \end{tabular}
 %\includegraphics[width=\linewidth]{unbalanced/interpolation-static}
 \caption{\label{fig-interpolation-static}
-Influence of relaxation parameter $\tau$ on unbalanced barycenters.
-Top to bottom: the evolution of the barycenter between two input measures.
+非均衡重心に対する緩和パラメータ$\tau$の影響。
+上から下へ：二つの入力測度間における重心の推移。
 }
 \end{figure}
 
 
 %%%
-\begin{rem}[Connection with dual norms]\label{rem-unb-dualnorms}
-A particularly simple setup to account for mass variation is to use dual norms, as detailed in~\S\ref{sec-dual-norms}. By choosing a compact set $B \subset \Cc(\X)$ one obtains a norm defined on the whole space $\Mm(\X)$ (in particular, the measures do not need to be positive). A particular instance of this setting is the flat norm~\eqref{eq-set-flatnorm}, which is recovered as a special instance of unbalanced transport, when using $\Divergm_\phi(\al|\al')=\norm{\al-\al'}_{\TV}$ to be the total variation norm~\eqref{eq-defn-tv}; see, for instance,~\citep{hanin1992kantorovich,lellmann2014imaging}. 
+\begin{rem}[双対ノルムとの関連]\label{rem-unb-dualnorms}
+質量変動を扱うための特に単純な設定は、~\S\ref{sec-dual-norms}で詳述されたように双対ノルムを用いることである。$\Cc(\X)$のコンパクト集合$B \subset \Cc(\X)$を選ぶことにより、$\Mm(\X)$全体の空間上で定義されるノルムが得られる（特に、測度は正である必要はない）。この設定の特殊なケースがフラットノルム~\eqref{eq-set-flatnorm}であり、これは全変動ノルム~\eqref{eq-defn-tv}として$\Divergm_\phi(\al|\al')=\norm{\al-\al'}_{\TV}$を用いた場合の非均衡輸送の特殊ケースとして回復される；例えば~\citep{hanin1992kantorovich,lellmann2014imaging}を参照。
 %
-We also refer to~\citep{schmitzer2017framework} for a general framework to define Wasserstein-1 unbalanced transport.
+Wasserstein-1非均衡輸送を定義するための一般的な枠組みについては~\citep{schmitzer2017framework}も参照されたい。
 \end{rem}
 %%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Problems with Extra Constraints on the Couplings}
+\section{カップリングに対する追加制約を持つ問題}
 
-Many other OT-like problems have been proposed in the literature. They typically correspond to adding extra constraints $\Cc$ on the set of feasible couplings appearing in the original OT problem~\eqref{eq-mk-generic}
+他の多くのOT型の問題が文献で提案されている。これらは通常、元のOT問題~\eqref{eq-mk-generic}に現れる許容カップリングの集合に追加制約$\Cc$を加えることに対応する
 \eql{\label{ot-extra-constr}
 	\umin{\pi \in \Couplings(\al,\be)}
 		\enscond{ \int_{\X \times \Y} \c(x,y) \d\pi(x,y) }{ \pi \in \Cc }.
-}	
-Let us give two representative examples.
+}
+二つの代表的な例を挙げる。
 %
-The optimal transport with capacity constraint~\citep{km1} corresponds to imposing that the density $\density{\pi}$ (for instance, with respect to the Lebesgue measure) is upper bounded
+容量制約付き最適輸送~\citep{km1}は、密度$\density{\pi}$（例えばLebesgue測度に関する）が上に有界であることを課すものに対応する
 \eql{\label{eq-capacity-constr}
 	\Cc = \enscond{ \pi }{ \density{\pi} \leq \kappa }
 }
-for some $\kappa>0$. This constraint rules out singular couplings localized on Monge maps. 
+ここで$\kappa>0$である。この制約はMonge写像上に局在化した特異カップリングを除外する。
 %
-The martingale transport problem (see, for instance,~\citet{GalichonMartingale,dolinsky2014martingale,TanTouzi,beiglbock2013model}), which finds many applications in finance, imposes the so-called martingale constraint on the conditional mean of the coupling, when $\X=\Y=\RR^d$:
+マルチンゲール輸送問題（例えば~\citet{GalichonMartingale,dolinsky2014martingale,TanTouzi,beiglbock2013model}を参照）は、金融において多くの応用を見出すものであり、$\X=\Y=\RR^d$のとき、カップリングの条件付き平均にいわゆるマルチンゲール制約を課す：
 \eql{\label{eq-martingale-constr}
 	\Cc = \enscond{ \pi }{ \foralls x \in \RR^d,  \int_{\RR^d} y \frac{\d \pi(x,y)}{\d\al(x)\d\be(y)} \d\be(y) = x }.
 }
-This constraint imposes that the barycentric projection map~\eqref{eq-bary-proj} of any admissible coupling must be equal to the identity.
+この制約は、任意の許容カップリングの重心射影写像~\eqref{eq-bary-proj}が恒等写像に等しくなければならないことを課す。
 %
-For arbitrary $(\al,\be)$, this set $\Cc$ is typically empty, but necessary and sufficient conditions exist ($\al$ and $\be$ should be in ``convex order'') to ensure $\Cc \neq \emptyset$ so that  $(\al,\be)$ satisfy a martingale constraint. This constraint can be difficult to enforce numerically when discretizing an existing problem.
+任意の$(\al,\be)$に対して、この集合$\Cc$は通常空っぽであるが、$\Cc \neq \emptyset$を保証する（$\al$と$\be$が「凸順序」にあるべきという）必要十分条件が存在し、$(\al,\be)$がマルチンゲール制約を満たすようにする。この制約は既存の問題を離散化する際に数値的に課すことが困難な場合がある。
 %
-It also forbids the solution to concentrate on a single Monge map, and can lead to couplings concentrated on the union of several graphs (a ``multivalued'' Monge map), or even more complicated support sets.
+また、単一のMonge写像上に解が集中することを禁じ、複数のグラフの和集合上に集中するカップリング（「多価」Monge写像）、またはさらに複雑な台の集合につながりうる。
 %
-Using an entropic penalization as in~\eqref{eq-entropic-generic}, one can solve approximately~\eqref{ot-extra-constr} using the Dykstra algorithm as explained in~\citet{2015-benamou-cisc}, which is a generalization of Sinkhorn's algorithm shown in~\S\ref{sec-sinkhorn}. This requires computing the projection onto $\Cc$ for the $\KL$ divergence, which is straightforward for~\eqref{eq-capacity-constr} but cannot be done in closed form~\eqref{eq-martingale-constr} and thus necessitates subiterations; see~\citep{guo2017computational} for more details.
+~\eqref{eq-entropic-generic}のようなエントロピーペナルティを用いることにより、~\citet{2015-benamou-cisc}で説明されたDykstraアルゴリズムを用いて~\eqref{ot-extra-constr}を近似的に解くことができる。これは~\S\ref{sec-sinkhorn}で示されたSinkhornアルゴリズムの一般化である。これには$\KL$ダイバージェンスに対する$\Cc$への射影の計算が必要であり、~\eqref{eq-capacity-constr}に対しては容易であるが~\eqref{eq-martingale-constr}に対しては閉じた形では計算できず、したがって副反復が必要となる；詳細は~\citep{guo2017computational}を参照。
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Sliced Wasserstein Distance and Barycenters}\label{sec-sliced}
+\section{スライスWasserstein距離と重心}\label{sec-sliced}
 
-One can define a distance between two measures $(\al,\be)$ defined on $\RR^\dim$ by aggregating 1-D Wasserstein distances between their projections onto all directions of the sphere. This defines
+$\RR^\dim$上で定義された二つの測度$(\al,\be)$間の距離を、球面上のすべての方向への射影の1次元Wasserstein距離を集約することにより定義できる。これは以下を定義する
 \eql{\label{eq-sw-def}
 	\SW(\al,\be)^2 \eqdef \int_{\SS^d} \Wass_2( P_{\th,\sharp} \al, P_{\th,\sharp} \be )^2 \d\th,
 }
-where $\SS^\dim = \ensconds{\th \in \RR^\dim}{\norm{\th}=1}$ is the $\dim$-dimensional sphere, and $P_\th : x \in \RR^\dim \rightarrow \RR$ is the projection. This approach is detailed in~\citep{2013-Bonneel-barycenter}, following ideas from Marc Bernot. It is related to the problem of Radon inversion over measure spaces~\citep{AbrahamRadon}. 
+ここで$\SS^\dim = \ensconds{\th \in \RR^\dim}{\norm{\th}=1}$は$\dim$次元球面であり、$P_\th : x \in \RR^\dim \rightarrow \RR$は射影である。このアプローチは~\citep{2013-Bonneel-barycenter}で詳述されており、Marc Bernotのアイデアに基づいている。これは測度空間上のRadon逆変換の問題~\citep{AbrahamRadon}に関連している。
 
 %%%
-\paragraph{Lagrangian discretization and stochastic gradient descent. }
+\paragraph{Lagrange離散化と確率的勾配降下法}
 
-The advantage of this functional is that 1-D Wasserstein distances are simple to compute, as detailed in~\S\ref{sec:specialcases}. In the specific case where $m=n$ and 
+この汎関数の利点は、1次元Wasserstein距離が~\S\ref{sec:specialcases}で詳述されているように容易に計算できることである。$m=n$かつ
 \eql{\label{eq-lagrangian-sliced}
 	\al=\frac{1}{n}\sum_{i=1}^n \de_{x_i}
-	\qandq 
-	\be=\frac{1}{n}\sum_{i=1}^m \de_{y_i}, 
+	\qandq
+	\be=\frac{1}{n}\sum_{i=1}^m \de_{y_i},
 }
-this is achieved by simply sorting points
+の特殊ケースでは、これは単に点をソートすることで達成される
 \eq{
 	\SW(\al,\be)^2 = \int_{\SS^d} \pa{
-		 \sum_{i=1}^n | \dotp{ x_{\si_\th(i)} - y_{\kappa_\th(i)} }{\th} |^2 
+		 \sum_{i=1}^n | \dotp{ x_{\si_\th(i)} - y_{\kappa_\th(i)} }{\th} |^2
 		}
 		\d\th,
 }
-where $\si_\th,\kappa_\th \in \Perm(n)$ are the permutation ordering in increasing order, respectively, $(\dotp{x_i}{\th})_i$ and $(\dotp{y_i}{\th})_i$. 
+ここで$\si_\th,\kappa_\th \in \Perm(n)$はそれぞれ$(\dotp{x_i}{\th})_i$と$(\dotp{y_i}{\th})_i$を昇順に並べる置換である。
 
-Fixing the vector $y$, the function $\Ee_\be(x) \eqdef \SW(\al,\be)^2$ is smooth, and one can use this function to define a mapping by gradient descent 
+ベクトル$y$を固定すると、関数$\Ee_\be(x) \eqdef \SW(\al,\be)^2$は滑らかであり、この関数を用いて勾配降下法により写像を定義できる
 \eql{\label{eq-grad-sliced-lagr}
 	x \leftarrow x - \tau \nabla\Ee_\be(x)
 	\qwhereq
 }
 \eq{
-	\nabla\Ee_\be(x)_i = 
+	\nabla\Ee_\be(x)_i =
 		2 \int_{\SS^d} \pa{
 		 	\dotp{ x_{i} - y_{\kappa_\th \circ \si_\th^{-1}(i)} }{\th}  \th
 		}
 		\d\th
 }
-using a small enough step size $\tau>0$. 
+ここで十分小さなステップサイズ$\tau>0$を用いる。
 %
-To make the method tractable, one can use a stochastic gradient descent (SGD), replacing this integral with a discrete sum against randomly drawn directions $\th \in \SS^\dim$ (see~\S\ref{sec-sgd} for more details on SGD). 
+この方法を扱いやすくするために、確率的勾配降下法（SGD）を用いて、この積分をランダムに抽出された方向$\th \in \SS^\dim$に対する離散和で置き換えることができる（SGDの詳細については~\S\ref{sec-sgd}を参照）。
 %
-The flow~\eqref{eq-grad-sliced-lagr} can be understood as (Langrangian implementation of) a Wasserstein gradient flow (in the sense of~\S\ref{sec-grad-flows}) of the function $\al \mapsto \SW(\al,\be)^2$. Numerically, one finds that this flow has no local minimizer and that it thus converges to $\al=\be$. The usefulness of the Lagrangian solver is that, at convergence, it defines a matching (similar to a Monge map) between the two distributions. This method has been used successfully for color transfer and texture synthesis in~\citep{rabin-ssvm-11} and is related to the alternate minimization approach detailed in~\citep{pitie2007automated}.
+フロー~\eqref{eq-grad-sliced-lagr}は、関数$\al \mapsto \SW(\al,\be)^2$のWasserstein勾配流（~\S\ref{sec-grad-flows}の意味で）の（Lagrange的実装と）理解できる。数値的には、このフローは局所的最小値を持たず、したがって$\al=\be$に収束することが見出される。Lagrangeソルバーの有用性は、収束時に二つの分布間のマッチング（Monge写像に類似したもの）を定義することである。この方法は~\citep{rabin-ssvm-11}において色転写とテクスチャ合成に成功裏に用いられており、~\citep{pitie2007automated}で詳述された交互最小化アプローチに関連している。
 
-It is simple to extend this Lagrangian scheme to compute approximate ``sliced'' barycenters  of measures, by mimicking the Frechet definition of Wasserstein barycenters~\eqref{eq-barycenter-generic} and minimizing 
+このLagrangeスキームを拡張して、測度の近似的な「スライス」重心を計算することは容易であり、Wasserstein重心のFrechet定義~\eqref{eq-barycenter-generic}を模倣して以下を最小化する
 \eql{\label{eq-barycenter-sliced}
 		\umin{\al \in \Mm_+^1(\X)} \sum_{s=1}^S \la_s \SW(\al,\be_s)^2,
 }
-given a set $(\be_s)_{s=1}^S$ of fixed input measure. Using a Lagrangian discretization of the form~\eqref{eq-lagrangian-sliced} for both $\al$ and the $(\be_s)_s$, one can perform the nonconvex minimization over the position $x=(x_i)_i$
+ここで$(\be_s)_{s=1}^S$は固定された入力測度の集合である。$\al$と$(\be_s)_s$の両方に対して~\eqref{eq-lagrangian-sliced}の形のLagrange離散化を用いて、位置$x=(x_i)_i$に関する非凸最小化を実行できる
 \eql{\label{eq-bary-lagrangian-sliced}
 	\umin{x} \Ee(x) \eqdef \sum_{s} \la_s \Ee_{\be_s}(x),
-	\qandq 
-	\nabla \Ee(x) = \sum_{s} \la_s \nabla \Ee_{\be_s}(x), 
+	\qandq
+	\nabla \Ee(x) = \sum_{s} \la_s \nabla \Ee_{\be_s}(x),
 }
-by gradient descent using formula~\eqref{eq-grad-sliced-lagr} to compute $\nabla \Ee_{\be_s}(x)$ (coupled with a random sampling of the direction $\th$).
+ここで$\nabla \Ee_{\be_s}(x)$の計算には公式~\eqref{eq-grad-sliced-lagr}を用いた勾配降下法（方向$\th$のランダムサンプリングと組み合わせて）を使用する。
 
 
 
 
 %%%
-\paragraph{Eulerian discretization and Radon transform. }
+\paragraph{Euler離散化とRadon変換}
 
-A related way to compute an approximated sliced barycenter, without resorting to an iterative minimization scheme, is to use the fact that~\eqref{eq-sw-def} computes a distance between the Radon transforms $\Rr(\al)$ and $\Rr(\be)$ where
+反復的な最小化スキームに頼ることなく近似的なスライス重心を計算する関連する方法は、~\eqref{eq-sw-def}がRadon変換$\Rr(\al)$と$\Rr(\be)$の間の距離を計算するという事実を利用することである。ここで
 \eq{
 	\Rr(\al) \eqdef ( P_{\th,\sharp} \al )_{\th \in \SS^d}.
 }
-A crucial point is that the Radon transform is invertible and that its inverse can be computed using a filtered backprojection formula. 
+重要な点は、Radon変換が可逆であり、その逆がフィルタ補正逆投影公式を用いて計算できることである。
 %
-Given a collection of measures $\rho = (\rho_\th)_{\th \in \SS^d}$, one defines the filtered  backprojection operator as
+測度の集合$\rho = (\rho_\th)_{\th \in \SS^d}$が与えられたとき、フィルタ補正逆投影作用素を以下のように定義する
 \eql{\label{eq-filter-backproj}
 	\Rr^+(\rho) = C_\dim \De^{\frac{d-1}{2}} \Bb(\rho),
 }
-where $\xi = \Bb(\rho) \in \Mm(\RR^d)$ is the measure defined through the relation 
+ここで$\xi = \Bb(\rho) \in \Mm(\RR^d)$は以下の関係を通じて定義される測度である
 \eql{\label{eq-backproj}
 	\foralls g \in \Cc(\RR^d), \quad
-	\int_{\RR^d} g(x) \d\xi(x) = 
-	\int_{\SS^d}  \int_{\RR^{\dim-1}}   \int_{\RR}   
-		g( r \th + U_\th z ) 
+	\int_{\RR^d} g(x) \d\xi(x) =
+	\int_{\SS^d}  \int_{\RR^{\dim-1}}   \int_{\RR}
+		g( r \th + U_\th z )
 	\d \rho_\th(r) \d z \d \th,
 }
-where $U_\th$ is any orthogonal basis of $\th^\bot$, 
-and where $C_\dim \in \RR$ is a normalizing constant which depends on the dimension.
+ここで$U_\th$は$\th^\bot$の任意の正規直交基底であり、
+$C_\dim \in \RR$は次元に依存する正規化定数である。
 %
-Here $\De^{\frac{d-1}{2}}$ is a fractional Laplacian, which is the high-pass filter defined over the Fourier domain as 
-$\hat \De^{\frac{d-1}{2}}(\om) = \norm{\om}^{d-1}$.
+ここで$\De^{\frac{d-1}{2}}$は分数次Laplacianであり、Fourier領域上で
+$\hat \De^{\frac{d-1}{2}}(\om) = \norm{\om}^{d-1}$として定義されるハイパスフィルタである。
 %
-The definition of the backprojection~\eqref{eq-backproj} adds up the contribution of all the measures $(\rho_\th)_\th$ by extending each one as being constant in the directions orthogonal to $\th$.
+逆投影~\eqref{eq-backproj}の定義は、各測度$(\rho_\th)_\th$を$\th$に直交する方向に定数として拡張することにより、すべての測度の寄与を足し合わせる。
 %
-One then has the left-inverse relation $\Rr^+ \circ \Rr = \Identity_{\Mm(\RR^\dim)}$, so that $\Rr^+$ is a valid reconstruction formula. 
+すると左逆関係$\Rr^+ \circ \Rr = \Identity_{\Mm(\RR^\dim)}$が成り立ち、$\Rr^+$は有効な再構成公式となる。
 
 
 \newcommand{\MyFigRadon}[1]{\includegraphics[width=.19\linewidth]{radon-bary/#1}}
@@ -400,27 +403,27 @@ One then has the left-inverse relation $\Rr^+ \circ \Rr = \Identity_{\Mm(\RR^\di
 \MyFigRadon{radon-5} &
 \MyFigRadon{radon-7} &
 \MyFigRadon{radon-9} \\
-$t=0$ & $t=1/4$ & $t=1/2$ & $t=3/4$ & $t=1$  
+$t=0$ & $t=1/4$ & $t=1/2$ & $t=3/4$ & $t=1$
 \end{tabular}
 \caption{\label{fig-radon-bary}
-Example of sliced barycenters computation using the Radon transform (as defined in~\eqref{eq-barycenter-radon-sliced}). 
+Radon変換を用いたスライス重心計算の例（~\eqref{eq-barycenter-radon-sliced}で定義される通り）。
 %
-Top: barycenters $\al_t$ for $S=2$ two input and weights $(\la_1,\la_2)=(1-t,t)$. 
-Bottom: their Radon transform $\Rr(\al_t)$ (the horizontal axis being the orientation angle $\th$). 
+上段：$S=2$の二つの入力と重み$(\la_1,\la_2)=(1-t,t)$に対する重心$\al_t$。
+下段：それらのRadon変換$\Rr(\al_t)$（水平軸は方位角$\th$）。
 }
 \end{figure}
 
-In order to compute barycenters of input densities, it makes sense to replace formula~\eqref{eq-barycenter-generic} by its equivalent using Radon transform, and thus consider independently for each $\th$ the 1-D barycenter problem
+入力密度の重心を計算するために、公式~\eqref{eq-barycenter-generic}をRadon変換を用いた等価な式で置き換え、各$\th$に対して独立に1次元重心問題を考えることは理にかなっている
 \eql{\label{eq-barycenter-radon-sliced}
 		\rho_\th^\star \in \uargmin{ (\rho_\th \in \Mm_+^1(\RR)) } \sum_{s=1}^S \la_s \Wass_2( \rho_\th, P_{\th,\sharp} \be_s)^2.
 }
-Each 1-D barycenter problem is easily computed using the monotone rearrangement as detailed in Remark~\ref{rem-bary-1d}.
+各1次元重心問題は、注意~\ref{rem-bary-1d}で詳述された単調再配置を用いて容易に計算される。
 %
-The Radon approximation $\al_{R} \eqdef \Rr^+( \rho^\star )$ of a sliced barycenter solving~\eqref{eq-barycenter-generic} is then obtained by the inverse Radon transform $\Rr^+$. Note that in general, $\al_R$ is not a solution to~\eqref{eq-barycenter-generic} because the Radon transform is not surjective, so that  $\rho^\star$, which is obtained as a barycenter of the Radon transforms $\Rr(\be_s)$ does not necessarily belong to the range of $\Rr$. But numerically it seems in practice to be almost the case~\citep{2013-Bonneel-barycenter}.
+~\eqref{eq-barycenter-generic}を解くスライス重心のRadon近似$\al_{R} \eqdef \Rr^+( \rho^\star )$は、逆Radon変換$\Rr^+$により得られる。一般に$\al_R$は~\eqref{eq-barycenter-generic}の解ではないことに注意されたい。なぜなら、Radon変換は全射ではないため、Radon変換$\Rr(\be_s)$の重心として得られる$\rho^\star$は$\Rr$の値域に必ずしも属さないからである。しかし数値的には、実際にはほぼそうであるようである~\citep{2013-Bonneel-barycenter}。
 %
-Numerically, this Radon transform formulation is very effective for input measures and barycenters discretized on a fixed grid (\emph{e.g.} a uniform grid for images), and $\Rr$ and well as $\Rr^+$ are computed approximately on this grid using fast algorithms (see, for instance,~\citep{FastSlantStack}).
+数値的には、このRadon変換の定式化は、固定格子上に離散化された入力測度と重心（例えば画像の一様格子）に対して非常に効果的であり、$\Rr$および$\Rr^+$はこの格子上で高速アルゴリズムを用いて近似的に計算される（例えば~\citep{FastSlantStack}を参照）。
 %
-Figure~\ref{fig-radon-bary} illustrates this computation of barycenters (and highlights the way the Radon transforms are interpolated), while Figure~\ref{fig-sliced-bary-compar} shows a comparison of the Radon barycenters~\eqref{eq-barycenter-radon-sliced} and the ones obtained by Lagrangian discretization~\eqref{eq-bary-lagrangian-sliced}.
+図~\ref{fig-radon-bary}はこの重心計算を示し（Radon変換がどのように補間されるかを強調している）、図~\ref{fig-sliced-bary-compar}はRadon重心~\eqref{eq-barycenter-radon-sliced}とLagrange離散化~\eqref{eq-bary-lagrangian-sliced}により得られた重心の比較を示す。
 
 
 \begin{figure}[h!]
@@ -432,86 +435,87 @@ Figure~\ref{fig-radon-bary} illustrates this computation of barycenters (and hig
 Radon & Lagrangian & Wasserstein
 \end{tabular}
 \caption{\label{fig-sliced-bary-compar}
-Comparison of barycenters computed using Radon transform~\eqref{eq-barycenter-radon-sliced} (Eulerian discretization), Lagrangian discretization~\eqref{eq-bary-lagrangian-sliced}, and Wasserstein OT (computed using Sinkhorn iterations~\eqref{eq-sinkhorn-bary}). 
+Radon変換~\eqref{eq-barycenter-radon-sliced}（Euler離散化）、Lagrange離散化~\eqref{eq-bary-lagrangian-sliced}、およびWasserstein OT（Sinkhorn反復~\eqref{eq-sinkhorn-bary}を用いて計算）による重心の比較。
 }
 \end{figure}
 
 
 
 %%%
-\paragraph{Sliced Wasserstein kernels.}
+\paragraph{スライスWassersteinカーネル}
 
-Beside its computational simplicity, another advantage of the sliced Wasserstein distance is that it is isometric to a Euclidean distance (it is thus a ``Hilbertian'' metric), as detailed in Remark~\ref{rem-1d-ot-generic}, and in particular formula~\eqref{eq-wass-cumul}. 
-% 
-As highlighted in~\S\ref{sec-non-embeddability}, this should be contrasted with the Wasserstein distance $\Wass_2$ on $\RR^\dim$, which is not Hilbertian in dimension $\dim \geq 2$. 
+計算の単純さに加えて、スライスWasserstein距離のもう一つの利点は、注意~\ref{rem-1d-ot-generic}、特に公式~\eqref{eq-wass-cumul}で詳述されているように、ユークリッド距離と等距であること（すなわち「ヒルベルト的」計量であること）である。
 %
-It is thus possible to use this sliced distance to equip the space of distributions $\Mm_1^+(\RR^\dim)$ with a reproducing kernel Hilbert space structure (as detailed in~\S\ref{sec-non-embeddability}). 
+~\S\ref{sec-non-embeddability}で強調されたように、これは$\RR^\dim$上のWasserstein距離$\Wass_2$と対照的であり、$\Wass_2$は次元$\dim \geq 2$においてヒルベルト的ではない。
 %
-One can, for instance, use the exponential and energy distance kernels
+したがって、このスライス距離を用いて、分布の空間$\Mm_1^+(\RR^\dim)$に再生核ヒルベルト空間構造を与えることが可能である（~\S\ref{sec-non-embeddability}で詳述されている通り）。
+%
+例えば、指数カーネルとエネルギー距離カーネル
 \eq{
 	\Krkhs(\al,\be) = e^{-\frac{\SW(\al,\be)^p}{2\si^p}}
 	\qandq
 	\Krkhs(\al,\be) = -\SW(\al,\be)^p
 }
-for $1 \leq p \leq 2$ for the exponential kernels and $0 < p < 2$ for the energy distance kernels.
+を使うことができる。ここで指数カーネルに対しては$1 \leq p \leq 2$、エネルギー距離カーネルに対しては$0 < p < 2$である。
 %
-This means that for any collection $(\al_i)_i$ of input measures, the matrix $( \Krkhs(\al_i,\al_j) )_{i,j}$ is symmetric positive semidefinite. It is possible to use these kernels to perform a variety of machine learning tasks using the ``kernel trick,'' for instance, in regression, classification (SVM and logistic), clustering (K-means) and dimensionality reduction (PCA)~\citep{Hofmann2008}.
+これは、入力測度の任意の集合$(\al_i)_i$に対して、行列$( \Krkhs(\al_i,\al_j) )_{i,j}$が対称半正定値であることを意味する。これらのカーネルを用いて、「カーネルトリック」により、回帰、分類（SVMおよびロジスティック）、クラスタリング（K-means）、次元削減（PCA）~\citep{Hofmann2008}など、様々な機械学習タスクを実行することが可能である。
 %
-We refer to~\citet{kolouri2016sliced} for details and applications.
+詳細と応用については~\citet{kolouri2016sliced}を参照されたい。
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Transporting Vectors and Matrices}
+\section{ベクトルと行列の輸送}
 
-Real-valued measures $\al \in \Mm(\Xx)$ are easily generalized to vector-valued measures $\al \in \Mm(\Xx;\VV)$, where $\VV$ is some vector space. For notational simplicity, we assume $\VV$ is Euclidean and equipped with some inner product $\dotp{\cdot}{\cdot}$ (typically $\VV=\RR^\dim$ and the inner product is the canonical one). Thanks to this inner product, vector-valued measures are identified with the dual of continuous functions $g : \Xx \rightarrow \VV$, \ie for any such $g$, one defines its integration against the measure as 
+実数値測度$\al \in \Mm(\Xx)$は、ベクトル値測度$\al \in \Mm(\Xx;\VV)$に容易に一般化される。ここで$\VV$はあるベクトル空間である。記法の簡潔さのため、$\VV$はユークリッド空間であり、ある内積$\dotp{\cdot}{\cdot}$を備えていると仮定する（典型的には$\VV=\RR^\dim$であり、内積は標準的なものである）。この内積のおかげで、ベクトル値測度は連続関数$g : \Xx \rightarrow \VV$の双対と同一視される。すなわち、任意のそのような$g$に対して、測度との積分は
 \eql{\label{eq-integration-vec-valued}
 	\int_\Xx g(x) \d\al(x) \in \RR,
 }
-which is a linear operation on $g$ and $\al$. A discrete measure has the form $\al = \sum_i \a_i \de_{x_i}$ where $(x_i,a_i) \in \Xx \times \VV$ and the integration formula~\eqref{eq-integration-vec-valued} simply reads
+と定義され、これは$g$と$\al$に関する線形作用素である。離散測度は$\al = \sum_i \a_i \de_{x_i}$の形を持ち、ここで$(x_i,a_i) \in \Xx \times \VV$であり、積分公式~\eqref{eq-integration-vec-valued}は単に
 \eq{
 	\int_\Xx g(x) \d\al(x) = \sum_i \dotp{\a_i}{g(x_i)} \in \RR.
 }
-Equivalently, if $\VV=\RR^\dim$, then such an $\al$ can be viewed as a collection $(\al_s)_{s=1}^\dim$ of $\dim$ ``classical'' real-valued measures (its coordinates), writing  
+と読める。
+同値的に、$\VV=\RR^\dim$ならば、そのような$\al$は$\dim$個の「古典的な」実数値測度$(\al_s)_{s=1}^\dim$の集まり（その座標）と見なすことができ、
 \eq{
-	\int_\Xx g(x) \d\al(x) =  \sum_{s=1}^\dim \int_\Xx g_s(x) \d\al_s(x), 
+	\int_\Xx g(x) \d\al(x) =  \sum_{s=1}^\dim \int_\Xx g_s(x) \d\al_s(x),
 }
-where $g(x)=(g_s(x))_{s=1}^\dim$ are the coordinates of $g$ in the canonical basis. 
+と書ける。ここで$g(x)=(g_s(x))_{s=1}^\dim$は$g$の標準基底における座標である。
 
 %%%
-\paragraph{Dual norms.}
+\paragraph{双対ノルム}
 
-It is nontrivial, and in fact in general impossible, to extend OT distances to such a general setting. Even coping with real-valued measures taking both positive and negative values is difficult. The only simple option is to consider dual norms, as defined in~\S\ref{sec-dual-norms}. Indeed, formula~\eqref{eq-w1-cont} readily extends to $\Mm(\Xx;\VV)$ by considering $B$ to be a subset of $\Cc(\Xx;\VV)$. So in particular, $\Ww_1$, the flat norm and MMD norms can be computed for vector-valued measures. 
+OT距離をこのような一般的な設定に拡張することは自明ではなく、実際一般には不可能である。正と負の両方の値を取る実数値測度を扱うことさえ困難である。唯一の単純な選択肢は、~\S\ref{sec-dual-norms}で定義された双対ノルムを考えることである。実際、公式~\eqref{eq-w1-cont}は、$B$を$\Cc(\Xx;\VV)$の部分集合として考えることにより、$\Mm(\Xx;\VV)$に容易に拡張される。したがって特に、$\Ww_1$、フラットノルム、およびMMDノルムはベクトル値測度に対して計算できる。
 
 %%%
-\paragraph{OT over cone-valued measures. }
+\paragraph{錐値測度上のOT}
 
-It is possible to define more advanced OT distances when $\al$ is restricted to be in a subset $\Mm(\Xx;\Vv) \subset \Mm(\Xx;\VV)$. The set $\Vv$ should be a positively 1-homogeneous convex cone of $\VV$
+$\al$が部分集合$\Mm(\Xx;\Vv) \subset \Mm(\Xx;\VV)$に制限される場合、より高度なOT距離を定義することが可能である。集合$\Vv$は$\VV$の正の1次同次凸錐でなければならない
 \eq{
 	\Vv \eqdef \enscond{ \la u }{ \la \in \RR^+,  u \in \Vv_0, }
 }
-where $\Vv_0$ is a compact convex set. 
+ここで$\Vv_0$はコンパクト凸集合である。
 %
-A typical example is the set of positive measures where $\Vv=\RR_+^\dim$. Dynamical convex formulations of OT over such a cone have been proposed; see~\citep{MatthesPositive}. This has been applied to model the distribution of chemical components. 
+典型的な例は$\Vv=\RR_+^\dim$の正の測度の集合である。このような錐上のOTの動的凸定式化が提案されている；~\citep{MatthesPositive}を参照。これは化学成分の分布のモデリングに応用されている。
 %
-Another important example is the set of positive symmetric matrices $\Vv=\Ss_+^\dim \subset \RR^{\dim \times \dim}$. It is of course possible to use dual norms over this space, by treating matrices as vectors; see, for instance,~\citep{Ning2014metrics}. Dynamical convex  formulations for OT over such a cone have been provided~\citep{Chen2016,JiangSpectral}. Some static (Kantorovich-like) formulations also have been proposed~\citep{ning2015matrix,2016-peyre-qot}, but a mathematically sound theoretical framework is still missing. In particular, it is unclear if these static approaches define distances for vector-valued measures and if they relate to some dynamical formulation.  Figure~\ref{fig-tensors} is an example of tensor interpolation obtained using the method detailed in~\citep{2016-peyre-qot}, which proposes a generalization of Sinkhorn algorithms using quantum relative entropy~\eqref{eq-quantum-entropy} to deal with tensor fields.
+もう一つの重要な例は正対称行列$\Vv=\Ss_+^\dim \subset \RR^{\dim \times \dim}$の集合である。もちろん、行列をベクトルとして扱うことにより、この空間上の双対ノルムを使用することが可能である；例えば~\citep{Ning2014metrics}を参照。このような錐上のOTの動的凸定式化が提供されている~\citep{Chen2016,JiangSpectral}。いくつかの静的な（Kantorovich型の）定式化も提案されている~\citep{ning2015matrix,2016-peyre-qot}が、数学的に健全な理論的枠組みはまだ欠けている。特に、これらの静的アプローチがベクトル値測度に対する距離を定義するのか、また何らかの動的定式化に関連するのかは不明である。図~\ref{fig-tensors}は、~\citep{2016-peyre-qot}で詳述された方法を用いて得られたテンソル補間の例であり、この方法はテンソル場を扱うために量子相対エントロピー~\eqref{eq-quantum-entropy}を用いたSinkhornアルゴリズムの一般化を提案している。
 
 %%%
-\paragraph{OT over positive matrices. }
+\paragraph{正行列上のOT}
 
-A related but quite different setting is to replace discrete measures, \ie histograms $\a \in \Si_n$, by positive matrices with unit trace $A \in \Ss_n^+$ such that $\tr(A)=1$. The rationale is that the eigenvalues $\la(A) \in \Si_n$ of $A$ play the role of a histogram, but one also has to take care of the rotations of the eigenvectors, so that this problem is more complicated.
+関連するが全く異なる設定は、離散測度、すなわちヒストグラム$\a \in \Si_n$を、単位トレースの正行列$A \in \Ss_n^+$（ただし$\tr(A)=1$）で置き換えることである。$A$の固有値$\la(A) \in \Si_n$がヒストグラムの役割を果たすという理由であるが、固有ベクトルの回転も考慮に入れる必要があるため、この問題はより複雑である。
 
-One can extend several divergences introduced in~\S\ref{sec-phi-div} to this setting. For instance, the Bures metric~\eqref{eq-bure-defn} is a generalization of the Hellinger distance (defined in Remark~\ref{exmp-hellinger}), since they are equal on positive diagonal matrices. 
+~\S\ref{sec-phi-div}で導入されたいくつかのダイバージェンスをこの設定に拡張することができる。例えば、Bures計量~\eqref{eq-bure-defn}はHellinger距離（注意~\ref{exmp-hellinger}で定義）の一般化であり、正の対角行列上では一致する。
 %
-One can also extend the Kullback--Leibler divergence~\eqref{eq-kl-defn} (see also Remark~\ref{ex_KLdiv}), which is generalized to positive matrices as
+Kullback--Leiblerダイバージェンス~\eqref{eq-kl-defn}（注意~\ref{ex_KLdiv}も参照）も拡張でき、正行列に対して以下のように一般化される
 \eql{\label{eq-quantum-entropy}
 	\KLD(A|B) \eqdef \tr\pa{ P \log(P)-P\log(Q)-P+Q, }
 }
-where $\log(\cdot)$ is the matrix logarithm. This matrix $\KLD$ is convex with both of its arguments. 
+ここで$\log(\cdot)$は行列対数である。この行列$\KLD$は両方の引数に関して凸である。
 
-It is possible to solve convex dynamic formulations to define OT distances between such matrices~\citep{Carlen2014,Chen2016,ChenGangbo17}. There also exists an equivalent of Sinkhorn's algorithm, which is due to~\citet{gurvits2004classical} and has been extensively studied in~\citep{georgiou2015positive}; see also the review paper~\citep{ReviewSinkhorn}. It is known to converge only in some cases but seems empirically to always work.
+このような行列間のOT距離を定義するために、凸動的定式化を解くことが可能である~\citep{Carlen2014,Chen2016,ChenGangbo17}。Sinkhornアルゴリズムの等価物も存在し、~\citet{gurvits2004classical}に由来し、~\citep{georgiou2015positive}で広く研究されている；レビュー論文~\citep{ReviewSinkhorn}も参照。これはいくつかのケースでのみ収束することが知られているが、経験的には常に機能するようである。
 
 
 \newcommand{\MyFigTensorMesh}[1]{\includegraphics[width=.100\linewidth,trim=140 10 120 0,clip]{tensors/mesh/interpol-#1}}
@@ -538,13 +542,13 @@ It is possible to solve convex dynamic formulations to define OT distances betwe
 \MyFigTensorMesh{7}&
 \MyFigTensorMesh{8}&
 \MyFigTensorMesh{9}\\
-$t=0$ & $t=1/8$ & $t=1/4$ & $t=3/8$ & $t=1/2$ & $t=5/8$ & $t=3/4$ & $t=7/8$ & $t=1$ 
+$t=0$ & $t=1/8$ & $t=1/4$ & $t=3/8$ & $t=1/2$ & $t=5/8$ & $t=3/4$ & $t=7/8$ & $t=1$
 \end{tabular}
 %%%
 \caption{%%%
-Interpolations between two input fields of positive semidefinite matrices (displayed at times $t \in \{0,1\}$ using ellipses) on some domain (here, a 2-D planar square and a surface mesh), using the method detailed in~\citet{2016-peyre-qot}. 
+ある領域（ここでは2次元平面正方形と曲面メッシュ）上の二つの入力半正定値行列場（時刻$t \in \{0,1\}$において楕円を用いて表示）間の補間。~\citet{2016-peyre-qot}で詳述された方法を使用。
 %
-Unlike linear interpolation schemes, this OT-like method transports the ``mass'' of the tensors (size of the ellipses) as well as their anisotropy and orientation.
+線形補間スキームとは異なり、このOT的手法はテンソルの「質量」（楕円の大きさ）だけでなく、それらの異方性と方向も輸送する。
 } \label{fig-tensors}
 \end{figure}
 %%% FIG %%%
@@ -554,24 +558,24 @@ Unlike linear interpolation schemes, this OT-like method transports the ``mass''
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Gromov--Wasserstein Distances}
+\section{Gromov--Wasserstein距離}
 
-For some applications such as shape matching, an important weakness of optimal transport distances lies in the fact that they are not invariant to important families of invariances, such as rescaling, translation or rotations. Although some nonconvex variants of OT to handle such global transformations have been proposed~\citep{cohen1999earth,pele2013tangent} and recently applied to problems such as cross-lingual word embeddings alignments~\citep{grave2018unsupervised,alvarez2018towards,grave2018unsupervised}, these methods require specifying first a subset of invariances, possibly between different metric spaces, to be relevant. We describe in this section a more general and very natural extension of OT that can deal with measures defined on different spaces without requiring the definition of a family of invariances.
+形状マッチングなどの一部の応用において、最適輸送距離の重要な弱点は、リスケーリング、平行移動、回転などの重要な不変性の族に対して不変ではないという事実にある。そのようなグローバル変換を扱うためのOTの非凸変形がいくつか提案されており~\citep{cohen1999earth,pele2013tangent}、最近では言語間単語埋め込みの整合~\citep{grave2018unsupervised,alvarez2018towards,grave2018unsupervised}などの問題に適用されているが、これらの方法はまず不変性の部分集合を指定する必要があり、可能性として異なる距離空間間で関連性を持たせる必要がある。この節では、不変性の族の定義を必要とせずに、異なる空間上で定義された測度を扱うことができる、より一般的で非常に自然なOTの拡張を記述する。
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Hausdorff Distance}
+\subsection{Hausdorff距離}
 \label{sec-hausdorff}
 
-The Hausdorff distance between two sets $A,B \subset \Z$ for some metric $\dist_\Z$ is 
+ある距離$\dist_\Z$に対する二つの集合$A,B \subset \Z$間のHausdorff距離は
 \eq{
 	\Hh_\Zz(A,B) \eqdef \max\Big(
-  		\sup_{a \in A} \inf_{b \in B} d_{\Zz}(a,b), 
+  		\sup_{a \in A} \inf_{b \in B} d_{\Zz}(a,b),
   		\sup_{b \in B} \inf_{a \in A} d_{\Zz}(a,b)
-	\Big), 
+	\Big),
 }
-see Figure~\ref{fig-hausdorff}.
+であり、図~\ref{fig-hausdorff}を参照。
 %
-This defines a distance between compact sets $\Kk(\Z)$ of $\Z$, and if $\Z$ is compact, then $(\Kk(\Z),\Hh_\Zz)$ is itself compact; see~\citep{burago2001course}.
+これは$\Z$のコンパクト集合$\Kk(\Z)$間の距離を定義し、$\Z$がコンパクトならば$(\Kk(\Z),\Hh_\Zz)$自身もコンパクトである；~\citep{burago2001course}を参照。
 
 \begin{figure}[h!]
 \centering
@@ -579,11 +583,11 @@ This defines a distance between compact sets $\Kk(\Z)$ of $\Z$, and if $\Z$ is c
 \qquad
 \includegraphics[width=.26\linewidth]{gromov-hausdorff/hausdorff-2}
 \caption{\label{fig-hausdorff}
-Computation of the Hausdorff distance in $\RR^2$. 
+$\RR^2$におけるHausdorff距離の計算。
 }
 \end{figure}
 
-Following~\citet{memoli-2011}, one remarks that this distance between sets $(A,B)$ can be defined similarly to the Wasserstein distance between measures (which should be somehow understood as ``weighted'' sets). One replaces the measures couplings~\eqref{eq-coupling-generic} by sets couplings
+\citet{memoli-2011}に従って、集合$(A,B)$間のこの距離は、測度間のWasserstein距離と同様に定義できることに注意する（測度はある意味で「重み付き」集合と理解されるべきものである）。測度のカップリング~\eqref{eq-coupling-generic}を集合のカップリング
 \eq{
 	\Rr(A,B) \eqdef \enscond{ R \in \X \times \Y }{
 	\begin{array}{l}
@@ -592,22 +596,23 @@ Following~\citet{memoli-2011}, one remarks that this distance between sets $(A,B
 	\end{array}
 	}.
 }
-With respect to Kantorovich problem~\eqref{eq-mk-generic}, one should replace integration (since one does not have access to measures) by maximization, and one has
+で置き換える。
+Kantorovich問題~\eqref{eq-mk-generic}に対して、積分（測度にアクセスできないため）を最大化で置き換えると、次式が得られる
 \eql{\label{eq-hausf-couplings}
-	\Hh_\Zz(A,B) = \uinf{ R \in \Rr(A,B) } \sup_{(a,b) \in R} d(a,b). 
+	\Hh_\Zz(A,B) = \uinf{ R \in \Rr(A,B) } \sup_{(a,b) \in R} d(a,b).
 }
 %
-Note that the support of a measure coupling $\pi \in \Couplings(\al,\be)$ is a set coupling between the supports, \ie $\Supp(\pi) \in \Rr( \Supp(\al),\Supp(\be) )$.
+測度カップリング$\pi \in \Couplings(\al,\be)$の台は台の間の集合カップリングであること、すなわち$\Supp(\pi) \in \Rr( \Supp(\al),\Supp(\be) )$であることに注意されたい。
 %
-The Hausdorff distance is thus connected to the $\infty$-Wasserstein distance (see Remark~\ref{rem-p-inf}) and one has $\Hh(A,B) \leq \Wass_\infty(\al,\be)$ for any measure $(\al,\be)$ whose supports are $(A,B)$.
+Hausdorff距離はしたがって$\infty$-Wasserstein距離（注意~\ref{rem-p-inf}を参照）に関連しており、台が$(A,B)$である任意の測度$(\al,\be)$に対して$\Hh(A,B) \leq \Wass_\infty(\al,\be)$が成り立つ。
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Gromov--Hausdorff distance}
+\subsection{Gromov--Hausdorff距離}
 
-The Gromov--Hausdorff (GH) distance~\citep{gromov-2001} (see also~\citep{edwards1975structure}) is a way to measure the distance between two metric spaces $(\X,d_\X), (\Y,d_\Y)$ by quantifying how far they are from being isometric to each other, see Figure~\ref{fig-gh}. It is defined as the minimum Hausdorff distance between every possible isometric embedding of the two spaces in a third one,
+Gromov--Hausdorff（GH）距離~\citep{gromov-2001}（~\citep{edwards1975structure}も参照）は、二つの距離空間$(\X,d_\X), (\Y,d_\Y)$がどの程度互いに等距であることから離れているかを定量化することにより、それらの間の距離を測る方法であり、図~\ref{fig-gh}を参照。これは、二つの空間のすべての可能な等距的埋め込みについての最小Hausdorff距離として定義される
 \eq{
-	\Gg\Hh(d_\Xx,d_\Yy) \eqdef 
+	\Gg\Hh(d_\Xx,d_\Yy) \eqdef
 	\inf_{\Zz,f,g} \enscond{
 		\Hh_\Zz(f(\Xx), g(\Yy))
 	}{
@@ -617,66 +622,66 @@ The Gromov--Hausdorff (GH) distance~\citep{gromov-2001} (see also~\citep{edwards
 		\end{array}
 	}.
 }
-Here, the constraint is that $f$ must be an isometric embedding, meaning that $d_\Zz(f(x),f(x'))=d_\Xx(x,x')$ for any $(x,x') \in \X^2$ (similarly for $g$). One can show that $\Gg\Hh$ defines a distance between compact metric spaces up to isometries, so that in particular $\Gg\Hh(d_\Xx,d_\Yy)=0$ if and only if there exists an isometry $h : \Xx \rightarrow \Yy$, \ie $h$ is bijective and $d_\Yy(h(x),h(x'))=d_\Xx(x,x')$ for any $(x,x') \in \Xx^2$. 
+ここで、$f$は等距的埋め込みでなければならないという制約があり、すなわち任意の$(x,x') \in \X^2$に対して$d_\Zz(f(x),f(x'))=d_\Xx(x,x')$が成り立つ（$g$についても同様）。$\Gg\Hh$は等距変換を除いたコンパクト距離空間間の距離を定義することが示せる。したがって特に、$\Gg\Hh(d_\Xx,d_\Yy)=0$であるための必要十分条件は、等距変換$h : \Xx \rightarrow \Yy$が存在すること、すなわち$h$が全単射であり、任意の$(x,x') \in \Xx^2$に対して$d_\Yy(h(x),h(x'))=d_\Xx(x,x')$が成り立つことである。
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=.45\linewidth]{gromov-hausdorff/gh-concept}
 \caption{\label{fig-gh}
-The GH approach to compare two metric spaces.
+二つの距離空間を比較するためのGHアプローチ。
 }
 \end{figure}
 
-Similarly to~\eqref{eq-hausf-couplings} and as explained in~\citep{memoli-2011}, it is possible to rewrite equivalently the GH distance using couplings as follows:
+~\eqref{eq-hausf-couplings}と同様に、~\citep{memoli-2011}で説明されているように、GH距離をカップリングを用いて以下のように等価的に書き直すことが可能である：
 \eq{
 	\Gg\Hh(d_\Xx,d_\Yy) = \frac{1}{2} \uinf{ R \in \Rr(\X,\Y) } \sup_{ ((x,y),(x',y')) \in R^2 }
-	|d_\Xx(x,x')-d_\Xx(y,y')|. 
+	|d_\Xx(x,x')-d_\Xx(y,y')|.
 }
-For discrete spaces $\Xx = (x_i)_{i=1}^n, \Yy = (y_j)_{j=1}^m$ represented using a distance matrix $\distD = ( d_{\Xx}(x_i,x_{i'}) )_{i,i'} \in \RR^{n \times n}$,  $\distD' = ( d_{\Yy}(y_j,y_{j'}) )_{j,j'} \in \RR^{m \times m}$, one can rewrite this optimization using binary matrices $\VectMode{R} \in \{0,1\}^{n \times m}$ indicating the support of the set couplings $R$ as follows:
+離散空間$\Xx = (x_i)_{i=1}^n, \Yy = (y_j)_{j=1}^m$が距離行列$\distD = ( d_{\Xx}(x_i,x_{i'}) )_{i,i'} \in \RR^{n \times n}$、$\distD' = ( d_{\Yy}(y_j,y_{j'}) )_{j,j'} \in \RR^{m \times m}$で表現される場合、この最適化を集合カップリング$R$の台を示す二値行列$\VectMode{R} \in \{0,1\}^{n \times m}$を用いて以下のように書き直すことができる：
 \eql{\label{eq-gh-coupling}
 	\text{GH}(\distD,\distD') = \frac{1}{2} \uinf{ \VectMode{R} \ones >0,\VectMode{R}^\top \ones>0  } \max_{ (i,i',j,j') }
-	\VectMode{R}_{i,j} \VectMode{R}_{j,j'} |\distD_{i,i'}-\distD_{j,j'}'|. 
+	\VectMode{R}_{i,j} \VectMode{R}_{j,j'} |\distD_{i,i'}-\distD_{j,j'}'|.
 }
-The initial motivation of the GH distance is to define and study limits of metric spaces, as illustrated in Figure~\ref{fig-gh-limit}, and we refer to~\citep{burago2001course} for details. 
+GH距離の元々の動機は、図~\ref{fig-gh-limit}に示されるように距離空間の極限を定義し研究することであり、詳細については~\citep{burago2001course}を参照されたい。
 %
-There is an explicit description of the geodesics for the GH distance~\citep{chowdhury2016constructing}, which is very similar to the one in Gromov--Wasserstein spaces, detailed in Remark~\ref{rem-geod-gw}. 
+GH距離に対する測地線の明示的な記述が存在し~\citep{chowdhury2016constructing}、これは注意~\ref{rem-geod-gw}で詳述されるGromov--Wasserstein空間における測地線と非常に類似している。
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=1\linewidth]{gromov-hausdorff/gh-convergence}
 \caption{\label{fig-gh-limit}
-GH limit of sequences of metric spaces.  
+距離空間の列のGH極限。
 }
 \end{figure}
 
-The underlying optimization problem~\eqref{eq-gh-coupling} is highly nonconvex, and computing the global minimum is untractable. It has been approached numerically using approximation schemes and has found applications in vision and graphics for shape matching~\citep{memoli2005theoretical,bronstein2006generalized}.
+基礎にある最適化問題~\eqref{eq-gh-coupling}は高度に非凸であり、大域的最小値の計算は扱いにくい。近似スキームを用いて数値的にアプローチされており、視覚やグラフィックスにおける形状マッチングへの応用が見出されている~\citep{memoli2005theoretical,bronstein2006generalized}。
 
-It is often desirable to ``smooth'' the definition of the Hausdorff distance by replacing the maximization by an integration. This in turn necessitates the introduction of measures, and it is one of the motivations for the definition of the GW distance in the next section.
- 
+Hausdorff距離の定義を「滑らかにする」こと、すなわち最大化を積分で置き換えることがしばしば望ましい。これはひいては測度の導入を必要とし、次節のGW距離の定義の動機の一つである。
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Gromov--Wasserstein Distance}
+\subsection{Gromov--Wasserstein距離}
 
-Optimal transport needs a ground cost $\C$ to compare histograms $(\a,\b)$ and thus cannot be used if the bins of those histograms are not defined on the same underlying space, or if one cannot preregister these spaces to define a ground cost between any pair of bins in the first and second histograms, respectively. 
+最適輸送はヒストグラム$(\a,\b)$を比較するために基底コスト$\C$を必要とするため、ヒストグラムのビンが同じ基礎空間上で定義されていない場合や、第一と第二のヒストグラムのビンの任意のペア間の基底コストを定義するためにこれらの空間を事前に位置合わせできない場合には使用できない。
 %
-To address this limitation, one can instead only assume a weaker assumption, namely that two matrices $\distD \in \RR^{n \times n}$ and $\distD' \in \RR^{m \times m}$ quantify similarity relationships between the points on which the histograms are defined. A typical scenario is when these matrices are (power of) distance matrices.
+この制限に対処するために、代わりにより弱い仮定のみを置くことができる。すなわち、二つの行列$\distD \in \RR^{n \times n}$と$\distD' \in \RR^{m \times m}$がヒストグラムが定義されている点間の類似関係を定量化すると仮定する。典型的なシナリオは、これらの行列が距離行列（のべき乗）である場合である。
 %
-The GW problem reads
+GW問題は次のように読める
 \eql{\label{eq-gw-def}
-	\GWD( (\a,\distD), (\b,\distD') )^2 \eqdef \umin{ \P \in \CouplingsD(\a,\b) } 
+	\GWD( (\a,\distD), (\b,\distD') )^2 \eqdef \umin{ \P \in \CouplingsD(\a,\b) }
 		\Ee_{\distD,\distD'}(\P)
 }
 \eq{
 	\qwhereq
-	\Ee_{\distD,\distD'}(\P) \eqdef 
-		\sum_{i,j,i',j'} |\distD_{i,i'} - \distD'_{j,j'}|^2 \P_{i,j}\P_{i',j'},  
+	\Ee_{\distD,\distD'}(\P) \eqdef
+		\sum_{i,j,i',j'} |\distD_{i,i'} - \distD'_{j,j'}|^2 \P_{i,j}\P_{i',j'},
 }
-see Figure~\ref{fig-gw}.
+図~\ref{fig-gw}を参照。
 %
-This problem is similar to the GH problem~\eqref{eq-gh-coupling} when replacing maximization by a sum and set couplings by measure couplings.
+この問題はGH問題~\eqref{eq-gh-coupling}と類似しており、最大化を和で、集合カップリングを測度カップリングで置き換えたものである。
 %
-This is a nonconvex problem, which can be recast as a quadratic assignment problem~\citep{loiola-2007} and is in full generality NP-hard to solve for arbitrary inputs. 
+これは非凸問題であり、二次割当問題~\citep{loiola-2007}として再定式化でき、一般の入力に対してはNP困難である。
 %
-It is in fact equivalent to a graph matching problem~\citep{lyzinski-2015} for a particular cost.\todoK{detail QAP/graph matching}
+これは実際、特定のコストに対するグラフマッチング問題~\citep{lyzinski-2015}と等価である。\todoK{detail QAP/graph matching}
 
 
 
@@ -684,78 +689,78 @@ It is in fact equivalent to a graph matching problem~\citep{lyzinski-2015} for a
 \centering
 \includegraphics[width=.7\linewidth]{gw/gw-concept}
 \caption{\label{fig-gw}
-The GW approach to comparing two metric measure spaces.  
+二つの距離測度空間を比較するためのGWアプローチ。
 }
 \end{figure}
 
-One can show that $\GWD$ satisfies the triangular inequality, and in fact it defines a distance between metric spaces equipped with a probability distribution, here assumed to be discrete in definition~\eqref{eq-gw-def}, up to isometries preserving the measures.
+$\GWD$が三角不等式を満たすことが示せる。実際、$\GWD$は確率分布を備えた距離空間間の距離を定義する。ここでは定義~\eqref{eq-gw-def}において離散的であると仮定しており、測度を保存する等距変換を除いた距離を定義する。
 %
-This distance was introduced and studied in detail by~\citet{memoli-2011}. An in-depth mathematical exposition (in particular, its geodesic structure and gradient flows) is given in~\citep{SturmGW}. See also~\citep{schmitzer2013modelling} for applications in computer vision.
+この距離は~\citet{memoli-2011}によって導入され詳細に研究された。数学的に深い解説（特にその測地線構造と勾配流）は~\citep{SturmGW}で与えられている。コンピュータビジョンにおける応用については~\citep{schmitzer2013modelling}も参照。
 %
-This distance is also tightly connected with the GH distance~\citep{gromov-2001} between metric spaces, which have been used for shape matching~\citep{memoli-2007,bronstein-2010}. 
+この距離はまた、距離空間間のGH距離~\citep{gromov-2001}と密接に関連しており、形状マッチング~\citep{memoli-2007,bronstein-2010}に使用されている。
 
 
 
 %%%%%%%%%%%%%%%%%%%%%
-\begin{rem2}{Gromov--Wasserstein distance}
-	The general setting corresponds to computing couplings between metric measure spaces $(\X,\dist_\X,\al_\X)$
-	and $(\Y,\dist_\Y,\al_\Y)$, where $(\dist_\X,\dist_\Y)$ are distances, while $\al_\X$ and $\al_\Y$ are measures on their respective spaces.
+\begin{rem2}{Gromov--Wasserstein距離}
+	一般的な設定は、距離測度空間$(\X,\dist_\X,\al_\X)$
+	と$(\Y,\dist_\Y,\al_\Y)$の間のカップリングを計算することに対応する。ここで$(\dist_\X,\dist_\Y)$は距離であり、$\al_\X$と$\al_\Y$はそれぞれの空間上の測度である。
 	%
-	One defines 
+	以下のように定義する
 	\begin{equation}
 		\label{eq-gw-generic}
 		\begin{split}
 		&\GW( (\al_\X,\dist_\X), (\al_\Y,\dist_\Y) )^2 \eqdef \\
-		&\umin{ \pi \in \Couplings(\al_\X,\al_\Y) } 
+		&\umin{ \pi \in \Couplings(\al_\X,\al_\Y) }
 		\int_{\X^2 \times \Y^2}
 		| \dist_\X(x,x')-\dist_\Y(y,y') |^2
 		\d\pi(x,y)\d\pi(x',y').
 		\end{split}
 	\end{equation}
-	$\GW$ defines a distance between metric measure spaces up to isometries, where one says that $(\X,\al_\X,\dist_\X)$ and $(\Y,\al_\Y,\dist_\Y) $ are isometric if there exists a bijection $\phi : \X \rightarrow \Y$ such that $\phi_{\sharp}\al_\X=\al_\Y$ and $\dist_\Y(\phi(x),\phi(x'))=\dist_\X(x,x')$.
+	$\GW$は等距変換を除いた距離測度空間間の距離を定義する。ここで$(\X,\al_\X,\dist_\X)$と$(\Y,\al_\Y,\dist_\Y)$が等距であるとは、全単射$\phi : \X \rightarrow \Y$が存在して$\phi_{\sharp}\al_\X=\al_\Y$かつ$\dist_\Y(\phi(x),\phi(x'))=\dist_\X(x,x')$が成り立つことをいう。
 \end{rem2}
 %%%%%%%%%%%%%%%%%%%%%
 
 
 
 %%%%%%%%%%%%%%%%%%%%%
-\begin{rem2}{Gromov--Wasserstein geodesics}\label{rem-geod-gw}
-The space of metric spaces (up to isometries) endowed with this $\GW$ distance~\eqref{eq-gw-generic} has a geodesic structure. \citet{SturmGW} shows that the geodesic between  $(\X_0,\dist_{\X_0},\al_0)$ and $(\X_1,\dist_{\X_1},\al_1)$ can be chosen to be 
-$t \in [0,1] \mapsto (\X_0 \times \X_1,\dist_t,\pi^\star),$ where $\pi^\star$ is a solution of~\eqref{eq-gw-generic} and for all $((x_0,x_1), (x_0',x_1')) \in (\X_0 \times \X_1)^2$, 
+\begin{rem2}{Gromov--Wasserstein測地線}\label{rem-geod-gw}
+この$\GW$距離~\eqref{eq-gw-generic}を備えた（等距変換を除いた）距離空間の空間は測地線構造を持つ。\citet{SturmGW}は、$(\X_0,\dist_{\X_0},\al_0)$と$(\X_1,\dist_{\X_1},\al_1)$間の測地線を
+$t \in [0,1] \mapsto (\X_0 \times \X_1,\dist_t,\pi^\star)$として選ぶことができることを示した。ここで$\pi^\star$は~\eqref{eq-gw-generic}の解であり、すべての$((x_0,x_1), (x_0',x_1')) \in (\X_0 \times \X_1)^2$に対して、
 \eq{
 	\dist_t((x_0,x_1), (x_0',x_1')) \eqdef
 	(1-t)\dist_{\X_0}(x_0,x_0') + t\dist_{\X_1}(x_1,x_1').
 }
-This formula allows one to define and analyze gradient flows which minimize functionals involving metric spaces; see~\citet{SturmGW}. It is, however, difficult to handle numerically, because it involves computations over the product space $\X_0 \times \X_1$. 
+この公式により、距離空間を含む汎関数を最小化する勾配流を定義し解析することができる；~\citet{SturmGW}を参照。しかし、積空間$\X_0 \times \X_1$上の計算を伴うため、数値的に扱うことは困難である。
 %
-A heuristic approach is used in~\citep{peyre2016gromov} to define geodesics and barycenters of metric measure spaces while imposing the cardinality of the involved spaces and making use of the entropic smoothing~\eqref{eq-gw-entropy} detailed below.
+ヒューリスティックなアプローチが~\citep{peyre2016gromov}で用いられており、関与する空間の濃度を固定し、以下で詳述されるエントロピー平滑化~\eqref{eq-gw-entropy}を利用しながら、距離測度空間の測地線と重心を定義している。
 \end{rem2}
 %%%%%%%%%%%%%%%%%%%%%
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Entropic Regularization}
+\subsection{エントロピー正則化}
 
-To approximate the computation of $\GWD$, and to help convergence of minimization schemes to better minima, one can consider the entropic regularized variant
+$\GWD$の計算を近似し、最小化スキームのより良い最小値への収束を助けるために、エントロピー正則化された変形を考えることができる
 \eql{\label{eq-gw-entropy}
-	\umin{ \P \in \CouplingsD(\a,\b) } 
+	\umin{ \P \in \CouplingsD(\a,\b) }
 		\Ee_{\distD,\distD'}(\P) - \varepsilon \HD(\P).
 }
-As proposed initially in~\citep{gold-1996,rangarajan-1999}, and later revisited in~\citep{2016-solomon-gw} for applications in graphics, one can use iteratively Sinkhorn's algorithm to progressively compute a stationary point of~\eqref{eq-gw-entropy}. 
+~\citep{gold-1996,rangarajan-1999}で最初に提案され、後にグラフィックスへの応用のために~\citep{2016-solomon-gw}で再考されたように、~\eqref{eq-gw-entropy}の停留点を逐次的に計算するためにSinkhornアルゴリズムを反復的に使用することができる。
 %
-Indeed, successive linearizations of the objective function lead to consider the succession of updates
+実際、目的関数の逐次的な線形化により、以下の更新の連鎖を考えることになる
 \eql{\label{eq-gw-sinkh}
 	\itt{\P} \eqdef \umin{ \P \in \CouplingsD(\a,\b) } \dotp{\P}{\it{\C}} - \varepsilon\H(\P)
 		\qwhereq
 }
 \eq{
-		\it{\C} \eqdef \nabla \Ee_{\distD,\distD'}(\it{\P}) = -\distD \it{\P} \distD', 
+		\it{\C} \eqdef \nabla \Ee_{\distD,\distD'}(\it{\P}) = -\distD \it{\P} \distD',
 }
-which can be interpreted as a mirror-descent scheme~\citep{2016-solomon-gw}. Each update can thus be solved using Sinkhorn iterations~\eqref{eq-sinkhorn} with cost $\it{\C}$.
+これはミラー降下スキーム~\citep{2016-solomon-gw}として解釈できる。各更新はしたがって、コスト$\it{\C}$を用いたSinkhorn反復~\eqref{eq-sinkhorn}により解くことができる。
 %
-Figure~\ref{fig-gw-iter} displays the evolution of the algorithm. 
+図~\ref{fig-gw-iter}はアルゴリズムの推移を示す。
 %
-Figure~\ref{fig-gw-sinkhorn} illustrates the use of this entropic GW to compute soft maps between domains. 
+図~\ref{fig-gw-sinkhorn}は、このエントロピーGWを用いて領域間のソフトマップを計算する使用例を示している。
 
 
 \newcommand{\FigGW}[1]{\includegraphics[width=.21\linewidth]{gromov-wasserstein/#1}}
@@ -768,14 +773,14 @@ Figure~\ref{fig-gw-sinkhorn} illustrates the use of this entropic GW to compute 
 \imgBox{\FigGW{coupling-3}}&
 \imgBox{\FigGW{coupling-4}}\\
 \FigGW{matching-1}&\FigGW{matching-2}&\FigGW{matching-3}&\FigGW{matching-4}\\
-$\ell=1$ & $\ell=2$ & $\ell=3$ & $\ell=4$ 
+$\ell=1$ & $\ell=2$ & $\ell=3$ & $\ell=4$
 \end{tabular}
 \caption{\label{fig-gw-iter}
-Iterations of the entropic GW algorithm~\eqref{eq-gw-sinkh} between two shapes $(x_i)_i$ and $(y_j)_j$ in $\RR^2$, initialized with $\P^{(0)}=\a \otimes \b$. The distance matrices are $\distD_{i,i'} = \norm{x_i-x_{i'}}$ and $\distD_{j,j'}' = \norm{y_j-y_{j'}}$. 
+$\RR^2$内の二つの形状$(x_i)_i$と$(y_j)_j$間のエントロピーGWアルゴリズム~\eqref{eq-gw-sinkh}の反復。$\P^{(0)}=\a \otimes \b$で初期化。距離行列は$\distD_{i,i'} = \norm{x_i-x_{i'}}$および$\distD_{j,j'}' = \norm{y_j-y_{j'}}$である。
 %
-Top row: coupling $\it{\P}$ displayed as a 2-D image.
+上段：2次元画像として表示されたカップリング$\it{\P}$。
 %
-Bottom row: matching induced by $\it{\P}$ (each point $x_i$ is connected to the three $y_j$ with the three largest values among $\{\it{\P}_{i,j}\}_j$). The shapes have the same size, but for display purposes, the inner shape $(x_i)_i$ has been reduced.
+下段：$\it{\P}$により誘導されるマッチング（各点$x_i$は$\{\it{\P}_{i,j}\}_j$のうち最大の三つの値を持つ三つの$y_j$と接続される）。形状は同じ大きさであるが、表示の都合上、内側の形状$(x_i)_i$は縮小されている。
 }
 \end{figure}
 
@@ -787,7 +792,7 @@ Bottom row: matching induced by $\it{\P}$ (each point $x_i$ is connected to the 
 \includegraphics[height=.27\linewidth]{gw/target-surf}
 \includegraphics[height=.27\linewidth]{gw/target-2d}
 \caption{\label{fig-gw-sinkhorn}
-Example of fuzzy correspondences computed by solving GW problem~\eqref{eq-gw-entropy} with Sinkhorn iterations~\eqref{eq-gw-sinkh}. Extracted from~\citep{2016-solomon-gw}.
+Sinkhorn反復~\eqref{eq-gw-sinkh}を用いてGW問題~\eqref{eq-gw-entropy}を解くことにより計算されたファジー対応の例。~\citep{2016-solomon-gw}より抜粋。
 }
 \end{figure}
 

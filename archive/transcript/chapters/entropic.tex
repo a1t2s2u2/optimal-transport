@@ -1,81 +1,81 @@
 % !TEX root = ../ComputationalOTFnT.tex
 
-\chapter{Entropic Regularization of Optimal Transport}
+\chapter{最適輸送のエントロピー正則化}
 \label{c-entropic}
 
-This chapter introduces a family of numerical schemes to approximate solutions to Kantorovich formulation of optimal transport and its many generalizations. It operates by adding an entropic regularization penalty to the original problem. This regularization has several important advantages, which make it, when taken altogether, a very useful tool: the minimization of the regularized problem can be solved using a simple alternate minimization scheme; that scheme translates into iterations that are simple matrix-vector products, making them particularly suited to execution of GPU; for some applications, these matrix-vector products do not require storing an $n\times m$ cost matrix, but instead only require access to a kernel evaluation; in the case where a large group of measures share the same support, all of these matrix-vector products can be cast as matrix-matrix products with significant speedups; the resulting approximate distance is smooth with respect to input histogram weights and positions of the Diracs and can be differentiated using automatic differentiation.
+この章では、最適輸送のカントロビッチ定式化とその多くの一般化に対する近似解を求めるための数値スキームの族を導入する。これはもとの問題にエントロピー正則化ペナルティを加えることで動作する。この正則化にはいくつかの重要な利点があり、それらを総合すると非常に有用なツールとなる：正則化された問題の最小化は単純な交互最小化スキームで解くことができる；そのスキームは単純な行列-ベクトル積の反復に帰着し、GPU上での実行に特に適している；一部の応用では、これらの行列-ベクトル積は$n\times m$のコスト行列を格納する必要がなく、カーネル評価へのアクセスのみを必要とする；大規模な測度群が同じ台を共有する場合、これらの行列-ベクトル積はすべて行列-行列積として実行でき、大幅な高速化が得られる；得られる近似距離は入力ヒストグラムの重みとディラック測度の位置に関して滑らかであり、自動微分を用いて微分可能である。
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Entropic Regularization}
+\section{エントロピー正則化}
 
-The discrete entropy of a coupling matrix is defined as
+カップリング行列の離散エントロピーは次のように定義される
 \eql{\label{eq-discr-entropy}
-	\HD(\P) \eqdef -\sum_{i,j} \P_{i,j} (\log(\P_{i,j})-1), 
+	\HD(\P) \eqdef -\sum_{i,j} \P_{i,j} (\log(\P_{i,j})-1),
 }
-with an analogous definition for vectors, with the convention that $\HD(\a) = -\infty$ if one of the entries $\a_j$ is 0 or negative. The function $\HD$ is 1-strongly concave, because its Hessian is $\partial^2 \HD(P)=-\diag(1/\P_{i,j})$ and $\P_{i,j} \leq 1$. The idea of the entropic regularization of optimal transport is to use $-\HD$ as a regularizing function to obtain approximate solutions to the original transport problem~\eqref{eq-mk-discr}:
+ベクトルに対しても同様の定義が成り立ち、$\a_j$のいずれかの成分が0または負の場合は$\HD(\a) = -\infty$とする規約を設ける。関数$\HD$は1-強凹関数である。なぜならそのヘッセ行列は$\partial^2 \HD(P)=-\diag(1/\P_{i,j})$であり$\P_{i,j} \leq 1$だからである。最適輸送のエントロピー正則化のアイデアは、$-\HD$を正則化関数として用い、もとの輸送問題~\eqref{eq-mk-discr}の近似解を得ることである：
 \eql{\label{eq-regularized-discr}
-	\MKD_\C^\varepsilon(\a,\b) \eqdef 
+	\MKD_\C^\varepsilon(\a,\b) \eqdef
 	\umin{\P \in \CouplingsD(\a,\b)}
-		\dotp{\P}{\C} - \varepsilon \HD(\P). 
-} 
-Since the objective is an $\varepsilon$-strongly convex function, Problem (\ref{eq-regularized-discr}) has a unique optimal solution. The idea to regularize the optimal transport problem by an entropic term can be traced back to modeling ideas in transportation theory~\citep{wilson1969use}: Actual traffic patterns in a network do not agree with those predicted by the solution of the optimal transport problem. Indeed, the former are more diffuse than the latter, which tend to rely on a few routes as a result of the sparsity of optimal couplings for~\eqref{eq-mk-discr}. To mitigate this sparsity, researchers in transportation proposed a model, called the ``gravity'' model~\citep{erlander1980optimal}, that is able to form a more ``blurred'' prediction of traffic given marginals and transportation costs.
+		\dotp{\P}{\C} - \varepsilon \HD(\P).
+}
+目的関数は$\varepsilon$-強凸関数であるため、問題(\ref{eq-regularized-discr})は一意の最適解を持つ。最適輸送問題をエントロピー項で正則化するというアイデアは、交通理論におけるモデリングのアイデアにまで遡ることができる~\citep{wilson1969use}：ネットワークにおける実際の交通パターンは、最適輸送問題の解によって予測されるものとは一致しない。実際、後者は~\eqref{eq-mk-discr}の最適カップリングのスパース性の結果として少数のルートに依存する傾向があるのに対し、前者はより拡散的である。このスパース性を緩和するために、交通の研究者は「重力」モデル~\citep{erlander1980optimal}と呼ばれるモデルを提案し、周辺分布と輸送コストが与えられた場合に、より「ぼやけた」交通予測を形成できるようにした。
 
-Figure~\ref{fig-impact-eps} illustrates the effect of the entropy to regularize a linear program over the simplex $\simplex_3$ (which can thus be visualized as a triangle in two dimensions). Note how the entropy pushes the original LP solution away from the boundary of the triangle. The optimal $\P_\varepsilon$ progressively moves toward an ``entropic center'' of the triangle. This is further detailed in the proposition below. The convergence of the solution of that regularized problem toward an optimal solution of the original linear program has been studied by~\citet{CominettiAsympt}, with precise asymptotics.
+図~\ref{fig-impact-eps}は、単体$\simplex_3$（したがって2次元の三角形として可視化できる）上の線形計画法を正則化するエントロピーの効果を示している。エントロピーがもとのLP解を三角形の境界から押し離す様子に注目されたい。最適な$\P_\varepsilon$は徐々に三角形の「エントロピー的中心」に向かって移動する。これは以下の命題でさらに詳しく述べる。正則化された問題の解がもとの線形計画法の最適解に収束することは~\citet{CominettiAsympt}によって研究されており、精密な漸近展開が与えられている。
 
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=.7\linewidth]{entropic/simplex}
 \caption{\label{fig-impact-eps}
-Impact of $\varepsilon$ on the optimization of a linear function on the simplex, solving $\P_\varepsilon = \argmin_{\P \in \simplex_3} \dotp{\C}{\P}-\varepsilon\HD(\P)$ for a varying $\varepsilon$. 
+単体上の線形関数の最適化に対する$\varepsilon$の影響、様々な$\varepsilon$に対して$\P_\varepsilon = \argmin_{\P \in \simplex_3} \dotp{\C}{\P}-\varepsilon\HD(\P)$を解く。
 }
 \end{figure}
 
 
-\begin{prop}[Convergence with $\varepsilon$]\label{prop-convergence-eps}
-The unique solution $\P_\varepsilon$ of~\eqref{eq-regularized-discr} converges to the optimal solution with maximal entropy within the set of all optimal solutions of the Kantorovich problem, namely
+\begin{prop}[$\varepsilon$に関する収束]\label{prop-convergence-eps}
+~\eqref{eq-regularized-discr}の一意の解$\P_\varepsilon$は、カントロビッチ問題のすべての最適解の集合の中で最大エントロピーを持つ最適解に収束する。すなわち
 \eql{\label{eq-entropy-conv-1}
 	\P_\varepsilon \overset{\varepsilon \rightarrow 0}{\longrightarrow}
 	\uargmin{\P} \enscond{ -\HD(\P) }{
 		\P \in \CouplingsD(\a,\b), \dotp{\P}{\C} = \MKD_\C(\a,\b),
 	}
 }
-so that in particular
+したがって特に
 \eq{
 	\MKD_\C^\varepsilon(\a,\b) \overset{\varepsilon \rightarrow 0}{\longrightarrow} \MKD_\C(\a,\b).
 }
-One also has
+また
 \eql{\label{eq-entropy-conv-2}
 	\P_\varepsilon \overset{\varepsilon \rightarrow \infty}{\longrightarrow}
 	\a \otimes \b = \a \transp{\b} = (\a_i \b_j)_{i,j}.
 }
 \end{prop}
 \begin{proof}
-	 We consider a sequence $(\varepsilon_\ell)_\ell$ such that $\varepsilon_\ell \rightarrow 0$ and $\varepsilon_\ell > 0$.	
- 	We denote $\P_\ell$ the solution of~\eqref{eq-regularized-discr} for $\varepsilon=\varepsilon_\ell$. 
+	 $\varepsilon_\ell \rightarrow 0$かつ$\varepsilon_\ell > 0$である列$(\varepsilon_\ell)_\ell$を考える。
+ 	$\varepsilon=\varepsilon_\ell$のときの~\eqref{eq-regularized-discr}の解を$\P_\ell$と表す。
 	%
-	Since $\CouplingsD(\a,\b)$ is bounded, we can extract a sequence (that we do not relabel for the sake of simplicity) such that $\P_\ell \rightarrow \P^\star$. Since $\CouplingsD(\a,\b)$ is closed, $\P^\star \in \CouplingsD(\a,\b)$. We consider any $\P$ such that $\dotp{\C}{\P} = \MKD_\C(\a,\b)$. By optimality of $\P$ and $\P_\ell$ for their respective optimization problems (for $\varepsilon=0$ and $\varepsilon=\varepsilon_\ell$), one has
+	$\CouplingsD(\a,\b)$は有界であるため、（簡単のため添字を付け替えない）部分列を抽出して$\P_\ell \rightarrow \P^\star$とすることができる。$\CouplingsD(\a,\b)$は閉集合であるから、$\P^\star \in \CouplingsD(\a,\b)$である。$\dotp{\C}{\P} = \MKD_\C(\a,\b)$を満たす任意の$\P$を考える。$\P$と$\P_\ell$がそれぞれの最適化問題（$\varepsilon=0$と$\varepsilon=\varepsilon_\ell$）に対して最適であることから、
  	\eql{\label{eq-proof-gamma-conv}
  		0 \leq \dotp{\C}{\P_\ell} - \dotp{\C}{\P} \leq \varepsilon_\ell ( \HD(\P_\ell)-\HD(\P) ).
  	}
- 	Since $\HD$ is continuous, taking the limit $\ell \rightarrow +\infty$ in this expression shows that 
- 	$\dotp{\C}{\P^\star} = \dotp{\C}{\P}$ so that $\P^\star$ is a feasible point of~\eqref{eq-entropy-conv-1}. Furthermore, dividing by $\varepsilon_\ell$ in~\eqref{eq-proof-gamma-conv} and taking the limit shows that 
- 	$\HD(\P) \leq \HD(\P^\star)$, which shows that $\P^\star$ is a solution of~\eqref{eq-entropy-conv-1}. Since the solution $\P_0^\star$ to this program is unique by strict convexity of $-\HD$, one has $\P^\star = \P_0^\star$, and the whole sequence is converging. 
+ 	$\HD$は連続であるから、この式で$\ell \rightarrow +\infty$の極限をとると
+ 	$\dotp{\C}{\P^\star} = \dotp{\C}{\P}$が得られ、$\P^\star$は~\eqref{eq-entropy-conv-1}の実行可能点である。さらに、~\eqref{eq-proof-gamma-conv}で$\varepsilon_\ell$で割って極限をとると
+ 	$\HD(\P) \leq \HD(\P^\star)$が得られ、$\P^\star$が~\eqref{eq-entropy-conv-1}の解であることが示される。$-\HD$の狭義凸性によりこの計画の解$\P_0^\star$は一意であるから、$\P^\star = \P_0^\star$であり、列全体が収束する。
 	%
-	In the limit $\varepsilon\rightarrow+\infty$, a similar proof shows that one should rather consider the problem
+	$\varepsilon\rightarrow+\infty$の極限においても同様の証明により、むしろ問題
 	\eq{
 		\umin{\P \in \CouplingsD(\a,\b)} -\HD(\P),
 	}
-	the solution of which is $\a \otimes \b$.
+	を考えるべきであり、その解は$\a \otimes \b$である。
 \end{proof}
 
-Formula~\eqref{eq-entropy-conv-1} states that for a small regularization $\varepsilon$, the solution converges to the maximum entropy optimal transport coupling.
+式~\eqref{eq-entropy-conv-1}は、小さな正則化$\varepsilon$に対して、解が最大エントロピー最適輸送カップリングに収束することを述べている。
 %
-In sharp contrast,~\eqref{eq-entropy-conv-2} shows that for a large regularization, the solution converges to the coupling with maximal entropy between two prescribed marginals $\a,\b$, namely the joint probability between two independent random variables distributed following $\a,\b$.
+対照的に、~\eqref{eq-entropy-conv-2}は、大きな正則化に対して、解が規定された周辺分布$\a,\b$の間の最大エントロピーカップリング、すなわち$\a,\b$に従って分布する2つの独立な確率変数の同時確率に収束することを示している。
 %
-A refined analysis of this convergence is performed in~\citet{CominettiAsympt}, including a first order expansion in $\varepsilon$ (resp., $1/\varepsilon$) near $\varepsilon=0$ (resp., $\varepsilon=+\infty$).
+この収束のより精密な分析は~\citet{CominettiAsympt}によって行われており、$\varepsilon=0$（resp., $\varepsilon=+\infty$）の近傍における$\varepsilon$（resp., $1/\varepsilon$）の1次展開を含む。
 %
-Figures~\ref{fig-entropic-densities} and~\ref{fig-entropic} show visually the effect of these two convergences. A key insight is that, as $\varepsilon$ increases, the optimal coupling becomes less and less sparse (in the sense of having entries larger than a prescribed threshold), which in turn has the effect of both accelerating computational algorithms (as we study in~\S\ref{sec-sinkhorn}) and leading to faster statistical convergence (as shown in~\S\ref{sec-entropy-ot-mmd}). 
+図~\ref{fig-entropic-densities}と図~\ref{fig-entropic}はこれら2つの収束の効果を視覚的に示している。重要な知見は、$\varepsilon$が増加するにつれて、最適カップリングはますますスパースでなくなり（所定の閾値より大きい成分を持つという意味で）、その結果、計算アルゴリズムの高速化（\S\ref{sec-sinkhorn}で検討）と統計的収束の高速化（\S\ref{sec-entropy-ot-mmd}で示される）の両方の効果をもたらすということである。
 
 \newcommand{\myfigSinkEps}[1]{%
 \imgBox{\includegraphics[width=.23\linewidth]{sinkhorn-eps/evol-img-#1}}}
@@ -95,12 +95,12 @@ Figures~\ref{fig-entropic-densities} and~\ref{fig-entropic} show visually the ef
 $\varepsilon=10$ &
 $\varepsilon=1$ &
 $\varepsilon=10^{-1}$ &
-$\varepsilon=10^{-2}$ 
+$\varepsilon=10^{-2}$
 \end{tabular}
 \caption{\label{fig-entropic-densities}
-Impact of $\varepsilon$ on the couplings between two 1-D densities, illustrating Proposition~\ref{prop-convergence-eps}.
+カップリングに対する$\varepsilon$の影響、命題~\ref{prop-convergence-eps}の図解。
 %
-Top row: between two 1-D densities. Bottom row: between two 2-D discrete empirical densities with the same number $n=m$ of points (only entries of the optimal $(\P_{i,j})_{i,j}$ above a small threshold are displayed as segments between $x_i$ and $y_j$).
+上段：2つの1次元密度間。下段：同じ点数$n=m$の2つの2次元離散経験密度間（最適な$(\P_{i,j})_{i,j}$の小さな閾値以上の成分のみが$x_i$と$y_j$の間の線分として表示されている）。
 }
 \end{figure}
 
@@ -109,19 +109,19 @@ Top row: between two 1-D densities. Bottom row: between two 2-D discrete empiric
 \centering
 \includegraphics[width=\linewidth]{entropic/matching-2d}
 \caption{\label{fig-entropic}
-Impact of $\varepsilon$ on coupling between two 2-D discrete empirical densities with the same number $n=m$ of points (only entries of the optimal $(\P_{i,j})_{i,j}$ above a small threshold are displayed as segments between $x_i$ and $y_j$).
+同じ点数$n=m$の2つの2次元離散経験密度間のカップリングに対する$\varepsilon$の影響（最適な$(\P_{i,j})_{i,j}$の小さな閾値以上の成分のみが$x_i$と$y_j$の間の線分として表示されている）。
 }
 \end{figure}
 
-Defining the Kullback--Leibler divergence between couplings as
+カップリング間のカルバック-ライブラー・ダイバージェンスを次のように定義すると
 \eql{\label{eq-kl-defn}
 	\KLD(\P|\K) \eqdef \sum_{i,j}  \P_{i,j} \log\pa{\frac{\P_{i,j}}{\K_{i,j}}} - \P_{i,j} + \K_{i,j},
 }
-the unique solution $\P_\varepsilon$ of~\eqref{eq-regularized-discr} is a projection onto $\CouplingsD(\a,\b)$ of the Gibbs kernel associated to the cost matrix $\C$ as
+~\eqref{eq-regularized-discr}の一意の解$\P_\varepsilon$は、コスト行列$\C$に関連するギブスカーネルの$\CouplingsD(\a,\b)$への射影として得られる
 \eq{
 	\K_{i,j} \eqdef e^{-\frac{\C_{i,j}}{\varepsilon}}.
 }
-Indeed one has that using the definition above
+実際、上の定義を用いると
 \eql{\label{eq-kl-proj}
 	\P_\varepsilon = \Proj_{\CouplingsD(\a,\b)}^\KLD(\K) \eqdef \uargmin{\P \in \CouplingsD(\a,\b)} \KLD(\P|\K).
 }
@@ -130,36 +130,36 @@ Indeed one has that using the definition above
 
 
 %%%%%
-\begin{rem1}{Entropic regularization between discrete measures}\label{rem:entrop-reg}
-For discrete measures of the form~\eqref{eq-discr-meas}, the definition of regularized transport extends naturally to
+\begin{rem1}{離散測度間のエントロピー正則化}\label{rem:entrop-reg}
+~\eqref{eq-discr-meas}の形の離散測度に対して、正則化された輸送の定義は自然に次のように拡張される
 \eql{\label{eq-entropic-disc-meas}
-	\MK_\c^\varepsilon(\al,\be) \eqdef \MKD_\C^\varepsilon(\a,\b), 
-} 
-with cost $\C_{i,j}=\c(x_i,y_j)$, to emphasize the dependency with respect to the positions $(x_i,y_j)$ supporting the input measures.
+	\MK_\c^\varepsilon(\al,\be) \eqdef \MKD_\C^\varepsilon(\a,\b),
+}
+コスト$\C_{i,j}=\c(x_i,y_j)$であり、入力測度を支持する位置$(x_i,y_j)$への依存性を強調している。
 \end{rem1}
 %%%%%
 
 
 %%%%%
-\begin{rem2}{General formulation}
-One can consider arbitrary measures by replacing the discrete entropy by the relative entropy with respect to the product measure $\d\al\otimes\d\be(x,y) \eqdef \d\al(x)\d\be(y)$, and propose a regularized counterpart to~\eqref{eq-mk-generic} using
+\begin{rem2}{一般的な定式化}
+離散エントロピーを直積測度$\d\al\otimes\d\be(x,y) \eqdef \d\al(x)\d\be(y)$に関する相対エントロピーで置き換えることで任意の測度を考えることができ、~\eqref{eq-mk-generic}に対する正則化された対応物として次を提案する
 \eql{\label{eq-entropic-generic}
-	\MK_\c^\varepsilon(\al,\be) \eqdef 
+	\MK_\c^\varepsilon(\al,\be) \eqdef
 	\umin{\pi \in \Couplings(\al,\be)}
 		\int_{\X \times \Y} c(x,y) \d\pi(x,y) + \varepsilon \KL(\pi|\al\otimes\be),
 }
-where the relative entropy is a generalization of the discrete Kullback--Leibler divergence~\eqref{eq-kl-defn}
+ここで相対エントロピーは離散カルバック-ライブラー・ダイバージェンス~\eqref{eq-kl-defn}の一般化である
 \eql{\label{eq-defn-rel-entropy}
 \begin{aligned}	 \KL(\pi|\xi) \eqdef \int_{\X \times \Y} \log\Big( \frac{\d \pi}{\d\xi}(x,y) \Big) \d\pi(x,y)\\
-	  + \int_{\X \times \Y} (\d\xi(x,y)-\d\pi(x,y)), 
+	  + \int_{\X \times \Y} (\d\xi(x,y)-\d\pi(x,y)),
 	  \end{aligned}
 }
-and by convention $\KL(\pi|\xi)=+\infty$ if $\pi$ does not have a density $\frac{\d \pi}{\d\xi}$ with respect to $\xi$. 
+$\pi$が$\xi$に関する密度$\frac{\d \pi}{\d\xi}$を持たない場合は$\KL(\pi|\xi)=+\infty$と約束する。
 %
-It is important to realize that the reference measure $\al\otimes\be$ chosen in~\eqref{eq-entropic-generic} to define the entropic regularizing term $\KL(\cdot|\al\otimes\be)$ plays no specific role; only its support matters, as noted by the following proposition.
+~\eqref{eq-entropic-generic}でエントロピー正則化項$\KL(\cdot|\al\otimes\be)$を定義するために選んだ基準測度$\al\otimes\be$は特別な役割を果たさないことを認識することが重要である；以下の命題が述べるように、その台のみが重要である。
 
 \begin{prop}
-	For any $\pi \in \Couplings(\al,\be)$, and for any $(\al',\be')$  having the same 0 measure sets as $(\al,\be)$ (so that they have both densities with respect to one another) one has
+	任意の$\pi \in \Couplings(\al,\be)$に対して、$(\al,\be)$と同じゼロ測度集合を持つ任意の$(\al',\be')$（したがって互いに密度を持つ）に対して
 	\eq{
 		\KL(\pi|\al\otimes\be) = \KL(\pi|\al'\otimes\be') - \KL(\al\otimes\be|\al'\otimes\be').
 	}
@@ -170,57 +170,57 @@ It is important to realize that the reference measure $\al\otimes\be$ chosen in~
 \end{proof}
 }
 
-This proposition shows that choosing $\KL(\cdot|\al'\otimes\be')$ in place of $\KL(\cdot|\al\otimes\be)$ in~\eqref{eq-entropic-generic} results in the same solution.
+この命題は、~\eqref{eq-entropic-generic}において$\KL(\cdot|\al\otimes\be)$の代わりに$\KL(\cdot|\al'\otimes\be')$を選んでも同じ解が得られることを示している。
 
 
-Formula~\eqref{eq-entropic-generic} can be refactored as a projection problem
+式~\eqref{eq-entropic-generic}は射影問題として再定式化できる
 \eql{\label{eq-entropic-generic-proj}
 	\umin{\pi \in \Couplings(\al,\be)} \KL(\pi|\Kk),
 }
-where $\Kk$ is the Gibbs distributions $\d\Kk(x,y) \eqdef e^{-\frac{c(x,y)}{\varepsilon}} \d\mu(x)\d\nu(y)$.
+ここで$\Kk$はギブス分布$\d\Kk(x,y) \eqdef e^{-\frac{c(x,y)}{\varepsilon}} \d\mu(x)\d\nu(y)$である。
 %
-This problem is often referred to as the ``static Schr\"odinger problem''~\citep{LeonardSchroedinger,RuschendorfThomsen}, since it was initially considered by Schr\"odinger in statistical physics~\citep{Schroedinger31}. 
+この問題は「静的シュレーディンガー問題」~\citep{LeonardSchroedinger,RuschendorfThomsen}と呼ばれることが多い。これはもともとシュレーディンガーが統計物理学において考えた問題である~\citep{Schroedinger31}。
 %
-As $\varepsilon \rightarrow 0$, the unique solution to~\eqref{eq-entropic-generic-proj} converges to the maximum entropy solution to~\eqref{eq-mk-generic}; see~\citep{leonard2012schrodinger,2017-carlier-SIMA}.
+$\varepsilon \rightarrow 0$のとき、~\eqref{eq-entropic-generic-proj}の一意の解は~\eqref{eq-mk-generic}の最大エントロピー解に収束する；~\citep{leonard2012schrodinger,2017-carlier-SIMA}を参照。
 %
-Section \ref{sec-entropic-dynamic} details an alternate ``dynamic'' formulation of the Schr\"odinger problem over the space of paths connecting the points of two measures.
+\S\ref{sec-entropic-dynamic}では、2つの測度の点を結ぶ経路の空間上でのシュレーディンガー問題の代替的な「動的」定式化を詳しく述べる。
 \end{rem2}
 %%%%%
 
 %%%%%
-\begin{rem2}{Mutual entropy}
-Similarly to~\eqref{eq-ot-proba-interpretation}, one can re\-phra\-se \eqref{eq-entropic-generic} using random variables 
+\begin{rem2}{相互エントロピー}
+~\eqref{eq-ot-proba-interpretation}と同様に、確率変数を用いて\eqref{eq-entropic-generic}を次のように言い換えることができる
 \eq{
 	\MK_\c^\varepsilon(\al,\be) = \umin{(X,Y)} \enscond{ \EE_{(X,Y)}(c(X,Y)) + \epsilon \text{I}(X,Y) }{ X \sim \al, Y \sim \be },
 }
-where, denoting $\pi$ the distribution of $(X,Y)$, $\text{I}(X,Y) \eqdef \KL(\pi|\al\otimes\be)$ is the so-called mutual information between the two random variables. One has $\text{I}(X,Y) \geq 0$ and $\text{I}(X,Y)=0$ if and only if the two random variables are independent.  
+ここで$\pi$を$(X,Y)$の分布として、$\text{I}(X,Y) \eqdef \KL(\pi|\al\otimes\be)$は2つの確率変数間のいわゆる相互情報量である。$\text{I}(X,Y) \geq 0$であり、$\text{I}(X,Y)=0$となるのは2つの確率変数が独立である場合に限る。
 \end{rem2}
 
 %%%%%
-\begin{rem2}{Independence and couplings}
-	A coupling $\pi \in \Couplings(\al,\be)$ describes the distribution of a couple of random variables $(X,Y)$ defined on $(\X,\Y)$, where $X$ (resp., $Y$) has law $\al$ (resp., $\be$).
-	% 
-	Proposition~\ref{prop-convergence-eps} carries over for generic (nonnecessary discrete) measures, so that the solution $\pi_\varepsilon$ of~\eqref{eq-entropic-generic} converges to the tensor product coupling $\al \otimes \be$ as $\varepsilon \rightarrow+\infty$. This coupling $\al \otimes \be$ corresponds to the random variables $(X,Y)$ being independent. 
+\begin{rem2}{独立性とカップリング}
+	カップリング$\pi \in \Couplings(\al,\be)$は、$(\X,\Y)$上で定義された確率変数の組$(X,Y)$の分布を記述する。ここで$X$（resp., $Y$）は法則$\al$（resp., $\be$）に従う。
 	%
-	In contrast, as $\varepsilon \rightarrow 0$, $\pi_\varepsilon$ convergence to a solution $\pi_0$ of the OT problem~\eqref{eq-mk-generic}. On $\X=\Y=\RR^\dim$, if $\al$ and $\be$ have densities with respect to the Lebesgue measure, as detailed in Remark~\ref{rem-exist-mongemap}, then $\pi_0$ is unique and supported on the graph of a bijective Monge map $\T : \RR^\dim \rightarrow \RR^\dim$. In this case, $(X,Y)$ are in some sense fully dependent, since $Y=\T(X)$ and $X=\T^{-1}(Y)$. 
+	命題~\ref{prop-convergence-eps}は一般的な（必ずしも離散でない）測度に対しても成り立つ。したがって~\eqref{eq-entropic-generic}の解$\pi_\varepsilon$は$\varepsilon \rightarrow+\infty$でテンソル積カップリング$\al \otimes \be$に収束する。このカップリング$\al \otimes \be$は確率変数$(X,Y)$が独立であることに対応する。
 	%
-	In the simple 1-D case $\dim=1$, a convenient way to visualize the dependency structure between $X$ and $Y$ is to use the copula $\xi_\pi$ associated to the joint distribution $\pi$. The cumulative function defined in~\eqref{eq-cumul-defn} is extended to couplings as 
+	対照的に、$\varepsilon \rightarrow 0$のとき、$\pi_\varepsilon$はOT問題~\eqref{eq-mk-generic}の解$\pi_0$に収束する。$\X=\Y=\RR^\dim$において、$\al$と$\be$がルベーグ測度に関する密度を持つ場合、注意~\ref{rem-exist-mongemap}で詳述するように、$\pi_0$は一意であり、全単射のモンジュ写像$\T : \RR^\dim \rightarrow \RR^\dim$のグラフ上に台を持つ。この場合、$Y=\T(X)$かつ$X=\T^{-1}(Y)$であるため、$(X,Y)$はある意味で完全に従属している。
+	%
+	$\dim=1$の単純な1次元の場合、$X$と$Y$の従属構造を視覚化する便利な方法は、同時分布$\pi$に付随するコピュラ$\xi_\pi$を用いることである。~\eqref{eq-cumul-defn}で定義された累積分布関数は、カップリングに対して次のように拡張される
 	\eq{
 		\foralls (x,y) \in \RR^2, \quad
-		\cumul{\pi}(x,y) \eqdef \int_{-\infty}^x \int_{-\infty}^y \d\pi.  
+		\cumul{\pi}(x,y) \eqdef \int_{-\infty}^x \int_{-\infty}^y \d\pi.
 	}
-	The copula is then defined as
+	コピュラは次のように定義される
 	\eq{
 		\foralls (s,t) \in [0,1]^2, \quad
 		\xi_{\pi}(s,t) \eqdef \cumul{\pi}( \cumul{\al}^{-1}(s),\cumul{\be}^{-1}(t) ),
 	}
-	where the pseudoinverse of a cumulative function is defined in~\eqref{eq-pseudo-inv-cum}. 
+	ここで累積分布関数の擬似逆関数は~\eqref{eq-pseudo-inv-cum}で定義される。
 	%
-	For independent variables, $\varepsilon=+\infty$, \ie $\pi=\al\otimes \be$, one has $\xi_{\pi_{+\infty}}(s,t)=st$.
+	独立な変数の場合、$\varepsilon=+\infty$、すなわち$\pi=\al\otimes \be$のとき、$\xi_{\pi_{+\infty}}(s,t)=st$となる。
 	%
-	In contrast, for fully dependent variables, $\varepsilon=+\infty$, one has $\xi_{\pi_0}(s,t)=\min(s,t)$.
+	対照的に、完全に従属する変数の場合、$\varepsilon=+\infty$のとき、$\xi_{\pi_0}(s,t)=\min(s,t)$となる。
 	%
-	Figure~\ref{fig-entropic-copula} shows how entropic regularization generates copula $\xi_{\pi_\varepsilon}$ interpolating between these two extreme cases. 
+	図~\ref{fig-entropic-copula}は、エントロピー正則化がこれら2つの極端な場合を補間するコピュラ$\xi_{\pi_\varepsilon}$をどのように生成するかを示している。
 \end{rem2}
 %%%%%
 
@@ -229,7 +229,7 @@ where, denoting $\pi$ the distribution of $(X,Y)$, $\text{I}(X,Y) \eqdef \KL(\pi
 \begin{figure}[h!]
 \centering
 \begin{tabular}{@{}c@{\hspace{5mm}}c@{}}
-\includegraphics[width=.4\linewidth]{sinkhorn-copula/input-1} & 
+\includegraphics[width=.4\linewidth]{sinkhorn-copula/input-1} &
 \includegraphics[width=.4\linewidth]{sinkhorn-copula/input-2}\\
 {\color{red}$\al$} & {\color{blue}$\be$}
 \end{tabular}
@@ -249,79 +249,79 @@ where, denoting $\pi$ the distribution of $(X,Y)$, $\text{I}(X,Y) \eqdef \KL(\pi
 {\color[rgb]{.75,.25,.75} $\varepsilon=1$} &
 {\color[rgb]{.5,.5,.5} $\varepsilon=0.5 \cdot 10^{-1}$} &
 {\color[rgb]{.25,.75,.25} $\varepsilon=10^{-1}$} &
-{\color[rgb]{0,1,0} $\varepsilon=10^{-3}$} 
+{\color[rgb]{0,1,0} $\varepsilon=10^{-3}$}
 \end{tabular}
 \caption{\label{fig-entropic-copula}
-Top: evolution with $\varepsilon$ of the solution $\pi_\varepsilon$ of~\eqref{eq-entropic-generic}. 
-Bottom: evolution of the copula function $\xi_{\pi_\varepsilon}$. 
+上：~\eqref{eq-entropic-generic}の解$\pi_\varepsilon$の$\varepsilon$による変化。
+下：コピュラ関数$\xi_{\pi_\varepsilon}$の変化。
 }
 \end{figure}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Sinkhorn's Algorithm and Its Convergence}
+\section{シンクホーンアルゴリズムとその収束}
 \label{sec-sinkhorn}
 
-The following proposition shows that the solution of~\eqref{eq-regularized-discr} has a specific form, which can be parameterized using $n+m$ variables. That parameterization is therefore essentially dual, in the sense that a coupling $\P$ in $\CouplingsD(\a,\b)$ has $nm$ variables but $n+m$ constraints.
+以下の命題は、~\eqref{eq-regularized-discr}の解が$n+m$個の変数でパラメータ化できる特定の形を持つことを示す。このパラメータ化は本質的に双対的である。なぜなら$\CouplingsD(\a,\b)$におけるカップリング$\P$は$nm$個の変数を持つが$n+m$個の制約を持つからである。
 
 \begin{prop}\label{prop-regularized-primal}
-The solution to~\eqref{eq-regularized-discr} is unique and has the form
+~\eqref{eq-regularized-discr}の解は一意であり、次の形を持つ
 \eql{\label{eq-scaling-form}
 	\foralls (i,j) \in \range{n} \times \range{m}, \quad \P_{i,j} = \uD_i \K_{i,j} \vD_j
 }
-for two (unknown) scaling variable $(\uD,\vD) \in \RR_+^n \times \RR_+^m$. 
-\end{prop} 
+ここで$(\uD,\vD) \in \RR_+^n \times \RR_+^m$は2つの（未知の）スケーリング変数である。
+\end{prop}
 
-\begin{proof} 
-Introducing two dual variables $\fD\in\RR^n,\gD\in\RR^m$ for each marginal constraint, the Lagrangian of~\eqref{eq-regularized-discr} reads
+\begin{proof}
+各周辺制約に対する2つの双対変数$\fD\in\RR^n,\gD\in\RR^m$を導入すると、~\eqref{eq-regularized-discr}のラグランジアンは次のようになる
 \eq{\label{eq-sinkhorn-lagrangian}
 	\Lag(\P,\fD,\gD)= \dotp{\P}{\C} - \varepsilon \HD(\P) - \dotp{\fD}{\P\ones_m-\a}-\dotp{\gD}{\transp{\P}\ones_n-\b}.
 }
-First order conditions then yield
+一階条件から
 $$
 	\frac{\partial\Lag(\P,\fD,\gD)}{\partial \P_{i,j}}= \C_{i,j} + \varepsilon \log(\P_{i,j}) - \fD_i -\gD_j=0,
 $$
-which result, for an optimal $\P$ coupling to the regularized problem, in the expression $\P_{i,j}=e^{\fD_i/\varepsilon}e^{-\C_{i,j}/\varepsilon}e^{\gD_j/\varepsilon}$, which can be rewritten in the form provided above using nonnegative vectors $\uD$ and $\vD$.
-\end{proof} 
+が得られ、正則化問題に対する最適カップリング$\P$は$\P_{i,j}=e^{\fD_i/\varepsilon}e^{-\C_{i,j}/\varepsilon}e^{\gD_j/\varepsilon}$と表される。これは非負ベクトル$\uD$と$\vD$を用いて上で与えた形に書き換えることができる。
+\end{proof}
 
 %%%
-\paragraph{Regularized OT as matrix scaling.} 
+\paragraph{行列スケーリングとしての正則化OT}
 
-The factorization of the optimal solution exhibited in Equation~\eqref{eq-scaling-form} can be conveniently rewritten in matrix form as $\P=\diag(\uD)\K\diag(\vD)$.
+式~\eqref{eq-scaling-form}で示された最適解の因子分解は、行列形式で$\P=\diag(\uD)\K\diag(\vD)$と便利に書き換えることができる。
 %
-The variables $(\uD,\vD)$ must therefore satisfy the following nonlinear equations which correspond to the mass conservation constraints inherent to $\CouplingsD(\a,\b)$:
+したがって変数$(\uD,\vD)$は、$\CouplingsD(\a,\b)$に固有の質量保存制約に対応する次の非線形方程式を満たさなければならない：
 \eql{\label{eq-dualsinkhorn-constraints}
 	\diag(\uD)\K\diag(\vD)\ones_m=\a,
 	\qandq
 	\diag(\vD)\K^\top \diag(\uD)\ones_n=\b.
 }
-These two equations can be further simplified, since $\diag(\vD)\ones_m$ is simply $\vD$, and the multiplication of $\diag(\uD)$ times $\K \vD$ is 
+これら2つの方程式はさらに簡略化できる。$\diag(\vD)\ones_m$は単に$\vD$であり、$\diag(\uD)$と$\K \vD$の積は
 \eql{\label{eq-dualsinkhorn-constraints2}
 	\uD \odot (\K \vD) = \a
 	\qandq
 	\vD \odot (\transp{\K}\uD) = \b,
 }
-where $\odot$ corresponds to entrywise multiplication of vectors. That problem is known in the numerical analysis community as the matrix scaling problem (see~\citep{nemirovski1999complexity} and references therein).
+ここで$\odot$はベクトルの成分ごとの積に対応する。この問題は数値解析のコミュニティでは行列スケーリング問題として知られている（~\citep{nemirovski1999complexity}およびその参考文献を参照）。
 %
-An intuitive way to handle these equations is to solve them iteratively, by modifying first $\uD$ so that it satisfies the left-hand side of Equation~\eqref{eq-dualsinkhorn-constraints2} and then $\vD$ to satisfy its right-hand side. These two updates define Sinkhorn's algorithm,
-\eql{\label{eq-sinkhorn}	
+これらの方程式を扱う直観的な方法は、まず$\uD$を式~\eqref{eq-dualsinkhorn-constraints2}の左辺を満たすように修正し、次に$\vD$をその右辺を満たすように修正して、反復的に解くことである。これら2つの更新がシンクホーンアルゴリズムを定義する
+\eql{\label{eq-sinkhorn}
 	\itt{\uD} \eqdef \frac{\a}{\K \it{\vD}}
 	\qandq
 	\itt{\vD} \eqdef \frac{\b}{\transp{\K}\itt{\uD}},
 }
-initialized with an arbitrary positive vector $\init{\vD} = \ones_m$. The division operator used above between two vectors is to be understood entrywise. Note that a different initialization will likely lead to a different solution for $\uD,\vD$, since $\uD,\vD$ are only defined up to a multiplicative constant (if $\uD,\vD$ satisfy \eqref{eq-dualsinkhorn-constraints} then so do $\lambda\uD,\vD/\lambda$ for any $\lambda>0$).
+初期値は任意の正ベクトル$\init{\vD} = \ones_m$である。上で用いた2つのベクトル間の除算演算子は成分ごとと理解されたい。異なる初期化は$\uD,\vD$に対して異なる解につながる可能性がある。なぜなら$\uD,\vD$は乗法定数の不定性を持つからである（$\uD,\vD$が\eqref{eq-dualsinkhorn-constraints}を満たすならば、任意の$\lambda>0$に対して$\lambda\uD,\vD/\lambda$も満たす）。
 %
-It turns out, however, that these iterations converge (see Remark~\ref{rem-iterative-projection} for a justification using iterative projections, and see Remark~\ref{rem-global-conv-sinkh} for a strict contraction result) and all result in the same optimal coupling $\diag(\uD)\K\diag(\vD)$. 
+しかしながら、これらの反復は収束し（反復射影を用いた正当化については注意~\ref{rem-iterative-projection}を、厳密な縮小性の結果については注意~\ref{rem-global-conv-sinkh}を参照）、すべて同じ最適カップリング$\diag(\uD)\K\diag(\vD)$に帰着する。
 %
-Figure~\ref{fig-sinkhorn-convergence}, top row, shows the evolution of the coupling $\diag(\it{\uD})\K\diag(\it{\vD})$ computed by Sinkhorn iterations. It  evolves from the Gibbs kernel $\K$ toward the optimal coupling solving~\eqref{eq-regularized-discr} by progressively shifting the mass away from the diagonal.
+図~\ref{fig-sinkhorn-convergence}の上段は、シンクホーン反復によって計算されるカップリング$\diag(\it{\uD})\K\diag(\it{\vD})$の変化を示している。ギブスカーネル$\K$から~\eqref{eq-regularized-discr}を解く最適カップリングへ、質量を対角線から徐々にずらしながら収束していく様子がわかる。
 
-\begin{rem}[Historical perspective] The iterations~\eqref{eq-sinkhorn} first appeared in~\citep{yule1912methods,kruithof}. They were later known as the iterative proportional fitting procedure (IPFP)~\citet{DemingStephanIPFP} and RAS~\citep{bacharach1965estimating} methods~\citep{ReviewSinkhorn}. The proof of their convergence is attributed to~\citet{Sinkhorn64}, hence the name of the algorithm. This algorithm was later extended in infinite dimensions by~\citet{Ruschendorf95}. This regularization was used in the field of economics to obtain approximate solutions to optimal transport problems, under the name of gravity models~\citep{wilson1969use,erlander1980optimal,erlander1990gravity}.
+\begin{rem}[歴史的展望] 反復~\eqref{eq-sinkhorn}は最初に~\citep{yule1912methods,kruithof}に登場した。後にIPFP（iterative proportional fitting procedure）~\citet{DemingStephanIPFP}およびRAS~\citep{bacharach1965estimating}法~\citep{ReviewSinkhorn}として知られるようになった。その収束の証明は~\citet{Sinkhorn64}に帰せられ、アルゴリズムの名前の由来となっている。このアルゴリズムは後に~\citet{Ruschendorf95}によって無限次元に拡張された。この正則化は経済学の分野で最適輸送問題の近似解を得るために使用され、重力モデル~\citep{wilson1969use,erlander1980optimal,erlander1990gravity}の名で知られていた。
 % with later contributions~\citep{SinkhornKnopp67,Sinkhorn67}
-It was rebranded as ``softassign'' by~\citet{kosowsky1994invisible} in the assignment case, namely when $\a=\b=\ones_n/n$, and used to solve matching problems in economics more recently by~\citet{Galichon-Entropic}.
+~\citet{kosowsky1994invisible}により、割当問題の場合、すなわち$\a=\b=\ones_n/n$の場合に「ソフト割当（softassign）」として再ブランド化され、より最近では~\citet{Galichon-Entropic}によって経済学におけるマッチング問題を解くために使用された。
 %
-This regularization has received renewed attention in data sciences (including machine learning, vision, graphics and imaging) following~\citep{CuturiSinkhorn}, who showed that Sinkhorn's algorithm provides an efficient and scalable approximation to optimal transport, thanks to seamless parallelization when solving several OT problems simultaneously (notably on GPUs; see Remark~\ref{rem-parallel}), and that this regularized quantity also defines, unlike the linear programming formulation, a differentiable loss function (see~\S\ref{sec-regularized-cost}).
+この正則化は、~\citep{CuturiSinkhorn}に続いてデータサイエンス（機械学習、ビジョン、グラフィックス、画像処理を含む）において再び注目を集めた。彼らはシンクホーンアルゴリズムが最適輸送に対する効率的でスケーラブルな近似を提供することを示した。これは複数のOT問題を同時に解く際のシームレスな並列化（特にGPU上；注意~\ref{rem-parallel}を参照）のおかげであり、またこの正則化された量は線形計画法の定式化とは異なり微分可能な損失関数を定義することも示した（\S\ref{sec-regularized-cost}を参照）。
 %
-There exist countless extensions and generalizations of the Sinkhorn algorithm (see for instance~\S\ref{sec-generalized}). For instance, when $\a=\b$, one can use averaged projection iterations to maintain symmetry~\citep{knight2014symmetry}. 
+シンクホーンアルゴリズムの拡張と一般化は無数に存在する（例えば\S\ref{sec-generalized}を参照）。例えば、$\a=\b$の場合、対称性を維持するために平均化された射影反復を用いることができる~\citep{knight2014symmetry}。
 \end{rem}
 
 \begin{figure}[h!]
@@ -332,116 +332,115 @@ There exist countless extensions and generalizations of the Sinkhorn algorithm (
 {\color{blue}$\varepsilon=10$} \quad {\color[rgb]{0.5,0,0.5}$\varepsilon=0.1$} \quad {\color{red}$\varepsilon=10^{-3}$}
 \end{tabular}
 \caption{\label{fig-sinkhorn-convergence}
-Top: evolution of the coupling $\it{\pi_\varepsilon}=\diag(\it{\uD})\K\diag(\it{\vD})$ computed at iteration $\ell$ of Sinkhorn's iterations, for 1-D densities on $\X=[0,1]$, $c(x,y)=|x-y|^2$, and $\varepsilon=0.1$.
-Bottom: impact of $\varepsilon$ the convergence rate of Sinkhorn, as measured in term of marginal constraint violation $\log( \|\it{\pi_\varepsilon} \ones_m - \b \|_1 )$.
+上：$\X=[0,1]$上の1次元密度、$c(x,y)=|x-y|^2$、$\varepsilon=0.1$の場合の、シンクホーン反復の$\ell$回目の反復で計算されるカップリング$\it{\pi_\varepsilon}=\diag(\it{\uD})\K\diag(\it{\vD})$の変化。
+下：周辺制約違反$\log( \|\it{\pi_\varepsilon} \ones_m - \b \|_1 )$で測定したシンクホーンの収束速度に対する$\varepsilon$の影響。
 }
 \end{figure}
 
 
 %%%%%%%%%%
-\begin{rem1}{Overall complexity}\label{rem-complexity-rounding}
-	By doing a careful convergence analysis (assuming $n=m$ for the sake of simplicity), \citet{altschuler2017near} showed that by setting $\varepsilon = \frac{4\log(n)}{\tau}$, $O(\norm{\C}_\infty^3 \log(n) \tau^{-3})$ Sinkhorn iterations (with an additional rounding step to compute a valid coupling $\hat \P \in \CouplingsD(\a,\b)$) are enough to ensure that $\dotp{\hat \P}{\C} \leq \MKD_{\C}(\a,\b) + \tau$. This implies that Sinkhorn computes a $\tau$-approximate solution of the unregularized OT problem in $O(n^2\log(n) \tau^{-3})$ operations. The rounding scheme consists in, given two vectors $\uD\in\RR^n,\vD\in\RR^m$ to carry out the following updates (\cite[Alg. 2]{altschuler2017near}):
+\begin{rem1}{全体の計算量}\label{rem-complexity-rounding}
+	注意深い収束解析により（簡単のため$n=m$を仮定）、\citet{altschuler2017near}は$\varepsilon = \frac{4\log(n)}{\tau}$と設定した場合、$O(\norm{\C}_\infty^3 \log(n) \tau^{-3})$回のシンクホーン反復（有効なカップリング$\hat \P \in \CouplingsD(\a,\b)$を計算するための追加の丸めステップを伴う）で$\dotp{\hat \P}{\C} \leq \MKD_{\C}(\a,\b) + \tau$を保証するのに十分であることを示した。これはシンクホーンが非正則化OT問題の$\tau$-近似解を$O(n^2\log(n) \tau^{-3})$演算で計算することを意味する。丸めスキームは、2つのベクトル$\uD\in\RR^n,\vD\in\RR^m$が与えられたとき、以下の更新を行うものである（\cite[Alg. 2]{altschuler2017near}）：
 	$$\begin{aligned}
-		\uD'& \eqdef \uD\odot\min\left(\frac{\a}{\uD\odot(\K\vD)},\ones_n\right), 
+		\uD'& \eqdef \uD\odot\min\left(\frac{\a}{\uD\odot(\K\vD)},\ones_n\right),
 		\vD' \eqdef \vD\odot \min\left(\frac{\b}{\vD\odot(\transp{\K}\uD')},\ones_n\right), \\
 	\Delta_{\a}& \eqdef \a- \uD'\odot (\K \vD'), \Delta_{\b} \eqdef \b- \vD'\odot (\transp{\K} \uD), \\
 	\hat\P& \eqdef \diag(\uD')\K\diag(\vD')+\Delta_{\a} \transp{(\Delta_{\b})}/\norm{\Delta_{\a}}_1.
 	\end{aligned}$$
-	This yields a matrix $\hat\P \in \CouplingsD(\a,\b)$ such that the $1$-norm between $\hat\P$ and $\diag(\uD)\K\diag(\vD)$ is controlled by the marginal violations of $\diag(\uD)\K\diag(\vD)$, namely
-	$$ \norm{\hat\P-\diag(\uD)\K\diag(\vD)}_1 \leq \norm{\a-\uD\odot(\K\vD)}_1+\norm{\b-\vD\odot(\transp{\K}\uD)}_1.$$ 
-This field remains active, as shown by the recent improvement on the result above by \citet{pmlr-v80-dvurechensky18a}.
+	これにより$\hat\P \in \CouplingsD(\a,\b)$である行列が得られ、$\hat\P$と$\diag(\uD)\K\diag(\vD)$の$1$-ノルムの差は$\diag(\uD)\K\diag(\vD)$の周辺違反によって制御される。すなわち
+	$$ \norm{\hat\P-\diag(\uD)\K\diag(\vD)}_1 \leq \norm{\a-\uD\odot(\K\vD)}_1+\norm{\b-\vD\odot(\transp{\K}\uD)}_1.$$
+この分野は活発であり、\citet{pmlr-v80-dvurechensky18a}による上記の結果の最近の改善がそれを示している。
 \end{rem1}
 %%%%%%%%%%
 
 %%%%%%%
-\begin{rem}[Numerical stability of Sinkhorn iterations]\label{rem-stability}
-As we discuss in Remarks~\ref{rem-global-conv-sinkh} and \ref{rem-local-conv}, the convergence of Sinkhorn's algorithm deteriorates as $\varepsilon\rightarrow 0$. In numerical practice, however, that slowdown is rarely observed in practice for a simpler reason: Sinkhorn's algorithm will often fail to terminate as soon as some of the elements of the kernel $\K$ become too negligible to be stored in memory as positive numbers, and become instead null. This can then result in a matrix product $\K\vD$ or $\transp{\K}\uD$ with ever smaller entries that become null and result in a division by $0$ in the Sinkhorn update of Equation~\eqref{eq-sinkhorn}. Such issues can be partly resolved by carrying out computations on the multipliers $\uD$ and $\vD$ in the log domain. That approach is carefully presented in Remark~\ref{rem-log-sinkh} and is related to a direct resolution of the dual of Problem~\eqref{eq-regularized-discr}.
+\begin{rem}[シンクホーン反復の数値安定性]\label{rem-stability}
+注意~\ref{rem-global-conv-sinkh}と\ref{rem-local-conv}で議論するように、シンクホーンアルゴリズムの収束は$\varepsilon\rightarrow 0$で悪化する。しかし数値計算上の実際では、より単純な理由でその減速が観察されることはまれである：カーネル$\K$の要素の一部がメモリ上に正の数として格納するには小さすぎてゼロになると、シンクホーンアルゴリズムはしばしば終了に失敗する。この結果、行列積$\K\vD$や$\transp{\K}\uD$の成分がますます小さくなってゼロになり、式~\eqref{eq-sinkhorn}のシンクホーン更新で0での除算が生じる。このような問題は、乗数$\uD$と$\vD$の計算を対数領域で行うことで部分的に解決できる。このアプローチは注意~\ref{rem-log-sinkh}で注意深く説明され、問題~\eqref{eq-regularized-discr}の双対の直接的な解法と関連している。
 \end{rem}
 %%%%%%%
 
 %%%%%%%
-\begin{rem}[Relation with iterative projections]\label{rem-iterative-projection}
-Denoting 
+\begin{rem}[反復射影との関係]\label{rem-iterative-projection}
 \eq{
 	\Cc^1_\a \eqdef \enscond{\P}{\P\ones_m=\a}
 	\qandq
 	\Cc^2_\b \eqdef \enscond{\P}{\transp{\P}\ones_m=\b}
 }
-the rows and columns constraints, one has $\CouplingsD(\a,\b) = \Cc^1_\a \cap \Cc^2_\b$. One can use Bregman iterative projections~\citep{bregman1967relaxation},
+と行と列の制約を表すと、$\CouplingsD(\a,\b) = \Cc^1_\a \cap \Cc^2_\b$となる。ブレグマン反復射影~\citep{bregman1967relaxation}を用いることができる
 \eql{\label{eq-kl-sinkh-proj}
 	\itt{\P} \eqdef \Proj_{\Cc^1_\a}^{\KLD}(\it{\P})
 	\qandq
 	\ittt{\P} \eqdef \Proj_{\Cc^2_\b}^{\KLD}(\itt{\P}).
 }
-Since the sets $\Cc^1_\a$ and $\Cc^2_\b$ are affine, these iterations are known to converge to the solution of~\eqref{eq-kl-proj}; see~\citep{bregman1967relaxation}. These iterates are equivalent to Sinkhorn iterations~\eqref{eq-sinkhorn} since defining 
+集合$\Cc^1_\a$と$\Cc^2_\b$はアフィンであるため、これらの反復は~\eqref{eq-kl-proj}の解に収束することが知られている；~\citep{bregman1967relaxation}を参照。これらの反復はシンクホーン反復~\eqref{eq-sinkhorn}と等価であり、
 \eq{\label{eq-sink-matrix}\P^{(2\ell)} \eqdef \diag(\it{\uD}) \K \diag(\it{\vD}),}
-one has
+と定義すると
 \begin{align*}
 	\P^{(2\ell+1)} &\eqdef \diag(\itt{\uD}) \K \diag(\it{\vD}) \\
 	\qandq
 	\P^{(2\ell+2)} &\eqdef \diag(\itt{\uD}) \K \diag(\itt{\vD}).
 \end{align*}
-In practice, however, one should prefer using~\eqref{eq-sinkhorn}, which only requires manipulating scaling vectors and multiplication against a Gibbs kernel, which can often be accelerated (see Remarks~\ref{rem-separable} and~\ref{rem-geod-heat} below). 
+しかし実際には、スケーリングベクトルの操作とギブスカーネルとの乗算のみを必要とする~\eqref{eq-sinkhorn}を用いることが好ましい。これはしばしば高速化できるからである（以下の注意~\ref{rem-separable}と~\ref{rem-geod-heat}を参照）。
 \end{rem}
 %%%%%%%
 
 %%%%%%%
-\begin{rem}[Proximal point algorithm]
-In order to approximate a solution of the unregularized ($\epsilon=0$) problem~\eqref{eq-mk-discr}, it is possible to use iteratively the Sinkhorn algorithm, using the so-called proximal point algorithm for the $\KL$ metric. 
+\begin{rem}[近接点アルゴリズム]
+非正則化（$\epsilon=0$）問題~\eqref{eq-mk-discr}の解を近似するために、$\KL$計量に対するいわゆる近接点アルゴリズムを用いてシンクホーンアルゴリズムを反復的に使用することが可能である。
 %
-We denote $F(\P) \eqdef \dotp{\P}{\pi} + \iota_{\CouplingsD(\a,\b)}(\P)$ the unregularized objective function.
+$F(\P) \eqdef \dotp{\P}{\pi} + \iota_{\CouplingsD(\a,\b)}(\P)$を非正則化目的関数とする。
 %
-The proximal point iterations for the $\KLD$ divergence computes a minimizer of $F$, and hence a solution of the unregularized OT problem~\eqref{eq-mk-discr}, by computing iteratively
+$\KLD$ダイバージェンスに対する近接点反復は、$F$の最小値、ひいては非正則化OT問題~\eqref{eq-mk-discr}の解を次の反復計算によって求める
 \eql{\label{eq-prox-point}
 	\itt{\P} \eqdef \Prox_{\frac{1}{\epsilon} F}^{\KLD}(\it{\P})
-	\eqdef 
+	\eqdef
 	\uargmin{\P \in \RR_+^{n \times m}} \KLD(\P|\it{\P}) + \frac{1}{\epsilon} F(\P)
 }
-starting from an arbitrary $\init{\P}$ (see also~\eqref{eq-prox-kl}).
+任意の$\init{\P}$から出発する（~\eqref{eq-prox-kl}も参照）。
 %
-The proximal point algorithm is the most basic proximal splitting method. 
+近接点アルゴリズムは最も基本的な近接分離法である。
 %
-Initially introduced for the Euclidean metric (see, for instance, (\citealt{rockafellar1976monotone})), it extends to any Bregman divergence~\citep{censor1992proximal}, so in particular it can be applied here for the $\KLD$ divergence (see Remark~\ref{rem-bregman}).   
+ユークリッド計量に対して最初に導入され（例えば(\citealt{rockafellar1976monotone})を参照）、任意のブレグマン・ダイバージェンスに拡張される~\citep{censor1992proximal}。したがって特に$\KLD$ダイバージェンスに対して適用できる（注意~\ref{rem-bregman}を参照）。
 %
-The proximal operator is usually not available in closed form, so some form of subiterations are required. 
+近接作用素は通常閉じた形では利用できないため、何らかの形の部分反復が必要である。
 %
-The optimization appearing in~\eqref{eq-prox-point} is very similar to the entropy regularized problem~\eqref{eq-regularized-discr}, with the relative entropy $\KLD(\cdot|\it{\P})$ used in place of the negative entropy $-\HD$. 
+~\eqref{eq-prox-point}に現れる最適化は、エントロピー正則化問題~\eqref{eq-regularized-discr}と非常に類似しており、負のエントロピー$-\HD$の代わりに相対エントロピー$\KLD(\cdot|\it{\P})$を用いたものである。
 %
-Proposition~\ref{prop-regularized-primal} and Sinkhorn iterations~\eqref{eq-sinkhorn} carry over to this more general setting when defining the Gibbs kernel as $\K=e^{-\frac{\C}{\epsilon}} \odot \it{\P} = ( e^{-\frac{\C_{i,j}}{\epsilon}} \it{\P}_{i,j} )_{i,j}$.
+命題~\ref{prop-regularized-primal}とシンクホーン反復~\eqref{eq-sinkhorn}は、ギブスカーネルを$\K=e^{-\frac{\C}{\epsilon}} \odot \it{\P} = ( e^{-\frac{\C_{i,j}}{\epsilon}} \it{\P}_{i,j} )_{i,j}$と定義することで、このより一般的な設定にも適用される。
 %
-Iterations~\eqref{eq-prox-point} can thus be implemented by running the Sinkhorn algorithm at each iteration.
+したがって反復~\eqref{eq-prox-point}は、各反復でシンクホーンアルゴリズムを実行することで実装できる。
 %
-Assuming for simplicity $\init{\P}=\ones_n \ones_m^\top$, these iterations thus have the form 
+簡単のため$\init{\P}=\ones_n \ones_m^\top$と仮定すると、これらの反復は次の形になる
 \begin{align*}
-	\itt{P} &= 
+	\itt{P} &=
 		\diag(\it{\uD}) ( e^{-\frac{\C}{\epsilon}} \odot \it{\P} ) \diag(\it{\vD})\\
 		&=
-		\diag(\it{\uD} \odot \cdots \odot \init{\uD})  
-			e^{-\frac{(\ell+1)\C}{\epsilon}} \odot \it{\P} ) 
-		\diag(\it{\vD} \odot \cdots \odot \init{\vD}).		
+		\diag(\it{\uD} \odot \cdots \odot \init{\uD})
+			e^{-\frac{(\ell+1)\C}{\epsilon}} \odot \it{\P} )
+		\diag(\it{\vD} \odot \cdots \odot \init{\vD}).
 \end{align*}
-The proximal point iterates apply therefore iteratively Sinkhorn's algorithm with a kernel $e^{-\frac{\C}{\epsilon/\ell}}$, i.e., with a decaying regularization parameter $\epsilon/\ell$.
+近接点反復はしたがってカーネル$e^{-\frac{\C}{\epsilon/\ell}}$、すなわち減衰する正則化パラメータ$\epsilon/\ell$を用いてシンクホーンアルゴリズムを反復的に適用する。
 %
-This method is thus tightly connected to a series of works which combine Sinkhorn with some decaying schedule on the regularization; see, for instance,~\citep{kosowsky1994invisible}. They are efficient in small spacial dimension, when combined with a multigrid strategy to approximate the coupling on an adaptive sparse grid~\citep{schmitzer2016stabilized}.  
+この方法は、シンクホーンと正則化の減衰スケジュールを組み合わせた一連の研究と密接に関連している；例えば~\citep{kosowsky1994invisible}を参照。これらは空間次元が小さい場合に、カップリングを適応的なスパースグリッド上で近似するマルチグリッド戦略と組み合わせることで効率的である~\citep{schmitzer2016stabilized}。
 \end{rem}
 %%%%%%%
 
 
 %%%%%%%%%
-\begin{rem}[Other regularizations]
-It is possible to replace the entropic term $-\HD(\P)$ in~\eqref{eq-regularized-discr} by any strictly convex penalty $R(\P)$, as detailed, for instance, in~\citep{dessein2016regularized}. A typical example is the squared $\ell^2$ norm 
+\begin{rem}[他の正則化]
+~\eqref{eq-regularized-discr}のエントロピー項$-\HD(\P)$を任意の狭義凸ペナルティ$R(\P)$に置き換えることが可能である。これは例えば~\citep{dessein2016regularized}で詳述されている。典型的な例は$\ell^2$ノルムの2乗
 \eql{\label{eq-quad-regul}
-	R(\P) = \sum_{i,j} \P_{i,j}^2 + \iota_{\RR_+}(\P_{i,j}); 
-} 
-see~\citep{essid2017quadratically}. 
+	R(\P) = \sum_{i,j} \P_{i,j}^2 + \iota_{\RR_+}(\P_{i,j});
+}
+である；~\citep{essid2017quadratically}を参照。
 %
-Another example is the family of Tsallis entropies~\citep{muzellec2017tsallis}.
+別の例として、ツァリスエントロピーの族がある~\citep{muzellec2017tsallis}。
 %
-Note, however, that if the penalty function is defined even when entries of $\P$ are nonpositive, which is, for instance, the case for a quadratic regularization~\eqref{eq-quad-regul}, then one must add back a nonnegativity constraint $\P \geq 0$, in addition to the marginal constraints $\P\ones_m=\a$ and $\P^\top \ones_n=\b$. Indeed, one can afford to ignore the nonnegativity constraint using entropy because that penalty incorporates a logarithmic term which forces the entries of $\P$ to stay in the positive orthant. This implies that the set of constraints is no longer affine and iterative Bregman projections do not converge anymore to the solution. 
+ただし、ペナルティ関数が$\P$の成分が非正の場合にも定義される場合（例えば2次正則化~\eqref{eq-quad-regul}がそうである）、周辺制約$\P\ones_m=\a$と$\P^\top \ones_n=\b$に加えて非負制約$\P \geq 0$を追加しなければならないことに注意する。実際、エントロピーを用いる場合は非負制約を無視できる。なぜならそのペナルティには$\P$の成分を正の象限に留める対数項が含まれているからである。これは制約集合がもはやアフィンではなくなり、反復ブレグマン射影が解に収束しなくなることを意味する。
 %
-A workaround is to use instead~\citeauthor{Dykstra83}'s algorithm~(\citeyear{Dykstra83,Dykstra85}) (see also \citealt{bauschke-lewis}), as detailed in~\citep{2015-benamou-cisc}. This algorithm uses projections according to the Bregman divergence associated to $R$. We refer to Remark~\ref{rem-bregman} for more details regarding Bregman divergences. An issue is that in general these projections cannot be computed explicitly. 
+回避策として、~\citeauthor{Dykstra83}のアルゴリズム~(\citeyear{Dykstra83,Dykstra85})（\citealt{bauschke-lewis}も参照）を用いることができ、~\citep{2015-benamou-cisc}で詳述されている。このアルゴリズムは$R$に関連するブレグマン・ダイバージェンスに従った射影を用いる。ブレグマン・ダイバージェンスの詳細については注意~\ref{rem-bregman}を参照されたい。問題は、一般にこれらの射影を明示的に計算できないことである。
 %
-For the squared norm~\eqref{eq-quad-regul}, this corresponds to computing the Euclidean projection on $(\Cc^1_\a,\Cc^2_\b)$ (with the extra positivity constraints), which can be solved efficiently using projection algorithms on simplices~\citep{condat2015fast}. The main advantage of the quadratic regularization over entropy is that it produces sparse approximation of the optimal coupling, yet this comes at the expense of a slower algorithm that cannot be parallelized as efficiently as Sinkhorn to compute several optimal transports simultaneously (as discussed in~\S\ref{rem-parallel}). Figure~\ref{fig-quad-regul} contrasts the approximation achieved by entropic and quadratic regularizers. 
+2乗ノルム~\eqref{eq-quad-regul}の場合、これは$(\Cc^1_\a,\Cc^2_\b)$へのユークリッド射影（追加の正値制約付き）の計算に対応し、単体上の射影アルゴリズム~\citep{condat2015fast}を用いて効率的に解くことができる。2次正則化のエントロピーに対する主な利点は、最適カップリングのスパースな近似を生成することであるが、これはアルゴリズムが遅くなり、複数の最適輸送を同時に計算する際にシンクホーンほど効率的に並列化できないという代償を伴う（\S\ref{rem-parallel}で議論）。図~\ref{fig-quad-regul}はエントロピー正則化と2次正則化による近似を対比している。
 \end{rem}
 %%%%%%%%%
 
@@ -471,54 +470,54 @@ For the squared norm~\eqref{eq-quad-regul}, this corresponds to computing the Eu
 {\color[rgb]{.45,.6,.15}$\varepsilon=10^3$} &
 {\color[rgb]{.3,.6,.3} $\varepsilon=10^2$} &
 {\color[rgb]{.15,.6,.45} $\varepsilon=10$} &
-{\color[rgb]{0,.6,.6} $\varepsilon=1$} 
+{\color[rgb]{0,.6,.6} $\varepsilon=1$}
 \end{tabular}
 \caption{\label{fig-quad-regul}
-Comparison of entropic regularization $R=-\HD$ (top row) and quadratic regularization $R=\norm{\cdot}^2+\iota_{\RR_+}$ (bottom row). 
-The $(\al,\be)$ marginals are the same as for Figure~\ref{fig-entropic-copula}.
+エントロピー正則化$R=-\HD$（上段）と2次正則化$R=\norm{\cdot}^2+\iota_{\RR_+}$（下段）の比較。
+周辺分布$(\al,\be)$は図~\ref{fig-entropic-copula}と同じ。
 }
 \end{figure}
 
 
 
 %%%%%%%%%%
-\begin{rem1}{Barycentric projection}\label{rem-barycenric-proj}
-	Consider again the setting of Remark~\ref{rem:entrop-reg} in which we use entropic regularization to approximate OT between discrete measures. The Kantorovich formulation in \eqref{eq-mk-discr} and its entropic regularization~\eqref{eq-regularized-discr} both yield a coupling $\P \in \CouplingsD(\a,\b)$. In order to define a transportation map $\T : \X \rightarrow \Y$, in the case where $\Y=\RR^\dim$, one can define the so-called barycentric projection map
+\begin{rem1}{重心射影}\label{rem-barycenric-proj}
+	注意~\ref{rem:entrop-reg}の設定を再び考える。ここでは離散測度間のOTを近似するためにエントロピー正則化を用いる。\eqref{eq-mk-discr}のカントロビッチ定式化とそのエントロピー正則化~\eqref{eq-regularized-discr}はともにカップリング$\P \in \CouplingsD(\a,\b)$を与える。$\Y=\RR^\dim$の場合に輸送写像$\T : \X \rightarrow \Y$を定義するために、いわゆる重心射影写像を定義できる
 	\eql{\label{eq-baryproj}
 		\T : x_i \in \X \longmapsto \frac{1}{\a_i} \sum_j \P_{i,j} y_j \in \Y,
 	}
-	where the input measures are discrete of the form~\eqref{eq-pair-discr}. Note that this map is only defined for points $(x_i)_i$ in the support of $\al$. 
+	ここで入力測度は~\eqref{eq-pair-discr}の形の離散測度である。この写像は$\al$の台の点$(x_i)_i$に対してのみ定義されることに注意する。
 	%
-	In the case where $\T$ is a permutation matrix (as detailed in Proposition~\ref{prop-matching-kanto}), then $\T$ is equal to a Monge map, and as $\varepsilon \rightarrow 0$, the barycentric projection progressively converges to that map if it is unique.
+	$\T$が置換行列である場合（命題~\ref{prop-matching-kanto}で詳述）、$\T$はモンジュ写像に等しく、$\varepsilon \rightarrow 0$のとき、重心射影はそれが一意であればその写像に漸近的に収束する。
 	%
-	For arbitrary (not necessarily discrete) measures, solving~\eqref{eq-mk-generic} or its regularized version~\eqref{eq-entropic-generic} defines a coupling $\pi \in \Couplings(\al,\be)$. Note that this coupling $\pi$ always has a density $\frac{\d\pi(x,y)}{\d\al(x)\d\be(y)}$ with respect to $\al \otimes \be$. A map can thus be retrieved by the formula
+	任意の（必ずしも離散でない）測度に対して、~\eqref{eq-mk-generic}またはその正則化版~\eqref{eq-entropic-generic}を解くことでカップリング$\pi \in \Couplings(\al,\be)$が定義される。このカップリング$\pi$は常に$\al \otimes \be$に関する密度$\frac{\d\pi(x,y)}{\d\al(x)\d\be(y)}$を持つことに注意する。したがって写像は次の式で復元できる
 	\eql{\label{eq-bary-proj}
 		\T : x \in \X \longmapsto \int_\Yy y \frac{\d\pi(x,y)}{\d\al(x)\d\be(y)} \d\be(y).
 	}
-	In the case where, for $\varepsilon=0$, $\pi$ is supported on the graph of the Monge map (see Remark~\ref{rem-exist-mongemap}), then using $\varepsilon>0$ produces a smooth approximation of this map.
-	%	
-	Such a barycentric projection is useful to apply the OT Monge map to solve problems in imaging; see Figure~\ref{fig-colors} for an application to color modification. It has also been used to compute approximations of principal geodesics in the space of probability measures endowed with the Wasserstein metric; see~\citep{SeguyCuturi}.
+	$\varepsilon=0$の場合に$\pi$がモンジュ写像のグラフ上に台を持つとき（注意~\ref{rem-exist-mongemap}を参照）、$\varepsilon>0$を用いるとこの写像の滑らかな近似が得られる。
+	%
+	このような重心射影は、OTモンジュ写像を画像処理の問題に適用するのに有用である；カラー変換への応用は図~\ref{fig-colors}を参照。また、ワッサースタイン計量を備えた確率測度の空間における主測地線の近似を計算するためにも使用されている；~\citep{SeguyCuturi}を参照。
 \end{rem1}
 %%%%%%%%%
 
 
 
 %%%%%%%%%%
-\begin{rem1}{Hilbert metric}
-As initially explained by~\citep{franklin1989scaling}, the global convergence analysis of Sinkhorn is greatly simplified using the Hilbert projective metric on $\RR_{+,*}^n$ (positive vectors), defined as
+\begin{rem1}{ヒルベルト計量}
+~\citep{franklin1989scaling}によって最初に説明されたように、シンクホーンの大域的収束解析は$\RR_{+,*}^n$（正ベクトル）上のヒルベルト射影計量を用いることで大幅に簡略化される。これは次のように定義される
 \eq{
 	\foralls (\uD,\uD') \in (\RR_{+,*}^n)^2, \quad
 	\Hilbert(\uD,\uD') \eqdef \log \umax{i,j} \frac{ \uD_i \uD_{j}' }{ \uD_{j} \uD_{i}'  }.
 }
-It can be shown to be a distance on the projective cone $\RR_{+,*}^n/\sim$, where $\uD \sim \uD'$ means that $\exists r>0, \uD=r\uD'$ (the vectors are equal up to rescaling, hence the name ``projective'').  
+これは射影錐$\RR_{+,*}^n/\sim$上の距離であることが示される。ここで$\uD \sim \uD'$は$\exists r>0, \uD=r\uD'$を意味する（ベクトルはスケーリングの不定性を除いて等しい、ゆえに「射影的」の名がある）。
 %
-This means that $\Hilbert$ satisfies the triangular inequality and $\Hilbert(\uD,\uD')=0$ if and only if $\uD \sim \uD'$. 
+すなわち$\Hilbert$は三角不等式を満たし、$\Hilbert(\uD,\uD')=0$となるのは$\uD \sim \uD'$の場合に限る。
 %
-This is a projective version of Hilbert's original distance on bounded open convex sets~\citep{hilbert1895gerade}.
+これはヒルベルトの元来の有界開凸集合上の距離~\citep{hilbert1895gerade}の射影版である。
 %
-The projective cone $\RR_{+,*}^n/\sim$ is a complete metric space for this distance. 
+射影錐$\RR_{+,*}^n/\sim$はこの距離に関して完備距離空間である。
 %
-By a logarithmic change of variables, the Hilbert metric on the rays of the positive cone is isometric to the variation seminorm (it is a norm between vectors that are defined up to an additive constant)
+対数変換により、正の錐の半直線上のヒルベルト計量は変動半ノルム（加法定数の不定性を持つベクトル間のノルム）と等長である
 \eql{\label{eq-hilbert-var}
 	\Hilbert(\uD,\uD') = \norm{\log(\uD)-\log(\uD')}_{\text{var}}
 }
@@ -527,13 +526,13 @@ By a logarithmic change of variables, the Hilbert metric on the rays of the posi
 	\norm{\fD}_{\text{var}} \eqdef (\max_i \fD_i) - (\min_i \fD_i).
 }
 %
-This variation seminorm is closely related to the $\ell^\infty$ norm since one always has $\norm{\fD}_{\text{var}}  \leq 2 \norm{\fD}_\infty$. If one imposes that $\fD_i=0$ for some fixed $i$, then a converse inequality also holds since $\norm{\fD}_\infty \leq \norm{\fD}_{\text{var}}$. These bounds are especially useful to analyze Sinkhorn convergence (see Remark~\ref{rem-global-conv-sinkh} below), because dual variables $\fD=\log(\uD)$ solving~\eqref{eq-dualsinkhorn-constraints2} are defined up to an additive constant, so that one can impose that $\fD_i=0$ for some $i$.
+この変動半ノルムは$\ell^\infty$ノルムと密接に関連しており、常に$\norm{\fD}_{\text{var}}  \leq 2 \norm{\fD}_\infty$が成り立つ。ある固定された$i$に対して$\fD_i=0$を課すと、$\norm{\fD}_\infty \leq \norm{\fD}_{\text{var}}$であるから逆向きの不等式も成り立つ。これらの評価はシンクホーンの収束解析に特に有用である（以下の注意~\ref{rem-global-conv-sinkh}を参照）。なぜなら~\eqref{eq-dualsinkhorn-constraints2}を解く双対変数$\fD=\log(\uD)$は加法定数の不定性を持つため、ある$i$に対して$\fD_i=0$を課すことができるからである。
 %
-The Hilbert metric was introduced independently by~\citep{birkhoff1957extensions} and~\citep{samelson1957perron}. They proved the following fundamental theorem, which shows that a positive matrix is a strict contraction on the cone of positive vectors.
+ヒルベルト計量は~\citep{birkhoff1957extensions}と~\citep{samelson1957perron}によって独立に導入された。彼らは以下の基本定理を証明した。これは正行列が正ベクトルの錐上で厳密な縮小写像であることを示している。
 
 
 \begin{thm}\label{thm-birkoff}
-	Let $\K \in \RR_{+,*}^{n \times m}$; then for $(\vD,\vD') \in (\RR_{+,*}^m)^2$
+	$\K \in \RR_{+,*}^{n \times m}$とする；すると$(\vD,\vD') \in (\RR_{+,*}^m)^2$に対して
 	\eq{
 		\Hilbert(\K \vD,\K \vD') \leq \la(\K) \Hilbert(\vD,\vD'),
 		\text{ where }
@@ -544,7 +543,7 @@ The Hilbert metric was introduced independently by~\citep{birkhoff1957extensions
 	}
 \end{thm}
 
-Figure~\ref{fig-h-m} illustrates this theorem. 
+図~\ref{fig-h-m}はこの定理を図解している。
 \end{rem1}
 
 
@@ -553,15 +552,15 @@ Figure~\ref{fig-h-m} illustrates this theorem.
 \includegraphics[width=.22\linewidth]{hilbert-metric/hilbert-metric} \qquad
 \includegraphics[width=.7\linewidth]{hilbert-metric/cones}\\
 \caption{\label{fig-h-m}
-Left: the Hilbert metric $\Hilbert$ is a distance over rays in cones (here positive vectors).
-Right: visualization of the contraction induced by the iteration of a positive matrix $\K$. 
+左：ヒルベルト計量$\Hilbert$は錐内の半直線上の距離である（ここでは正ベクトル）。
+右：正行列$\K$の反復によって誘導される縮小の可視化。
 }
 \end{figure}
 
 
 %%%%%%%%%%
-\begin{rem1}{Perron--Frobenius}
-A typical application of Theorem~\ref{thm-birkoff} is to provide a quantitative proof of the Perron--Frobenius theorem, which, as explained in Remark~\ref{rem-local-conv}, is linked to a local linearization of Sinkhorn's iterates. A matrix $\K \in \RR_+^{n \times n}$ with $\K^\top \ones_n = \ones_n$ maps $\simplex_n$ into $\simplex_n$. If furthermore $\K>0$, then according to Theorem~\ref{thm-birkoff}, it is strictly contractant for the metric $\Hilbert$, hence there exists a unique invariant probability distribution $p^\star \in \simplex_n$ with $\K p^\star=p^\star$. Furthermore, for any $p_0 \in \simplex_n$, $\Hilbert(\K^\ell p_0,p^\star) \leq \la(\K)^\ell \Hilbert(p_0,p^\star)$, \ie one has linear convergence of the iterates of the matrix toward $p^\star$. This is illustrated in Figure~\ref{fig-perron}.
+\begin{rem1}{ペロン-フロベニウス}
+定理~\ref{thm-birkoff}の典型的な応用は、ペロン-フロベニウスの定理の定量的な証明を与えることである。注意~\ref{rem-local-conv}で説明するように、これはシンクホーン反復の局所的な線形化に関連している。$\K^\top \ones_n = \ones_n$を満たす行列$\K \in \RR_+^{n \times n}$は$\simplex_n$を$\simplex_n$に写す。さらに$\K>0$であれば、定理~\ref{thm-birkoff}により計量$\Hilbert$に関して厳密に縮小的であるから、$\K p^\star=p^\star$を満たす一意の不変確率分布$p^\star \in \simplex_n$が存在する。さらに、任意の$p_0 \in \simplex_n$に対して$\Hilbert(\K^\ell p_0,p^\star) \leq \la(\K)^\ell \Hilbert(p_0,p^\star)$、すなわち行列の反復が$p^\star$に線形収束する。これは図~\ref{fig-perron}に図示されている。
 \end{rem1}
 %%%%%%%%%%
 
@@ -575,7 +574,7 @@ A typical application of Theorem~\ref{thm-birkoff} is to provide a quantitative 
 $\simplex_3$ & $\K \simplex_3$ & $\K^2 \simplex_3$ &  $\{ \K^\ell \simplex_3 \}_\ell$
 \end{tabular}
 \caption{\label{fig-perron}
-Evolution of $\K^\ell \simplex_3 \rightarrow \{p^\star\}$ the invariant probability distribution of $\K \in \RR_{+,*}^{3 \times 3}$ with $\K^\top \ones_3=\ones_3$.
+$\K^\top \ones_3=\ones_3$を満たす$\K \in \RR_{+,*}^{3 \times 3}$の不変確率分布$p^\star$への$\K^\ell \simplex_3 \rightarrow \{p^\star\}$の変化。
 }
 \end{figure}
 
@@ -583,70 +582,69 @@ Evolution of $\K^\ell \simplex_3 \rightarrow \{p^\star\}$ the invariant probabil
 
 
 %%%%%%%%%%
-\begin{rem11}{Global convergence}{rem-global-conv-sinkh}
-The following theorem, proved by~\citep{franklin1989scaling}, makes use of Theorem~\ref{thm-birkoff} to show the linear convergence of Sinkhorn's iterations.
+\begin{rem11}{大域的収束}{rem-global-conv-sinkh}
+次の定理は~\citep{franklin1989scaling}によって証明され、定理~\ref{thm-birkoff}を用いてシンクホーン反復の線形収束を示す。
 
 \begin{thm}
-	One has $(\it{\uD},\it{\vD}) \rightarrow (\uD^\star,\vD^\star)$ and
+	$(\it{\uD},\it{\vD}) \rightarrow (\uD^\star,\vD^\star)$であり
 	\eql{\label{eq-convlin-sinkh}
 		\Hilbert(\it{\uD}, \uD^\star) = O(\la(\K)^{2\ell}), \quad
 		\Hilbert(\it{\vD}, \vD^\star) = O(\la(\K)^{2\ell}).
 	}
-	One also has
+	また
 	\eql{\label{eq-convsinkh-control}
 		\begin{split}
 		\Hilbert(\it{\uD}, \uD^\star) &\leq \frac{\Hilbert( \it{\P}\ones_m,\a )}{1-\la(\K)^2}, \\
 		\Hilbert(\it{\vD}, \vD^\star) &\leq \frac{\Hilbert( \P^{(\ell),\top} \ones_n,\b )}{1-\la(\K)^2},
 		\end{split}
 	}
-	where we denoted $\it{\P} \eqdef \diag(\it{\uD}) \K \diag(\it{\vD})$. Last, one has
+	ここで$\it{\P} \eqdef \diag(\it{\uD}) \K \diag(\it{\vD})$と表した。最後に
 	\eql{\label{eq-convlin-sinkh-prim}
 		\|\log(\it{\P}) - \log(\P^\star)\|_\infty \leq \Hilbert(\it{\uD}, \uD^\star) + \Hilbert(\it{\vD}, \vD^\star),
 	}
-	where $\P^\star$ is the unique solution of~\eqref{eq-regularized-discr}. 
+	ここで$\P^\star$は~\eqref{eq-regularized-discr}の一意の解である。
 \end{thm}
 
 \begin{proof}
-	One notices that for any $(\vD,\vD') \in (\RR_{+,*}^m)^2$, one has 
-	\eq{	
+	任意の$(\vD,\vD') \in (\RR_{+,*}^m)^2$に対して
+	\eq{
 		\Hilbert(\vD,\vD') = \Hilbert(\vD/\vD',\ones_m) = \Hilbert(\ones_m/\vD,\ones_m/\vD').
 	}
-	This shows that
+	であることに注意する。これにより
 	\begin{align*}
 		\Hilbert(\itt{\uD},\uD^\star) &= \Hilbert\pa{ \frac{\a}{\K \it{\vD}}, \frac{\a}{\K \vD^\star} } \\
 		&= \Hilbert( \K \it{\vD}, \K \vD^\star ) \leq \la(\K) \Hilbert( \it{\vD}, \vD^\star ),
 	\end{align*}
-	where we used Theorem~\ref{thm-birkoff}. This shows~\eqref{eq-convlin-sinkh}.  One also has, using the triangular inequality,
+	ここで定理~\ref{thm-birkoff}を用いた。これにより~\eqref{eq-convlin-sinkh}が示される。また三角不等式を用いると
 	\begin{align*}
 		\Hilbert(\it{\uD},\uD^\star) &\leq \Hilbert(\itt{\uD},\it{\uD}) + \Hilbert(\itt{\uD},\uD^\star) \\
 		&\leq \Hilbert\pa{ \frac{\a}{\K \it{\vD}},\it{\uD} } + \la(\K)^2 \Hilbert(\it{\uD},\uD^\star) \\
-		&= \Hilbert\pa{ \a,\it{\uD} \odot  ( \K \it{\vD} ) } + \la(\K)^2 \Hilbert(\it{\uD},\uD^\star), 
+		&= \Hilbert\pa{ \a,\it{\uD} \odot  ( \K \it{\vD} ) } + \la(\K)^2 \Hilbert(\it{\uD},\uD^\star),
 	\end{align*}
-	which gives the first part of~\eqref{eq-convsinkh-control} since 
-	$\it{\uD} \odot  ( \K \it{\vD} ) = \it{\P}\ones_m$ (the second one being similar).
+	$\it{\uD} \odot  ( \K \it{\vD} ) = \it{\P}\ones_m$であるから、~\eqref{eq-convsinkh-control}の第一部分が得られる（第二部分も同様）。
 	%
-	The proof of~\eqref{eq-convlin-sinkh-prim} follows from~\citep[Lem. 3]{franklin1989scaling}.
+	~\eqref{eq-convlin-sinkh-prim}の証明は~\citep[Lem. 3]{franklin1989scaling}に従う。
 \end{proof}
- 
-The bound~\eqref{eq-convsinkh-control} shows that some error measures on the marginal constraints violation, for instance, $\| \it{\P} \ones_m - \a \|_1$ and $\|\transp{\it{\P}} \ones_n - \b \|_1$, are useful stopping criteria to monitor the convergence.
-%
-Note that thanks to~\eqref{eq-hilbert-var}, these Hilbert metric rates on the scaling variable $(\it{\uD},\it{\vD})$ give a linear rate on the dual variables $(\it{\fD},\it{\gD}) \eqdef (\varepsilon\log(\it{\uD}),\varepsilon\log(\it{\vD}))$ for the variation norm $\norm{\cdot}_{\text{var}}$.
 
-Figure~\ref{fig-sinkhorn-convergence}, bottom row, highlights this linear rate on the constraint violation and shows how this rate degrades as $\varepsilon\rightarrow 0$. 
+評価~\eqref{eq-convsinkh-control}は、周辺制約違反に関するある種の誤差測度、例えば$\| \it{\P} \ones_m - \a \|_1$と$\|\transp{\it{\P}} \ones_n - \b \|_1$が、収束を監視するための有用な停止基準であることを示している。
 %
-These results are proved in~\citep{franklin1989scaling} and are tightly connected to nonlinear Perron--Frobenius theory~\citep{lemmens2012nonlinear}. Perron--Frobenius theory corresponds to the linearization of the iterations; see~\eqref{eq-linearized-sinkh}. This convergence analysis is extended by~\citep{linial1998deterministic}, who show that each iteration of Sinkhorn increases the permanence of the scaled coupling matrix. 
+~\eqref{eq-hilbert-var}のおかげで、スケーリング変数$(\it{\uD},\it{\vD})$に関するこれらのヒルベルト計量の収束率は、双対変数$(\it{\fD},\it{\gD}) \eqdef (\varepsilon\log(\it{\uD}),\varepsilon\log(\it{\vD}))$に対する変動ノルム$\norm{\cdot}_{\text{var}}$での線形収束率を与える。
+
+図~\ref{fig-sinkhorn-convergence}の下段は、制約違反に関するこの線形収束率を強調し、$\varepsilon\rightarrow 0$でこの収束率がどのように悪化するかを示している。
+%
+これらの結果は~\citep{franklin1989scaling}で証明されており、非線形ペロン-フロベニウス理論~\citep{lemmens2012nonlinear}と密接に関連している。ペロン-フロベニウス理論は反復の線形化に対応する；~\eqref{eq-linearized-sinkh}を参照。この収束解析は~\citep{linial1998deterministic}によって拡張され、シンクホーンの各反復がスケーリングされたカップリング行列のパーマネントを増加させることが示された。
 \end{rem11}
 %%%%%%%%%%
 
 
 
 %%%%%%%%%%
-\begin{rem1}{Local convergence}\label{rem-local-conv}
-The global linear rate~\eqref{eq-convlin-sinkh-prim} is often quite pessimistic, typically in $\X=\Y=\RR^d$ for cases where there exists a Monge map when $\varepsilon=0$ (see Remark~\ref{rem-monge2}). The global rate is in contrast rather sharp for more difficult situations where the cost matrix $\C$ is close to being random, and in these cases, the rate scales exponentially bad with $\varepsilon$, $1-\la(\K) \sim e^{-1/\varepsilon}$.
+\begin{rem1}{局所収束}\label{rem-local-conv}
+大域的線形収束率~\eqref{eq-convlin-sinkh-prim}はしばしばかなり悲観的であり、特に$\varepsilon=0$のときにモンジュ写像が存在する場合の$\X=\Y=\RR^d$においてそうである（注意~\ref{rem-monge2}を参照）。大域的収束率は、コスト行列$\C$がランダムに近いより困難な状況ではむしろ鋭く、これらの場合、収束率は$\varepsilon$に関して指数的に悪化し、$1-\la(\K) \sim e^{-1/\varepsilon}$となる。
 %
-To obtain a finer asymptotic analysis of the convergence (\eg if one is interested in a high-precision solution and performs a large number of iterations), one usually rather studies the local convergence rate. 
+より精密な漸近的収束解析を得るために（例えば高精度の解に関心があり、多数の反復を行う場合）、通常は局所収束率を研究する。
 %
-One can write a Sinkhorn update as iterations of a fixed-point map $\itt{\fD} = \Phi( \it{\fD} )$, where
+シンクホーンの更新を不動点写像$\itt{\fD} = \Phi( \it{\fD} )$の反復として書くことができる。ここで
 \eq{
 	\Phi \eqdef \Phi_2 \odot \Phi_1
 	\qwhereq
@@ -655,18 +653,18 @@ One can write a Sinkhorn update as iterations of a fixed-point map $\itt{\fD} = 
 		\Phi_2(\gD) = \varepsilon \log \K ( e^{\gD/\varepsilon} ) - \log(\a).
 	}
 }
-For optimal $(\fD,\gD)$ solving~\eqref{eq-dual-formulation}, denoting $\P = \diag(e^{\fD/\varepsilon}) \K \diag(e^{\gD/\varepsilon})$ the optimal coupling solving~\eqref{eq-regularized-discr}, one has the following Jacobian:
+~\eqref{eq-dual-formulation}を解く最適な$(\fD,\gD)$に対して、$\P = \diag(e^{\fD/\varepsilon}) \K \diag(e^{\gD/\varepsilon})$を~\eqref{eq-regularized-discr}を解く最適カップリングとすると、次のヤコビアンが得られる：
 \eql{\label{eq-linearized-sinkh}
 	\partial \Phi(\fD) = \diag(\a)^{-1} \odot \P \odot \diag(\b)^{-1} \odot \transp{\P}.
-} 
-This Jacobian is a positive matrix with $\partial \Phi(\fD) \ones_n = \ones_n$, and thus by the Perron--Frobenius theorem, it has a single dominant eigenvector $\ones_m$ with associated eigenvalue $1$. Since $\fD$ is defined up to a constant, it is actually the second eigenvalue $1-\kappa<1$ which governs the local linear rate, and this shows that for $\ell$ large enough, 
+}
+このヤコビアンは$\partial \Phi(\fD) \ones_n = \ones_n$を満たす正行列であり、したがってペロン-フロベニウスの定理により、固有値$1$に対応する支配的な固有ベクトル$\ones_m$を1つ持つ。$\fD$は定数の不定性を持つため、実際には第2固有値$1-\kappa<1$が局所的な線形収束率を支配し、十分大きな$\ell$に対して
 \eq{
 	\|\it{\fD}-\fD \| = O( (1-\kappa)^\ell ).
-} 
+}
 %
-Numerically, in ``simple cases'' (such as when there exists a smooth Monge map when $\varepsilon=0$), this rate scales like $\kappa \sim \varepsilon$. 
+数値的には、「単純な場合」（例えば$\varepsilon=0$のとき滑らかなモンジュ写像が存在する場合）において、この収束率は$\kappa \sim \varepsilon$のようにスケーリングする。
 %
-We refer to~\citep{knight2008sinkhorn} for more details in the bistochastic (assignment) case.
+二重確率的（割当）場合の詳細については~\citep{knight2008sinkhorn}を参照されたい。
 \end{rem1}
 %%%%%%%%%%
 
@@ -676,90 +674,91 @@ We refer to~\citep{knight2008sinkhorn} for more details in the bistochastic (ass
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Speeding Up Sinkhorn's Iterations}
+\section{シンクホーン反復の高速化}
 
-The main computational bottleneck of Sinkhorn's iterations is the vector-matrix multiplication against kernels $\K$ and $\K^\top$, with complexity $O(nm)$ if implemented naively. We now detail several important cases where the complexity can be improved significantly.
+シンクホーン反復の主な計算ボトルネックは、カーネル$\K$と$\K^\top$に対するベクトル-行列積であり、単純に実装すると計算量は$O(nm)$である。以下では、計算量を大幅に改善できるいくつかの重要なケースを詳述する。
 
 %%%%%%%
-\begin{rem}[Parallel and GPU friendly computation]\label{rem-parallel} The simplicity of Sinkhorn's algorithm yields an extremely efficient approach to compute simultaneously several regularized Wasserstein distances between pairs of histograms. 
-Let $N$ be an integer, $\a_1,\ldots,\a_N$ be histograms in $\simplex_n$, and $\b_1,\ldots,\b_N$ be histograms in $\Sigma_m$. 
-We seek to compute all $N$ approximate distances $\MKD_\C^\varepsilon(\a_1,\b_1),\dots,\MKD_\C^\varepsilon(\a_N,\b_N)$. 
-In that case, writing $\A=[\a_1,\dots,\a_N]$ and $\B=[\b_1,\dots,\b_N]$ for the $n\times N$ and $m\times N$ matrices storing all histograms, one can notice that all Sinkhorn iterations for all these $N$ pairs can be carried out in parallel, by setting, for instance,
-\eql{\label{eq-sinkhorn-par}	
+\begin{rem}[並列かつGPU向きの計算]\label{rem-parallel} シンクホーンアルゴリズムの簡潔さは、ヒストグラムのペア間の複数の正則化ワッサースタイン距離を同時に計算するための極めて効率的なアプローチを提供する。
+$N$を整数とし、$\a_1,\ldots,\a_N$を$\simplex_n$のヒストグラム、$\b_1,\ldots,\b_N$を$\Sigma_m$のヒストグラムとする。
+すべての$N$個の近似距離$\MKD_\C^\varepsilon(\a_1,\b_1),\dots,\MKD_\C^\varepsilon(\a_N,\b_N)$を計算したい。
+この場合、すべてのヒストグラムを格納する$n\times N$と$m\times N$の行列を$\A=[\a_1,\dots,\a_N]$と$\B=[\b_1,\dots,\b_N]$と書くと、これら$N$ペアに対するすべてのシンクホーン反復は、例えば次のように設定することで並列に実行できる
+\eql{\label{eq-sinkhorn-par}
 	\itt{\UD} \eqdef \frac{\A}{\K \it{\VD}}
 	\qandq
 	\itt{\VD} \eqdef \frac{\B}{\transp{\K}\itt{\UD}},
 }
-initialized with $\init{\VD} = \ones_{m \times N}$. Here $\frac{\cdot}{\cdot}$ corresponds to the entrywise division of matrices.
-One can further check that upon convergence of $\VD$ and $\UD$, the (row) vector of regularized distances simplifies to
+初期値は$\init{\VD} = \ones_{m \times N}$である。ここで$\frac{\cdot}{\cdot}$は行列の成分ごとの除算に対応する。
+$\VD$と$\UD$の収束後、正則化距離の（行）ベクトルは次のように簡略化されることが確認できる
 $$ \transp{\ones_n} (    \UD\odot \log \UD \odot (   (\K\odot \C) \VD) +  \UD\odot(   (\K\odot \C)(\VD\odot \log \VD)    ) ) \in\RR^{N}.$$
-Note that the basic Sinkhorn iterations described in Equation~\eqref{eq-sinkhorn} are intrinsically GPU friendly, since they only consist in matrix-vector products, and this was exploited, for instance, to solve matching problems in~\citet{slomp2011gpu}). However, the matrix-matrix operations presented in Equation~\eqref{eq-sinkhorn-par} present even better opportunities for parallelism, which explains the success of Sinkhorn's algorithm to compute OT distances between histograms at large scale.
+式~\eqref{eq-sinkhorn}で記述される基本的なシンクホーン反復は本質的にGPU向きであることに注意する。なぜならそれらは行列-ベクトル積のみから構成されるからであり、これは例えば~\citet{slomp2011gpu}でマッチング問題を解くために利用された。しかし、式~\eqref{eq-sinkhorn-par}で示される行列-行列演算はさらに良い並列化の機会を提供し、これが大規模なヒストグラム間のOT距離を計算する際のシンクホーンアルゴリズムの成功を説明している。
 \end{rem}
 %%%%%%%
 
 %%%%%%%%%
-\begin{rem}[Speed-up for separable kernels]\label{rem-separable} We consider in this section an important particular case for which the complexity of each Sinkhorn iteration can be significantly reduced. That particular case happens when each index $i$ and $j$ considered in the cost-matrix can be described as a $d$-uple taken in the cartesian product of $d$ finite sets $\range{n_1},\dots,\range{n_d}$,
+\begin{rem}[分離可能カーネルに対する高速化]\label{rem-separable} 本節では、各シンクホーン反復の計算量を大幅に削減できる重要な特殊ケースを考える。このケースは、コスト行列で考慮される各添字$i$と$j$が$d$個の有限集合$\range{n_1},\dots,\range{n_d}$の直積から取られた$d$-組として記述できる場合に発生する
 $$i=(i_k)_{k=1}^d, j=(j_k)_{k=1}^d \in \range{n_1}\times\dots\times\range{n_d}.$$
-In that setting, if the cost $\C_{ij}$ between indices $i$ and $j$ is additive along these sub-indices, namely if there exists $d$ matrices $\C^1,\dots,\C^d$, each of respective size $n_1\times n_,\dots,n_d\times n_d$, such that
+この設定において、添字$i$と$j$の間のコスト$\C_{ij}$がこれらの部分添字に沿って加法的である場合、すなわちそれぞれサイズ$n_1\times n_,\dots,n_d\times n_d$の$d$個の行列$\C^1,\dots,\C^d$が存在して
 $$\C_{ij} = \sum_{k=1}^d \C^k_{i_k,j_k},$$
-then one obtains as a direct consequence that the kernel appearing in the Sinkhorn iterations has a separable multiplicative structure,
+となる場合、直接的な帰結として、シンクホーン反復に現れるカーネルは分離可能な乗法構造を持つ
 \eql{\label{eq-speedup-separable}
 \K_{i,j} = \prod_{k=1}^d \K^k_{i_k,j_k}.
 }
-Such a separable multiplicative structure allows for a very fast (exact) evaluation of $\K \uD$. Indeed, instead of instantiating $\K$ as a matrix of size $n\times n$, which would have a prohibitive size since $n=\prod_k n_k$ is usually exponential in the dimension $d$, one can instead recover $\K\uD$ by simply applying $\K^k$ along each ``slice'' of $\uD$. If $n=m$, the complexity reduces to $O(n^{1+1/d})$ in place of $O(n^2)$.
+このような分離可能な乗法構造により、$\K \uD$の非常に高速な（厳密な）評価が可能になる。実際、$\K$をサイズ$n\times n$の行列として実体化する代わりに（$n=\prod_k n_k$は通常次元$d$に関して指数的であるため禁止的なサイズとなる）、各「スライス」に沿って$\uD$に$\K^k$を適用するだけで$\K\uD$を復元できる。$n=m$の場合、計算量は$O(n^2)$の代わりに$O(n^{1+1/d})$に減少する。
 %
 
-An important example of this speed-up arises when $\Xx=\Yy=[0,1]^d$; the ground cost is the $q$-th power of the $q$-norm, $$\c(x,y)=\norm{x-y}^q_q=\sum_{i=1}^d |x_i-y_i|^q, \; q>0;$$ and the space is discretized using a regular grid in which only points $x_i = (i_1/n_1,\ldots,i_d/n_d)$ for $i=(i_1,\dots,i_d)\in\range{n_1}\times \dots\times\range{n_d}$ are considered. In that case a multiplication by $\K$ can be carried out more efficiently by applying each 1-D $n_k\times n_k$ convolution matrix $$\K^k = \begin{bmatrix}\exp(-\left|\frac{r-s}{n_k}\right|^q/ \varepsilon)\end{bmatrix}_{1 \leq r,s\leq n_k}$$ to $\uD$ reshaped as a tensor whose first dimension has been permuted to match the $k$-th set of indices.
+この高速化の重要な例は、$\Xx=\Yy=[0,1]^d$で基底コストが$q$-ノルムの$q$乗、$$\c(x,y)=\norm{x-y}^q_q=\sum_{i=1}^d |x_i-y_i|^q, \; q>0;$$であり、空間が正則格子で離散化されて$x_i = (i_1/n_1,\ldots,i_d/n_d)$（$i=(i_1,\dots,i_d)\in\range{n_1}\times \dots\times\range{n_d}$）の点のみが考慮される場合に生じる。この場合、$\K$との積は各1次元$n_k\times n_k$畳み込み行列$$\K^k = \begin{bmatrix}\exp(-\left|\frac{r-s}{n_k}\right|^q/ \varepsilon)\end{bmatrix}_{1 \leq r,s\leq n_k}$$を、$k$番目の添字集合に一致するように第1次元を置換したテンソルとして再形成した$\uD$に適用することで、より効率的に実行できる。
 %
-For instance, if $d=2$ (planar case) and $q=2$ (2-Wasserstein, resulting in Gaussian convolutions), histograms $\a$ and as a consequence Sinkhorn multipliers $\uD$ can be instantiated as $n_1\times n_2$ matrices. We write $\mathbf{U}$ to underline the fact that the multiplier $\uD$ is reshaped as a $n_1\times n_2$ matrix, rather than a vector of length $n_1n_2$. Then, computing $\K\uD$, which would naively require $(n_1 n_2)^2$ operations with a naive implementation, can be obtained by applying two 1-D convolutions separately, as $$(\K^2(\K^1 \mathbf{U})^T)^T=\K^1\mathbf{U}\K^2,$$ to recover a $n_1\times n_2$ matrix in $(n_1^2)n_2+n_1(n_2^2)$ operations instead of $n_1^2n_2^2$ operations. Note that this example agrees with the exponent $(1+1/d)$ given above. With larger $d$, one needs to apply these very same 1-D convolutions to each slice of $\uD$ (reshaped as a tensor of suitable size) an operation which is extremely efficient on GPUs.
+例えば、$d=2$（平面の場合）かつ$q=2$（2-ワッサースタイン、ガウス畳み込みに帰着）の場合、ヒストグラム$\a$、したがってシンクホーン乗数$\uD$は$n_1\times n_2$の行列として表現できる。乗数$\uD$が長さ$n_1n_2$のベクトルではなく$n_1\times n_2$の行列として再形成されていることを強調するために$\mathbf{U}$と書く。すると、単純な実装では$(n_1 n_2)^2$演算を必要とする$\K\uD$の計算は、2つの1次元畳み込みを個別に適用して$$(\K^2(\K^1 \mathbf{U})^T)^T=\K^1\mathbf{U}\K^2,$$として得ることができ、$n_1^2n_2^2$演算の代わりに$(n_1^2)n_2+n_1(n_2^2)$演算で$n_1\times n_2$行列が復元される。この例は上で与えた指数$(1+1/d)$と一致することに注意する。$d$がより大きい場合、（適切なサイズのテンソルとして再形成された）$\uD$の各スライスにこれと全く同じ1次元畳み込みを適用する必要があるが、この演算はGPU上で極めて効率的である。
 %
 
-This important observations underlies many of the practical successes found when applying optimal transport to shape data in 2-D and 3-D, as highlighted in~\citep{2015-solomon-siggraph,2016-bonneel-barycoord}, in which distributions supported on grids of sizes as large as $200^3=8 \times 10^6$ are handled.
+この重要な観察は、2次元や3次元の形状データに最適輸送を適用する際の多くの実用的な成功の基盤となっている。~\citep{2015-solomon-siggraph,2016-bonneel-barycoord}で強調されているように、$200^3=8 \times 10^6$もの大きさの格子上に台を持つ分布が扱われている。
 \end{rem}
 %%%%%%%%%
 
 %%%%%%%%%
-\begin{rem}[Approximated convolutions]\label{rem-convol-sinkh}
-The main computational bottleneck of Sinkhorn's iterations~\eqref{eq-sinkhorn} lies in the multiplication of a vector by $\K$ or by its adjoint. Besides using separability~\eqref{eq-speedup-separable}, it is also possible to exploit other special structures in the kernel. The simplest case is for translation invariant kernels $\K_{i,j} = k_{i-j}$, which is typically the case when discretizing the measure on a fixed uniform grid in Euclidean space $\X=\RR^\dim$. Then $\K \vD = k \star \vD$ is a convolution, and there are several algorithms to approximate the convolution in nearly linear time. 
+\begin{rem}[近似畳み込み]\label{rem-convol-sinkh}
+シンクホーン反復~\eqref{eq-sinkhorn}の主な計算ボトルネックは、$\K$またはその随伴によるベクトルの乗算にある。分離性~\eqref{eq-speedup-separable}を利用する以外にも、カーネルの他の特殊構造を利用することが可能である。最も単純なケースは平行移動不変カーネル$\K_{i,j} = k_{i-j}$であり、これはユークリッド空間$\X=\RR^\dim$の固定された一様格子上で測度を離散化する場合に典型的である。このとき$\K \vD = k \star \vD$は畳み込みであり、ほぼ線形時間で畳み込みを近似するいくつかのアルゴリズムが存在する。
 %
-The most usual one is by Fourier transform $\Ff$, assuming for simplicity periodic boundary conditions, because $\Ff(k \star \vD)=\Ff(k) \odot \Ff(\vD)$. This leads, however, to unstable computations and is often unacceptable for small $\varepsilon$.
+最も一般的なのはフーリエ変換$\Ff$による方法であり、簡単のため周期境界条件を仮定すると、$\Ff(k \star \vD)=\Ff(k) \odot \Ff(\vD)$であるからである。しかしこれは不安定な計算につながり、小さな$\varepsilon$に対してはしばしば許容できない。
 %
-Another popular way to speed up computation is by approximating the convolution using a succession of autoregressive filters, using, for instance, the Deriche filtering method~\citet{deriche1993recursively}. We refer to~\citep{getreuer2013survey} for a comparison of various fast filtering methods.
+計算を高速化するもう1つの一般的な方法は、例えばデリシュフィルタリング法~\citet{deriche1993recursively}を用いて、自己回帰フィルターの連続適用により畳み込みを近似することである。様々な高速フィルタリング法の比較については~\citep{getreuer2013survey}を参照されたい。
 \end{rem}
 %%%%%%%%%
 
 %%%%%%%%%
-\begin{rem}[Geodesic in heat approximation]\label{rem-geod-heat}
-For nonplanar domains, the kernel $\K$ is not a convolution, but in the case where the cost is $\C_{i,j}=d_\Mm(x_i,y_j)^p$ where $d_\Mm$ is a geodesic distance on a surface $\Mm$ (or a more general manifold), it is also possible to perform fast approximations of the application of $\K=e^{-\frac{d_\Mm}{\varepsilon}}$ to a vector. Indeed, \citeauthor{varadhan-1967}'s formulas~\citeyearpar{varadhan-1967} assert that this kernel is close to the Laplacian kernel (for $p=1$) and the heat kernel (for $p=2$). 
+\begin{rem}[熱近似における測地線]\label{rem-geod-heat}
+非平面領域では、カーネル$\K$は畳み込みではないが、コストが$\C_{i,j}=d_\Mm(x_i,y_j)^p$（$d_\Mm$は曲面$\Mm$（またはより一般的な多様体）上の測地線距離）の場合、$\K=e^{-\frac{d_\Mm}{\varepsilon}}$のベクトルへの適用の高速近似を行うことも可能である。実際、\citeauthor{varadhan-1967}の公式~\citeyearpar{varadhan-1967}は、このカーネルがラプラシアンカーネル（$p=1$の場合）および熱核（$p=2$の場合）に近いことを主張している。
 %
-The first formula of Varadhan states
+ヴァラダンの第1公式は次のように述べる
 \eql{\label{eq-varadhan-1}
 	-\frac{\sqrt{t}}{2} \log( \Pp_t(x,y) ) = d_\Mm(x,y) + o(t)
 	\qwhereq
 	\Pp_t \eqdef (\Id - t\De_{\Mm})^{-1},
 }
-where $\De_{\Mm}$ is the Laplace--Beltrami operator associated to the manifold $\Mm$ (which is negative semidefinite), so that 
-$\Pp_t$ is an integral kernel and $g = \int_\Mm \Pp_t(x,y) f(y) \d y$ is the solution of $g - t \De_{\Mm} g = f$. 
+ここで$\De_{\Mm}$は多様体$\Mm$に関連するラプラス-ベルトラミ作用素（半負定値）であり、
+$\Pp_t$は積分核であり、$g = \int_\Mm \Pp_t(x,y) f(y) \d y$は$g - t \De_{\Mm} g = f$の解である。
 %
-The second formula of Varadhan states
+ヴァラダンの第2公式は次のように述べる
 \eql{\label{eq-varadhan-2}
 	\sqrt{ -4 t \log( \Hh_t(x,y) ) } = d_\Mm(x,y) + o(t),
 }
-where  $\Hh_t$ is the integral kernel defined so that $g_t = \int_\Mm \Hh_t(x,y) f(y) \d y$ is the solution at time $t$ of the heat equation
+ここで$\Hh_t$は、$g_t = \int_\Mm \Hh_t(x,y) f(y) \d y$が時刻$t$における熱方程式
 \eq{
 	\frac{\partial g_t(x)}{\partial t} = (\Delta_\Mm g_t)(x).
 }
-The convergence in these formulas~\eqref{eq-varadhan-1} and~\eqref{eq-varadhan-2} is uniform on compact manifolds.
+の解であるように定義された積分核である。
+公式~\eqref{eq-varadhan-1}と~\eqref{eq-varadhan-2}の収束はコンパクト多様体上で一様である。
 %
-Numerically, the domain $\Mm$ is discretized (for instance, using finite elements) and $\De_\Mm$ is approximated by a discrete Laplacian matrix $L$. A typical example is when using piecewise linear finite elements, so that $L$ is the celebrated cotangent Laplacian (see~\citep{botsch-2010} for a detailed account for this construction).
+数値的には、領域$\Mm$は離散化され（例えば有限要素法を用いて）、$\De_\Mm$は離散ラプラシアン行列$L$で近似される。典型的な例は区分線形有限要素を用いる場合であり、$L$は有名なコタンジェントラプラシアンとなる（この構成の詳細については~\citep{botsch-2010}を参照）。
 %
-These formulas can be used to approximate efficiently the multiplication by the Gibbs kernel $\K_{i,j}=e^{-\frac{d(x_i,y_j)^p}{\varepsilon}}$.
+これらの公式はギブスカーネル$\K_{i,j}=e^{-\frac{d(x_i,y_j)^p}{\varepsilon}}$との積を効率的に近似するために使用できる。
 %
-Equation~\eqref{eq-varadhan-1} suggests, for the case $p=1$, to use $\varepsilon=\frac{\sqrt{t}}{2}$ and to replace the multiplication by $\K$ by the multiplication by $(\Id-t L)^{-1}$, which necessitates the resolution of a positive symmetric linear system.
+式~\eqref{eq-varadhan-1}は、$p=1$の場合に$\varepsilon=\frac{\sqrt{t}}{2}$とし、$\K$との積を$(\Id-t L)^{-1}$との積で置き換えることを示唆する。これには正定値対称線形系の解法が必要である。
 %
-Equation~\eqref{eq-varadhan-2}, coupled with $R$ steps of implicit Euler for the stable resolution of the heat flow, suggests for $p=2$ to trade the multiplication by $\K$ by the multiplication by $(\Id-\frac{t}{R} L)^{-R}$ for $4 t=\varepsilon$, which in turn necessitates $R$ resolutions of linear systems. Fortunately, since these linear systems are supposed to be solved at each Sinkhorn iteration, one can solve them efficiently by precomputing a sparse Cholesky factorization. By performing a reordering of the rows and columns of the matrix~\citep{george1989evolution}, one obtains a nearly linear sparsity for 2-D manifolds and thus each Sinkhorn iteration has linear complexity (the performance degrades with the dimension of the manifold). 
+式~\eqref{eq-varadhan-2}は、熱流の安定的な解法のための陰的オイラー法の$R$ステップと組み合わせると、$p=2$の場合に$\K$との積を$4 t=\varepsilon$として$(\Id-\frac{t}{R} L)^{-R}$との積で置き換えることを示唆する。これには$R$回の線形系の解法が必要である。幸い、これらの線形系は各シンクホーン反復で解かれるため、スパースなコレスキー分解を事前に計算することで効率的に解ける。行列の行と列の並べ替え~\citep{george1989evolution}を行うことで、2次元多様体に対してほぼ線形のスパース性が得られ、各シンクホーン反復は線形計算量を持つ（性能は多様体の次元とともに低下する）。
 %
-The use of Varadhan's formula to approximate geodesic distances was initially proposed in~\citep{Crane2013} and its use in conjunction with Sinkhorn iterations in~\citep{2015-solomon-siggraph}.
+ヴァラダンの公式を測地線距離の近似に使用することは~\citep{Crane2013}で最初に提案され、シンクホーン反復との併用は~\citep{2015-solomon-siggraph}で提案された。
 %
 \todoK{Maybe add some pedagological figure illustrating the method.}
 \end{rem}
@@ -767,82 +766,83 @@ The use of Varadhan's formula to approximate geodesic distances was initially pr
 
 
 %%%%%%%%%%
-\begin{rem}[Extrapolation acceleration]
-	Since the Sinkhorn algorithm is a fixed-point algorithm (as shown in Remark~\ref{rem-local-conv}), one can use standard linear or even nonlinear extrapolation schemes to enhance the conditioning of the fixed-point mapping near the solution, and improve the linear convergence rate. 
+\begin{rem}[外挿加速]
+	シンクホーンアルゴリズムは（注意~\ref{rem-local-conv}で示されたように）不動点アルゴリズムであるため、標準的な線形または非線形外挿スキームを用いて解の近傍での不動点写像の条件数を改善し、線形収束率を向上させることができる。
 	%
-	This is similar to the successive overrelaxation  method (see, for instance,~\citep{hadjidimos2000successive}), so that the local linear rate of convergence is improved from $O((1-\kappa)^\ell)$ to $O((1-\sqrt{\kappa})^\ell)$ for some $\kappa>0$ (see Remark~\ref{rem-local-conv}). 
+	これは逐次過緩和法（例えば~\citep{hadjidimos2000successive}を参照）と類似しており、局所的な線形収束率はある$\kappa>0$に対して$O((1-\kappa)^\ell)$から$O((1-\sqrt{\kappa})^\ell)$に改善される（注意~\ref{rem-local-conv}を参照）。
 	%
-	We refer to~\citep{2016-peyre-qot} for more details\todoK{citer papier recent Lenaic}.
+	詳細については~\citep{2016-peyre-qot}を参照されたい\todoK{citer papier recent Lenaic}。
 \end{rem}
 %%%%%%%%%%
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Stability and Log-Domain Computations}
+\section{安定性と対数領域での計算}
 
-As briefly mentioned in Remark~\ref{rem-stability}, the Sinkhorn algorithm suffers from numerical overflow when the regularization parameter $\epsilon$ is small compared to the entries of the cost matrix $\C$. This concern can be alleviated to some extent by carrying out computations in the log domain. The relevance of this approach is made more clear by considering the dual problem associated to~\eqref{eq-regularized-discr}, in which these log-domain computations arise naturally.
+注意~\ref{rem-stability}で簡単に述べたように、シンクホーンアルゴリズムは正則化パラメータ$\epsilon$がコスト行列$\C$の成分に比べて小さい場合に数値的なオーバーフローを起こす。この懸念は計算を対数領域で行うことである程度軽減できる。このアプローチの妥当性は、~\eqref{eq-regularized-discr}に関連する双対問題を考えることでより明確になる。この双対問題では対数領域での計算が自然に現れる。
 
 \begin{prop}
-One has
+次が成り立つ
 \eql{\label{eq-dual-formulation}
 	\MKD_\C^\varepsilon(\a,\b) = \umax{\fD \in \RR^n,\gD \in \RR^m}
-		 \dotp{\fD}{\a} + \dotp{\gD}{\b} 
+		 \dotp{\fD}{\a} + \dotp{\gD}{\b}
 		% - \varepsilon\sum_{i,j} e^{ \frac{\fD_i+\gD_j-\C_{i,j}}{\varepsilon} }.
 		- \varepsilon \dotp{e^{\fD/\varepsilon} }{ \K e^{\gD/\varepsilon}}.
-} 
+}
 %
-The optimal $(\fD,\gD)$ are linked to scalings $(\uD,\vD)$ appearing in~\eqref{eq-scaling-form} through 
+最適な$(\fD,\gD)$は~\eqref{eq-scaling-form}に現れるスケーリング$(\uD,\vD)$と次のように関連する
 \eql{\label{eq-entropy-pd}
 	(\uD,\vD)=(e^{\fD/\varepsilon},e^{\gD/\varepsilon}).
 }
 \end{prop}
 
 \begin{proof}
-We start from the end of the proof of Proposition~\ref{prop-regularized-primal}, which links the optimal primal solution $\P$ and dual multipliers $\fD$ and $\gD$ for the marginal constraints as 
+命題~\ref{prop-regularized-primal}の証明の終わりから出発する。そこでは最適な主問題の解$\P$と周辺制約に対する双対乗数$\fD$と$\gD$が次のように関連づけられる
 \eq{
 	\label{eq-prim-dual-ent}\P_{i,j}=e^{\fD_i/\varepsilon}e^{-\C_{i,j}/\varepsilon}e^{\gD_j/\varepsilon}.
-} 
-Substituting in the Lagrangian $\Lag(\P,\fD,\gD)$ of Equation~\eqref{eq-sinkhorn-lagrangian} the optimal $\P$ as a function of $\fD$ and $\gD$, we obtain that the Lagrange dual function equals
+}
+式~\eqref{eq-sinkhorn-lagrangian}のラグランジアン$\Lag(\P,\fD,\gD)$に、$\fD$と$\gD$の関数としての最適な$\P$を代入すると、ラグランジュ双対関数は次に等しくなる
 \eql{\label{eq-lagrange-dual-naive}
 	\fD,\gD \mapsto \dotp{e^{\fD/\varepsilon}}{\left(\K\odot \C\right)e^{\gD/\varepsilon}} - \varepsilon \HD(\diag(e^{\fD/\varepsilon}) \K \diag(e^{\gD/\varepsilon})).
 }
-The neg-entropy of $\P$ scaled by $\varepsilon$, namely $\varepsilon \dotp{\P}{\log \P - \ones_{n\times m}}$, can be stated explicitly as a function of $\fD,\gD, \C$,
+$\varepsilon$でスケーリングした$\P$の負エントロピー、すなわち$\varepsilon \dotp{\P}{\log \P - \ones_{n\times m}}$は、$\fD,\gD, \C$の関数として明示的に表すことができ
 \begin{align*}
 &\dotp{\diag(e^{\fD/\varepsilon}) \K \diag(e^{\gD/\varepsilon})}{\fD\transp{\ones_m}+\ones_n\transp{\gD}-\C-\varepsilon\ones_{n\times m}}\\
 &= -\dotp{e^{\fD/\varepsilon}}{\left(\K\odot \C\right)e^{\gD/\varepsilon}} + \dotp{\fD}{\a}+ \dotp{\gD}{\b}-\varepsilon \dotp{e^{\fD/\varepsilon}}{\K e^{\gD/\varepsilon}};
 \end{align*}
-therefore, the first term in~\eqref{eq-lagrange-dual-naive} cancels out with the first term in the entropy above. The remaining terms are those appearing in~\eqref{eq-dual-formulation}.
+したがって~\eqref{eq-lagrange-dual-naive}の第1項は上のエントロピーの第1項と相殺される。残りの項が~\eqref{eq-dual-formulation}に現れるものである。
 \end{proof}
 
 
-	
+
 %%%%%%%%%%
-\begin{rem}[Sinkhorn as a block coordinate ascent on the dual problem]\label{rem-sinkh-block}
-A simple approach to solving the unconstrained maximization problem~\eqref{eq-dual-formulation} is to use an exact \emph{block coordinate ascent} strategy, namely to update alternatively $\fD$ and $\gD$ to cancel the respective gradients in these variables of the objective of \eqref{eq-dual-formulation}. Indeed, one can notice after a few elementary computations that, writing $Q(\fD,\gD)$ for the objective of~\eqref{eq-dual-formulation},
+\begin{rem}[双対問題に対するブロック座標上昇としてのシンクホーン]\label{rem-sinkh-block}
+制約なし最大化問題~\eqref{eq-dual-formulation}を解く単純なアプローチは、正確な\emph{ブロック座標上昇}戦略を用いることである。すなわち$\fD$と$\gD$を交互に更新して、~\eqref{eq-dual-formulation}の目的関数のこれらの変数に関するそれぞれの勾配をゼロにする。実際、いくつかの基本的な計算の後、~\eqref{eq-dual-formulation}の目的関数を$Q(\fD,\gD)$と書くと
 \begin{align}
 	\label{eq-dualupadate-sinkh-1}\nabla|_\fD\, Q(\fD,\gD) &=  \a - e^{\fD/\varepsilon}\odot \left(\K e^{\gD/\varepsilon}\right),\\
 	\label{eq-dualupadate-sinkh-2}\nabla|_\gD\, Q(\fD,\gD) &=  \b - e^{\gD/\varepsilon}\odot \left(\transp{\K} e^{\fD/\varepsilon}\right).
 \end{align}
-Block coordinate ascent can therefore be implemented in a closed form by applying successively the following updates, starting from any arbitrary $\init{\gD}$, for $l\geq 0$:
+であることがわかる。ブロック座標上昇はしたがって、任意の$\init{\gD}$から出発して、$l\geq 0$に対して以下の更新を逐次適用することにより閉じた形で実装できる：
 \begin{align}
 	\label{eq-slse-sinkh-1}\itt{\fD} &= \varepsilon \log \a -\varepsilon\log\left(\K e^{\it{\gD}/\varepsilon}\right), \\
 	\label{eq-slse-sinkh-2}\itt{\gD} &= \varepsilon \log \b- \varepsilon\log\left(\transp{\K} e^{\itt{\fD}/\varepsilon}\right).
 \end{align}
-Such iterations are mathematically equivalent to the Sinkhorn iterations~\eqref{eq-sinkhorn} when considering the primal-dual relations highlighted in~\eqref{eq-entropy-pd}. Indeed, we recover that at any iteration
+このような反復は、~\eqref{eq-entropy-pd}で強調された主-双対関係を考慮すると、シンクホーン反復~\eqref{eq-sinkhorn}と数学的に等価である。実際、任意の反復において
 \eq{
-	(\it{\fD},\it{\gD}) = \varepsilon ( \log(\it{\uD}), \log(\it{\vD}) ). 
+	(\it{\fD},\it{\gD}) = \varepsilon ( \log(\it{\uD}), \log(\it{\vD}) ).
 }
+が回復される。
 \end{rem}
 %%%%%%%%%%
 
 %%%%%%%%%%
-\begin{rem}[Soft-min rewriting]
-Iterations~\eqref{eq-slse-sinkh-1} and~\eqref{eq-slse-sinkh-2} can be given an alternative interpretation, using the following notation. Given a vector $\z$ of real numbers we write $\smine\z$ for the \emph{soft-minimum} of its coordinates, namely
+\begin{rem}[ソフト最小値書き換え]
+反復~\eqref{eq-slse-sinkh-1}と~\eqref{eq-slse-sinkh-2}は、以下の表記法を用いて別の解釈を与えることができる。実数のベクトル$\z$が与えられたとき、その座標の\emph{ソフト最小値}を$\smine\z$と書く。すなわち
 \eql{\label{eq-defn-softmin}
 	\smine\z= -\varepsilon \log \sum_i e^{-\z_i/\varepsilon}.
 }
-Note that $\smine(\z)$ converges to $\min\,\z$ for any vector $\z$ as $\varepsilon\rightarrow 0$. Indeed, $\smine$ can be interpreted as a differentiable approximation of the $\min$ function, as shown in Figure~\ref{fig-softmin}. 
+$\varepsilon\rightarrow 0$のとき、任意のベクトル$\z$に対して$\smine(\z)$は$\min\,\z$に収束することに注意する。実際、$\smine$は図~\ref{fig-softmin}に示すように、$\min$関数の微分可能な近似として解釈できる。
 
 \begin{figure}[h!]
 \centering
@@ -856,63 +856,64 @@ $\varepsilon=1$ &
 $\varepsilon=0.5$ &
 $\varepsilon=10^{-1}$ &
 $\varepsilon=10^{-2}$ &
-$\varepsilon=10^{-3}$ 
+$\varepsilon=10^{-3}$
 \end{tabular}
 \caption{\label{fig-softmin}
-Display of the function $\smine(\z)$ in 2-D, $\z \in \RR^2$, for varying~$\varepsilon$.
+2次元における関数$\smine(\z)$の表示、$\z \in \RR^2$、様々な$\varepsilon$に対して。
 }
 \end{figure}
 
-Using this notation, Equations~\eqref{eq-slse-sinkh-1} and~\eqref{eq-slse-sinkh-2} can be rewritten
+この表記法を用いると、式~\eqref{eq-slse-sinkh-1}と~\eqref{eq-slse-sinkh-2}は次のように書き換えられる
 \begin{align}
 \label{eq-slse-smin-1}(\itt{\fD})_i &= \smine\, (\C_{ij}-\it{\gD}_j)_j + \varepsilon \log \a_i, \\
 \label{eq-slse-smin-2}(\itt{\gD})_j &= \smine\, (\C_{ij}-\it{\fD}_i)_i + \varepsilon \log \b_j.
 \end{align}
-Here the term $\smine\, (\C_{ij}-\it{\gD}_j)_j$ denotes the soft-minimum of all values of the $j$th column of matrix $(\C-\ones_n (\it{\gD})^\top )$. To simplify notations, we introduce an operator that takes a matrix as input and outputs now a column vector of the soft-minimum values of its columns or rows. Namely, for any matrix $A\in\RR^{n\times m}$, we define
+ここで$\smine\, (\C_{ij}-\it{\gD}_j)_j$は行列$(\C-\ones_n (\it{\gD})^\top )$の$j$列のすべての値のソフト最小値を表す。表記を簡略化するために、行列を入力として取り、その列または行のソフト最小値の列ベクトルを出力する演算子を導入する。すなわち、任意の行列$A\in\RR^{n\times m}$に対して
 \begin{align*}
-	\SMINEr(\A) \eqdef \pa{\smine \pa{\A_{i,j}}_j}_i\in\RR^n,\\ 
+	\SMINEr(\A) \eqdef \pa{\smine \pa{\A_{i,j}}_j}_i\in\RR^n,\\
 	\SMINEc(\A) \eqdef \pa{\smine \pa{\A_{i,j}}_i}_j\in\RR^m.
 \end{align*}
-Note that these operations are equivalent to the entropic $\c$-transform introduced in~\S\ref{sec-semi-discr-entropy} (see in particular~\eqref{eq-sinkh-c-transf}).
+と定義する。これらの演算は\S\ref{sec-semi-discr-entropy}で導入されるエントロピー的$\c$-変換と等価であることに注意する（特に~\eqref{eq-sinkh-c-transf}を参照）。
 %
-Using this notation, Sinkhorn's iterates read
+この表記法を用いると、シンクホーンの反復は次のように書ける
 \begin{align}
 	\label{eq-lse-dual-1}\itt{\fD} &= \SMINEr\, (\C-\ones_n\transp{\it{\gD}}) + \varepsilon \log \a, \\
 	\label{eq-lse-dual-2}\itt{\gD} &= \SMINEc\, (\C-\it{\fD}\transp{\ones_m})  + \varepsilon \log \b.
 \end{align}
-Note that as $\varepsilon \rightarrow 0$, $\smine$ converges to $\min$, but the iterations do not converge anymore in the limit $\varepsilon=0$, because alternate minimization does not converge for constrained problems, which is the case for the unregularized dual~\eqref{eq-dual}.
+$\varepsilon \rightarrow 0$のとき$\smine$は$\min$に収束するが、$\varepsilon=0$の極限では反復はもはや収束しない。なぜなら交互最小化は制約付き問題では収束せず、これは非正則化双対~\eqref{eq-dual}の場合だからである。
 \end{rem}
 %%%%%%%%%%
 
 
 
 %%%%%%%%%%
-\begin{rem}[Log-domain Sinkhorn]\label{rem-log-sinkh}
-While mathematically equivalent to the Sinkhorn updates~\eqref{eq-sinkhorn}, iterations~\eqref{eq-slse-smin-1} and~\eqref{eq-slse-smin-2} suggest using the \emph{log-sum-exp} stabilization trick to avoid underflow for small values of $\varepsilon$. Writing $\underbar{z}=\min \z$, that trick suggests evaluating $\smine \z$ as
+\begin{rem}[対数領域シンクホーン]\label{rem-log-sinkh}
+シンクホーン更新~\eqref{eq-sinkhorn}と数学的に等価であるが、反復~\eqref{eq-slse-smin-1}と~\eqref{eq-slse-smin-2}は、小さな$\varepsilon$の値に対するアンダーフローを回避するために\emph{ログサムエクスポネンシャル}安定化トリックの使用を示唆する。$\underbar{z}=\min \z$と書くと、そのトリックは$\smine \z$を次のように評価することを示唆する
 \eql{\label{eq-log-domain-min}
 	\smine \z = \underbar{z} -\varepsilon \log \sum_i e^{-(\z_i-\underbar{z})/\varepsilon}.
 }
-Instead of substracting $\underbar{z}$ to stabilize the log-domain iterations as in~\eqref{eq-log-domain-min}, one can actually substract the previously computed scalings. 
-This leads to the stabilized iteration
+~\eqref{eq-log-domain-min}のように$\underbar{z}$を引いて対数領域反復を安定化する代わりに、実際には以前に計算されたスケーリングを引くことができる。
+これは安定化された反復につながる
 \begin{align}
 	\label{eq-lse-sinkh-1}\itt{\fD} &= \SMINEr( \logP(\it{\fD},\it{\gD}))  + \it{\fD} + \varepsilon\log(\a), \\
-	\label{eq-lse-sinkh-2}\itt{\gD} &= \SMINEc( \logP(\itt{\fD},\it{\gD})) + \it{\gD} + \varepsilon \log(\b), 
+	\label{eq-lse-sinkh-2}\itt{\gD} &= \SMINEc( \logP(\itt{\fD},\it{\gD})) + \it{\gD} + \varepsilon \log(\b),
 \end{align}
-where we defined
+ここで
 \eq{
 	\logP(\fD,\gD) = \pa{\C_{i,j} - \fD_i - \gD_j}_{i,j}.
 }
+と定義した。
 % The log-sum-exp operators are defined as
 % \begin{align*}
 % 	\foralls i \in \range{n}, \quad \LSE_1(\logP)_i &= \varepsilon \log \sum_j \exp( \logP_{i,j} ), \\
 % 	\foralls j \in \range{m}, \quad \LSE_2(\logP)_j &= \varepsilon \log \sum_i \exp( \logP_{i,j} ).
 % \end{align*}
-In contrast to the original iterations~\eqref{eq-sinkhorn}, these log-domain iterations~\eqref{eq-lse-sinkh-1} and~\eqref{eq-lse-sinkh-2} are stable for arbitrary $\varepsilon>0$,
-because the quantity $\logP(\fD,\gD)$ stays bounded during the iterations. 
-The downside is that it requires $nm$ computations of $\exp$ at each step. 
-Computing a $\SMINEr$ or $\SMINEc$ is typically substantially slower than matrix multiplications and requires computing line by line soft-minima of matrices $\logP$. There is therefore no efficient way to parallelize the application of Sinkhorn maps for several marginals simultaneously.
+もとの反復~\eqref{eq-sinkhorn}とは対照的に、これらの対数領域反復~\eqref{eq-lse-sinkh-1}と~\eqref{eq-lse-sinkh-2}は任意の$\varepsilon>0$に対して安定である。
+なぜなら量$\logP(\fD,\gD)$は反復中に有界に留まるからである。
+欠点は、各ステップで$nm$回の$\exp$の計算が必要なことである。
+$\SMINEr$または$\SMINEc$の計算は、行列積よりも通常大幅に遅く、行列$\logP$の行ごとのソフト最小値の計算を必要とする。したがって、複数の周辺分布に対するシンクホーン写像の適用を効率的に並列化する方法は存在しない。
 %
-In Euclidean domains of small dimension, it is possible to develop efficient multiscale solvers with a decaying $\varepsilon$ strategy to significantly speed up the computation using sparse grids~\citep{schmitzer2016stabilized}.
+小さな次元のユークリッド領域では、計算を大幅に高速化するために、減衰する$\varepsilon$戦略とスパースグリッドを用いた効率的なマルチスケール解法を開発することが可能である~\citep{schmitzer2016stabilized}。
 \end{rem}
 %%%%%%%%%%
 
@@ -920,15 +921,15 @@ In Euclidean domains of small dimension, it is possible to develop efficient mul
 
 
 %%%%%%%%%%
-\begin{rem2}{Dual for generic measures}
-For generic and not necessarily discrete input measures $(\al,\be)$, the dual problem~\eqref{eq-dual-formulation} reads
+\begin{rem2}{一般的な測度に対する双対}
+一般的な（必ずしも離散でない）入力測度$(\al,\be)$に対して、双対問題~\eqref{eq-dual-formulation}は次のようになる
 \eql{\label{eq-dual-entropic}
-	\usup{(\f,\g) \in \Cc(\X)\times\Cc(\Y)} \int_\X \f \d\al + \int_\Y \g \d\be 
+	\usup{(\f,\g) \in \Cc(\X)\times\Cc(\Y)} \int_\X \f \d\al + \int_\Y \g \d\be
 		 - \varepsilon \int_{\X\times\Y} e^{ \frac{-c(x,y)+f(x)+g(y)}{\varepsilon} } \d\al(x)\d\be(y).
 }
-This corresponds to a smoothing of the constraint $\Potentials(\c)$ appearing in the original problem~\eqref{eq-dual-generic}, which is retrieved in the limit $\varepsilon \rightarrow 0$.
+これはもとの問題~\eqref{eq-dual-generic}に現れる制約$\Potentials(\c)$の平滑化に対応し、$\varepsilon \rightarrow 0$の極限で復元される。
 %
-Proving existence (\ie the sup is actually a max) of these Kantorovich potentials $(\f,\g)$ in the case of entropic transport is less easy than for classical OT, because one cannot use the $c$-transform and potentials are not automatically Lipschitz. Proof of existence can be done using the convergence of Sinkhorn iterations; see~\citep{2016-chizat-sinkhorn} for more details. 
+エントロピー輸送の場合にこれらのカントロビッチポテンシャル$(\f,\g)$の存在（すなわち上限が実際に最大値であること）を証明することは、古典的なOTの場合より容易ではない。なぜなら$c$-変換を使うことができず、ポテンシャルは自動的にリプシッツにならないからである。存在の証明はシンクホーン反復の収束を用いて行うことができる；詳細は~\citep{2016-chizat-sinkhorn}を参照。
 \end{rem2}
 %%%%%%%%%%
 
@@ -936,58 +937,58 @@ Proving existence (\ie the sup is actually a max) of these Kantorovich potential
 
 
 %%%%%%%
-\begin{rem2}{Unconstrained entropic dual}
-As in Remark~\ref{rem-uncons-dual}, in the case $\int_\X \d\mu=\int_\Y\d\nu = 1$, one can consider an  alternative dual formulation
+\begin{rem2}{制約なしエントロピー双対}
+注意~\ref{rem-uncons-dual}と同様に、$\int_\X \d\mu=\int_\Y\d\nu = 1$の場合、代替的な双対定式化を考えることができる
 \eql{\label{eq-dual-entropic-alt}
-	\usup{(\f,\g) \in \Cc(\X)\times\Cc(\Y)} \int_\X \f \d\al + \int_\Y \g \d\be 
+	\usup{(\f,\g) \in \Cc(\X)\times\Cc(\Y)} \int_\X \f \d\al + \int_\Y \g \d\be
 		+ \smine( c - f \oplus g ),
 }
-which achieves the same optimal value as~\eqref{eq-dual-entropic}.
+これは~\eqref{eq-dual-entropic}と同じ最適値を達成する。
 %
-Similarly to~\eqref{eq-defn-softmin}, the soft-minimum (here on $\X \times \Y$) is defined as
+~\eqref{eq-defn-softmin}と同様に、ソフト最小値（ここでは$\X \times \Y$上）は次のように定義される
 \eq{
 	\foralls S \in \Cc(\X\times\Y), \quad
-	\smine S \eqdef 
+	\smine S \eqdef
 	- \varepsilon \int_{\X\times\Y} e^{ \frac{-S(x,y)}{\varepsilon} } \d\al(x)\d\be(y)
 }
-(note that it depends on $(\al,\be)$).
-% 
-As $\epsilon \rightarrow 0$, $\smine \rightarrow \min$, as used in the unregularized and unconstrained formulation~\eqref{eq-dual-uncons}.
+（これは$(\al,\be)$に依存することに注意する）。
 %
-Note that while both~\eqref{eq-dual-entropic} and~\eqref{eq-dual-entropic-alt} are unconstrained problems, 
-a chief advantage of~\eqref{eq-dual-entropic-alt} is that it is better conditioned, 
-in the sense that the Hessian of the functional is uniformly bounded by $\epsilon$. 
-Another way to obtain such a conditioning improvement is to consider semidual problems; 
-see \S\ref{sec-semi-discr-entropy} and in particular Remark~\ref{rem-second-order-smoothness}.
-% 
-A disadvantage of this alternative dual formulation is that the presence of a log prevents the use of stochastic optimization methods as detailed in \S\ref{sec-sgd}; see in particular Remark~\ref{rem-sgd-cont-cont}.
+$\epsilon \rightarrow 0$のとき、$\smine \rightarrow \min$であり、非正則化かつ制約なし定式化~\eqref{eq-dual-uncons}で使われるものに帰着する。
+%
+~\eqref{eq-dual-entropic}と~\eqref{eq-dual-entropic-alt}はともに制約なし問題であるが、
+~\eqref{eq-dual-entropic-alt}の主な利点は条件が良いことである。
+汎関数のヘッセ行列が$\epsilon$で一様に有界であるという意味においてである。
+このような条件数の改善を得るもう1つの方法は半双対問題を考えることである；
+\S\ref{sec-semi-discr-entropy}、特に注意~\ref{rem-second-order-smoothness}を参照。
+%
+この代替的な双対定式化の欠点は、対数の存在により\S\ref{sec-sgd}で詳述される確率的最適化手法の使用が妨げられることである；特に注意~\ref{rem-sgd-cont-cont}を参照。
 \end{rem2}
 %%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Regularized Approximations of the Optimal Transport Cost}
+\section{最適輸送コストの正則化近似}
 \label{sec-regularized-cost}
 
-The entropic dual~\eqref{eq-dual-formulation} is a smooth unconstrained concave maximization problem, which approximates the original Kantorovich dual~\eqref{eq-dual}, as detailed in the following proposition. \todoK{explain soft indicator constraint, transition to result below.}
+エントロピー双対~\eqref{eq-dual-formulation}は滑らかな制約なし凹最大化問題であり、以下の命題で詳述するように、もとのカントロビッチ双対~\eqref{eq-dual}を近似する。\todoK{explain soft indicator constraint, transition to result below.}
 
 \begin{prop}\label{prop-feasibility-dual}
-Any pair of optimal solutions $(\fD^\star,\gD^\star)$ to~\eqref{eq-dual-formulation} are such that $(\fD^\star,\gD^\star) \in \PotentialsD(\C)$, the set of feasible Kantorovich potentials defined in~\eqref{eq-feasible-potential}. As a consequence, we have that for any $\varepsilon$,
+~\eqref{eq-dual-formulation}の最適解の任意のペア$(\fD^\star,\gD^\star)$は、$(\fD^\star,\gD^\star) \in \PotentialsD(\C)$（~\eqref{eq-feasible-potential}で定義された実行可能カントロビッチポテンシャルの集合）を満たす。結果として、任意の$\varepsilon$に対して
 \eq{
 	\dotp{\fD^\star}{\a} + \dotp{\gD^\star}{\b} \leq  \MKD_\C(\a,\b).
 }
 \end{prop}
 \begin{proof}
-	Primal-dual optimality conditions in~\eqref{eq-prim-dual-ent} with the constraint that $\P$ is a probability and therefore $\P_{i,j}\leq 1$ for all $i,j$ yields that $\exp(-(\fD^\star_i+\gD^\star_j-\C_{i,j})/\varepsilon)\leq 1$ and therefore that $\fD^\star_i+\gD^\star_j\leq\C_{i,j}$.
+	~\eqref{eq-prim-dual-ent}における主-双対最適性条件と、$\P$が確率分布であり従ってすべての$i,j$に対して$\P_{i,j}\leq 1$であるという制約から、$\exp(-(\fD^\star_i+\gD^\star_j-\C_{i,j})/\varepsilon)\leq 1$が得られ、したがって$\fD^\star_i+\gD^\star_j\leq\C_{i,j}$となる。
 \end{proof}
 
-A chief advantage of the regularized transportation cost $\MKD_\C^\varepsilon$ defined in~\eqref{eq-regularized-discr} is that it is smooth and convex, which makes it a perfect fit for integrating as a loss function in variational problems (see Chapter~\ref{c-variational}).
+~\eqref{eq-regularized-discr}で定義される正則化輸送コスト$\MKD_\C^\varepsilon$の主な利点は、それが滑らかで凸であることであり、変分問題における損失関数としての統合に最適である（第~\ref{c-variational}章を参照）。
 
 \begin{prop}\label{prop-convexity-dual}
-$\MKD_\C^\varepsilon(\a,\b)$ is a jointly convex function of $\a$ and $\b$ for $\epsilon\geq 0$. When $\epsilon>0$, its gradient is equal to
+$\MKD_\C^\varepsilon(\a,\b)$は$\epsilon\geq 0$に対して$\a$と$\b$の同時凸関数である。$\epsilon>0$のとき、その勾配は次に等しい
 \eq{
 	\nabla\MKD_\C^\varepsilon(\a,\b)= \begin{bmatrix} \fD^\star \\ \gD^\star \end{bmatrix},
 }
-where $\fD^\star$ and $\gD^\star$ are the optimal solutions of Equation~\eqref{eq-dual-formulation} chosen so that their coordinates sum to 0.
+ここで$\fD^\star$と$\gD^\star$は、座標の和が0になるように選ばれた式~\eqref{eq-dual-formulation}の最適解である。
 \end{prop}
 
 \todoK{
@@ -997,59 +998,59 @@ where $\fD^\star$ and $\gD^\star$ are the optimal solutions of Equation~\eqref{e
 }
 
 
-In \citep{CuturiSinkhorn}, lower and upper bounds to approximate the Wasserstein distance between two histograms were proposed. These bounds consist in evaluating the primal and dual objectives at the solutions provided by the Sinkhorn algorithm.
+\citep{CuturiSinkhorn}において、2つのヒストグラム間のワッサースタイン距離を近似するための下界と上界が提案された。これらの界はシンクホーンアルゴリズムによって得られる解において主問題と双対問題の目的関数を評価することから成る。
 
-\begin{defn}[Sinkhorn divergences]
-	Let $\fD^\star$ and $\gD^\star$ be optimal solutions to~\eqref{eq-dual-formulation} and $\P^\star$ be the solution to~\eqref{eq-regularized-discr}. The Wasserstein distance is approximated using the following primal and dual Sinkhorn divergences:
+\begin{defn}[シンクホーン・ダイバージェンス]
+	$\fD^\star$と$\gD^\star$を~\eqref{eq-dual-formulation}の最適解、$\P^\star$を~\eqref{eq-regularized-discr}の解とする。ワッサースタイン距離は以下の主シンクホーン・ダイバージェンスと双対シンクホーン・ダイバージェンスを用いて近似される：
 \begin{align*}
 	\SINKHORNP_\C^\varepsilon(\a,\b)& \eqdef \dotp{\C}{\P^\star} =  \dotp{e^{\frac{\fD^\star}{\varepsilon}}}{(\K\odot \C)e^{\frac{\gD^\star}{\varepsilon}}}, \\
 	\SINKHORND_\C^\varepsilon(\a,\b) & \eqdef \dotp{\fD^\star}{\a} + \dotp{\gD^\star}{\b},
 \end{align*}
-where $\odot$ stands for the elementwise product of matrices, 
+ここで$\odot$は行列の成分ごとの積を表す。
 \end{defn}
 
 \begin{prop}\label{prop-sinkhorn-div}
-The following relationship holds:
+次の関係が成り立つ：
 \eq{
 	\SINKHORND_\C^\varepsilon(\a,\b)\leq \MKD_\C^\varepsilon(\a,\b) \leq \SINKHORNP_\C^\varepsilon(\a,\b).
 }
-Furthermore
+さらに
 \eql{\label{eq-sinkh-div-gap}
 	\SINKHORNP_\C^\varepsilon(\a,\b) - \SINKHORND_\C^\varepsilon(\a,\b) = \varepsilon ( \HD(\P^\star)+1 ) .
 }
 \end{prop}
 \begin{proof}
-Equation~\eqref{eq-sinkh-div-gap} is obtained by writing that the primal and dual problems have the same values at the optima (see~\eqref{eq-dual-formulation}), and hence
+式~\eqref{eq-sinkh-div-gap}は、主問題と双対問題が最適値において同じ値を持つこと（~\eqref{eq-dual-formulation}を参照）から、
 \eq{
-	\MKD_\C^\varepsilon(\a,\b) = \SINKHORNP_\C^\varepsilon(\a,\b) - \varepsilon \HD(\P^\star) = 
+	\MKD_\C^\varepsilon(\a,\b) = \SINKHORNP_\C^\varepsilon(\a,\b) - \varepsilon \HD(\P^\star) =
 	\SINKHORND_\C^\varepsilon(\a,\b) - \varepsilon \dotp{e^{\fD^\star/\varepsilon} }{ \K e^{\gD^\star/\varepsilon}}
 }
-The final result can be obtained by remarking that $\dotp{e^{\fD^\star/\varepsilon} }{ \K e^{\gD^\star/\varepsilon}}=1$, since the latter amounts to computing the sum of all entries of $\P^\star$.
+と書くことで得られる。最終結果は$\dotp{e^{\fD^\star/\varepsilon} }{ \K e^{\gD^\star/\varepsilon}}=1$であることに注意することで得られる。後者は$\P^\star$のすべての成分の和を計算することに相当するからである。
 \end{proof}
 
 
-The relationships given above suggest a practical way to bound the actual OT distance, but they are, in fact, valid only upon convergence of the Sinkhorn algorithm and therefore never truly useful in practice. Indeed, in practice Sinkhorn iterations are always terminated after a certain accuracy threshold is reached. When a predetermined number of $L$ iterations is set and used to evaluate $\SINKHORND_\C^\varepsilon$ using iterates $\itL{\fD}$ and $\itL{\gD}$ instead of optimal solutions $\fD^\star$ and $\gD^\star$, one recovers, however, a lower bound: Using notation appearing in Equations~\eqref{eq-lse-sinkh-1} and~\eqref{eq-lse-sinkh-2}, we thus introduce the following finite step approximation of $\MKD_\C^\varepsilon$:
+上で与えた関係式はOT距離を実際に界で挟む実用的な方法を示唆するが、実際にはシンクホーンアルゴリズムの収束時にのみ有効であり、したがって実際には真に有用ではない。実際には、シンクホーン反復は常にある精度の閾値に達した後で終了される。所定の反復回数$L$が設定され、最適解$\fD^\star$と$\gD^\star$の代わりに反復$\itL{\fD}$と$\itL{\gD}$を用いて$\SINKHORND_\C^\varepsilon$を評価すると、下界が回復される：式~\eqref{eq-lse-sinkh-1}と~\eqref{eq-lse-sinkh-2}に現れる表記法を用いて、$\MKD_\C^\varepsilon$の次の有限ステップ近似を導入する：
 \eql{\label{eq-algorithmic-loss}
 	\itL{\SINKHORND_\C}(\a,\b) \eqdef \dotp{\itL{\fD}}{\a} + \dotp{\itL{\gD}}{\b}.
 }
-This ``algorithmic'' Sinkhorn functional lower bounds the regularized cost function as soon as $L\geq 1$.
+この「アルゴリズム的」シンクホーン汎関数は$L\geq 1$の場合に正則化コスト関数の下界を与える。
 
 
-\begin{prop}[Finite Sinkhorn divergences]\label{defn-sinkhorn-div}
-The following relationship holds:
+\begin{prop}[有限シンクホーン・ダイバージェンス]\label{defn-sinkhorn-div}
+次の関係が成り立つ：
 \eq{
 	\itL{\SINKHORND_\C}(\a,\b) \leq \MKD_\C^\varepsilon(\a,\b).
 }
 \end{prop}
-\begin{proof}Similarly to the proof of Proposition~\ref{prop-feasibility-dual}, we exploit the fact that after even just one single Sinkhorn iteration, we have, following~\eqref{eq-slse-sinkh-1} and~\eqref{eq-slse-sinkh-2}, that $\itL{\fD}$ and $\itL{\gD}$ are such that the matrix with elements $\exp(-(\itL{\fD}_i+\itL{\gD}_j-\C_{i,j})/\varepsilon)$ has column sum $\b$ and its elements are therefore each upper bounded by $1$, which results in the dual feasibility of $(\itL{\fD}_i,\itL{\gD})$.
+\begin{proof}命題~\ref{prop-feasibility-dual}の証明と同様に、たった1回のシンクホーン反復の後でも、~\eqref{eq-slse-sinkh-1}と~\eqref{eq-slse-sinkh-2}に従って、$\itL{\fD}$と$\itL{\gD}$は成分$\exp(-(\itL{\fD}_i+\itL{\gD}_j-\C_{i,j})/\varepsilon)$を持つ行列の列和が$\b$であり、したがってその各成分は1以下であるという事実を利用する。これにより$(\itL{\fD}_i,\itL{\gD})$の双対実行可能性が得られる。
 \end{proof}
 
-\begin{rem}[Primal infeasibility of the Sinkhorn iterates]
-Note that the primal iterates provided in \eqref{eq-sink-matrix} are not primal feasible, since, by definition, these iterates are designed to satisfy upon convergence marginal constraints. Therefore, it is not valid to consider $\dotp{\C}{\P^{(2L+1)}}$ as an approximation of $\MKD_\C(\a,\b)$ since $\P^{(2L+1)}$ is not feasible. Using the rounding scheme of~\citet{altschuler2017near} laid out in Remark~\ref{rem-complexity-rounding} one can, however, yield an upper bound on $\MKD_\C^\varepsilon(\a,\b)$ that can, in addition, be conveniently computed using matrix operations in parallel for several pairs of histograms, in the same fashion as Sinkhorn's algorithm~\citep{NIPS2018_8184}.
+\begin{rem}[シンクホーン反復の主問題における非実行可能性]
+\eqref{eq-sink-matrix}で提供される主反復は主問題において実行可能ではないことに注意する。なぜなら定義上、これらの反復は収束時に周辺制約を満たすよう設計されているからである。したがって$\P^{(2L+1)}$は実行可能ではないため、$\dotp{\C}{\P^{(2L+1)}}$を$\MKD_\C(\a,\b)$の近似と見なすことは妥当ではない。注意~\ref{rem-complexity-rounding}で述べた~\citet{altschuler2017near}の丸めスキームを用いることで、$\MKD_\C^\varepsilon(\a,\b)$の上界を得ることができる。さらに、シンクホーンアルゴリズムと同様に~\citep{NIPS2018_8184}、複数のヒストグラムのペアに対して行列演算を用いて並列に便利に計算できる。
 \end{rem}
 
 
-\begin{rem}[Nonconvexity of finite dual Sinkhorn divergence] Unlike the regularized expression $\MKD_\C^\varepsilon$ in~\eqref{eq-dual-formulation}, the finite Sinkhorn divergence $\itL{\SINKHORND_\C}(\a,\b)$ is \emph{not}, in general, a convex function of its arguments (this can be easily checked numerically). $\itL{\SINKHORND_\C}(\a,\b)$ is, however, a differentiable function which can be differentiated using automatic differentiation techniques (see Remark~\ref{rem-auto-diff}) with respect to any of its arguments, notably $\C,\a$, or $\b$.
+\begin{rem}[有限双対シンクホーン・ダイバージェンスの非凸性] ~\eqref{eq-dual-formulation}の正則化された式$\MKD_\C^\varepsilon$とは異なり、有限シンクホーン・ダイバージェンス$\itL{\SINKHORND_\C}(\a,\b)$は一般にその引数の凸関数\emph{ではない}（数値的に容易に確認できる）。しかし$\itL{\SINKHORND_\C}(\a,\b)$は微分可能な関数であり、自動微分技法を用いて（注意~\ref{rem-auto-diff}を参照）任意の引数、特に$\C,\a$または$\b$に関して微分できる。
 \end{rem}
 \todoK{ automatically differentiated using the following recursion:\todo{write recursion}.}
 
@@ -1057,89 +1058,89 @@ Note that the primal iterates provided in \eqref{eq-sink-matrix} are not primal 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Generalized Sinkhorn}
+\section{一般化シンクホーン}
 \label{sec-generalized}
 
-The regularized OT problem~\eqref{eq-regularized-discr} is a special case of a structured convex optimization problem of the form
+正則化OT問題~\eqref{eq-regularized-discr}は、次の形の構造化凸最適化問題の特殊ケースである
 \eql{\label{eq-generalized-ot-regul}
 	\umin{\P}
 		\sum_{i,j} \C_{i,j} \P_{i,j} - \varepsilon \HD(\P) + F( \P\ones_m ) + G( \transp{\P}\ones_n ).
-} 
-Indeed, defining $F=\iota_{\{\a\}}$ and $G=\iota_{\{\b\}}$, where the indicator function of a closed convex set $\Cc$ is
+}
+実際、$F=\iota_{\{\a\}}$、$G=\iota_{\{\b\}}$と定義すると、閉凸集合$\Cc$の指示関数は
 \eql{\label{eq-iota-function}
 	\iota_{\Cc}(x) = \choice{
 		0 \qifq x \in \Cc, \\
 		+\infty \quad\text{otherwise},
 	}
 }
-one retrieves the hard marginal constraints defining $\Couplings(\a,\b)$.
+であり、$\Couplings(\a,\b)$を定義するハード周辺制約が復元される。
 %
-The proof of Proposition~\ref{prop-regularized-primal} carries to this more general problem~\eqref{eq-generalized-ot-regul}, so that  the unique solution of~\eqref{eq-generalized-ot-regul} also has the form~\eqref{eq-scaling-form}. 
+命題~\ref{prop-regularized-primal}の証明はこのより一般的な問題~\eqref{eq-generalized-ot-regul}にも適用されるため、~\eqref{eq-generalized-ot-regul}の一意の解も~\eqref{eq-scaling-form}の形を持つ。
 
-As shown in~\citep{2015-Peyre-siims,FrognerNIPS,2016-chizat-sinkhorn,karlsson2016generalized}, Sinkhorn iterations~\eqref{eq-sinkhorn} can hence be extended to this problem, and they read
+~\citep{2015-Peyre-siims,FrognerNIPS,2016-chizat-sinkhorn,karlsson2016generalized}で示されたように、シンクホーン反復~\eqref{eq-sinkhorn}はこの問題に拡張でき、次のように書ける
 \eql{\label{eq-gen-sinkh}
 	\uD \leftarrow \frac{\Prox_{F}^{\KLD}(\K \vD)}{\K \vD}
 	\qandq
-	\vD \leftarrow \frac{\Prox_{G}^{\KLD}(\transp{\K}\uD)}{\transp{\K}\uD},	
+	\vD \leftarrow \frac{\Prox_{G}^{\KLD}(\transp{\K}\uD)}{\transp{\K}\uD},
 }
-where the proximal operator for the $\KLD$ divergence is
+ここで$\KLD$ダイバージェンスに対する近接作用素は
 \eql{\label{eq-prox-kl}
 	\foralls \uD \in \RR_+^N, \quad
 	\Prox_{F}^{\KLD}(\uD) = \uargmin{\uD' \in \RR_+^N}	\KLD(\uD'|\uD) + F(\uD').
 }
-For some functions $F,G$ it is possible to prove the linear rate of convergence for iterations~\eqref{eq-gen-sinkh}, and these schemes can be generalized to arbitrary measures; see~\citep{2016-chizat-sinkhorn} for more details.
+一部の関数$F,G$に対しては反復~\eqref{eq-gen-sinkh}の線形収束率を証明することが可能であり、これらのスキームは任意の測度に一般化できる；詳細は~\citep{2016-chizat-sinkhorn}を参照。
 
-Iterations~\eqref{eq-gen-sinkh} are thus interesting in the cases where $\Prox_{F}^{\KLD}$ and $\Prox_{G}^{\KLD}$ can be computed in closed form or very efficiently. This is in particular the case for separable functions of the form $F(\uD) = \sum_i F_i(\uD_i)$ since in this case
+反復~\eqref{eq-gen-sinkh}は、$\Prox_{F}^{\KLD}$と$\Prox_{G}^{\KLD}$が閉じた形で、または非常に効率的に計算できる場合に興味深い。これは特に$F(\uD) = \sum_i F_i(\uD_i)$の形の分離可能関数の場合であり、このとき
 \eq{
 	\Prox_{F}^{\KLD}(\uD) = \pa{ \Prox_{F_i}^{\KLD}(\uD_i) }_i.
 }
-Computing each $\Prox_{F_i}^{\KLD}$ is usually simple since it is a scalar optimization problem.
+各$\Prox_{F_i}^{\KLD}$の計算は、スカラー最適化問題であるため通常単純である。
 %
-Note that, similarly to the initial Sinkhorn algorithm, it is also possible to stabilize the computation using log-domain computations~\citep{2016-chizat-sinkhorn}.
+初期のシンクホーンアルゴリズムと同様に、対数領域での計算を用いて計算を安定化することも可能であることに注意する~\citep{2016-chizat-sinkhorn}。
 
-This algorithm can be used to approximate the solution to various generalizations of OT, and in particular unbalanced OT problems of the form~\eqref{eq-unbalanced-pbm} (see~\S\ref{sec-unbalanced} and in particular iterations~\eqref{eq-iterate-gen-sinkh}) and gradient flow problems of the form~\eqref{eq-grad-flow-discr} (see~\S\ref{sec-grad-flows}).
+このアルゴリズムはOTの様々な一般化の解を近似するために使用でき、特に~\eqref{eq-unbalanced-pbm}の形の非均衡OT問題（\S\ref{sec-unbalanced}、特に反復~\eqref{eq-iterate-gen-sinkh}を参照）および~\eqref{eq-grad-flow-discr}の形の勾配流問題（\S\ref{sec-grad-flows}を参照）に使用できる。
 
 
 %%%
-\begin{rem1}{Duality and Legendre transform}
-The dual problem to~\eqref{eq-generalized-ot-regul} reads
+\begin{rem1}{双対性とルジャンドル変換}
+~\eqref{eq-generalized-ot-regul}の双対問題は次のようになる
 \eql{\label{eq-dual-generalized}
 	\umax{\fD,\gD}
 		- F^*( \fD ) -G^*(\gD)
 		- \varepsilon\sum_{i,j} e^{ \frac{\fD_i+\gD_j-\C_{i,j}}{\varepsilon} }
 }
-so that $(\uD,\vD) = (e^{\fD/\varepsilon},e^{\gD/\varepsilon})$ are the associated scalings appearing in~\eqref{eq-scaling-form}.
-Here, $F^*$ and $G^*$ are the Fenchel--Legendre conjugate, which are convex functions defined as
+したがって$(\uD,\vD) = (e^{\fD/\varepsilon},e^{\gD/\varepsilon})$が~\eqref{eq-scaling-form}に現れる対応するスケーリングである。
+ここで$F^*$と$G^*$はフェンシェル-ルジャンドル共役であり、次のように定義される凸関数である
 \eql{\label{eq-legendre}
 		\foralls \fD \in \RR^n, \quad
-		F^*(\fD) \eqdef \umax{\a \in \RR^n} \dotp{\fD}{\a} - F(\a). 
+		F^*(\fD) \eqdef \umax{\a \in \RR^n} \dotp{\fD}{\a} - F(\a).
 }
 %
-The generalized Sinkhorn iterates~\eqref{eq-gen-sinkh} are a special case of Dykstra's algorithm~\citep{Dykstra83,Dykstra85} (extended to Bregman divergence~\citep{bauschke-lewis,CensorReich-Dykstra}; see also Remark~\ref{rem-bregman}) and is an alternate maximization scheme on the dual problem~\eqref{eq-dual-generalized}. 
+一般化シンクホーン反復~\eqref{eq-gen-sinkh}はダイクストラアルゴリズム~\citep{Dykstra83,Dykstra85}（ブレグマン・ダイバージェンスに拡張されたもの~\citep{bauschke-lewis,CensorReich-Dykstra}；注意~\ref{rem-bregman}も参照）の特殊ケースであり、双対問題~\eqref{eq-dual-generalized}に対する交互最大化スキームである。
 \end{rem1}
 %%%
 
-The formulation~\eqref{eq-generalized-ot-regul} can be further generalized to more than two functions and more than a single coupling; we refer to~\citep{2016-chizat-sinkhorn} for more details. This includes as a particular case the Sinkhorn algorithm~\eqref{eq-sinkh-multimarg} for the multimarginal problem, as detailed in~\S\ref{sec-multimarginal}. 
+定式化~\eqref{eq-generalized-ot-regul}は2つ以上の関数および単一のカップリングを超えてさらに一般化できる；詳細は~\citep{2016-chizat-sinkhorn}を参照。これには特殊ケースとして、\S\ref{sec-multimarginal}で詳述する多周辺問題に対するシンクホーンアルゴリズム~\eqref{eq-sinkh-multimarg}が含まれる。
 %
-It is also possible to rewrite the regularized barycenter problem~\eqref{eq-entropic-bary} this way, and the iterations~\eqref{eq-sinkhorn-bary} are in fact a special case of this generalized Sinkhorn.
+正則化重心問題~\eqref{eq-entropic-bary}をこのように書き換えることも可能であり、反復~\eqref{eq-sinkhorn-bary}は実際にこの一般化シンクホーンの特殊ケースである。
 
 
 \if 0 %% REMOVED %%%
 \eq{
 	\umin{(\P_s)_{s=1}^S}
-		\sum_{i,j,s} \C_{s,i,j} \P_{s,i,j} - \varepsilon \HD(\P_s) + 
+		\sum_{i,j,s} \C_{s,i,j} \P_{s,i,j} - \varepsilon \HD(\P_s) +
 		\sum_{k} F_k( (\P_s\ones_m)_s, (\transp{\P_s}\ones_n)_s )
-} 
+}
 where $\{\C_s\}_s$ are given cost matrices.
 
-The solution has the form 
+The solution has the form
 \eql{\label{eq-scaling-form-multi}
-	\foralls (s,i,j) \in \range{1,S} \times \range{n} \times \range{m}, \quad 
+	\foralls (s,i,j) \in \range{1,S} \times \range{n} \times \range{m}, \quad
 	\P_{s,i,j} =  \K_{s,i,j} \prod_{k} \uD_{k,i} \prod_\ell \vD_{k,j}
 }
-where $\K_s=e^{-\C_s/\varepsilon}$ is a Gibbs kernel, and $(\uD_k,\vD_\ell)_{k,\ell}$ are scaling vectors that need to be computed using Generalized Sinkhorn iterations similar to~\eqref{eq-gen-sinkh}~\citep{2016-chizat-sinkhorn}. 
+where $\K_s=e^{-\C_s/\varepsilon}$ is a Gibbs kernel, and $(\uD_k,\vD_\ell)_{k,\ell}$ are scaling vectors that need to be computed using Generalized Sinkhorn iterations similar to~\eqref{eq-gen-sinkh}~\citep{2016-chizat-sinkhorn}.
 %
-In the case where the functions $F_s$ are indicator functions, one retrieves the Sinkhorn algorithm~\eqref{eq-sinkh-multimarg} for the multi-marginal problem, as detailed in~\S\ref{sec-multimarginal}. 
+In the case where the functions $F_s$ are indicator functions, one retrieves the Sinkhorn algorithm~\eqref{eq-sinkh-multimarg} for the multi-marginal problem, as detailed in~\S\ref{sec-multimarginal}.
 %
 It is also possible to rewrite the regularized barycenter problem~\eqref{eq-entropic-bary} this way, and the iterations~\eqref{eq-sinkhorn-bary} are in fact a special case of this generalized Sinkhorn.
 
@@ -1155,10 +1156,9 @@ It is also possible to rewrite the regularized barycenter problem~\eqref{eq-entr
 %	\prod \uD_ \K \vD
 %}
 %\eq{
-%	\vD \leftarrow \frac{\Prox_{G}^{\KLD}(\transp{\K}\uD)}{\transp{\K}\uD}.	
+%	\vD \leftarrow \frac{\Prox_{G}^{\KLD}(\transp{\K}\uD)}{\transp{\K}\uD}.
 %}
 %where we defined the Gibbs kernel associated to the cost matrix $\C$ as
 %\eq{
 %	\K_{i,j} \eqdef e^{-\frac{\C_{i,j}}{\varepsilon}}
 %}
-

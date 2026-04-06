@@ -1,59 +1,59 @@
 % !TEX root = ../ComputationalOTFnT.tex
 \newcommand{\myFigRKHS}[1]{\includegraphics[width=.195\linewidth]{rkhs/#1}}
-\chapter{Statistical Divergences}
+\chapter{統計的ダイバージェンス}
 \label{c-statistical}
 
-We study in this chapter the statistical properties of the Wasserstein distance. More specifically, we compare it to other major distances and divergences routinely used in data sciences. We quantify how one can approximate the distance between two probability distributions when having only access to samples from said distributions. To introduce these subjects,~\S\ref{sec-phi-div} and~\S\ref{sec-dual-norms} review respectively divergences and integral probability metrics between probability distributions. A divergence $D$ typically satisfies $D(\al,\be) \geq 0$ and $D(\al,\be)=0$ if and only if $\al=\be$, but it does not need to be symmetric or satisfy the triangular inequality. An integral probability metric for measures is a dual norm defined using a prescribed family of test functions. These quantities are sound alternatives to Wasserstein distances and are routinely used as loss functions to tackle inference problems, as will be covered in~\S\ref{c-variational}. We show first in~\S\ref{sec-non-embeddability} that the optimal transport distance is not Hilbertian, \ie one cannot approximate it efficiently using a Hilbertian metric on a suitable feature representation of probability measures. We show in \S\ref{sec-empirical-wass} how to approximate $D(\al,\be)$ from discrete samples $(x_i)_i$ and $(y_j)_j$ drawn from $\al$ and $\be$. A good statistical understanding of that problem is crucial when using the Wasserstein distance in machine learning. Note that this section will be chiefly concerned with the statistical approximation of optimal transport between distributions supported on \emph{continuous} sets. The very same problem when the ground space is finite has received some attention in the literature following the work of~\citet{sommerfeld2018inference}, extended to entropic regularized quantities by~\citet{bigot2017central}.
+本章では、Wasserstein距離の統計的性質を考察する。より具体的には、データサイエンスで日常的に用いられる他の主要な距離やダイバージェンスとの比較を行う。二つの確率分布間の距離を、それらの分布からのサンプルのみを用いてどのように近似できるかを定量化する。これらの話題を導入するために、\S\ref{sec-phi-div}と\S\ref{sec-dual-norms}では、それぞれ確率分布間のダイバージェンスと積分確率計量について概説する。ダイバージェンス$D$は典型的には$D(\al,\be) \geq 0$かつ$D(\al,\be)=0$であることと$\al=\be$であることが同値であるが、対称性や三角不等式を満たす必要はない。測度に対する積分確率計量は、所定のテスト関数族を用いて定義される双対ノルムである。これらの量はWasserstein距離に対する健全な代替であり、\S\ref{c-variational}で扱う推論問題に取り組むための損失関数として日常的に用いられている。まず\S\ref{sec-non-embeddability}において、最適輸送距離がヒルベルト的でないこと、すなわち確率測度の適切な特徴表現上のヒルベルト計量を用いて効率的に近似することができないことを示す。\S\ref{sec-empirical-wass}では、$\al$と$\be$からそれぞれ抽出された離散サンプル$(x_i)_i$と$(y_j)_j$から$D(\al,\be)$をどのように近似するかを示す。この問題に対する十分な統計的理解は、機械学習においてWasserstein距離を用いる際に不可欠である。なお、本節では主に\emph{連続}集合上に台を持つ分布間の最適輸送の統計的近似を扱う。台空間が有限である場合の同じ問題は、~\citet{sommerfeld2018inference}の研究に続き文献で注目を集めており、~\citet{bigot2017central}によってエントロピー正則化量に拡張されている。
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{$\phi$-Divergences}
+\section{$\phi$-ダイバージェンス}
 \label{sec-phi-div}
 
-Before detailing in the following section ``weak'' norms, whose construction shares similarities with $\Wass_1$, let us detail a generic construction of so-called divergences between measures, which can then be used as loss functions when estimating probability distributions. Such divergences compare two input measures by comparing their mass \emph{pointwise}, without introducing any notion of mass transportation. Divergences are functionals which, by looking at the pointwise ratio between two measures, give a sense of how close they are. They have nice analytical and computational properties and build  upon \emph{entropy functions}.
+次節で$\Wass_1$と類似した構成を持つ「弱い」ノルムを詳述する前に、いわゆるダイバージェンスの一般的な構成について説明する。これは確率分布を推定する際の損失関数として利用できる。このようなダイバージェンスは、質量の移動の概念を導入することなく、二つの入力測度をそれらの質量の\emph{各点}比較によって比較する。ダイバージェンスは、二つの測度間の各点の比率を見ることで、それらがどれほど近いかの感覚を与える汎関数である。これらは良好な解析的・計算的性質を持ち、\emph{エントロピー関数}に基づいている。
 
-\begin{defn}[Entropy function]
+\begin{defn}[エントロピー関数]
 \label{def_entropy}
-A function $\phi : \RR \to \RR \cup \{\infty\}$ is an entropy function if it is lower semicontinuous, convex, $\dom \phi\subset [0,\infty[$, and satisfies the following feasibility condition:  $\dom \phi \; \cap\;  ]0, \infty[\; \neq \emptyset$. The speed of growth of $\phi$ at $\infty$ is described by %its recession (or horizon) function
+関数$\phi : \RR \to \RR \cup \{\infty\}$がエントロピー関数であるとは、下半連続かつ凸で、$\dom \phi\subset [0,\infty[$であり、以下の実行可能性条件$\dom \phi \; \cap\;  ]0, \infty[\; \neq \emptyset$を満たすことをいう。$\phi$の無限遠での増大の速度は以下で記述される。%its recession (or horizon) function
 \eq{
 \phi'_\infty = \lim_{x\rightarrow +\infty} \varphi(x)/x \in \RR \cup \{\infty\} \, .
 }
 \end{defn}
 
-If $\phi'_\infty = \infty$, then $\phi$ grows faster than any linear function and $\phi$ is said \emph{superlinear}. Any entropy function $\phi$ induces a $\phi$-divergence (also known as Cisz\'ar divergence~\citep{ciszar1967information,ali1966general} or $f$-divergence) as follows.
+$\phi'_\infty = \infty$のとき、$\phi$は任意の線形関数より速く増大し、$\phi$は\emph{超線形}であるという。任意のエントロピー関数$\phi$は、以下のように$\phi$-ダイバージェンス（Cisz\'arダイバージェンス~\citep{ciszar1967information,ali1966general}または$f$-ダイバージェンスとも呼ばれる）を誘導する。
 
 
 
-\begin{defn}[$\phi$-Divergences]
+\begin{defn}[$\phi$-ダイバージェンス]
 \label{def_divergence}
-Let $\phi$ be an entropy function.
-For $\al,\be \in \Mm(\X)$, let $\frac{\d \al}{\d \be} \be + \al^{\perp}$ be the Lebesgue decomposition\footnote{The Lebesgue decomposition theorem asserts that, given $\be$, $\al$ admits a unique decomposition as the sum of two measures $\al^s + \al^\perp$ such that $\al^s$ is absolutely continuous with respect to $\be$ and $\al^\perp$ and $\be$ are singular.} of $\al$ with respect to $\be$. The divergence $\Divergm_\phi$ is defined by
+$\phi$をエントロピー関数とする。
+$\al,\be \in \Mm(\X)$に対し、$\frac{\d \al}{\d \be} \be + \al^{\perp}$を$\be$に関する$\al$のルベーグ分解\footnote{ルベーグの分解定理は、$\be$が与えられたとき、$\al$は二つの測度$\al^s + \al^\perp$の和として一意に分解され、$\al^s$は$\be$に関して絶対連続であり、$\al^\perp$と$\be$は互いに特異であることを主張する。}とする。ダイバージェンス$\Divergm_\phi$は以下で定義される。
 \eql{\label{eq-phi-div}
-	\Divergm_\phi (\al|\be) \eqdef \int_\X \phi\left(\frac{\d \al}{\d \be} \right) \d \be 
+	\Divergm_\phi (\al|\be) \eqdef \int_\X \phi\left(\frac{\d \al}{\d \be} \right) \d \be
 + \phi'_\infty \al^{\perp}(\X)
 }
-if $\al,\be$ are nonnegative and $\infty$ otherwise.
+ただし$\al,\be$が非負の場合であり、そうでなければ$\infty$とする。
 \end{defn}%
 
-The additional term $\phi'_\infty \al^{\perp}(\X)$ in~\eqref{eq-phi-div} is important to ensure that $\Divergm_\phi$ defines a continuous functional (for the weak topology of measures) even if $\phi$ has a linear growth at infinity, as this is, for instance, the case for the absolute value~\eqref{eq-tv-entropy} defining the TV norm. If $\phi$ as a superlinear growth, \eg the usual entropy~\eqref{eq-shannon-entropy}, then $\phi'_\infty=+\infty$ so that $\Divergm_\phi (\al|\be) = +\infty$ if $\al$ does not have a density with respect to $\be$. 
+~\eqref{eq-phi-div}における追加項$\phi'_\infty \al^{\perp}(\X)$は、$\phi$が無限遠で線形増大を持つ場合でも（例えば、TVノルムを定義する絶対値~\eqref{eq-tv-entropy}の場合のように）、$\Divergm_\phi$が（測度の弱位相に関する）連続汎関数を定義することを保証するために重要である。$\phi$が超線形増大を持つ場合、例えば通常のエントロピー~\eqref{eq-shannon-entropy}では、$\phi'_\infty=+\infty$となるため、$\al$が$\be$に関して密度を持たなければ$\Divergm_\phi (\al|\be) = +\infty$となる。
 
-In the discrete setting, assuming 
+離散的な設定では、
 \eql{\label{eq-div-disc-meas}
 	\al=\sum_i \a_i \de_{x_i}
 	\qandq \be=\sum_i \b_i \de_{x_i}
-} 
-are supported on the same set of $n$ points $(x_i)_{i=1}^n \subset \X$,~\eqref{eq-phi-div} defines a divergence on $\simplex_n$
+}
+が$n$個の点$(x_i)_{i=1}^n \subset \X$の同一集合上に台を持つと仮定すると、~\eqref{eq-phi-div}は$\simplex_n$上のダイバージェンスを定義する。
 \eql{\label{eq-discr-diverg}
 	\DivergmD_\phi(\a|\b) = \sum_{i \in \Supp(\b)} \phi\pa{ \frac{\a_i}{\b_i} } \b_i + \phi'_\infty \sum_{i \notin \Supp(\b)} \a_i,
 }
-where $\Supp(\b) \eqdef \enscond{i \in \range{n}}{ b_i \neq 0 }$.
+ここで$\Supp(\b) \eqdef \enscond{i \in \range{n}}{ b_i \neq 0 }$である。
 
-The proof of the following proposition can be found in~\cite[Thm 2.7]{LieroMielkeSavareLong}.
+以下の命題の証明は~\cite[Thm 2.7]{LieroMielkeSavareLong}に見ることができる。
 
 \begin{proposition}
-If $\phi$ is an entropy function, then $\Divergm_\phi$ is jointly $1$-homogeneous, convex and weakly* lower semicontinuous in $(\al,\be)$.
+$\phi$がエントロピー関数であるならば、$\Divergm_\phi$は$(\al,\be)$について同次1次、凸、かつ弱*下半連続である。
 \end{proposition}
 
 
@@ -61,25 +61,25 @@ If $\phi$ is an entropy function, then $\Divergm_\phi$ is jointly $1$-homogeneou
 \centering
 \includegraphics[width=.6\linewidth]{divergences/divergences}
 \caption{\label{fig-divergences}
-Example of entropy functionals.
+エントロピー汎関数の例。
 }
 \end{figure}
 
 
-\begin{rem}[Dual expression]
-	A $\phi$-divergence can be expressed using the Legendre transform 
+\begin{rem}[双対表現]
+	$\phi$-ダイバージェンスは、$\phi$のルジャンドル変換
 	\eq{
 		\phi^*(s) \eqdef \usup{t \in \RR} st - \phi(t)
 	}
-	of $\phi$ (see also~\eqref{eq-legendre}) as
+	（~\eqref{eq-legendre}も参照）を用いて以下のように表現できる。
 	\eq{
-		\Divergm_\phi (\al|\be) = \usup{f: \X \rightarrow \RR} \int_\X f(x) \d\al(x) - \int_\X \phi^*(f(x)) \d\be(x); 
+		\Divergm_\phi (\al|\be) = \usup{f: \X \rightarrow \RR} \int_\X f(x) \d\al(x) - \int_\X \phi^*(f(x)) \d\be(x);
 	}
-	see~\citet{LieroMielkeSavareLong} for more details.
+	詳細は~\citet{LieroMielkeSavareLong}を参照されたい。
 \end{rem}
 
 
-We now review a few popular instances of this framework. Figure~\ref{fig-divergences} displays the associated entropy functionals, while Figure~\ref{fig-divergences-relations} reviews the relationship between them.
+ここで、この枠組みのいくつかの代表的な例を概観する。図~\ref{fig-divergences}は対応するエントロピー汎関数を示し、図~\ref{fig-divergences-relations}はそれらの関係を概観する。
 
 
 
@@ -89,15 +89,15 @@ We now review a few popular instances of this framework. Figure~\ref{fig-diverge
 \centering
 \includegraphics[width=.6\linewidth]{divergences/divergences-comparison}
 \caption{\label{fig-divergences-relations}
-Diagram of relationship between divergences (inspired by~\citet{gibbs2002choosing}).
-For $\X$ a metric space with ground distance $d$, $d_{\max} = \sup_{(x,x')} d(x,x')$ is the diameter of $\X$. When $\X$ is discrete, $d_{\min} \eqdef \min_{x \neq x'} d(x,x')$. \todoK{Tripple check these bounds since they might use different definition/normalization. }\todoK{Change the notation for the Hellinger distance one the symbol is decided $\Hellinger$. }
+ダイバージェンス間の関係図（~\citet{gibbs2002choosing}に着想を得たもの）。
+$\X$を基底距離$d$を持つ距離空間とし、$d_{\max} = \sup_{(x,x')} d(x,x')$を$\X$の直径とする。$\X$が離散的な場合、$d_{\min} \eqdef \min_{x \neq x'} d(x,x')$とする。\todoK{Tripple check these bounds since they might use different definition/normalization. }\todoK{Change the notation for the Hellinger distance one the symbol is decided $\Hellinger$. }
 }
 \end{figure}
 
 
-\begin{example}[Kullback--Leibler divergence]
+\begin{example}[Kullback--Leiblerダイバージェンス]
 \label{ex_KLdiv}
-The Kullback--Leibler divergence $\KL \eqdef \Divergm_{\phi_{\KL}}$, also known as the relative entropy, was already introduced in~\eqref{eq-defn-rel-entropy} and~\eqref{eq-kl-defn}. It is the divergence associated to the Shannon--Boltzman entropy function $\phi_{\KL}$, given by
+Kullback--Leiblerダイバージェンス$\KL \eqdef \Divergm_{\phi_{\KL}}$は、相対エントロピーとも呼ばれ、既に~\eqref{eq-defn-rel-entropy}と~\eqref{eq-kl-defn}で導入された。これはShannon--Boltzmannエントロピー関数$\phi_{\KL}$に対応するダイバージェンスであり、以下で与えられる。
 \eql{\label{eq-shannon-entropy}
 	\phi_{\KL}(s)= \begin{cases}
 		s\log(s)-s+1 & \textnormal{for } s>0 , \\
@@ -107,46 +107,46 @@ The Kullback--Leibler divergence $\KL \eqdef \Divergm_{\phi_{\KL}}$, also known 
 }
 \end{example}
 
-\begin{remark}[Bregman divergence]\label{rem-bregman}
-The discrete KL divergence, $\KLD \eqdef \DivergmD_{\phi_{\KL}}$, has the unique property of being both a $\phi$-divergence and a Bregman divergence.
+\begin{remark}[Bregmanダイバージェンス]\label{rem-bregman}
+離散KLダイバージェンス$\KLD \eqdef \DivergmD_{\phi_{\KL}}$は、$\phi$-ダイバージェンスでありかつBregmanダイバージェンスでもあるという一意的な性質を持つ。
 %
-For discrete vectors in $\RR^n$, a Bregman divergence~\citep{bregman1967relaxation} associated to a smooth strictly convex function $\psi : \RR^n \rightarrow \RR$ is defined as
+$\RR^n$上の離散ベクトルに対して、滑らかな狭義凸関数$\psi : \RR^n \rightarrow \RR$に対応するBregmanダイバージェンス~\citep{bregman1967relaxation}は以下で定義される。
 \eql{\label{eq-bregman-discr}
-	\VectMode{B}_\psi(\a|\b) \eqdef \psi(\a) - \psi(\b) - \dotp{\nabla \psi(\b)}{\a-\b}, 
+	\VectMode{B}_\psi(\a|\b) \eqdef \psi(\a) - \psi(\b) - \dotp{\nabla \psi(\b)}{\a-\b},
 }
-where $\dotp{\cdot}{\cdot}$ is the canonical inner product on $\RR^n$. Note that $\VectMode{B}_\psi(\a|\b)$ is a convex function of $\a$ and a linear function of $\psi$.
+ここで$\dotp{\cdot}{\cdot}$は$\RR^n$上の標準内積である。$\VectMode{B}_\psi(\a|\b)$は$\a$の凸関数であり、$\psi$の線形関数であることに注意されたい。
 %
-Similarly to $\phi$-divergence, a Bregman divergence satisfies $\VectMode{B}_\psi(\a|\b) \geq 0$ and $\VectMode{B}_\psi(\a|\b)=0$ if and only if $\a=\b$. 
+$\phi$-ダイバージェンスと同様に、Bregmanダイバージェンスは$\VectMode{B}_\psi(\a|\b) \geq 0$を満たし、$\VectMode{B}_\psi(\a|\b)=0$であることと$\a=\b$であることは同値である。
 %
-The KL divergence is the Bregman divergence for minus the entropy $\psi = -\HD$ defined in~\eqref{eq-discr-entropy}), \ie $\KLD = \VectMode{B}_{-\HD}$. 
+KLダイバージェンスは、~\eqref{eq-discr-entropy}で定義された負のエントロピー$\psi = -\HD$に対するBregmanダイバージェンスであり、すなわち$\KLD = \VectMode{B}_{-\HD}$である。
 %
-A Bregman divergence is locally a squared Euclidean distance since
+Bregmanダイバージェンスは局所的にはユークリッド距離の二乗であり、
 \eq{
 	\VectMode{B}_\psi(\a + \varepsilon|\a + \eta) = \dotp{ \partial^2 \psi(\a)(\varepsilon-\eta) }{\varepsilon-\eta}
 	+ o(\norm{\varepsilon-\eta}^2)
 }
-and the set of separating points $\enscond{\a}{\VectMode{B}_\psi(\a|\b) = \VectMode{B}_\psi(\a|\b')}$ is a hyperplane between $\b$ and $\b'$.
+が成り立ち、分離点の集合$\enscond{\a}{\VectMode{B}_\psi(\a|\b) = \VectMode{B}_\psi(\a|\b')}$は$\b$と$\b'$の間の超平面である。
 %
-These properties make Bregman divergence suitable to replace Euclidean distances in first order optimization methods. The best know example is mirror gradient descent~\citep{beck2003mirror}, which is an explicit descent step of the form~\eqref{eq-explicit-metricflow}.
+これらの性質により、Bregmanダイバージェンスは一次最適化法においてユークリッド距離の代替として適している。最も有名な例はミラー勾配降下法~\citep{beck2003mirror}であり、これは~\eqref{eq-explicit-metricflow}の形式の陽的降下ステップである。
 %
-Bregman divergences are also important in convex optimization and can be used, for instance, to derive Sinkhorn iterations and study its convergence in finite dimension; see Remark~\ref{rem-iterative-projection}.
+Bregmanダイバージェンスは凸最適化においても重要であり、例えばSinkhorn反復の導出や有限次元での収束の研究に用いることができる。注釈~\ref{rem-iterative-projection}を参照されたい。
 %%%% Should be re-written in infinite dimension
-%While KL is both a $\phi$ and a Bregman divergence, these are radically different concepts. In particular, to generalize formula~\eqref{eq-bregman-discr} to nondiscrete measures on some space $\Xx$, one needs to fix a reference measure $\xi$ and consider only measures $\al,\be$ with square integrable densities $\frac{\d\al}{\d\xi},\frac{\d\be}{\d\xi} \in L^2(\d\xi)$. For some strictly convex $\psi : L^2(\d\xi) \rightarrow \RR$, one then defines the Bregman divergence as 
+%While KL is both a $\phi$ and a Bregman divergence, these are radically different concepts. In particular, to generalize formula~\eqref{eq-bregman-discr} to nondiscrete measures on some space $\Xx$, one needs to fix a reference measure $\xi$ and consider only measures $\al,\be$ with square integrable densities $\frac{\d\al}{\d\xi},\frac{\d\be}{\d\xi} \in L^2(\d\xi)$. For some strictly convex $\psi : L^2(\d\xi) \rightarrow \RR$, one then defines the Bregman divergence as
 %\eq{
-%	\Bb_{\psi,\xi}(\al|\be) \eqdef \psi\pa{\frac{\d\al}{\d\xi}} - 
-%		\psi\pa{\frac{\d\be}{\d\xi}} - 
-%		\int_{\X} \eta(x) \pa{ 
+%	\Bb_{\psi,\xi}(\al|\be) \eqdef \psi\pa{\frac{\d\al}{\d\xi}} -
+%		\psi\pa{\frac{\d\be}{\d\xi}} -
+%		\int_{\X} \eta(x) \pa{
 %			\frac{\d\al}{\d\xi}(x)-\frac{\d\be}{\d\xi}(x)
 %		} \d \xi(x),
 %}
-%where $\eta = \nabla \psi\pa{\frac{\d\be}{\d\xi}}  \in L^2(\d\xi)$ is the gradient~\citep{rao1985cross,jones1990general}.  
-%%% 
+%where $\eta = \nabla \psi\pa{\frac{\d\be}{\d\xi}}  \in L^2(\d\xi)$ is the gradient~\citep{rao1985cross,jones1990general}.
+%%%
 %The simplest case is if $\psi(\rho) = \int_\X \tilde\psi(\rho(x)) \d\xi(x)$ in which case
 %\eq{
-%	\Bb_{\psi,\xi}(\al|\be) \eqdef 
+%	\Bb_{\psi,\xi}(\al|\be) \eqdef
 %		\int_\X \pa{
-%		\tilde\psi\pa{\frac{\d\al}{\d\xi}} - 
-%		\tilde\psi\pa{\frac{\d\be}{\d\xi}} - 
+%		\tilde\psi\pa{\frac{\d\al}{\d\xi}} -
+%		\tilde\psi\pa{\frac{\d\be}{\d\xi}} -
 %		\tilde\psi'\pa{\frac{\d\be}{\d\xi}}
 %		\pa{
 %			\frac{\d\al}{\d\xi}-\frac{\d\be}{\d\xi}
@@ -155,36 +155,36 @@ Bregman divergences are also important in convex optimization and can be used, f
 %}
 \end{remark}
 
-\begin{remark}[Hyperbolic geometry of KL]
-	It is interesting to contrast the geometry of the Kullback--Leibler divergence to that defined by quadratic optimal transport when comparing Gaussians. As detailed, for instance, by~\citet{costa2015fisher}, the Kullback--Leibler divergence has a closed form for Gaussian densities. In the univariate case, $\dim=1$, if $\al = \Nn(m_\al,\si_\al^2)$ and $\be = \Nn(m_\be,\si_\be^2)$, one has
+\begin{remark}[KLの双曲幾何]
+	Kullback--Leiblerダイバージェンスの幾何学を、ガウス分布の比較における二次最適輸送が定義する幾何学と対比することは興味深い。例えば~\citet{costa2015fisher}が詳述しているように、Kullback--Leiblerダイバージェンスはガウス密度に対して閉じた形を持つ。一変量の場合$\dim=1$において、$\al = \Nn(m_\al,\si_\al^2)$かつ$\be = \Nn(m_\be,\si_\be^2)$とすると、
 	\eql{\label{eq-kl-gaussian}
 		\KL(\al|\be) = \frac{1}{2}\pa{
-			\frac{\si_\al^2}{\si_\be^2}  + 
+			\frac{\si_\al^2}{\si_\be^2}  +
 			\log\pa{\frac{\si_\be^2}{\si_\al^2}}
 			+ \frac{|m_\al-m_\be|}{\si_\be^2}
 			 - 1
 		}.
-	}	
-	This expression shows that the divergence between $\al$ and $\be$ diverges to infinity as $\si_\be$ diminishes to $0$ and $\be$ becomes a Dirac mass. In that sense, one can say that singular Gaussians are infinitely far from all other Gaussians in the KL geometry. That geometry is thus useful when one wants to avoid dealing with singular covariances. To simplify the analysis, one can look at the infinitesimal geometry of KL, which is obtained by performing a Taylor expansion at order 2,
+	}
+	この表現は、$\si_\be$が$0$に減少し$\be$がディラック質量になるにつれて$\al$と$\be$の間のダイバージェンスが無限大に発散することを示している。この意味で、特異ガウス分布はKL幾何において他のすべてのガウス分布から無限に遠いと言える。したがって、この幾何学は特異共分散を扱うことを避けたい場合に有用である。分析を簡略化するために、KLの無限小幾何学を見ることができ、これは2次のテイラー展開によって得られる。
 	\eq{
 		\KL( \Nn(m+\de_m,(\si+\de_\si)^2) | \Nn(m,\si^2) ) = \frac{1}{\si^2}\pa{
 			\frac{1}{2}\de_m^2 + \de_\si^2
-		} + 
+		} +
 		o( \de_m^2,\de_\si^2 ).
 	}
-	This local Riemannian metric, the so-called Fisher metric, expressed over $(m/\sqrt{2},\si) \in \RR \times \RR_{+,*}$, matches exactly that of the hyperbolic Poincar\'e half plane. 
+	この局所リーマン計量、いわゆるフィッシャー計量は、$(m/\sqrt{2},\si) \in \RR \times \RR_{+,*}$上で表現すると、双曲ポアンカレ半平面の計量と正確に一致する。
 	%
-	Geodesics over this space are half circles centered along the $\si=0$ line and have an exponential speed, \ie they only reach the limit $\si=0$ after an infinite time. 
+	この空間上の測地線は$\si=0$の直線を中心とする半円であり、指数的な速度を持つ。すなわち、極限$\si=0$に到達するのは無限時間後である。
 	%
-	Note in particular that if $\si_\al=\si_\be$ but $m_\al \neq m_\al$, then the geodesic between $(\al,\be)$ over this hyperbolic half plane does not have a constant standard deviation. 
-	
-	The KL hyperbolic geometry over the space of Gaussian parameters $(m,\si)$ should be contrasted with the Euclidean geometry associated to OT as described in Remark~\ref{rem-dist-gaussians}, since in the univariate case
+	特に、$\si_\al=\si_\be$であるが$m_\al \neq m_\al$の場合、この双曲半平面上の$(\al,\be)$間の測地線は一定の標準偏差を持たないことに注意されたい。
+
+	ガウスパラメータ$(m,\si)$の空間上のKL双曲幾何学は、注釈~\ref{rem-dist-gaussians}で記述されたOTに付随するユークリッド幾何学と対比されるべきである。一変量の場合、
 	\eql{\label{eq-univariate-gauss}
-		\Wass_2^2( \al,\be ) = |m_\al - m_\be |^2 + |\si_\al-\si_\be|^2. 
-	}  
-	Figure~\ref{fig-kl-gaussians} shows a visual comparison of these two geometries and their respective geodesics.
+		\Wass_2^2( \al,\be ) = |m_\al - m_\be |^2 + |\si_\al-\si_\be|^2.
+	}
+	図~\ref{fig-kl-gaussians}は、これら二つの幾何学とそれぞれの測地線の視覚的比較を示している。
 	%
-	This interesting comparison was suggested to us by Jean Feydy.  
+	この興味深い比較はJean Feydyによって示唆されたものである。
 \end{remark}
 
 
@@ -197,132 +197,130 @@ Bregman divergences are also important in convex optimization and can be used, f
 KL & OT
 \end{tabular}
 \caption{\label{fig-kl-gaussians}
-Comparisons of interpolation between Gaussians using KL (hyperbolic) and OT (Euclidean) geometries.
+KL（双曲）幾何とOT（ユークリッド）幾何を用いたガウス分布間の補間の比較。
 }
 \end{figure}
 
 
-\begin{example}[Total variation]\label{exmp-tv}
-The total variation distance $\TV \eqdef \Divergm_{\phi_{\TV}}$ is the divergence associated to
+\begin{example}[全変動]\label{exmp-tv}
+全変動距離$\TV \eqdef \Divergm_{\phi_{\TV}}$は、以下に対応するダイバージェンスである。
 \eql{\label{eq-tv-entropy}
 	\phi_{\TV}(s)= \begin{cases}
 		|s-1| & \textnormal{for } s\geq0 , \\
 		+\infty & \textnormal{otherwise.}
 		\end{cases}
 }
-It actually defines a norm on the full space of measure $\Mm(\X)$ where
+これは実際には測度の全空間$\Mm(\X)$上のノルムを定義し、
 \eql{\label{eq-defn-tv}
 	\TV(\al|\be) = \norm{\al-\be}_{\TV},
 	\qwhereq
 	\norm{\al}_{\TV} = |\al|(\X) = \int_\X \d|\al|(x).
 }
-If $\al$ has a density $\density{\al}$ on $\X=\RR^\dim$, then the TV norm is the $L^1$ norm on functions, $\norm{\al}_{\TV} = \int_\X |\density{\al}(x)| \d x = \norm{\density{\al}}_{L^1}$.
+となる。$\al$が$\X=\RR^\dim$上で密度$\density{\al}$を持つ場合、TVノルムは関数の$L^1$ノルムであり、$\norm{\al}_{\TV} = \int_\X |\density{\al}(x)| \d x = \norm{\density{\al}}_{L^1}$となる。
 %
-If $\al$ is discrete as in~\eqref{eq-div-disc-meas}, then the TV norm is the $\ell^1$ norm of vectors in $\RR^n$, $\norm{\al}_{\TV}=\sum_i |\a_i| = \norm{\a}_{\ell^1}$.
+$\al$が~\eqref{eq-div-disc-meas}のように離散的である場合、TVノルムは$\RR^n$のベクトルの$\ell^1$ノルムであり、$\norm{\al}_{\TV}=\sum_i |\a_i| = \norm{\a}_{\ell^1}$となる。
 \end{example}
 
-\begin{rem}[Strong vs. weak topology]
-	The total variation norm~\eqref{eq-defn-tv} defines the so-called ``strong'' topology on the space of measure. 
+\begin{rem}[強位相と弱位相]
+	全変動ノルム~\eqref{eq-defn-tv}は測度の空間上のいわゆる「強」位相を定義する。
 	%
-	On a compact domain $\X$ of radius $R$, one has 
+	半径$R$のコンパクト領域$\X$上では、
 	\eq{
 		\Wass_1(\al,\be) \leq R \norm{\al-\be}_{\TV}
 	}
-	so that this strong notion of convergence implies the weak convergence metrized by Wasserstein distances. 
+	が成り立つので、この強い収束の概念はWasserstein距離によって距離化される弱収束を含意する。
 	%
-	The converse is, however, not true, since $\de_x$ does not converge strongly to $\de_y$ if $x \rightarrow y$ (note that
-	$\norm{\de_x-\de_y}_{\TV}=2$ if $x \neq y$). 
+	しかし逆は成り立たない。$x \rightarrow y$のとき$\de_x$は$\de_y$に強収束しないからである（$x \neq y$のとき$\norm{\de_x-\de_y}_{\TV}=2$であることに注意）。
 	%
-	A chief advantage is that $\Mm_+^1(\Xx)$ (once again on a compact ground space $\X$) is compact for the weak topology, so that from any sequence of probability measures $(\al_k)_k$, one can always extract a converging subsequence, which makes it a suitable space for several optimization problems, such as those considered in Chapter~\ref{c-variational}.
+	主要な利点は、$\Mm_+^1(\Xx)$が（再びコンパクトな台空間$\X$上で）弱位相に関してコンパクトであることであり、したがって確率測度の任意の列$(\al_k)_k$から常に収束する部分列を取り出すことができる。これにより、第~\ref{c-variational}章で考察するような最適化問題に適した空間となる。
 \end{rem}
 
 
 \begin{example}[Hellinger]\label{exmp-hellinger}
-	The Hellinger distance $\Hellinger \eqdef \Divergm_{\phi_{H}}^{1/2}$ is the square root of the divergence associated to
+	Hellinger距離$\Hellinger \eqdef \Divergm_{\phi_{H}}^{1/2}$は、以下に対応するダイバージェンスの平方根である。
 	\eq{
 		\phi_{H}(s)= \begin{cases}
 			|\sqrt{s}-1|^2 & \textnormal{for } s\geq0 , \\
 			+\infty & \textnormal{otherwise.}
 			\end{cases}
 	}
-	As its name suggests, $\Hellinger$ is a distance on $\Mm_+(\X)$, which metrizes the strong topology as $\norm{\cdot}_{\TV}$. 
+	名前が示す通り、$\Hellinger$は$\Mm_+(\X)$上の距離であり、$\norm{\cdot}_{\TV}$と同様に強位相を距離化する。
 	%
-	If $(\al,\be)$ have densities $(\density{\al},\density{\be})$ on $\X=\RR^\dim$, then $\Hellinger(\al,\be) = \norms{\sqrt{\density{\al}}-\sqrt{\density{\be}}}_{L^2}$.
+	$(\al,\be)$が$\X=\RR^\dim$上で密度$(\density{\al},\density{\be})$を持つ場合、$\Hellinger(\al,\be) = \norms{\sqrt{\density{\al}}-\sqrt{\density{\be}}}_{L^2}$となる。
 	%
-	If $(\al,\be)$ are discrete as in~\eqref{eq-div-disc-meas}, then $\Hellinger(\al,\be) = \norms{\sqrt{\a}-\sqrt{\b}}$.	
+	$(\al,\be)$が~\eqref{eq-div-disc-meas}のように離散的である場合、$\Hellinger(\al,\be) = \norms{\sqrt{\a}-\sqrt{\b}}$となる。
 	%
-	Considering $\phi_{L^p}(s)=|s^{1/p}-1|^p$ generalizes the Hellinger ($p=2$) and total variation ($p=1$) distances
-	and $\Divergm_{\phi_{L^p}}^{1/p}$ is a distance which metrizes the strong convergence for $0<p<+\infty$. 
+	$\phi_{L^p}(s)=|s^{1/p}-1|^p$を考えるとHellinger（$p=2$）および全変動（$p=1$）距離が一般化され、$\Divergm_{\phi_{L^p}}^{1/p}$は$0<p<+\infty$に対して強収束を距離化する距離となる。
 \end{example}
 
 
-\begin{example}[Jensen--Shannon distance]
-	The KL divergence is not symmetric and, while being a Bregman divergence (which are locally quadratic norms), it is not the square of a distance. On the other hand, the Jensen--Shannon distance $\text{JS}(\al,\be)$, defined as
+\begin{example}[Jensen--Shannon距離]
+	KLダイバージェンスは対称ではなく、Bregmanダイバージェンス（局所的に二次ノルム）ではあるが、距離の二乗ではない。一方、Jensen--Shannon距離$\text{JS}(\al,\be)$は以下で定義され、
 	\eq{
 		\text{JS}(\al,\be)^2 \eqdef \frac{1}{2}\pa{
 			\KL(\al|\xi) + \KL(\be|\xi)
 		}
 		\qwhereq
-		\xi = \frac{\al+\be}{2}, 
+		\xi = \frac{\al+\be}{2},
 	}
-	is a distance~\citep{endres2003new,osterreicher2003new}. 
-	% 
-	$\text{JS}^2$ can be shown to be a $\phi$-divergence for $\phi(s) = t\log(t)-(t+1)\log(t+1)$.
+	距離である~\citep{endres2003new,osterreicher2003new}。
 	%
-	In sharp contrast with $\KL$, $\text{JS}(\al,\be)$ is always bounded; more precisely, it satisfies $0 \leq \text{JS}(\al,\be)^2 \leq \ln(2)$. 
+	$\text{JS}^2$は$\phi(s) = t\log(t)-(t+1)\log(t+1)$に対する$\phi$-ダイバージェンスであることが示せる。
 	%
-	Similarly to the TV norm and the Hellinger distance, it metrizes the strong convergence. 
+	$\KL$とは鋭く対照的に、$\text{JS}(\al,\be)$は常に有界である。より正確には、$0 \leq \text{JS}(\al,\be)^2 \leq \ln(2)$を満たす。
+	%
+	TVノルムやHellinger距離と同様に、強収束を距離化する。
 \end{example}
 
 
 
 \begin{example}[$\chi^2$]\label{exmp-chisquare}
-	The $\chi^2$-divergence $\chi^2 \eqdef \Divergm_{\phi_{\chi^2}}$ is the divergence associated to
+	$\chi^2$-ダイバージェンス$\chi^2 \eqdef \Divergm_{\phi_{\chi^2}}$は、以下に対応するダイバージェンスである。
 	\eq{
 		\phi_{\chi^2}(s)= \begin{cases}
 			|s-1|^2 & \textnormal{for } s\geq0 , \\
 			+\infty & \textnormal{otherwise.}
 			\end{cases}
 	}
-	If $(\al,\be)$ are discrete as in~\eqref{eq-div-disc-meas} and have the same support, then 
+	$(\al,\be)$が~\eqref{eq-div-disc-meas}のように離散的で同一の台を持つ場合、
 	\eq{
 		\chi^2(\al|\be) = \sum_i \frac{(\a_i-\b_i)^2}{\b_i}.
-	}	
+	}
 \end{example}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Integral Probability Metrics}
+\section{積分確率計量}
 \label{sec-dual-norms}
 
 
-Formulation~\eqref{eq-w1-cont} is a special case of a dual norm. A dual norm is a convenient way to design ``weak'' norms that can deal with arbitrary measures. For a symmetric convex set $B$ of measurable functions, one defines 
+定式化~\eqref{eq-w1-cont}は双対ノルムの特殊な場合である。双対ノルムは、任意の測度を扱うことのできる「弱い」ノルムを設計するための便利な方法である。可測関数の対称凸集合$B$に対して、以下を定義する。
 \eql{\label{eq-dual-norm-cont}
-	\norm{\al}_B \eqdef 
+	\norm{\al}_B \eqdef
 	\umax{\f} \enscond{ \int_{\X} \f(x) \d\al(x) }{ \f \in B}.
 }
-These dual norms are often called ``integral probability metrics'; see~\citep{sriperumbudur2012empirical}.
+これらの双対ノルムは「積分確率計量」と呼ばれることが多い。~\citep{sriperumbudur2012empirical}を参照されたい。
 
- 
-% Cf. ``Integral probability metrics and their generating classes of functions".  
 
-\begin{example}[Total variation]
-The total variation norm (Example~\ref{exmp-tv}) is a dual norm associated to the whole space of continuous functions
+% Cf. ``Integral probability metrics and their generating classes of functions".
+
+\begin{example}[全変動]
+全変動ノルム（例~\ref{exmp-tv}）は、連続関数の全空間に対応する双対ノルムである。
 \eq{
 	B = \enscond{f \in \Cc(\X)}{\norm{f}_\infty \leq 1}.
 }
-The total variation distance is the only nontrivial divergence that is also a dual norm; see~\citep{sriperumbudur2009integral}. 
+全変動距離は、双対ノルムでもある唯一の非自明なダイバージェンスである。~\citep{sriperumbudur2009integral}を参照されたい。
 \end{example}
 
-\begin{rem}[Metrizing the weak convergence]\label{rem-ipm-weak}
-By using smaller ``balls'' $B$, which typically only contain continuous (and sometimes regular) functions, one defines weaker dual norms.
+\begin{rem}[弱収束の距離化]\label{rem-ipm-weak}
+より小さな「球」$B$を用いることで、典型的には連続（ときに正則な）関数のみを含む、より弱い双対ノルムが定義される。
 %
-In order for $\norm{\cdot}_B$ to metrize the weak convergence (see Definition~\ref{dfn-weak-conv}), it is sufficient for the space spanned by $B$ to be dense in the set of continuous functions for the sup-norm $\norm{\cdot}_\infty$ (i.e. for the topology of uniform convergence); see~\citep[para. 5.1]{ambrosio2006gradient}.
+$\norm{\cdot}_B$が弱収束（定義~\ref{dfn-weak-conv}を参照）を距離化するためには、$B$で張られる空間がsupノルム$\norm{\cdot}_\infty$（すなわち一様収束の位相）に関して連続関数の集合の中で稠密であれば十分である。~\citep[para. 5.1]{ambrosio2006gradient}を参照されたい。
 \end{rem}
 
-Figure~\ref{fig-dual-norms} displays a comparison of several such dual norms, which we now detail.
+図~\ref{fig-dual-norms}はいくつかのこのような双対ノルムの比較を示しており、以下で詳述する。
 
 
 \begin{figure}[h!]
@@ -334,41 +332,41 @@ $(\al,\be)=(\de_0,\de_t)$ &
 $(\al,\be)=(\de_0,\frac{1}{2}(\de_{-t/2}+\de_{t/2}))$
 \end{tabular}
 \caption{\label{fig-dual-norms}
-Comparison of dual norms. 
+双対ノルムの比較。
 }
 \end{figure}
 
 
 
 %%%%
-\subsection{$\Wass_1$ and Flat Norm}
+\subsection{$\Wass_1$とフラットノルム}
 
-If the set $B$ is bounded, then $\norm{\cdot}_B$ is a norm on the whole space $\Mm(\Xx)$ of measures.
+集合$B$が有界であれば、$\norm{\cdot}_B$は測度の全空間$\Mm(\Xx)$上のノルムとなる。
 %
-This is not the case of $\Wass_1$, which is only defined for $\al$ such that $\int_\X \d\al=0$ (otherwise $\norm{\al}_B=+\infty$). 
+$\Wass_1$の場合はそうではなく、$\int_\X \d\al=0$を満たす$\al$に対してのみ定義される（そうでなければ$\norm{\al}_B=+\infty$となる）。
 %
-This can be alleviated by imposing a bound on the value of the potential $\f$, in order to define for instance the flat norm.
+これはポテンシャル$\f$の値に上界を課すことで緩和でき、例えばフラットノルムを定義する。
 
-\begin{example}[$\Wass_1$ norm]
-$\Wass_1$ as defined in~\eqref{eq-w1-cont}, is a special case of dual norm~\eqref{eq-dual-norm-cont}, using
-\eq{ 
+\begin{example}[$\Wass_1$ノルム]
+~\eqref{eq-w1-cont}で定義される$\Wass_1$は、以下を用いる双対ノルム~\eqref{eq-dual-norm-cont}の特殊な場合である。
+\eq{
 	B = \enscond{f}{\Lip(f) \leq 1}
-} 
-the set of 1-Lipschitz functions.
+}
+すなわち1-リプシッツ関数の集合である。
 \end{example}
 
-\begin{example}[Flat norm and Dudley metric]
-The flat norm is defined using 
+\begin{example}[フラットノルムとDudley計量]
+フラットノルムは以下を用いて定義される。
 \eql{\label{eq-set-flatnorm}
 	B=\enscond{f}{\norm{\nabla \f}_\infty \leq 1 \qandq \norm{\f}_\infty \leq 1}.
 }
-It metrizes the weak convergence on the whole space $\Mm(\X)$.
-% 
-Formula~\eqref{eq-w1-discr} is extended to compute the flat norm by adding the constraint $\abs{\fD_k} \leq 1$.
+これは測度の全空間$\Mm(\X)$上で弱収束を距離化する。
 %
-The flat norm is sometimes called the ``Kantorovich--Rubinstein'' norm~\citep{hanin1992kantorovich} and has been used as a fidelity term for inverse problems in imaging~\citep{lellmann2014imaging}.
+式~\eqref{eq-w1-discr}は、制約$\abs{\fD_k} \leq 1$を追加することでフラットノルムの計算に拡張される。
 %
-The flat norm is  similar to the Dudley metric, which uses
+フラットノルムは「Kantorovich--Rubinstein」ノルム~\citep{hanin1992kantorovich}と呼ばれることもあり、画像処理における逆問題の忠実度項として用いられてきた~\citep{lellmann2014imaging}。
+%
+フラットノルムはDudley計量と類似しており、こちらは以下を用いる。
 \eq{\label{eq-set-dudley}
 	B=\enscond{f}{\norm{\nabla \f}_\infty + \norm{\f}_\infty \leq 1}.
 }
@@ -376,25 +374,25 @@ The flat norm is  similar to the Dudley metric, which uses
 
 
 %%%%
-\subsection{Dual RKHS Norms and Maximum Mean Discrepancies}
+\subsection{双対RKHSノルムと最大平均差異}
 \label{sec-mmd}
 
 
-It is also possible to define ``Euclidean'' norms (built using quadratic functionals) on measures using the machinery of kernel methods and more specifically reproducing kernel Hilbert spaces (RKHS; see~\citep{scholkopf2002learning} for a survey of their applications in data sciences), of which we recall first some basic definitions.
+カーネル法、より具体的には再生核ヒルベルト空間（RKHS; データサイエンスにおける応用の概説は~\citep{scholkopf2002learning}を参照）の機構を用いて、測度上の「ユークリッド的」ノルム（二次汎関数を用いて構成される）を定義することも可能である。まず基本的な定義を想起する。
 
 \begin{defn}\label{def-negativedefinitekernel}
-A symmetric function $k$ (resp., $\varphi$) defined on a set $\X \times \X$ is said to be positive (resp., negative) definite if for any $n\geq0$, family $x_1,\dots,x_n\in\Z$, and vector $r\in\RR^n$ the following inequality holds:
+集合$\X \times \X$上で定義された対称関数$k$（あるいは$\varphi$）が正定値（あるいは負定値）であるとは、任意の$n\geq0$、任意の族$x_1,\dots,x_n\in\Z$、および任意のベクトル$r\in\RR^n$に対して以下の不等式が成り立つことをいう。
 \eql{\label{eq-dual-kern}
-	\sum_{i,j=1}^n r_i r_j k(x_i,x_j)\geq 0, 
+	\sum_{i,j=1}^n r_i r_j k(x_i,x_j)\geq 0,
 	\quad
 	\left(\text{resp.}\quad\sum_{i,j=1}^n r_i r_j \varphi(x_i,x_j)\leq 0\right).
 }
-The kernel is said to be conditionally positive if positivity only holds in~\eqref{eq-dual-kern} for zero mean vectors $r$ (i.e. such that $\dotp{r}{\ones_n}=0$).  
+カーネルが条件付き正定値であるとは、~\eqref{eq-dual-kern}において正定値性が零平均ベクトル$r$（すなわち$\dotp{r}{\ones_n}=0$を満たすもの）に対してのみ成り立つ場合をいう。
 \end{defn}
 
 
-\if 0 %%%% REMOVED 
-Using a positive definite kernel $k$, one can now define a Hilbertian norm $\norm{\cdot}_\Krkhs$ on functions 
+\if 0 %%%% REMOVED
+Using a positive definite kernel $k$, one can now define a Hilbertian norm $\norm{\cdot}_\Krkhs$ on functions
 \eq{
 	\norm{f}_\Krkhs^2 \eqdef \int_{\X \times \X} \Krkhs(x,y) f(x) f(y) \d \rho(x) \d \rho(y)
 }
@@ -403,49 +401,49 @@ where $\rho$ is some reference measure, typically Lebesgue's measure on $\X=\RR^
 	B = \enscond{\f}{ \norm{\f}_\Krkhs \leq 1}
 }
 %
-that is plugged into notation~\eqref{eq-dual-norm-cont}. The dual RKHS norm for measures that results from this construction is often referred to as the ``maximum mean discrepancy'' (MMD) (see~\citet{gretton2007kernel}), and can be revisited through the prism of Kernel Mean Embeddings (see~\citet{muandet2017kernel} for a review). 
-\fi 
+that is plugged into notation~\eqref{eq-dual-norm-cont}. The dual RKHS norm for measures that results from this construction is often referred to as the ``maximum mean discrepancy'' (MMD) (see~\citet{gretton2007kernel}), and can be revisited through the prism of Kernel Mean Embeddings (see~\citet{muandet2017kernel} for a review).
+\fi
 
 
-If $k$ is conditionally positive, one defines the following norm:  
+$k$が条件付き正定値のとき、以下のノルムが定義される。
 \eql{\label{eq-kernel-dual}
-	\norm{\al}^2_{\Krkhs} \eqdef \int_{\X \times \X} \Krkhs(x,y) \d \al(x) \d \al(y). 
+	\norm{\al}^2_{\Krkhs} \eqdef \int_{\X \times \X} \Krkhs(x,y) \d \al(x) \d \al(y).
 }
-These norms are often referred to as ``maximum mean discrepancy'' (MMD) (see~\citep{gretton2007kernel}) and have also been called ``kernel norms'' in shape analysis~\citep{glaunes2004diffeomorphic}.
+これらのノルムは「最大平均差異」（MMD）と呼ばれることが多く（~\citep{gretton2007kernel}を参照）、形状解析では「カーネルノルム」とも呼ばれてきた~\citep{glaunes2004diffeomorphic}。
 %
-This expression~\eqref{eq-kernel-dual} can be rephrased, introducing two independent random vectors $(X,X')$ on $\X$ distributed with law $\al$, as
+この表現~\eqref{eq-kernel-dual}は、$\X$上の分布$\al$に従う二つの独立な確率ベクトル$(X,X')$を導入して以下のように言い換えることができる。
 \eq{
-	\norm{\al}^2_{\Krkhs} = \EE_{X,X'}( \Krkhs(X,X') ). 
+	\norm{\al}^2_{\Krkhs} = \EE_{X,X'}( \Krkhs(X,X') ).
 }
-One can show that $\norm{\cdot}^2_{\Krkhs}$ is the dual norm in the sense of~\eqref{eq-dual-norm-cont} associated to the unit ball $B$ of the RKHS associated to $k$. We refer to~\citep{berlinet03reproducing,Hofmann2008,scholkopf2002learning} for more details on RKHS functional spaces.  
+$\norm{\cdot}^2_{\Krkhs}$は、$k$に対応するRKHSの単位球$B$に対応する~\eqref{eq-dual-norm-cont}の意味での双対ノルムであることが示される。RKHS関数空間の詳細は~\citep{berlinet03reproducing,Hofmann2008,scholkopf2002learning}を参照されたい。
 
-\begin{rem}[Universal kernels]
-According to Remark~\ref{rem-ipm-weak}, the MMD norm $\norm{\cdot}_k$ metrizes the weak convergence if the span of the dual ball $B$ is dense in the space of continuous functions $\Cc(\Xx)$. This means that finite sums of the form $\sum_{i=1}^n a_i k(x_i,\cdot)$ (for arbitrary choice of $n$ and points $(x_i)_i$) are dense in $\Cc(\Xx)$ for the uniform norm $\norm{\cdot}_\infty$.  For translation-invariant kernels over $\X=\RR^d$, $\Krkhs(x,y)=\Krkhs_0(x-y)$, this is equivalent to having a nonvanishing Fourier transform, $\hat \Krkhs_0(\om) >0$.
+\begin{rem}[普遍カーネル]
+注釈~\ref{rem-ipm-weak}によれば、MMDノルム$\norm{\cdot}_k$は、双対球$B$の張る空間が連続関数の空間$\Cc(\Xx)$の中で稠密であれば弱収束を距離化する。これは、有限和$\sum_{i=1}^n a_i k(x_i,\cdot)$（$n$と点$(x_i)_i$の任意の選択に対して）が一様ノルム$\norm{\cdot}_\infty$に関して$\Cc(\Xx)$の中で稠密であることを意味する。$\X=\RR^d$上の平行移動不変カーネル$\Krkhs(x,y)=\Krkhs_0(x-y)$の場合、これはフーリエ変換が消えないこと$\hat \Krkhs_0(\om) >0$と同値である。
 \end{rem}
 
-In the special case where $\al$ is a discrete measure of the form~\eqref{eq-pair-discr}, one thus has the simple expression
+$\al$が~\eqref{eq-pair-discr}の形の離散測度である特殊な場合には、以下の簡単な表現が得られる。
 \eq{
 	\norm{\al}_{\Krkhs}^2 = \sum_{i=1}^n \sum_{i'=1}^n \a_i\a_{i'} \KrkhsD_{i,i'}  = \dotp{\KrkhsD\a}{\a}
 	\qwhereq
 	\KrkhsD_{i,i'} \eqdef \Krkhs(x_i,x_{i'}).
 }
-In particular, when $\al=\sum_{i=1}^n \a_i \de_{x_i}$ and $\be=\sum_{i=1}^n \b_i \de_{x_i}$ are supported on the same set of points, $\norm{\al-\be}_{\Krkhs}^2 = \dotp{\KrkhsD(\a-\b)}{\a-\b}$, so that $\norm{\cdot}_{\Krkhs}$ is a Euclidean norm (proper if $\KrkhsD$ is positive definite, degenerate otherwise if $\KrkhsD$ is semidefinite) on the simplex $\simplex_n$.
+特に、$\al=\sum_{i=1}^n \a_i \de_{x_i}$と$\be=\sum_{i=1}^n \b_i \de_{x_i}$が同一の点集合上に台を持つとき、$\norm{\al-\be}_{\Krkhs}^2 = \dotp{\KrkhsD(\a-\b)}{\a-\b}$となるので、$\norm{\cdot}_{\Krkhs}$は単体$\simplex_n$上のユークリッドノルム（$\KrkhsD$が正定値なら真のノルム、$\KrkhsD$が半正定値なら退化したノルム）である。
 %
-To compute the discrepancy between two discrete measures of the form~\eqref{eq-pair-discr}, one can use
+~\eqref{eq-pair-discr}の形の二つの離散測度間の差異を計算するには、以下を用いることができる。
 \eql{\label{eq-mmd-discr}
-	\norm{\al-\be}_{\Krkhs}^2 = 
+	\norm{\al-\be}_{\Krkhs}^2 =
 		\sum_{i,i'} \a_i \a_{i'} \Krkhs(x_i,x_{i'})	+
 		\sum_{j,j'} \b_j \b_{j'} \Krkhs(y_j,y_{j'}) - 2
-		\sum_{i,j} \a_i \b_j \Krkhs(x_i,y_j). 
+		\sum_{i,j} \a_i \b_j \Krkhs(x_i,y_j).
 }
 
-\begin{example}[Gaussian RKHS]\label{exmp-gaussian-kernel}
-One of the most popular kernels is the Gaussian one $\Krkhs(x,y) = e^{-\frac{\norm{x-y}^2}{2 \si^2}}$, which is a positive universal kernel on $\Xx=\RR^d$. 
+\begin{example}[ガウスRKHS]\label{exmp-gaussian-kernel}
+最もよく用いられるカーネルの一つはガウスカーネル$\Krkhs(x,y) = e^{-\frac{\norm{x-y}^2}{2 \si^2}}$であり、これは$\Xx=\RR^d$上の正定値普遍カーネルである。
 %
-An attractive feature of the Gaussian kernel is that it is separable as a product of 1-D kernels, which facilitates computations when working on regular grids (see also Remark~\ref{rem-separable}).
-However, an important issue that arises when using the Gaussian kernel is that one needs to select the bandwidth parameter $\si$. This bandwidth should match the ``typical scale'' between observations in the measures to be compared. If the measures have multiscale features (some regions may be very dense, others very sparsely populated), a Gaussian kernel is thus not well adapted, and one should consider a ``scale-free'' kernel as we detail next. An issue with such scale-free kernels is that they are global (have slow polynomial decay), which makes them typically computationally more expensive, since no compact support approximation is possible.
+ガウスカーネルの魅力的な特徴は、1次元カーネルの積として分離可能であることであり、これにより正則格子上での計算が容易になる（注釈~\ref{rem-separable}も参照）。
+しかし、ガウスカーネルを用いる際に生じる重要な問題は、帯域幅パラメータ$\si$を選択する必要があることである。この帯域幅は、比較する測度の観測値間の「典型的なスケール」と一致する必要がある。測度がマルチスケールの特徴を持つ場合（ある領域は非常に密で、他の領域は非常に疎である場合）、ガウスカーネルは適切ではなく、次に詳述する「スケールフリー」カーネルを検討すべきである。このようなスケールフリーカーネルの問題は、大域的（遅い多項式減衰を持つ）であることであり、コンパクト台近似が不可能なため、計算コストが典型的に高くなる。
 %
-Figure~\ref{fig-rkhs} shows a comparison between several kernels. 
+図~\ref{fig-rkhs}はいくつかのカーネルの比較を示している。
 \end{example}
 
 \begin{figure}[h!]
@@ -464,11 +462,11 @@ Figure~\ref{fig-rkhs} shows a comparison between several kernels.
 $({\color{red} \al},{\color{blue} \be})$ & $\text{ED}(\RR^2,\norm{\cdot})$ & $(G,.005)$ &  $(G,.02)$ & $(G,.05)$
 \end{tabular}
 \caption{\label{fig-rkhs}
-Top row: display of $\psi$ such that $\norm{\al-\be}_k = \norm{\psi \star (\al-\be)}_{L^2(\RR^2)}$, formally defined over Fourier as $\hat\psi(\om) = \sqrt{ \hat k_0(\om) }$, where $\Krkhs(x,x')=k_0(x-x')$.
+上段: $\norm{\al-\be}_k = \norm{\psi \star (\al-\be)}_{L^2(\RR^2)}$なる$\psi$の表示。フーリエ上では$\hat\psi(\om) = \sqrt{ \hat k_0(\om) }$として形式的に定義される。ここで$\Krkhs(x,x')=k_0(x-x')$である。
 %
-Bottom row: display of $\psi \star (\al-\be)$.
+下段: $\psi \star (\al-\be)$の表示。
 %
-(G,$\si$) stands for Gaussian kernel of variance $\si^2$. The kernel for $\text{ED}(\RR^2,\norm{\cdot})$ is $\psi(x)=1/\sqrt{\norm{x}}$.
+(G,$\si$)は分散$\si^2$のガウスカーネルを表す。$\text{ED}(\RR^2,\norm{\cdot})$のカーネルは$\psi(x)=1/\sqrt{\norm{x}}$である。
 %
 \todoK{check that in 2D the ED sqrt kernel is $1/\sqrt{|x|}$, I think this is the case.} \todoK{Explain that ED and large sigma are too global to match the feature size, medium sigma only capture one scale of the details ; small sigma too small}
 }
@@ -476,55 +474,55 @@ Bottom row: display of $\psi \star (\al-\be)$.
 
 
 \begin{example}[$H^{-1}(\RR^\dim)$]\label{exp-sobolev-neg1}
-Another important dual norm is $H^{-1}(\RR^\dim)$, the dual (over distributions) of the Sobolev space $H^1(\RR^\dim)$ of functions having derivatives in $L^2(\RR^\dim)$.
+もう一つの重要な双対ノルムは$H^{-1}(\RR^\dim)$であり、これは$L^2(\RR^\dim)$に導関数を持つ関数のソボレフ空間$H^1(\RR^\dim)$の（超関数上の）双対である。
 %
-It is defined using the primal RKHS norm $\norm{\nabla \f}_{L^2(\RR^\dim)}^2$. It is not defined for singular measures (\emph{e.g.} Diracs) unless $\dim=1$ because functions in the Sobolev space $H^1(\RR^\dim)$ are in general not continuous.
+これは主RKHSノルム$\norm{\nabla \f}_{L^2(\RR^\dim)}^2$を用いて定義される。$\dim=1$でない限り、$H^1(\RR^\dim)$のソボレフ空間の関数は一般に連続でないため、特異測度（例えばディラック）に対しては定義されない。
 %
-This $H^{-1}$ norm (defined on the space of zero mean measures with densities) can also be formulated in divergence form,
+この$H^{-1}$ノルム（零平均で密度を持つ測度の空間上で定義される）はダイバージェンス形式でも定式化できる。
 \eql{\label{eq-dual-sobolev-div}
-	\norm{\al-\be}_{H^{-1}(\RR^\dim)}^2 = 
+	\norm{\al-\be}_{H^{-1}(\RR^\dim)}^2 =
 	\umin{\flow} \enscond{ \int_{\RR^\dim} \norm{\flow(x)}_2^2 \d x }{  \diverg(\flow)=\al-\be },
 }
-which should be contrasted with~\eqref{eq-w1-cont-div}, where an $L^1$ norm of the vector field $\flow$ was used in place of the $L^2$ norm used here.
+これは~\eqref{eq-w1-cont-div}と対比されるべきであり、そちらではここで用いた$L^2$ノルムの代わりにベクトル場$\flow$の$L^1$ノルムが用いられていた。
 %
-The ``weighted'' version of this Sobolev dual norm,
+このソボレフ双対ノルムの「重み付き」版、
 \eq{
-	\norm{\rho}_{H^{-1}(\al)}^2 = 
+	\norm{\rho}_{H^{-1}(\al)}^2 =
 	\umin{\diverg(\flow)=\rho} \int_{\RR^\dim} \norm{\flow(x)}_2^2 \d \al(x),
 }
-can be interpreted as the natural ``linearization'' of the Wasserstein $\Wass_2$ norm, in the sense that the Benamou--Brenier dynamic formulation can be interpreted infinitesimally as 
+はWasserstein $\Wass_2$ノルムの自然な「線形化」として解釈できる。すなわち、Benamou--Brenier動的定式化は無限小的に以下のように解釈できる。
 \eql{\label{eq-wass-asymp-sob}
 	\Wass_2(\al,\al+\varepsilon \rho) = \varepsilon \norm{\rho}_{H^{-1}(\al)} + o(\varepsilon).
 }
-The functionals $\Wass_2(\al,\be)$ and $\norm{\al-\be}_{H^{-1}(\al)}$ can be shown to be equivalent~\citep{peyre2011comparison}.
+汎関数$\Wass_2(\al,\be)$と$\norm{\al-\be}_{H^{-1}(\al)}$は同値であることが示される~\citep{peyre2011comparison}。
 %
-The issue is that $\norm{\al-\be}_{H^{-1}(\al)}$ is not a norm (because of the weighting by $\al$), and one cannot in general replace it by $\norm{\al-\be}_{H^{-1}(\RR^\dim)}$ unless $(\al,\be)$ have densities. 
+問題は、$\norm{\al-\be}_{H^{-1}(\al)}$がノルムではないこと（$\al$による重み付けのため）であり、$(\al,\be)$が密度を持たない限り、一般にはこれを$\norm{\al-\be}_{H^{-1}(\RR^\dim)}$で置き換えることはできない。
 %
-In this case, if $\al$ and $\be$ have densities on the same support bounded from below by $a>0$ and from above by $b<+\infty$, then 
+この場合、$\al$と$\be$が同一の台上で下から$a>0$、上から$b<+\infty$で有界な密度を持つならば、
 \eql{\label{eq-compar-w2-sob}
 	b^{-1/2} \norm{\al-\be}_{H^{-1}(\RR^\dim)} \leq W_2(\al,\be) \leq a^{-1/2} \norm{\al-\be}_{H^{-1}(\RR^\dim)};
 }
-see~\citep[Theo. 5.34]{SantambrogioBook}, and see~\citep{peyre2011comparison} for sharp constants. 
+が成り立つ。~\citep[Theo. 5.34]{SantambrogioBook}を参照し、最適定数については~\citep{peyre2011comparison}を参照されたい。
 %
 % Note however $H^{-1}(\al)$ and $\Wass_2(\al,\be)$ are related when comparing close enough distribution, they have very different behaviors.
 \end{example}
 
-\begin{example}[Negative Sobolev spaces]\label{exp-sobolev-neg}
-	One can generalize this construction by considering the Sobolev space $H^{-r}(\RR^\dim)$ of arbitrary negative index, which is the dual of the functional Sobolev space $H^{r}(\RR^\dim)$ of functions having $r$ derivatives (in the sense of distributions) in $L^2(\RR^\dim)$.
+\begin{example}[負ソボレフ空間]\label{exp-sobolev-neg}
+	この構成を一般化するには、任意の負の指数のソボレフ空間$H^{-r}(\RR^\dim)$を考えればよい。これは$r$階導関数（超関数の意味で）が$L^2(\RR^\dim)$に属する関数のソボレフ空間$H^{r}(\RR^\dim)$の双対である。
 	%
-	In order to metrize the weak convergence, one needs functions in $H^{r}(\RR^\dim)$  to be continuous, which is the case when $r>\dim/2$. As the dimension $\dim$ increases, one thus needs to consider higher regularity.
+	弱収束を距離化するためには、$H^{r}(\RR^\dim)$の関数が連続である必要があり、これは$r>\dim/2$のとき成り立つ。次元$\dim$が増加すると、より高い正則性を考える必要がある。
 	%
-	For arbitrary $\al$ (not necessarily integers), these spaces are defined using the Fourier transform, and for a measure $\al$ with Fourier transform $\hat \al(\om)$ (written here as a density with respect to the Lebesgue measure $\d\om$)
+	任意の$\al$（必ずしも整数でなくてよい）に対して、これらの空間はフーリエ変換を用いて定義され、フーリエ変換$\hat \al(\om)$（ここではルベーグ測度$\d\om$に関する密度として記述）を持つ測度$\al$に対して、
 	\eq{
 		\norm{\al}_{H^{-r}(\RR^\dim)}^2 \eqdef \int_{\RR^\dim} \norm{\om}^{-2r} |\hat \al(\om)|^{2}\d\om.
 	}
-	This corresponds to a dual RKHS norm with a convolutive kernel $k(x,y)=k_0(x-y)$ with $\hat k_0(\om) = \pm \norm{\om}^{-2r}$. Taking the inverse Fourier transform, one sees that (up to constant) one has
+	これは$\hat k_0(\om) = \pm \norm{\om}^{-2r}$を持つ畳み込みカーネル$k(x,y)=k_0(x-y)$を用いた双対RKHSノルムに対応する。逆フーリエ変換を取ると、（定数を除いて）以下が得られることがわかる。
 	 \eql{\label{eq-sob-kern}
-	 	\foralls x \in \RR^\dim, \quad  
-		k_0(x) = 
+	 	\foralls x \in \RR^\dim, \quad
+		k_0(x) =
 		\choice{
 			\frac{1}{\norm{x}^{d-2r}} \qifq r < d/2,  \\
-			-\norm{x}^{2r-d} \qifq r>d/2. 
+			-\norm{x}^{2r-d} \qifq r>d/2.
 		}
 	}
 \end{example}
@@ -532,36 +530,36 @@ see~\citep[Theo. 5.34]{SantambrogioBook}, and see~\citep{peyre2011comparison} fo
 
 
 
-\begin{example}[Energy distance]\label{exp-energy-dist}
-The energy distance (or Cramer distance when $\dim=1$)~\citep{szekely2004testing} associated to a distance $\dist$ is defined as
+\begin{example}[エネルギー距離]\label{exp-energy-dist}
+エネルギー距離（$\dim=1$のときCramer距離）~\citep{szekely2004testing}は、距離$\dist$に対して以下で定義される。
 \eql{\label{eq-defn-ed}
 	\norm{\al-\be}_{\text{ED}(\X,\dist^p)} \eqdef \norm{\al-\be}_{\Krkhs_{\text{ED}}}
 	\qwhereq
 	\Krkhs_{\text{ED}}(x,y) = -\dist(x,y)^p
 }
-for $0 < p < 2$. \todoK{is it correct?}
+ただし$0 < p < 2$とする。\todoK{is it correct?}
 %
-It is a valid MMD norm over measures if $\dist$ is negative definite (see Definition~\ref{def-negativedefinitekernel}), a typical example being the Euclidean distance $\dist(x,y)=\norm{x-y}$. 
+$\dist$が負定値（定義~\ref{def-negativedefinitekernel}を参照）であれば、これは測度上の有効なMMDノルムであり、典型的な例はユークリッド距離$\dist(x,y)=\norm{x-y}$である。
 %
-For $\X=\RR^\dim$, $\dist(x,y)=\norm{\cdot}$, using~\eqref{eq-sob-kern}, one sees that the energy distance is a Sobolev norm
+$\X=\RR^\dim$、$\dist(x,y)=\norm{\cdot}$の場合、~\eqref{eq-sob-kern}を用いると、エネルギー距離はソボレフノルムであることがわかる。
 \eq{
 	\norm{\cdot}_{\text{ED}(\RR^\dim,\norm{\cdot}^p)} = \norm{\cdot}_{H^{-\frac{d+p}{2}}(\RR^\dim)}.
 }
-A chief advantage of the energy distance over more usual kernels such as the Gaussian (Example~\ref{exmp-gaussian-kernel}) is that it is scale-free and does not depend on a bandwidth parameter $\si$. More precisely, one has the following scaling behavior on $\X=\RR^\dim$, when denoting $f_s(x)=sx$ the dilation by a factor $s>0$,
+エネルギー距離がガウスカーネル（例~\ref{exmp-gaussian-kernel}）のようなより一般的なカーネルに対して持つ主要な利点は、スケールフリーであり帯域幅パラメータ$\si$に依存しないことである。より正確には、$\X=\RR^\dim$上で因子$s>0$による膨張を$f_s(x)=sx$と記すと、以下のスケーリング挙動を持つ。
 \eq{
 	\norm{f_{s\sharp}(\al-\be)}_{\text{ED}(\RR^\dim,\norm{\cdot}^p)} = s^{\frac{p}{2}} \norm{\al-\be}_{\text{ED}(\RR^\dim,\norm{\cdot}^p)},
 }
-while the Wasserstein distance exhibits a perfect linear scaling,
+一方、Wasserstein距離は完全な線形スケーリングを示す。
 \eq{
 	\Wass_p( f_{s\sharp}\al,f_{s\sharp}\be) ) = s \Wass_p(\al,\be) ).
 }
-Note, however, that for the energy distance, the parameter $p$ must satisfy $0 < p < 2$, and that for $p=2$, it degenerates to the distance between the means 
+ただし、エネルギー距離ではパラメータ$p$は$0 < p < 2$を満たす必要があり、$p=2$のときは平均間の距離に退化する。
 \eq{
 	\norm{\al-\be}_{\text{ED}(\RR^\dim,\norm{\cdot}^2)}
-	= 
-	\norm{\int_{\RR^\dim} x (\d\al(x)-\d\be(x))  }, 
+	=
+	\norm{\int_{\RR^\dim} x (\d\al(x)-\d\be(x))  },
 }
-so it is not a norm anymore. This shows that it is not possible to get the same linear scaling under $f_{s\sharp}$ with the energy distance as for the Wasserstein distance. 
+すなわちもはやノルムではない。これは、エネルギー距離ではWasserstein距離と同じ$f_{s\sharp}$下での線形スケーリングを得ることができないことを示している。
 %
 \todoK{compare the sqrt kernel associated to energy and sobolev and comment its slow decay}
 \end{example}
@@ -573,64 +571,64 @@ so it is not a norm anymore. This shows that it is not possible to get the same 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Wasserstein Spaces Are Not Hilbertian}\label{sec-non-embeddability}
+\section{Wasserstein空間はヒルベルト的ではない}\label{sec-non-embeddability}
 
-Some of the special cases of the Wasserstein geometry outlined earlier in~\S\ref{sec:specialcases} have highlighted the fact that the optimal transport distance can sometimes be computed in closed form. They also illustrate that in such cases the optimal transport distance is a \emph{Hilbertian} metric between probability measures, in the sense that there exists a map $\tphi$ from the space of input measures onto a Hilbert space, as defined below.
+\S\ref{sec:specialcases}で先に概説したWasserstein幾何の特殊な場合のいくつかは、最適輸送距離がときに閉じた形で計算できるという事実を明らかにした。またそのような場合に最適輸送距離が確率測度間の\emph{ヒルベルト的}計量であること、すなわち以下に定義するように、入力測度の空間からヒルベルト空間への写像$\tphi$が存在することも示した。
 
 \begin{defn}\label{def-Hilbertmetric}
-A distance $d$ defined on a set $\Z\times \Z$ is said to be Hilbertian if there exists a Hilbert space $\RKHS$ and a mapping $\tphi:\Z\rightarrow \RKHS$ such that for any pair $z,z'$ in $\Z$ we have that $d(z,z')=\|\tphi(z)-\tphi(z')\|_\RKHS$.
+集合$\Z\times \Z$上で定義された距離$d$がヒルベルト的であるとは、ヒルベルト空間$\RKHS$と写像$\tphi:\Z\rightarrow \RKHS$が存在して、$\Z$の任意の対$z,z'$に対して$d(z,z')=\|\tphi(z)-\tphi(z')\|_\RKHS$が成り立つことをいう。
 \end{defn}
 
-For instance, Remark~\ref{rem-1d-ot-generic} shows that the Wasserstein metric is a Hilbert norm between univariate distributions, simply by defining $\tphi$ to be the map that associates to a measure its generalized quantile function. Remark~\ref{rem-dist-gaussians} shows that for univariate Gaussians, as written in~\eqref{eq-univariate-gauss} in this chapter, the Wasserstein distance between two univariate Gaussians is simply the Euclidean distance between their mean and standard deviation.
+例えば、注釈~\ref{rem-1d-ot-generic}は、Wasserstein計量が一変量分布間のヒルベルトノルムであることを示している。これは単に$\tphi$を測度にその一般化分位関数を対応させる写像として定義することによる。注釈~\ref{rem-dist-gaussians}は、本章の~\eqref{eq-univariate-gauss}に記されているように、一変量ガウス分布に対して二つの一変量ガウス分布間のWasserstein距離がそれらの平均と標準偏差の間のユークリッド距離に過ぎないことを示している。
 
-Hilbertian distances have many favorable properties when used in a data analysis context~\citep{dattorro2010convex}. First, they can be easily cast as radial basis function kernels: for any Hilbertian distance $\dist$, it is indeed known that $e^{-\dist^p/t}$ is a positive definite kernel for any value $0\leq p\leq 2$ and any positive scalar $t$ as shown in~\citep[Cor. 3.3.3, Prop. 3.2.7]{berg84harmonic}. The Gaussian $(p=2)$ and Laplace $(p=1)$ kernels are simple applications of that result using the usual Euclidean distance. The entire field of kernel methods~\citep{Hofmann2008} builds upon the positive definiteness of a kernel function to define convex learning algorithms operating on positive definite kernel matrices. Points living in a Hilbertian space can also be efficiently embedded in lower dimensions with low distortion factors \citep{Johnson84}, \citep[\S V.6.2]{barvinok2002course} using simple methods such as multidimensional scaling~\citep{borg2005modern}.
+ヒルベルト的距離はデータ解析の文脈で用いる際に多くの好ましい性質を持つ~\citep{dattorro2010convex}。第一に、それらは容易に動径基底関数カーネルに変換できる。任意のヒルベルト的距離$\dist$に対して、$e^{-\dist^p/t}$は任意の$0\leq p\leq 2$と任意の正スカラー$t$に対して正定値カーネルであることが~\citep[Cor. 3.3.3, Prop. 3.2.7]{berg84harmonic}で示されている。ガウスカーネル（$p=2$）とラプラスカーネル（$p=1$）は、通常のユークリッド距離を用いたこの結果の単純な応用である。カーネル法の全分野~\citep{Hofmann2008}は、正定値カーネル行列上で動作する凸学習アルゴリズムを定義するために、カーネル関数の正定値性に基づいている。ヒルベルト空間の点は、多次元尺度構成法~\citep{borg2005modern}のような単純な方法を用いて、低い歪み率で効率的に低次元に埋め込むこともできる~\citep{Johnson84}, \citep[\S V.6.2]{barvinok2002course}。
 
-Because Hilbertian distances have such properties, one might hope that the Wasserstein distance remains Hilbertian in more general settings than those outlined above, notably when the dimension of $\X$ is 2 and more. This can be disproved using the following equivalence.
+ヒルベルト的距離がこのような性質を持つため、Wasserstein距離が上で概説した以上のより一般的な設定、特に$\X$の次元が2以上の場合にもヒルベルト的であることが期待されるかもしれない。これは以下の同値性を用いて反証できる。
 
-\begin{prop}\label{prop-negative-definite} A distance $d$ is Hilbertian if and only if $d^2$ is negative definite.
+\begin{prop}\label{prop-negative-definite} 距離$d$がヒルベルト的であることと$d^2$が負定値であることは同値である。
 \end{prop}
-\begin{proof} If a distance is Hilbertian, then $d^2$ is trivially negative definite. Indeed, given $n$ points in $\Z$, the sum $\sum r_i r_j d^2(z_i,z_j)$ can be rewritten as $\sum r_i r_j \|\tphi(z_i)-\tphi(z_j)\|_\RKHS^2$ which can be expanded, taking advantage of the fact that $\sum r_i=0$ to $-2\sum r_i r_j \dotp{\tphi(z_i)}{\tphi(z_j)}_\RKHS$ which is negative by definition of a Hilbert dot product. If, on the contrary, $d^2$ is negative definite, then the fact that $d$ is Hilbertian proceeds from a key result by \citet{schoenberg38} outlined in (\cite[p. 82, Prop. 3.2]{berg84harmonic}).
+\begin{proof} 距離がヒルベルト的であれば、$d^2$が負定値であることは自明である。実際、$\Z$の$n$個の点が与えられると、和$\sum r_i r_j d^2(z_i,z_j)$は$\sum r_i r_j \|\tphi(z_i)-\tphi(z_j)\|_\RKHS^2$と書き直すことができ、$\sum r_i=0$であることを利用して展開すると$-2\sum r_i r_j \dotp{\tphi(z_i)}{\tphi(z_j)}_\RKHS$となり、ヒルベルト内積の定義により負となる。逆に$d^2$が負定値であれば、$d$がヒルベルト的であることは\citet{schoenberg38}による重要な結果（\cite[p. 82, Prop. 3.2]{berg84harmonic}に概説）から得られる。
 \end{proof}
 
-It is therefore sufficient to show that the squared Wasserstein distance is not negative definite to show that it is not Hilbertian, as stated in the following proposition.
+したがって、以下の命題で述べるように、Wasserstein距離の二乗が負定値でないことを示せば、それがヒルベルト的でないことを示すのに十分である。
 
-\begin{prop}\label{prop-negative-definite-negative} If $\X=\RR^\dim$ with $\dim\geq 2$ and the ground cost is set to $\dist(x,y)=\norm{x-y}_2$, then the $p$-Wasserstein distance is not Hilbertian for $p=1,2$.
+\begin{prop}\label{prop-negative-definite-negative} $\X=\RR^\dim$で$\dim\geq 2$とし、基底コストを$\dist(x,y)=\norm{x-y}_2$とするとき、$p$-Wasserstein距離は$p=1,2$に対してヒルベルト的でない。
 \end{prop}
 
-\begin{proof} It suffices to prove the result for $\dim=2$ since any counterexample in that dimension suffices to obtain a counterexample in any higher dimension. We provide a nonrandom counterexample which works using measures supported on four vectors $x^1, x^2,x^3,x^4\in\RR^{2}$ defined as follows: $x^{1}=[0,0], x^{2}=[1,0], x^{3}=[0,1], x^{4}=[1,1]$. We now consider all points on the regular grid on the simplex of four dimensions, with increments of $1/4$. There are $35=\bigl(\!\bigl(\substack{4\\4}\bigl)\!\bigl)=\binom{4+4-1}{4}$ such points in the simplex. Each probability vector $\a^i$ on that grid is such that for $j\leq 4$, we have that $\a^i_j$ is in the set $\{0,\tfrac{1}{4},\tfrac{1}{2},\tfrac{3}{4},1\}$ and such that $\sum_{j=1}^4\a^i_j=1$. For a given $p$, the $35\times 35$ pairwise Wasserstein distance matrix $\D_p$ between these histograms can be computed. $\D_p$ is not negative definite if and only if its elementwise square $\D_p^2$ is such that $\J \D_p^2 \J$ has positive eigenvalues, where $\J$ is the centering matrix $\J=\Identity_n-\tfrac{1}{n}\ones_{n,n}$, which is the case as illustrated in Figure~\ref{fig-counterexample}.
+\begin{proof} $\dim=2$に対して結果を証明すれば十分である。なぜなら、その次元での反例は任意のより高い次元での反例を得るのに十分だからである。$\RR^{2}$の4つのベクトル$x^1, x^2,x^3,x^4$上に台を持つ測度を用いた非確率的な反例を以下のように提示する。$x^{1}=[0,0], x^{2}=[1,0], x^{3}=[0,1], x^{4}=[1,1]$と定義する。次に、4次元の単体上の正則格子のすべての点を$1/4$刻みで考える。単体上にはそのような点が$35=\bigl(\!\bigl(\substack{4\\4}\bigl)\!\bigl)=\binom{4+4-1}{4}$個ある。格子上の各確率ベクトル$\a^i$は、$j\leq 4$に対して$\a^i_j$が集合$\{0,\tfrac{1}{4},\tfrac{1}{2},\tfrac{3}{4},1\}$に属し、$\sum_{j=1}^4\a^i_j=1$を満たす。与えられた$p$に対して、これらのヒストグラム間の$35\times 35$対Wasserstein距離行列$\D_p$が計算できる。$\D_p$が負定値でないことは、その要素ごとの二乗$\D_p^2$について$\J \D_p^2 \J$が正の固有値を持つことと同値であり、ここで$\J$は中心化行列$\J=\Identity_n-\tfrac{1}{n}\ones_{n,n}$である。これは図~\ref{fig-counterexample}に示されている通りである。
 \end{proof}
-	
+
 \begin{figure}[h!]
 \centering
 \includegraphics[width=.6\linewidth]{counterexample_nsdness/maxeig_vs_p}
 \caption{\label{fig-counterexample}
-One can show that a distance is \emph{not} Hilbertian by looking at the spectrum of the centered matrix $\J \D_p^2 \J$ corresponding to the pairwise squared-distance matrix $\D_p^2$ of a set of points. The spectrum of such a matrix is necessarily non-positive if the distance is Hilbertian. Here we plot the values of the maximal eigenvalue of that matrix for points selected in the proof of Proposition~\ref{prop-negative-definite-negative}. We do so for varying values of $p$, and display the maximal eigenvalues we obtain. These eigenvalues are all positive, which shows that for all these values of $p$, the $p$-Wasserstein distance is not Hilbertian.
+距離がヒルベルト的で\emph{ない}ことは、点集合の対二乗距離行列$\D_p^2$に対応する中心化行列$\J \D_p^2 \J$のスペクトルを見ることで示せる。距離がヒルベルト的であれば、そのような行列のスペクトルは必然的に非正である。ここでは命題~\ref{prop-negative-definite-negative}の証明で選ばれた点に対して、その行列の最大固有値の値を$p$の種々の値に対してプロットしている。得られた最大固有値を示す。これらの固有値はすべて正であり、これはこれらの$p$のすべての値に対して$p$-Wasserstein距離がヒルベルト的でないことを示している。
 }
 \end{figure}
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Embeddings and Distortion}
+\subsection{埋め込みと歪み}
 
-An important body of work quantifies the hardness of approximating Wasserstein distances using Hilbertian embeddings. 
+重要な研究の蓄積が、ヒルベルト的埋め込みを用いたWasserstein距離の近似の困難さを定量化している。
 %
-It has been shown that embedding measures in $\ell_2$ spaces incurs necessarily an important \todoK{need to be more precise here} distortion~(\citet{naor-2005,andoni2015snowflake}) as soon as $\X=\RR^\dim$ with $\dim\geq 2$.
+$\X=\RR^\dim$で$\dim\geq 2$の場合、測度を$\ell_2$空間に埋め込むと必然的に重要な\todoK{need to be more precise here}歪みが生じることが示されている~(\citet{naor-2005,andoni2015snowflake})。
 
-It is possible to embed quasi-isometrically $p$-Wasserstein spaces for $0 < p \leq 1$ in $\ell_1$ (see~\citep{indyk,andoni2008earth,do2011sublinear}), but the equivalence constant between the distances grows fast with the dimension $\dim$. Note also that for $p=1$ the embedding is true only for discrete measures (\ie the embedding constant depends on the minimum distance between the spikes).  \todoK{need to be more precise here} 
+$0 < p \leq 1$に対して$p$-Wasserstein空間を$\ell_1$に準等長的に埋め込むことは可能であるが（~\citep{indyk,andoni2008earth,do2011sublinear}を参照）、距離間の同値定数は次元$\dim$とともに急速に増大する。なお、$p=1$の場合、埋め込みは離散測度に対してのみ成り立つ（すなわち、埋め込み定数はスパイク間の最小距離に依存する）。\todoK{need to be more precise here}
 %
-A closely related embedding technique consists in using the characterization of $\Wass_1$ as the dual of Lipschitz functions $f$ (see~\S\ref{sec-w1-eucl}) and approximating the Lipschitz constraint $\norm{\nabla f}_1 \leq 1$ by a weighted $\ell_1$ ball over the wavelets coefficients; see~\citep{shirdhonkar2008approximate}. 
+密接に関連する埋め込み手法として、$\Wass_1$のリプシッツ関数$f$の双対としての特徴付け（\S\ref{sec-w1-eucl}を参照）を用いて、リプシッツ制約$\norm{\nabla f}_1 \leq 1$をウェーブレット係数上の重み付き$\ell_1$球で近似する方法がある。~\citep{shirdhonkar2008approximate}を参照されたい。
 %
-This weighted $\ell_1$ ball of wavelet coefficients defines a so-called Besov space of negative index~\citep{leeb2016holder}.
+このウェーブレット係数の重み付き$\ell_1$球は、いわゆる負の指数のベソフ空間を定義する~\citep{leeb2016holder}。
 %
-These embedding results are also similar to the bound on the Wasserstein distance obtained using dyadic partitions; see~\citep[Prop. 1]{weed2017sharp} and also~\citep{fournier2015rate}.
+これらの埋め込み結果は、ダイアディック分割を用いたWasserstein距離の上界とも類似している。~\citep[Prop. 1]{weed2017sharp}および~\citep{fournier2015rate}も参照されたい。
 %
-This also provides a quasi-isometric embedding in $\ell_1$ (this embedding being given by rescaled wavelet coefficients) and comes with the advantage that this embedding can be computed approximately in linear time when the input measures are discretized on uniform grids. We refer to~\citep{mallat2008wavelet} for more details on wavelets. Note that the idea of using multiscale embeddings to compute Wasserstein-like distances has been used extensively in computer vision; see, for instance,~\citep{ling2006diffusion,grauman2005pyramid,CuturiNIPS2006,lazebnik2006beyond}. 
+これは$\ell_1$への準等長的な埋め込みも提供し（この埋め込みはスケーリングされたウェーブレット係数によって与えられる）、入力測度が一様格子上で離散化されている場合にこの埋め込みを線形時間で近似的に計算できるという利点がある。ウェーブレットの詳細は~\citep{mallat2008wavelet}を参照されたい。なお、Wasserstein的距離を計算するためにマルチスケール埋め込みを用いるアイデアは、コンピュータビジョンで広く用いられてきた。例えば~\citep{ling2006diffusion,grauman2005pyramid,CuturiNIPS2006,lazebnik2006beyond}を参照されたい。
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Negative/Positive Definite Variants of Optimal Transport}
+\subsection{最適輸送の負定値/正定値変種}
 
-We show later in~\S\ref{sec-sliced} that the \emph{sliced} approximation to Wasserstein distances, essentially a sum of 1-D directional transportation distance computed on random push-forwards of measures projected on lines, is negative definite as the sum of negative definite functions~\citep[\S 3.1.11]{berg84harmonic}. This result can be used to define a positive definite kernel~\citep{kolouri2016sliced}. Another way to recover a positive definite kernel is to cast the optimal transport problem as a soft-min problem (over all possible transportation tables) rather than a minimum, as proposed by~\citet{kosowsky1994invisible} to introduce entropic regularization. That soft-min defines a term whose neg-exponential (also known as a generating function) is positive definite~\citep{cuturi2012positivity}.
+後に\S\ref{sec-sliced}で示すように、Wasserstein距離の\emph{スライス}近似、すなわち直線上に射影された測度のランダムな押し出しに対して計算される1次元方向輸送距離の和は、負定値関数の和として負定値である~\citep[\S 3.1.11]{berg84harmonic}。この結果は正定値カーネルを定義するために用いることができる~\citep{kolouri2016sliced}。正定値カーネルを回復する別の方法は、\citet{kosowsky1994invisible}がエントロピー正則化を導入するために提案したように、最適輸送問題を（可能なすべての輸送テーブル上の）最小問題ではなくソフトミン問題として定式化することである。そのソフトミンは、その負の指数関数（母関数とも呼ばれる）が正定値である項を定義する~\citep{cuturi2012positivity}。
 
 
 
@@ -639,66 +637,66 @@ We show later in~\S\ref{sec-sliced} that the \emph{sliced} approximation to Wass
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Empirical Estimators for OT, MMD and $\phi$-divergences}
+\section{OT、MMD、$\phi$-ダイバージェンスの経験的推定量}
 \label{sec-empirical-wass}
 
-In an applied setting, given two input measures $(\al,\be) \in \Mm_+^1(\X)^2$, an important statistical problem is to approximate the (usually unknown) divergence $D(\al,\be)$ using only samples $(x_i)_{i=1}^n$ from $\al$ and $(y_j)_{j=1}^m$ from $\be$. These samples are assumed to be independently identically distributed from their respective distributions. 
+応用的な設定において、二つの入力測度$(\al,\be) \in \Mm_+^1(\X)^2$が与えられたとき、重要な統計的問題は、$\al$からのサンプル$(x_i)_{i=1}^n$と$\be$からのサンプル$(y_j)_{j=1}^m$のみを用いて（通常は未知の）ダイバージェンス$D(\al,\be)$を近似することである。これらのサンプルはそれぞれの分布から独立同分布に従って抽出されたものと仮定する。
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Empirical Estimators for OT and MMD}
+\subsection{OTとMMDの経験的推定量}
 
-For both Wasserstein distances $\Wass_p$ (see~\ref{eq-defn-wass-dist}) and MMD norms (see \S\ref{sec-dual-norms}), a straightforward estimator of the unknown distance between distriubtions is compute it directly between the empirical measures, hoping ideally that one can control the rate of convergence of the latter to the former,
+Wasserstein距離$\Wass_p$（~\ref{eq-defn-wass-dist}を参照）とMMDノルム（\S\ref{sec-dual-norms}を参照）の両方に対して、分布間の未知の距離の直接的な推定量は、経験的測度間で直接計算することであり、理想的には後者から前者への収束速度を制御できることが望ましい。
 \eq{
 	D(\al,\be) \approx D(\hat \al_n,\hat \be_m) \qwhereq
 	\choice{
-		\hat \al_n \eqdef \frac{1}{n}\sum_i \de_{x_i},\\ 
+		\hat \al_n \eqdef \frac{1}{n}\sum_i \de_{x_i},\\
 		\hat \be_m \eqdef \frac{1}{m}\sum_j \de_{y_j}.
 	}
 }
-Note that here both $\hat \al_n$ and $\hat \be_m$ are random measures, so $D(\hat \al_n,\hat \be_m)$ is a random number. 
-% 
-For simplicity, we assume that $\X$ is compact (handling unbounded domain requires extra constraints on the moments of the input measures).
-
-For such a dual distance that metrizes the weak convergence (see Definition~\ref{dfn-weak-conv}), since there is the weak convergence $\hat\al_n \rightarrow \al$, one has $D(\hat \al_n,\hat \be_n) \rightarrow D(\al,\be)$ as $n \rightarrow +\infty$.
+ここで$\hat \al_n$と$\hat \be_m$はともに確率的測度であるため、$D(\hat \al_n,\hat \be_m)$は確率変数であることに注意されたい。
 %
-But an important question is the speed of convergence of $D(\hat \al_n,\hat \be_n)$ toward $D(\al,\be)$, and this rate is often called the ``sample complexity'' of $D$. 
+簡単のため、$\X$はコンパクトであると仮定する（非有界領域を扱うには入力測度のモーメントに追加の制約が必要となる）。
 
-Note that for $D(\al,\be) = \norm{\cdot}_{\TV}$, since the TV norm does not metrize the weak convergence, $\norms{\hat \al_n - \hat \be_n}_{\TV}$ is not a consistent estimator, namely it does not converge toward $\norm{\al-\be}_{\TV}$. Indeed, with probability 1, $\norms{\hat \al_n - \hat \be_n}_{\TV}=2$ since the support of the two discrete measures does not overlap. Similar issues arise with other $\phi$-divergences, which cannot be estimated using divergences between empirical distributions.
+弱収束を距離化する（定義~\ref{dfn-weak-conv}を参照）このような双対距離に対して、弱収束$\hat\al_n \rightarrow \al$が成り立つので、$n \rightarrow +\infty$のとき$D(\hat \al_n,\hat \be_n) \rightarrow D(\al,\be)$となる。
+%
+しかし重要な問題は$D(\hat \al_n,\hat \be_n)$の$D(\al,\be)$への収束速度であり、この速度はしばしば$D$の「サンプル計算量」と呼ばれる。
+
+$D(\al,\be) = \norm{\cdot}_{\TV}$の場合、TVノルムは弱収束を距離化しないため、$\norms{\hat \al_n - \hat \be_n}_{\TV}$は一致推定量ではない。すなわち、$\norm{\al-\be}_{\TV}$に収束しない。実際、確率1で$\norms{\hat \al_n - \hat \be_n}_{\TV}=2$となる。二つの離散測度の台が重ならないからである。同様の問題は他の$\phi$-ダイバージェンスでも生じ、経験的分布間のダイバージェンスを用いて推定することはできない。
 
 
 %%%%
-\paragraph{Rates for OT.}
+\paragraph{OTの収束速度}
 
-For $\X=\RR^\dim$ and measure supported on bounded domain, it is shown by~\citep{dudley1969speed} that for $\dim>2$, and $1 \leq p < +\infty$,  
+$\X=\RR^\dim$で有界領域上に台を持つ測度に対して、$\dim>2$かつ$1 \leq p < +\infty$のとき、~\citep{dudley1969speed}により以下が示されている。
 \eq{
 	\EE( |\Wass_p(\hat \al_n,\hat \be_n)-\Wass_p(\al,\be)| ) = O(n^{-\frac{1}{\dim}}),
 }
-where the expectation $\EE$ is taken with respect to the random samples $(x_i,y_i)_i$. This rate is tight in $\RR^\dim$ if one of the two measures has a density with respect to the Lebesgue measure. This result was proved for general metric spaces~\citep{dudley1969speed} using the notion of covering numbers and was later refined, in particular for $\X=\RR^d$ in~\citep{dereich2013constructive,fournier2015rate}. 
+ここで期待値$\EE$は確率的サンプル$(x_i,y_i)_i$に関してとられている。この速度は、二つの測度の一方がルベーグ測度に関して密度を持つ場合、$\RR^\dim$では最適である。この結果は被覆数の概念を用いて一般の距離空間に対して証明され~\citep{dudley1969speed}、後に特に$\X=\RR^d$の場合に精緻化された~\citep{dereich2013constructive,fournier2015rate}。
 % Proof on $\Wass_1$ implies on $\Wass_p$ for $1 \leq p < +\infty$ by monotonicity in $p$.
-This rate can be refined when the measures are supported on low-dimensional subdomains:~\citet{weed2017sharp} show that, indeed, the rate depends on the intrinsic dimensionality of the support. \citeauthor{weed2017sharp} also study the nonasymptotic behavior of that convergence, such as for measures which are discretely approximated (\emph{e.g.} mixture of Gaussians with small variances).
+この速度は、測度が低次元部分領域上に台を持つ場合に精緻化される。~\citet{weed2017sharp}は、実際に速度が台の内在的次元に依存することを示した。\citeauthor{weed2017sharp}はまた、離散的に近似された測度（例えば小さい分散のガウス混合）のような収束の非漸近的挙動も研究した。
 %
-It is also possible to prove concentration of $\Wass_p(\hat \al_n,\hat \be_n)$ around its mean $\Wass_p(\al,\be)$; see~\citep{bolley2007quantitative,boissard2011simple,weed2017sharp}.
+$\Wass_p(\hat \al_n,\hat \be_n)$のその平均$\Wass_p(\al,\be)$周りへの集中も証明することが可能である。~\citep{bolley2007quantitative,boissard2011simple,weed2017sharp}を参照されたい。
 
 %%%
-\paragraph{Rates for MMD.}
+\paragraph{MMDの収束速度}
 
-For weak norms $\norm{\cdot}^2_{\Krkhs}$ which are dual of RKHS norms (also called MMD), as defined in~\eqref{eq-kernel-dual}, and contrary to Wasserstein distances, the sample complexity does not depend on the ambient dimension 
+~\eqref{eq-kernel-dual}で定義されたRKHSノルムの双対である弱ノルム$\norm{\cdot}^2_{\Krkhs}$（MMDとも呼ばれる）に対して、Wasserstein距離とは対照的に、サンプル計算量は周囲の次元に依存しない。
 \eq{
-	\EE( |\norms{\hat \al_n-\hat \be_n}_{\Krkhs} - \norm{\al-\be}_{\Krkhs} | ) = O(n^{-\frac{1}{2}}); 
+	\EE( |\norms{\hat \al_n-\hat \be_n}_{\Krkhs} - \norm{\al-\be}_{\Krkhs} | ) = O(n^{-\frac{1}{2}});
 }
-see~\citep{sriperumbudur2012empirical}. 
+~\citep{sriperumbudur2012empirical}を参照されたい。
 %
-Figure~\ref{fig-sample-complexity} shows a numerical comparison of the sample complexity rates for Wasserstein and MMD distances.  
+図~\ref{fig-sample-complexity}はWasserstein距離とMMD距離のサンプル計算量の速度の数値的比較を示している。
 %
-Note, however, that $\norms{\hat \al_n-\hat \be_n}_{\Krkhs}^2$ is a slightly biased estimate of $\norm{\al-\be}_{\Krkhs}^2$. In order to define an unbiased estimator, and thus to be able to use, for instance, SGD when minimizing such losses, one should rather use the unbiased estimator 
+ただし、$\norms{\hat \al_n-\hat \be_n}_{\Krkhs}^2$は$\norm{\al-\be}_{\Krkhs}^2$のわずかに偏った推定量であることに注意されたい。不偏推定量を定義し、例えばこのような損失の最小化にSGDを使用できるようにするためには、以下の不偏推定量を用いるべきである。
 \begin{align*}
 	\text{MMD}_{\Krkhs}(\hat \al_n,\hat \be_n)^2 & \eqdef
 		\frac{1}{n(n-1)} \sum_{i,i'} \Krkhs(x_i,x_{i'})	+
 		\frac{1}{n(n-1)}\sum_{j,j'} \Krkhs(y_j,y_{j'}) \\
 		 & \qquad - 2
-		\frac{1}{n^2}\sum_{i,j} \Krkhs(x_i,y_j), 
+		\frac{1}{n^2}\sum_{i,j} \Krkhs(x_i,y_j),
 \end{align*}
-which should be compared to~\eqref{eq-mmd-discr}. It satisfies $\EE(\text{MMD}_{\Krkhs}(\hat \al_n,\hat \be_n)^2) = \norm{\al-\be}_{\Krkhs}^2$; see~\citep{gretton2012kernel}.
+これは~\eqref{eq-mmd-discr}と比較されるべきである。これは$\EE(\text{MMD}_{\Krkhs}(\hat \al_n,\hat \be_n)^2) = \norm{\al-\be}_{\Krkhs}^2$を満たす。~\citep{gretton2012kernel}を参照されたい。
 
 
 \begin{figure}[h!]
@@ -706,32 +704,32 @@ which should be compared to~\eqref{eq-mmd-discr}. It satisfies $\EE(\text{MMD}_{
 \begin{tabular}{@{}c@{\hspace{1mm}}c@{}}
 \includegraphics[width=.49\linewidth]{sample-complexity/energy-rates-cropped}&
 \includegraphics[width=.49\linewidth]{sample-complexity/wass2-rates-cropped}\\
-Energy distance $\norm{\cdot}_{H^{-1}}$ & $\Wass_2$ 
+エネルギー距離 $\norm{\cdot}_{H^{-1}}$ & $\Wass_2$
 \end{tabular}
 \caption{\label{fig-sample-complexity}
-Decay of $\log_{10}(D(\hat\al_n,\hat\al_n'))$ as a function of $\log_{10}(n)$ for $D$ being the energy distance $D=\norm{\cdot}_{H^{-1}}$ (\ie the $H^{-1}$ norm) as defined in Example~\ref{exp-energy-dist} (left) and the Wasserstein distance $D=\Wass_2$ (right).
+$D$が例~\ref{exp-energy-dist}で定義されたエネルギー距離$D=\norm{\cdot}_{H^{-1}}$（すなわち$H^{-1}$ノルム）（左）およびWasserstein距離$D=\Wass_2$（右）の場合の$\log_{10}(n)$の関数としての$\log_{10}(D(\hat\al_n,\hat\al_n'))$の減衰。
 %
-Here $(\hat\al_n,\hat\al_n')$ are two independent empirical distributions of $\al$, the uniform distribution on the unit cube $[0,1]^\dim$, tested for several value of $\dim \in \{2,3,5\}$.
-% 
-The shaded bar displays the confidence interval at $\pm$ the standard deviation of $\log(D(\hat\al_n,\al))$. 
+ここで$(\hat\al_n,\hat\al_n')$は$\al$の二つの独立な経験的分布であり、$\al$は単位立方体$[0,1]^\dim$上の一様分布であり、$\dim \in \{2,3,5\}$のいくつかの値に対して検証されている。
+%
+網掛け部分は$\log(D(\hat\al_n,\al))$の標準偏差$\pm$での信頼区間を示している。
 }
 \end{figure}
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Empirical Estimators for $\phi$-divergences}
+\subsection{$\phi$-ダイバージェンスの経験的推定量}
 
-It is not possible to approximate $\Divergm_\phi(\al|\be)$, as defined in~\eqref{def_divergence}, from discrete samples using $\Divergm_\phi(\hat \al_n|\hat \be_n)$. Indeed, this quantity is either $+\infty$ (for instance, for the $\KL$ divergence) or is not converging to $\Divergm_\phi(\al|\be)$ as $n \rightarrow +\infty$ (for instance, for the $\TV$ norm).
+離散サンプルから~\eqref{def_divergence}で定義された$\Divergm_\phi(\al|\be)$を$\Divergm_\phi(\hat \al_n|\hat \be_n)$を用いて近似することはできない。実際、この量は$+\infty$であるか（例えば$\KL$ダイバージェンスの場合）、あるいは$n \rightarrow +\infty$のとき$\Divergm_\phi(\al|\be)$に収束しない（例えば$\TV$ノルムの場合）。
 %
-Instead, it is required to use a density estimator to somehow smooth the discrete empirical measures and replace them by densities; see~\citep{silverman1986density}. 
+代わりに、離散的な経験的測度を何らかの方法で平滑化して密度に置き換えるために、密度推定量を用いる必要がある。~\citep{silverman1986density}を参照されたい。
 %
-In a Euclidean space $\Xx=\RR^\dim$, introducing $h_\si=h(\cdot/\si)$ with a smooth windowing function and a bandwidth $\si>0$, a density estimator for $\al$ is defined using a convolution against this kernel, 
+ユークリッド空間$\Xx=\RR^\dim$において、滑らかな窓関数と帯域幅$\si>0$を用いて$h_\si=h(\cdot/\si)$を導入すると、$\al$に対する密度推定量はこのカーネルとの畳み込みによって定義される。
 \eql{\label{eq-kernel-density-estimate}
 	\hat \mu_n \star h_\si = \frac{1}{n}\sum_i h_\si(\cdot-x_i).
-} 
+}
 %
-One can then approximate the $\phi$ divergence using
+すると$\phi$ダイバージェンスを以下で近似できる。
 \eq{
 	\Divergm_\phi^\si(\hat \al_n |\hat \be_n)
 	\eqdef
@@ -740,21 +738,21 @@ One can then approximate the $\phi$ divergence using
 		\frac{
 			\sum_i h_\si(y_j-x_i)
 		}{
-			\sum_{j'} h_\si(y_j-y_{j'}),		
+			\sum_{j'} h_\si(y_j-y_{j'}),
 		}
 	}
-} 
-where $\si$ should be adapted to the number $n$ of samples and to the dimension $\dim$. 
+}
+ここで$\si$はサンプル数$n$と次元$\dim$に適合させる必要がある。
 %
-It is also possible to devise nonparametric estimators, bypassing the choice of a fixed bandwidth $\si$ to select instead a number $k$ of nearest neighbors. These methods typically make use of the distance between nearest neighbors~\citep{loftsgaarden1965nonparametric}, which is similar to locally adapting the bandwidth $\si$ to the local sampling density. Denoting $\De_k(x)$ the distance between $x \in \RR^\dim$ and its $k$th nearest neighbor among the $(x_i)_{i=1}^n$, a density estimator is defined as
+固定帯域幅$\si$の選択を回避し、代わりに最近傍数$k$を選択するノンパラメトリック推定量を考案することも可能である。これらの手法は典型的に最近傍間の距離を利用し~\citep{loftsgaarden1965nonparametric}、これは帯域幅$\si$を局所サンプリング密度に局所的に適応させることに類似する。$\De_k(x)$を$x \in \RR^\dim$と$(x_i)_{i=1}^n$の中のその第$k$最近傍との距離とすると、密度推定量は以下で定義される。
 \eql{\label{eq-knn-density-estimate}
 	\rho_{\hat \al_n}^k(x) \eqdef \frac{k/n}{ |B_\dim| \De_k(x)^r },
 }
-where $|B_\dim|$ is the volume of the unit ball in $\RR^\dim$.
+ここで$|B_\dim|$は$\RR^\dim$における単位球の体積である。
 %
-Instead of somehow ``counting'' the number of sample falling in an area of width $\si$ in~\eqref{eq-kernel-density-estimate}, this formula~\eqref{eq-knn-density-estimate} estimates the radius required to encapsulate $k$ samples. Figure~\ref{fig-density-estimation} compares the estimators~\eqref{eq-kernel-density-estimate} and~\eqref{eq-knn-density-estimate}.
+~\eqref{eq-kernel-density-estimate}において幅$\si$の領域内に落ちるサンプル数を何らかの方法で「数える」代わりに、この式~\eqref{eq-knn-density-estimate}は$k$個のサンプルを包含するのに必要な半径を推定する。図~\ref{fig-density-estimation}は推定量~\eqref{eq-kernel-density-estimate}と~\eqref{eq-knn-density-estimate}を比較している。
 %
-A typical example of application is detailed in~\eqref{eq-discr-entropy} for the entropy functional, which is the KL divergence with respect to the Lebesgue measure. We refer to~\citep{BerishaHero} for more details.
+典型的な応用例は~\eqref{eq-discr-entropy}でエントロピー汎関数（ルベーグ測度に関するKLダイバージェンス）について詳述されている。詳細は~\citep{BerishaHero}を参照されたい。
 
 
 \newcommand{\myFigDE}[1]{\includegraphics[width=.32\linewidth]{density-estimation/#1}}
@@ -768,7 +766,7 @@ $\si=2.5 \cdot 10^{-3}$ & $\si=15 \cdot 10^{-3}$ & $\si=25 \cdot 10^{-3}$ \\
 $k=1$ & $k=50$ & $k=100$
 \end{tabular}
 \caption{\label{fig-density-estimation}
-Comparison of kernel density estimation $\hat \mu_n \star h_\si$ (top, using a Gaussian kernel $h$) and $k$-nearest neighbors estimation $\rho_{\hat \al_n}^k$ (bottom) for $n=200$ samples from a mixture of two Gaussians.
+二つのガウス分布の混合からの$n=200$サンプルに対する、カーネル密度推定$\hat \mu_n \star h_\si$（上段、ガウスカーネル$h$を使用）と$k$-最近傍推定$\rho_{\hat \al_n}^k$（下段）の比較。
 }
 \end{figure}
 
@@ -777,28 +775,28 @@ Comparison of kernel density estimation $\hat \mu_n \star h_\si$ (top, using a G
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Entropic Regularization: Between OT and MMD}
+\section{エントロピー正則化：OTとMMDの間}
 \label{sec-entropy-ot-mmd}
 
-Following Proposition~\ref{prop-sinkhorn-div}, we recall that the Sinkhorn divergence is defined as 
+命題~\ref{prop-sinkhorn-div}に従い、Sinkhornダイバージェンスは以下で定義されることを想起する。
 \eq{
-	\SINKHORNP_\C^\varepsilon(\a,\b) \eqdef 
-	\dotp{\P^\star}{\C} = 
+	\SINKHORNP_\C^\varepsilon(\a,\b) \eqdef
+	\dotp{\P^\star}{\C} =
 	\dotp{e^{\frac{\fD^\star}{\varepsilon}}}{(\K\odot \C)e^{\frac{\gD^\star}{\varepsilon}}},
 }
-where $\P^\star$ is the solution of~\eqref{eq-regularized-discr} while $(\fD^\star,\gD^\star)$ are solutions of~\eqref{eq-dual-formulation}.
+ここで$\P^\star$は~\eqref{eq-regularized-discr}の解であり、$(\fD^\star,\gD^\star)$は~\eqref{eq-dual-formulation}の解である。
 %
-Assuming $\C_{i,j}=\dist(x_i,x_j)^p$ for some distance $\dist$ on $\X$, for two discrete probability distributions of the form~\eqref{eq-pair-discr}, this defines a regularized Wasserstein cost
+ある距離$\dist$に対して$\C_{i,j}=\dist(x_i,x_j)^p$と仮定すると、~\eqref{eq-pair-discr}の形の二つの離散確率分布に対して、これは正則化されたWassersteinコストを定義する。
 \eq{
 	\Wass_{p,\varepsilon}(\al,\be)^p \eqdef \SINKHORNP_\C^\varepsilon(\a,\b).
 }
-This definition is generalized to any input distribution (not necessarily discrete) as
+この定義は任意の入力分布（必ずしも離散的でなくてよい）に以下のように一般化される。
 \eq{
 	\Wass_{p,\varepsilon}(\al,\be)^p \eqdef \int_{\X \times \X} \dist(x,y)^p \d\pi^\star(x,y),
-}	
-where $\pi^\star$ is the solution of~\eqref{eq-entropic-generic}. 
+}
+ここで$\pi^\star$は~\eqref{eq-entropic-generic}の解である。
 
-In order to cancel the bias introduced by the regularization (in particular, $\Wass_{p,\varepsilon}(\al,\al) \neq 0$), we introduce a corrected regularized divergence
+正則化によって導入されるバイアス（特に$\Wass_{p,\varepsilon}(\al,\al) \neq 0$）を打ち消すために、補正された正則化ダイバージェンスを導入する。
 \eq{
 	\tilde\Wass_{p,\varepsilon}(\al,\be)^p \eqdef
 	2 \Wass_{p,\varepsilon}(\al,\be)^p
@@ -807,9 +805,9 @@ In order to cancel the bias introduced by the regularization (in particular, $\W
 	-
 	\Wass_{p,\varepsilon}(\be,\be)^p.
 }
-It is proved in~\citep{feydy2018interpolating} that if $e^{-c/\epsilon}$ is a positive kernel, then a related corrected divergence (obtained by using $\MKD_\C^\varepsilon$ in place of $\SINKHORNP_\C^\varepsilon$) is positive. 
+$e^{-c/\epsilon}$が正定値カーネルであれば、関連する補正されたダイバージェンス（$\SINKHORNP_\C^\varepsilon$の代わりに$\MKD_\C^\varepsilon$を用いて得られるもの）は正であることが~\citep{feydy2018interpolating}で証明されている。
 %
-Note that it is possible to define other renormalization schemes using regularized optimal transport, as proposed, for instance, by~\citet{amari2017information}.
+例えば~\citet{amari2017information}が提案しているように、正則化最適輸送を用いた他の再正規化スキームを定義することも可能であることに注意されたい。
 
 \begin{figure}[h!]
 \centering
@@ -819,25 +817,24 @@ Note that it is possible to define other renormalization schemes using regulariz
 $\dim=2$ & $\dim=5$
 \end{tabular}
 \caption{\label{fig-sample-complexity-regul}
-Decay of $\EE(\log_{10}(\tilde\Wass_{p,\varepsilon}(\hat\al_n,\hat\al_n')))$, for $p=3/2$ for various $\varepsilon$, as a function of $\log_{10}(n)$ where $\al$ is the same as in Figure~\ref{fig-sample-complexity}. \todoK{redo the plot with higher precision}
+種々の$\varepsilon$に対する$p=3/2$での$\EE(\log_{10}(\tilde\Wass_{p,\varepsilon}(\hat\al_n,\hat\al_n')))$の$\log_{10}(n)$の関数としての減衰。ここで$\al$は図~\ref{fig-sample-complexity}と同じものである。\todoK{redo the plot with higher precision}
 }
 \end{figure}
 
 
-The following proposition, whose proof can be found in~\citep{ramdas2017wasserstein}, shows that this regularized divergence interpolates between the Wasserstein distance and the energy distance defined in Example~\ref{exp-energy-dist}.
+以下の命題は~\citep{ramdas2017wasserstein}に証明があり、この正則化ダイバージェンスが例~\ref{exp-energy-dist}で定義されたWasserstein距離とエネルギー距離の間を補間することを示している。
 
 \begin{prop}
-	One has
+	以下が成り立つ。
 	\eq{
 		\tilde\Wass_{p,\varepsilon}(\al,\be)  \overset{\varepsilon \rightarrow 0}{\longrightarrow} 2 \Wass_{p}(\al,\be)
 		\qandq
-		\tilde\Wass_{p,\varepsilon}(\al,\be)^p \overset{\varepsilon \rightarrow +\infty}{\longrightarrow} \norm{\al-\be}_{\text{ED}(\X,\dist)}^2, 
+		\tilde\Wass_{p,\varepsilon}(\al,\be)^p \overset{\varepsilon \rightarrow +\infty}{\longrightarrow} \norm{\al-\be}_{\text{ED}(\X,\dist)}^2,
 	}
-	where $\norm{\cdot}_{\text{ED}(\X,\dist)}$ is defined in~\eqref{eq-defn-ed}. 
+	ここで$\norm{\cdot}_{\text{ED}(\X,\dist)}$は~\eqref{eq-defn-ed}で定義されている。
 \end{prop}
 
-Figure~\ref{fig-sample-complexity-regul} shows numerically the impact of $\epsilon$ on the sample complexity rates. It is proved in~\cite{genevay2018sample}, in the case of $c(x,y)=\norm{x-y}^2$ on $\Xx=\RR^d$, that these rates interpolate between the ones of OT and MMD. 
-
+図~\ref{fig-sample-complexity-regul}は$\epsilon$のサンプル計算量の速度への影響を数値的に示している。$\Xx=\RR^d$上で$c(x,y)=\norm{x-y}^2$の場合、これらの速度がOTとMMDの速度の間を補間することが~\cite{genevay2018sample}で証明されている。
 
 
 

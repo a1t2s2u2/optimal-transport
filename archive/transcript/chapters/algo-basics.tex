@@ -1,151 +1,151 @@
 % !TEX root = ../ComputationalOTFnT.tex
 
-\chapter{Algorithmic Foundations}
+\chapter{アルゴリズムの基礎}
 \label{c-algo-basics} % a label for the chapter, to refer to it later
 
-This chapter describes the most common algorithmic tools from combinatorial optimization and linear programming that can be used to solve the discrete formulation of optimal transport, as described in the primal problem~\eqref{eq-mk-discr} or alternatively its dual~\eqref{eq-dual}.
+本章では、主問題~\eqref{eq-mk-discr}またはその双対~\eqref{eq-dual}で記述される最適輸送の離散定式化を解くために用いられる、組合せ最適化および線形計画法における最も一般的なアルゴリズム的手法について述べる。
 
-The origins of these algorithms can be traced back to World War II, either right before with \citeauthor{tolstoi1930methods}'s seminal work \citeyearpar{tolstoi1930methods} or during the war itself, when~\citet{Hitchcock41} and \citet{Kantorovich42} formalized the generic problem of dispatching available resources toward consumption sites in an optimal way. Both of these formulations, as well as the later contribution by~\citet{koopmans1949optimum}, fell short of providing a \emph{provably} correct algorithm to solve that problem (the cycle violation method was already proposed as a heuristic by~\citet{tolstoi1939metody}). One had to wait until the field of linear programming fully blossomed, with the proposal of the simplex method, to be at last able to solve rigorously these problems.
+これらのアルゴリズムの起源は第二次世界大戦にまで遡ることができ、戦前の\citeauthor{tolstoi1930methods}の先駆的な研究 \citeyearpar{tolstoi1930methods}、あるいは戦中に~\citet{Hitchcock41}および\citet{Kantorovich42}が、利用可能な資源を消費地へ最適に配分するという一般的な問題を定式化した時期に始まる。これらの定式化、および後の~\citet{koopmans1949optimum}による貢献は、いずれもその問題を解くための\emph{証明可能に}正しいアルゴリズムを提供するには至らなかった（巡回違反法は~\citet{tolstoi1939metody}によってヒューリスティックとして既に提案されていた）。線形計画法の分野が十分に成熟し、シンプレックス法が提案されるまで、これらの問題を厳密に解くことはできなかった。
 
-The goal of linear programming is to solve optimization problems whose objective function is linear and whose constraints are linear (in)equalities in the variables of interest. The optimal transport problem fits that description and is therefore a particular case of that wider class of problems. One can argue, however, that optimal transport is truly special among all linear program. First,~\citeauthor{dantzig1991}'s early motivation to solve linear programs was greatly related to that of solving transportation problems~\citep[p. 210]{dantzig49econometrica}. Second, despite being only a particular case, the optimal transport problem remained in the spotlight of optimization, because it was understood shortly after that optimal transport problems were related, and in fact equivalent, to an important class of linear programs known as minimum cost network flows~\citep[p. 213, Lem. 9.3]{korte2012combinatorial} thanks to a result by~\citet{ford1962flows}. As such, the OT problem has been the subject of particular attention, ever since the birth of mathematical programming~\citep{Dantzig51}, and is still widely used to introduce optimization to a new audience~\citep[\S1, p. 4]{nocedal}. 
+線形計画法の目的は、目的関数が線形であり、制約が関心のある変数に関する線形（不）等式であるような最適化問題を解くことである。最適輸送問題はこの記述に適合するため、この広いクラスの問題の特殊な場合である。しかしながら、最適輸送はすべての線形計画の中でも真に特別であると言える。第一に、\citeauthor{dantzig1991}が線形計画を解こうとした初期の動機は、輸送問題を解くこととと密接に関連していた~\citep[p. 210]{dantzig49econometrica}。第二に、特殊な場合に過ぎないにもかかわらず、最適輸送問題は最適化の分野で注目され続けた。それは、最適輸送問題が最小費用ネットワークフローとして知られる線形計画の重要なクラスと関連し、実際には等価であることが、~\citet{ford1962flows}の結果により~\citep[p. 213, Lem. 9.3]{korte2012combinatorial}間もなく理解されたためである。そのため、OT問題は数理計画法の誕生~\citep{Dantzig51}以来、特に注目されてきており、新しい読者に最適化を紹介するために今なお広く用いられている~\citep[\S1, p. 4]{nocedal}。
 
-\section{The Kantorovich Linear Programs}\label{s-kantorovich}
-We have already introduced in Equation~\eqref{eq-mk-discr} the primal OT problem:
+\section{カントロヴィッチの線形計画}\label{s-kantorovich}
+式~\eqref{eq-mk-discr}で主OT問題を既に導入した：
 \eql{\label{eq-mk-discr-algo}
-	\MKD_{\C}(\a,\b) = 
+	\MKD_{\C}(\a,\b) =
 	\umin{\P \in \CouplingsD(\a,\b)}
-		\sum_{i\in \range{n}, j \in \range{m}} \C_{i,j} \P_{i,j}. 
+		\sum_{i\in \range{n}, j \in \range{m}} \C_{i,j} \P_{i,j}.
 }
-To make the link with the linear programming literature, one can cast the equation above as a linear program in \emph{standard} form, that is, a linear program with a linear objective; equality constraints defined with a matrix and a constant vector; and nonnegative constraints on variables. Let $\Identity_n$ stand for the identity matrix of size $n$ and let $\otimes$ be Kronecker's product. The ${(n+m) \times nm}$ matrix
+線形計画法の文献との関連を明確にするために、上記の式を\emph{標準}形の線形計画、すなわち線形目的関数、行列と定数ベクトルで定義される等式制約、および変数の非負制約を持つ線形計画として定式化できる。$\Identity_n$をサイズ$n$の単位行列、$\otimes$をクロネッカー積とする。${(n+m) \times nm}$行列
 $$
 \mathbf{A}= \begin{bmatrix}
 	\transp{\ones_{n}} \otimes \Identity_m \\
 	\Identity_n \otimes \transp{\ones_{m}}
 \end{bmatrix}\in\RR^{(n+m)\times nm}
 $$
-can be used to encode the row-sum and column-sum constraints that need to be satisfied for any $\P$ to be in $\CouplingsD(\a,\b)$. To do so, simply cast a matrix $\P\in\RR^{n\times m}$ as a vector $\p\in\RR^{nm}$ such that the $i+n(j-1)$'s element of $\p$ is equal to $\P_{ij}$ ($\P$ is enumerated columnwise) to obtain the following equivalence:
+は、任意の$\P$が$\CouplingsD(\a,\b)$に属するために満たすべき行和および列和の制約を符号化するために用いることができる。そのために、行列$\P\in\RR^{n\times m}$をベクトル$\p\in\RR^{nm}$として表し、$\p$の第$i+n(j-1)$要素が$\P_{ij}$に等しくなるようにする（$\P$は列方向に列挙される）と、以下の同値が得られる：
 $$\P\in \RR^{n\times m}\in \CouplingsD(\a,\b) \Leftrightarrow \p\in\RR^{nm}_+, \mathbf{A}\p = \bigl[\begin{smallmatrix}\a\\ \b \end{smallmatrix} \bigr].$$
-Therefore we can write the original optimal transport problem as
+したがって、元の最適輸送問題を以下のように書くことができる：
 \eql{\label{eq-mk-discr-primal}
 	\MKD_{\C}(\a,\b) =
 	\umin{\substack{\p \in \RR^{nm}_+\\
 		\mathbf{A}\p = \bigl[\begin{smallmatrix}\a\\ \b \end{smallmatrix} \bigr]}} \transp{\cc}\p,
 }
-where the $nm$-dimensional vector $\cc$ is equal to the stacked columns contained in the cost matrix $\C$. 
+ここで$nm$次元ベクトル$\cc$はコスト行列$\C$の列を積み重ねたものに等しい。
 
-\begin{rem}\label{rem-transportation-polytope} Note that one of the $n+m$ constraints described above is redundant or that, in other words, the line vectors of matrix $A$ are not linearly independent. Indeed, summing all $n$ first lines and the subsequent $m$ lines results in the same vector (namely $A \bigl[\begin{smallmatrix} \ones_n\\\zeros_m \end{smallmatrix}\bigr] = A \bigl[\begin{smallmatrix} \zeros_n\\\ones_m\end{smallmatrix}\bigr]=\transp{\ones_{nm}}$). One can show that removing a line in $A$ and the corresponding entry in $\bigl[\begin{smallmatrix}\a\\ \b \end{smallmatrix}\bigr]$ yields a properly defined linear system. For simplicity, and to avoid treating asymmetrically $\a$ and $\b$, we retain in what follows a redundant formulation, keeping in mind that degeneracy will pop up in some of our computations.\end{rem}
+\begin{rem}\label{rem-transportation-polytope} 上記の$n+m$個の制約のうち一つは冗長であること、言い換えれば、行列$A$の行ベクトルは線形独立ではないことに注意されたい。実際、最初の$n$行と後続の$m$行をそれぞれ足し合わせると同じベクトルが得られる（すなわち$A \bigl[\begin{smallmatrix} \ones_n\\\zeros_m \end{smallmatrix}\bigr] = A \bigl[\begin{smallmatrix} \zeros_n\\\ones_m\end{smallmatrix}\bigr]=\transp{\ones_{nm}}$）。$A$の一つの行とそれに対応する$\bigl[\begin{smallmatrix}\a\\ \b \end{smallmatrix}\bigr]$のエントリを除去しても、適切に定義された線形系が得られることが示せる。簡潔さのため、また$\a$と$\b$を非対称に扱うことを避けるため、以下では冗長な定式化を維持し、いくつかの計算で退化が生じることに留意する。\end{rem}
 
-The dual problem corresponding to Equation~\eqref{eq-mk-discr-primal} is, following duality in linear programming~\citep[p. 143]{bertsimas1997introduction} defined as
+式~\eqref{eq-mk-discr-primal}に対応する双対問題は、線形計画法における双対性~\citep[p. 143]{bertsimas1997introduction}に従い、以下のように定義される：
 \eql{\label{eq-mk-discr-dual}
-	\MKD_{\C}(\a,\b) = 
+	\MKD_{\C}(\a,\b) =
 	\umax{\substack{\hD \in \RR^{n+m}\\
 		\transp{A}\hD \leq \cc}}  \transp{\bigl[\begin{smallmatrix}\a\\ \b \end{smallmatrix} \bigr]}\hD.
 }
 
-Note that this program is exactly equivalent to that presented in Equation~\eqref{prop-duality-discr}.
+この計画問題は式~\eqref{prop-duality-discr}で示されたものと正確に等価であることに注意されたい。
 
 
-\begin{rem}\label{rem-duality} We provide a simple derivation of the duality result above, which can be seen as a direct formulation of the arguments developed in Remark~\ref{rem-kantorovich-dual}. Strong duality, namely the fact that the optima of both primal~\eqref{eq-mk-discr-primal} and dual~\eqref{eq-mk-discr-dual} problems do indeed coincide, requires a longer proof~\citep[\S4.10]{bertsimas1997introduction}. To simplify notation, we write $\q=\bigl[\begin{smallmatrix}\a\\ \b \end{smallmatrix} \bigr]$. 
-Consider now a relaxed primal problem of the optimal transport problem, where the constraint $\mathbf{A}\p=\q$ is no longer necessarily enforced but bears instead a cost $\transp{\hD}(\mathbf{A}\p-\q)$ parameterized by an arbitrary vector of costs $\hD\in\RR^{n+m}$. 
-This relaxation, whose optimum depends directly on the cost vector $\hD$, can be written as
-$$\LagrangeMKD(\hD)\eqdef \umin{\p \in \RR^{nm}_+} \transp{\cc}\p-\transp{\hD}(\mathbf{A}\p-\q).$$ 
-Note first that this relaxed problem has no marginal constraints on~$\p$. Because that minimization allows for many more $\p$ solutions, we expect $\LagrangeMKD(\hD)$ to be smaller than $\bar{z}=\MKD_{\C}(\a,\b)$. Indeed, writing $\p^\star$ for any optimal solution of the primal problem \eqref{eq-mk-discr-algo}, we obtain
+\begin{rem}\label{rem-duality} 上記の双対性の結果の簡潔な導出を示す。これは注~\ref{rem-kantorovich-dual}で展開された議論の直接的な定式化と見なすことができる。強双対性、すなわち主問題~\eqref{eq-mk-discr-primal}と双対問題~\eqref{eq-mk-discr-dual}の最適値が実際に一致するという事実は、より長い証明を要する~\citep[\S4.10]{bertsimas1997introduction}。記法を簡略化するため、$\q=\bigl[\begin{smallmatrix}\a\\ \b \end{smallmatrix} \bigr]$と書く。
+ここで、最適輸送問題の緩和された主問題を考える。制約$\mathbf{A}\p=\q$はもはや必ずしも強制されず、代わりに任意のコストベクトル$\hD\in\RR^{n+m}$によってパラメータ化されたコスト$\transp{\hD}(\mathbf{A}\p-\q)$が課される。
+この緩和の最適値はコストベクトル$\hD$に直接依存し、以下のように書ける：
+$$\LagrangeMKD(\hD)\eqdef \umin{\p \in \RR^{nm}_+} \transp{\cc}\p-\transp{\hD}(\mathbf{A}\p-\q).$$
+まず、この緩和問題は$\p$に対する周辺制約を持たないことに注意する。この最小化はより多くの$\p$の解を許容するため、$\LagrangeMKD(\hD)$は$\bar{z}=\MKD_{\C}(\a,\b)$よりも小さくなることが期待される。実際、主問題\eqref{eq-mk-discr-algo}の任意の最適解を$\p^\star$と書くと、
 $$\umin{\p \in \RR^{nm}_+} \transp{\cc}\p-\transp{\hD}(\mathbf{A}\p-\q) \leq \transp{\cc}\p^\star-\transp{\hD}(\mathbf{A}\p^\star-\q)=\transp{\cc}\p^\star=\bar{z}.$$
-The approach above defines therefore a problem which can be used to compute an optimal upper bound for the original problem~\eqref{eq-mk-discr-algo}, for any cost vector $\hD$; that function is called the Lagrange dual function of $\MKD$. 
-The goal of duality theory is now to compute the best lower bound $\underline{z}$ by \emph{maximizing} $\LagrangeMKD$ over \emph{any} cost vector $\hD$, namely
+したがって、上記のアプローチは、任意のコストベクトル$\hD$に対して元の問題~\eqref{eq-mk-discr-algo}の最適な上界を計算するための問題を定義する。この関数は$\MKD$のラグランジュ双対関数と呼ばれる。
+双対理論の目的は、\emph{任意の}コストベクトル$\hD$に対して$\LagrangeMKD$を\emph{最大化}することにより、最良の下界$\underline{z}$を計算することである。すなわち
 $$
 	\underline{z}=\umax{\hD} \pa{ \LagrangeMKD(\hD)=\umax{\hD} \transp{\hD}\q + \umin{\p \in \RR^{nm}_+} \transp{(\cc-\transp{A}\hD)}\p }.
 $$
-The second term involving a minimization on $\p$ can be easily shown to be $-\infty$ if any coordinate of $\transp{\cc}- \transp{A}\hD$ is negative. 
-Indeed, if for instance for a given index $i\leq n+m$ we have $\cc_i-(\transp{A}\hD)_i<0$, then it suffices to take for $\p$ the canonical vector $\e_i$ multiplied by any arbitrary large positive value to obtain an unbounded value. 
-When trying to maximize the lower bound $\LagrangeMKD(\hD)$ it therefore makes sense to restrict vectors $\hD$ to be such that $\transp{A}\hD\leq \cc$, in which case the best possible lower bound becomes $$\underline{z}=	\umax{\substack{\hD \in \RR^{n+m}\\\transp{A}\hD \leq \cc}}\transp{\hD}\q.$$ We have therefore proved a weak duality result, namely that $\underline{z}\leq \bar{z}$.
+$\p$に関する最小化を含む第二項は、$\transp{\cc}- \transp{A}\hD$のいずれかの座標が負であれば$-\infty$になることが容易に示される。
+実際、例えばある添字$i\leq n+m$に対して$\cc_i-(\transp{A}\hD)_i<0$であれば、$\p$として正準基底ベクトル$\e_i$に任意の大きな正の値を掛けたものを取ることで、非有界な値が得られる。
+下界$\LagrangeMKD(\hD)$を最大化しようとする場合、$\transp{A}\hD\leq \cc$を満たすベクトル$\hD$に制限することが合理的であり、その場合の最良の下界は$$\underline{z}=	\umax{\substack{\hD \in \RR^{n+m}\\\transp{A}\hD \leq \cc}}\transp{\hD}\q.$$となる。これにより弱双対性の結果、すなわち$\underline{z}\leq \bar{z}$が証明された。
 \end{rem}
 
 
-\section{$\C$-Transforms}\label{sec-c-transforms} We present in this section an important property of the dual optimal transport problem~\eqref{eq-mk-discr-dual} which takes a more important meaning when used for the semidiscrete optimal transport problem in~\S\ref{s-c-transform}. This section builds upon the original formulation~\eqref{eq-dual} that splits dual variables according to row and column sum constraints:
-\eql{\label{eq-dual-discrete-split}\MKD_\C(\a,\b) = \umax{(\fD,\gD) \in \PotentialsD(\C)} \dotp{\fD}{\a} + \dotp{\gD}{\b}. 
+\section{$\C$変換}\label{sec-c-transforms} 本節では、双対最適輸送問題~\eqref{eq-mk-discr-dual}の重要な性質を示す。この性質は\S\ref{s-c-transform}における半離散最適輸送問題で用いる際により重要な意味を持つ。本節は、双対変数を行和と列和の制約に従って分離する元の定式化~\eqref{eq-dual}に基づいている：
+\eql{\label{eq-dual-discrete-split}\MKD_\C(\a,\b) = \umax{(\fD,\gD) \in \PotentialsD(\C)} \dotp{\fD}{\a} + \dotp{\gD}{\b}.
 }
-Consider any dual feasible pair $(\fD,\gD)$. If we ``freeze'' the value of $\fD$, we can notice that there is no better vector solution for $\gD$ than the $\C$-transform vector of $\fD$, denoted $\fD^{\,\C}\in\RR^m$ and defined as
+任意の双対実行可能対$(\fD,\gD)$を考える。$\fD$の値を「固定」すれば、$\gD$に対する最良のベクトル解は$\fD$の$\C$変換ベクトルであることに気付く。これを$\fD^{\,\C}\in\RR^m$と書き、以下で定義される：
 \eq{(\fD^{\,\C})_j = \min_{i\in \range{n}} \C_{ij}-\fD_i,}
-since it is indeed easy to prove that $(\fD,\fD^{\,\C})\in\PotentialsD(\C)$ and that $\fD^{\,\C}$ is the largest possible vector such that this constraint is satisfied. We therefore have that
+実際、$(\fD,\fD^{\,\C})\in\PotentialsD(\C)$であること、および$\fD^{\,\C}$がこの制約を満たす最大のベクトルであることが容易に証明できる。したがって、
 \eq{\dotp{\fD}{\a} + \dotp{\gD}{\b} \leq \dotp{\fD}{\a} + \dotp{\fD^{\,\C}}{\b}.}
-This result allows us first to reformulate the dual problem as a piecewise affine concave maximization problem expressed in a single variable $\fD$ as
+が成り立つ。この結果により、まず双対問題を単一変数$\fD$で表される区分的アフィン凹最大化問題として再定式化できる：
 \eql{\label{eq-semidual-discret}\MKD_\C(\a,\b) = \umax{\fD\in\RR^{n}} \dotp{\fD}{\a} + \dotp{\fD^{\,\C}}{\b}.}
 
-Putting that result aside, the same reasoning applies of course if we now ``freeze'' the values of $\gD$ and consider instead the $\bar{\C}$-transform of $\gD$, namely vector $\gD^{\bar{\C}}\in\RR^n$ defined as
+この結果を一旦脇に置くと、$\gD$の値を「固定」して$\gD$の$\bar{\C}$変換、すなわちベクトル$\gD^{\bar{\C}}\in\RR^n$を以下で定義すれば、もちろん同じ議論が成り立つ：
 \eq{(\gD^{\bar{\C}})_i = \min_{j\in \range{m}} \C_{ij}-\gD_j,}
-with a different increase in objective
+目的関数の増加は異なり、
 \eq{\dotp{\fD}{\a} + \dotp{\gD}{\b} \leq \dotp{\gD^{\bar{\C}}}{\a} + \dotp{\gD}{\b}.}
-Starting from a given $\fD$, it is therefore tempting to alternate $\C$ and $\bar{\C}$ transforms several times to improve $\fD$. Indeed, we have the sequence of inequalities
+与えられた$\fD$から出発して、$\fD$を改善するために$\C$変換と$\bar{\C}$変換を複数回交互に適用したくなる。実際、以下の不等式の列が得られる：
 \eq{
 	\dotp{\fD}{\a} + \dotp{\fD^{\,\C}}{\b} \leq \dotp{\fD^{\,\C\bar{\C}}}{\a} + \dotp{\fD^{\,\C}}{\b}\leq  \dotp{\fD^{\,\C\bar{\C}}}{\a} + \dotp{\fD^{\,\C\bar{\C}\C}}{\b}\leq  \dots
-} 
-One may hope for a strict increase in the objective at each of these iterations. However, this does not work because alternating $\C$ and $\bar{\C}$ transforms quickly hits a plateau.
+}
+これらの反復の各ステップで目的関数が真に増加することを期待するかもしれない。しかし、$\C$変換と$\bar{\C}$変換を交互に適用するとすぐに停滞するため、これはうまくいかない。
 
-\begin{prop}\label{prop-ccc-2}The following identities, in which the inequality sign between vectors should be understood elementwise, hold:
+\begin{prop}\label{prop-ccc-2}以下の等式が成り立つ。ここでベクトル間の不等号は要素ごとに理解されるものとする：
 	\begin{enumerate}[label=(\roman*)]
-	\item $\fD\leq \fD\,' \Rightarrow \fD^{\,\C}\geq \fD\,'^{\,\C}$, 
-	\item $\fD^{\,\C\bar{\C}} \geq \fD$, $\gD^{\bar{\C}\C} \geq \gD$, 
+	\item $\fD\leq \fD\,' \Rightarrow \fD^{\,\C}\geq \fD\,'^{\,\C}$,
+	\item $\fD^{\,\C\bar{\C}} \geq \fD$, $\gD^{\bar{\C}\C} \geq \gD$,
 	\item $\fD^{\,\C\bar{\C}\C}=\fD^{\,\C}.$
-\end{enumerate}	
+\end{enumerate}
 \end{prop}
-\begin{proof} The first inequality follows from the definition of $\C$-transforms. Expanding the definition of $\fD^{\,\C\bar{\C}}$ we have
+\begin{proof} 第一の不等式は$\C$変換の定義から従う。$\fD^{\,\C\bar{\C}}$の定義を展開すると
 \eq{\left(\fD^{\,\C\bar{\C}}\right)_i= \min_{j\in \range{m}} \C_{ij}-\fD^{\,\C}_j = \min_{j\in \range{m}} \C_{ij}- \min_{i'\in \range{n}} \C_{i'j}-\fD_{i
 '}.}
-Now, since $-\min_{i'\in \range{n}} \C_{i'j}-\fD_{i'} \geq -(\C_{ij}-\fD_i)$, we recover 
+ここで、$-\min_{i'\in \range{n}} \C_{i'j}-\fD_{i'} \geq -(\C_{ij}-\fD_i)$であるから、
 \eq{\left(\fD^{\,\C\bar{\C}}\right)_i \geq \min_{j\in \range{m}} \C_{ij}- \C_{ij}+\fD_i = \fD_i.}
-The relation $\gD^{\bar{\C}\C} \geq \gD$ is obtained in the same way. Now, set $\gD=\fD^{\,\C}$. Then, $\gD^{\bar{\C}}=\fD^{\,\C\bar{\C}}\geq \fD$. Therefore, using result (i) we have $\fD^{\,\C\bar{\C}\C}\leq \fD^{\,\C}$. Result (ii) yields $\fD^{\,\C\bar{\C}\C}\geq \fD^{\,\C}$, proving the equality.
+が回復される。関係式$\gD^{\bar{\C}\C} \geq \gD$も同様に得られる。次に、$\gD=\fD^{\,\C}$とおく。すると、$\gD^{\bar{\C}}=\fD^{\,\C\bar{\C}}\geq \fD$である。したがって、結果(i)を用いると$\fD^{\,\C\bar{\C}\C}\leq \fD^{\,\C}$が得られる。結果(ii)により$\fD^{\,\C\bar{\C}\C}\geq \fD^{\,\C}$であるから、等式が証明される。
 \end{proof}
-%Applying the $\C\bar{\C}$ transform more than once has therefore no impact. 
+%Applying the $\C\bar{\C}$ transform more than once has therefore no impact.
 
 
-\section{Complementary Slackness}\label{s-complementary}
+\section{相補スラック性}\label{s-complementary}
 
-Primal~\eqref{eq-mk-discr-primal} and dual~\eqref{eq-mk-discr-dual},~\eqref{eq-dual} problems can be solved independently to obtain optimal primal $\P^{\star}$ and dual $(\fD^{\star},\gD^{\star})$ solutions. The following proposition characterizes their relationship. 
+主問題~\eqref{eq-mk-discr-primal}と双対問題~\eqref{eq-mk-discr-dual},~\eqref{eq-dual}は独立に解くことができ、最適な主変数$\P^{\star}$および双対変数$(\fD^{\star},\gD^{\star})$が得られる。以下の命題はそれらの関係を特徴づける。
 
-\begin{prop}\label{prop-primal-dual-optimal}Let $\P^\star$ and $\fD^\star,\gD^\star$ be optimal solutions for the primal~\eqref{eq-dual-generic} and dual~\eqref{eq-mk-discr} problems, respectively. Then, for any pair $(i,j)\in\range{n}\times\range{m}$, $\P^\star_{i,j}(\C_{i,j}-\fD^\star_i+\gD^\star_j)=0$ holds. In other words, if $\P^\star_{i,j}>0$, then necessarily $\fD^\star_i+\gD^\star_j=\C_{i,j}$; if $\fD^\star_i+\gD^\star_j<\C_{i,j}$ then necessarily $\P^\star_{i,j}=0$.
+\begin{prop}\label{prop-primal-dual-optimal}$\P^\star$および$\fD^\star,\gD^\star$をそれぞれ主問題~\eqref{eq-dual-generic}および双対問題~\eqref{eq-mk-discr}の最適解とする。このとき、任意の対$(i,j)\in\range{n}\times\range{m}$に対して、$\P^\star_{i,j}(\C_{i,j}-\fD^\star_i+\gD^\star_j)=0$が成り立つ。言い換えれば、$\P^\star_{i,j}>0$ならば必然的に$\fD^\star_i+\gD^\star_j=\C_{i,j}$であり、$\fD^\star_i+\gD^\star_j<\C_{i,j}$ならば必然的に$\P^\star_{i,j}=0$である。
 \end{prop}
-\begin{proof} We have by strong duality that $\dotp{\P^\star}{\C} = \dotp{\fD^\star}{\a}+\dotp{\gD^\star}{\b}$. Recall that $\P^\star\ones_m = \a$ and $\transp{\P^\star}\ones_n = \b$; therefore 
+\begin{proof} 強双対性により$\dotp{\P^\star}{\C} = \dotp{\fD^\star}{\a}+\dotp{\gD^\star}{\b}$が成り立つ。$\P^\star\ones_m = \a$および$\transp{\P^\star}\ones_n = \b$であることを想起すると、
 	$$\begin{aligned}\dotp{\fD^\star}{\a}+\dotp{\gD^\star}{\b} &= \dotp{\fD^\star}{\P^\star\ones_m}+\dotp{\gD^\star}{\transp{\P^\star}\ones_n}\\&=  \dotp{\fD^\star\transp{\ones_m}}{\P^\star}+\dotp{\ones_n\transp{\gD^\star}}{\P^\star},\end{aligned}$$
-	which results in $$\dotp{\P^\star}{\C- \fD^\star\oplus \gD^\star}=0.$$
-Because $(\fD^\star,\gD^\star)$ belongs to the polyhedron of dual constraints~\eqref{eq-feasible-potential}, each entry of the matrix $\C- \fD^\star\oplus \gD^\star$ is necessarily nonnegative. Therefore, since all the entries of $\P$ are nonnegative, the constraint that the dot-product above is equal to $0$ enforces that, for any pair of indices $(i,j)$ such that $\P_{i,j}>0$, $\C_{i,j}-(\fD_i+\gD_j)$ must be zero, and for any pair of indices $(i,j)$ such that $\C_{i,j}>\fD_i+\gD_j$ that $\P_{i,j}=0$.
+	となり、$$\dotp{\P^\star}{\C- \fD^\star\oplus \gD^\star}=0.$$
+が得られる。$(\fD^\star,\gD^\star)$は双対制約の多面体~\eqref{eq-feasible-potential}に属するため、行列$\C- \fD^\star\oplus \gD^\star$の各要素は必然的に非負である。したがって、$\P$のすべての要素が非負であることから、上記の内積がゼロに等しいという制約は、$\P_{i,j}>0$である任意の添字対$(i,j)$に対して$\C_{i,j}-(\fD_i+\gD_j)$がゼロでなければならないこと、および$\C_{i,j}>\fD_i+\gD_j$である任意の添字対$(i,j)$に対して$\P_{i,j}=0$でなければならないことを強制する。
 \end{proof}
 
-The converse result is also true. We define first the idea that two variables for the primal and dual problems are complementary.
+逆の結果もまた成り立つ。まず、主問題と双対問題の二つの変数が相補的であるという概念を定義する。
 
 \begin{defn}\label{def-complementary}
-A matrix $\P\in\RR^{n\times m}$ and a pair of vectors $(\fD,\gD)$ are complementary w.r.t. $\C$ if for all pairs of indices $(i,j)$ such that  $\P_{i,j}>0$ one also has $\C_{i,j}=\fD_i+\gD_j$.
+行列$\P\in\RR^{n\times m}$とベクトルの対$(\fD,\gD)$が$\C$に関して相補的であるとは、$\P_{i,j}>0$であるすべての添字対$(i,j)$に対して$\C_{i,j}=\fD_i+\gD_j$も成り立つことをいう。
 \end{defn}
 
-If a pair of feasible primal and dual variables is complementary, then we can conclude they are optimal.
+主変数と双対変数の実行可能な対が相補的であれば、それらが最適であると結論付けることができる。
 
-\begin{prop}\label{prop-primal-dual-optimality} If $\P$ and $(\fD,\gD)$ are complementary and feasible solutions for the primal~\eqref{eq-dual-generic} and dual~\eqref{eq-mk-discr} problems, respectively, then $\P$ and $(\fD,\gD)$ are both primal and dual optimal.
+\begin{prop}\label{prop-primal-dual-optimality} $\P$と$(\fD,\gD)$がそれぞれ主問題~\eqref{eq-dual-generic}と双対問題~\eqref{eq-mk-discr}の相補的かつ実行可能な解であるならば、$\P$と$(\fD,\gD)$はともに主最適かつ双対最適である。
 \end{prop}
 \begin{proof}
-	By weak duality, we have that
+	弱双対性により、
 $$\MKD_{\C}(\a,\b)\leq \dotp{\P}{\C}=\dotp{\P}{\fD\oplus\gD}=\dotp{\a}{\fD}+\dotp{\b}{\gD}\leq \MKD_{\C}(\a,\b)$$
-and therefore $\P$ and $(\fD,\gD)$ are respectively primal and dual optimal.
+が成り立ち、したがって$\P$と$(\fD,\gD)$はそれぞれ主最適および双対最適である。
 \end{proof}
 
 
 \todoK{
-\begin{prop}[Primal-dual relationships]
+\begin{prop}[主双対関係]
 	\todo{something on this?}
 \end{prop}
 }
 
-\section{Vertices of the Transportation Polytope}\label{s-extremal}
+\section{輸送多面体の頂点}\label{s-extremal}
 
-Recall that a vertex or an extremal point of a convex set is formally a point $\mathbf{x}$ in that set such that, if there exiss $\mathbf{y}$ and $\mathbf{z}$ in that set with $\mathbf{x}=(\mathbf{y}+\mathbf{z})/2$, then necessarily $\mathbf{x}=\mathbf{y}=\mathbf{z}$. A linear program with a nonempty and bounded feasible set attains its minimum at a vertex (or extremal point) of the feasible set~\citep[p.~65, Theo.~2.7]{bertsimas1997introduction}. Since the feasible set $\CouplingsD(\a,\b)$ of the primal optimal transport problem~\eqref{eq-mk-discr-primal} is bounded, one can restrict the search for an optimal $\P$ to the set of extreme points of the polytope $\CouplingsD(\a,\b)$. Matrices $\P$ that are extremal in $\CouplingsD(\a,\b)$ have an interesting structure that has been the subject of extensive research~\citep[\S8]{brualdi2006combinatorial}. That structure requires describing the transport problem using the formalism of bipartite graphs.
- 
-\subsection{Tree Structure of the Support of All Vertices of $\CouplingsD(\a,\b)$} 
-Let $V=(1,2,\dots,n)$ and $V'=(1',2',\dots,m')$ be two sets of nodes. Note that we add a prime to the labels of set $V'$ to disambiguate them from those of $V$. Consider their union $V\cup V'$, with $n+m$ nodes, and the set $\alledges$ of all $nm$ directed edges $\{ (i,j'), i \in \range{n}, j\in \range{m}\}$ between them (here we just add a prime to an integer $j\leq m$ to form $j'$ in $V'$). To each edge $(i,j')$ we associate the corresponding cost value $\C_{ij}$. The complete bipartite graph $\mathcal{G}$ between $V$ and $V'$ is $(V\cup V',E)$. A transport plan is a flow on that graph satisfying source ($\a_i$ flowing out of each node $i$) and sink ($\b_j$ flowing into each node $j'$) constraints, as described informally in Figure~\ref{fig-simplex}. An extremal point in $\CouplingsD(\a,\b)$ has the following property~\citep[p.~338,~Theo.~8.1.2]{brualdi2006combinatorial}.
+凸集合の頂点または端点とは、形式的にはその集合に属する点$\mathbf{x}$であって、その集合に属する$\mathbf{y}$と$\mathbf{z}$が存在し$\mathbf{x}=(\mathbf{y}+\mathbf{z})/2$が成り立つならば、必然的に$\mathbf{x}=\mathbf{y}=\mathbf{z}$であるような点をいう。空でなく有界な実行可能集合を持つ線形計画は、その実行可能集合の頂点（または端点）で最小値を達成する~\citep[p.~65, Theo.~2.7]{bertsimas1997introduction}。主最適輸送問題~\eqref{eq-mk-discr-primal}の実行可能集合$\CouplingsD(\a,\b)$は有界であるため、最適な$\P$の探索を多面体$\CouplingsD(\a,\b)$の端点の集合に限定できる。$\CouplingsD(\a,\b)$で端点となる行列$\P$は、広範な研究の対象となってきた興味深い構造を持つ~\citep[\S8]{brualdi2006combinatorial}。その構造を記述するには、輸送問題を二部グラフの形式で表す必要がある。
+
+\subsection{$\CouplingsD(\a,\b)$のすべての頂点の台の木構造}
+$V=(1,2,\dots,n)$と$V'=(1',2',\dots,m')$を二つのノード集合とする。集合$V'$のラベルには$V$のラベルと区別するためにプライムを付ける。それらの和集合$V\cup V'$は$n+m$個のノードを持ち、それらの間のすべての$nm$本の有向辺の集合$\alledges$を$\{ (i,j'), i \in \range{n}, j\in \range{m}\}$とする（ここでは整数$j\leq m$にプライムを付けて$V'$の$j'$を構成する）。各辺$(i,j')$に対して対応するコスト値$\C_{ij}$を関連付ける。$V$と$V'$の間の完全二部グラフ$\mathcal{G}$は$(V\cup V',E)$である。輸送計画はこのグラフ上の、ソース（各ノード$i$から$\a_i$が流出する）およびシンク（各ノード$j'$に$\b_j$が流入する）制約を満たすフローであり、図~\ref{fig-simplex}に非形式的に描かれている。$\CouplingsD(\a,\b)$の端点は以下の性質を持つ~\citep[p.~338,~Theo.~8.1.2]{brualdi2006combinatorial}。
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\linewidth]{algo-basics-tree-solution/networksol}
 \caption{\label{fig-simplex}
-The optimal transport problem as a bipartite network flow problem. Here $n=3,m=4$. All coordinates of the source histogram, $\a$, are depicted as source nodes on the left labeled $1,2,3$, whereas all coordinates of the target histogram $\b$ are labeled as nodes $1',2',3',4'$. The graph is bipartite in the sense that all source nodes are connected to all target nodes, with no additional edges. To each edge $(i,j')$ is associated a cost $\C_{ij}$. A feasible flow is represented on the right. Proposition~\ref{prop-extremal} shows that this flow is not extremal since it has at least one cycle given by $((1,1'),(2,1'),(2,4'),(1,4'))$. 
+二部ネットワークフロー問題としての最適輸送問題。ここで$n=3,m=4$である。ソースヒストグラム$\a$のすべての座標は左側のソースノード$1,2,3$として描かれ、ターゲットヒストグラム$\b$のすべての座標はノード$1',2',3',4'$として描かれている。このグラフはすべてのソースノードがすべてのターゲットノードに接続され、追加の辺がないという意味で二部である。各辺$(i,j')$にはコスト$\C_{ij}$が関連付けられている。実行可能なフローが右側に表示されている。命題~\ref{prop-extremal}は、少なくとも一つの巡回$((1,1'),(2,1'),(2,4'),(1,4'))$が存在するため、このフローが端点ではないことを示している。
 }
 \end{figure}
 
@@ -154,62 +154,62 @@ The optimal transport problem as a bipartite network flow problem. Here $n=3,m=4
 \centering
 \includegraphics[width=\linewidth]{algo-basics-tree-solution/tree-sol2}
 \caption{\label{fig-perturb}
-A solution $\P$ with a cycle in the graph of its support can be perturbed to obtain two feasible solutions $\Q$ and $\RRd$ such that $\P$ is their average, therefore disproving that $\P$ is extremal. 
+台のグラフに巡回を持つ解$\P$は、$\P$がそれらの平均となるような二つの実行可能解$\Q$および$\RRd$を得るために摂動でき、それにより$\P$が端点であることが否定される。
 }
 \end{figure}
 
-\begin{prop}[Extremal solutions]\label{prop-extremal}
-Let $\P$ be an extremal point of the polytope $\CouplingsD(\a,\b)$. Let $S(\P)\subset \alledges$ be the subset of edges $\{(i,j'), i\in\range{n}, j\in\range{m} \text{ such that } \P_{ij}>0\}$. Then the graph $G(\P)\eqdef (V\cup V',S(\P))$ has no cycles. In particular, $\P$ cannot have more than $n+m-1$ nonzero entries.
+\begin{prop}[端点解]\label{prop-extremal}
+$\P$を多面体$\CouplingsD(\a,\b)$の端点とする。$S(\P)\subset \alledges$を辺の部分集合$\{(i,j'), i\in\range{n}, j\in\range{m} \text{ such that } \P_{ij}>0\}$とする。このとき、グラフ$G(\P)\eqdef (V\cup V',S(\P))$は巡回を持たない。特に、$\P$は$n+m-1$個を超える非零要素を持つことができない。
  \end{prop}
 \begin{proof}
-We proceed by contradiction. Suppose that $\P$ is an extremal point of the polytope $\CouplingsD(\a,\b)$ and that its corresponding set $S(\P)$ of edges, denoted $F$ for short, is such that the graph $G=(V\cup V',F)$ contains a cycle, namely there exists $k>1$ and a sequence of distinct indices $i_1,\dots,i_{k-1}\in\range{n}$ and $j_1,\dots,j_{k-1}\in\range{m}$ such that the set of edges $H$ given below forms a subset of $F$. $$H=\left\{(i_1,j_1'), (i_2,j_1'), (i_2,j_2'),\dots,(i_k,j_k'),(i_1,j_k')\right\}.$$ 
-	We now construct two feasible matrices $\Q$ and $\RRd$ such that $\P=(\Q+\RRd)/2$. To do so, consider a \emph{directed} cycle $\bar{H}$ corresponding to $H$, namely the sequence of pairs $i_1\rightarrow j_1', j_1' \rightarrow i_2, i_2 \rightarrow j_2',\dots, i_k \rightarrow j_k' , j_k' \rightarrow i_1$, as well as the elementary amount of flow $\varepsilon < \min_{(i,j')\in F}\P_{ij}$.
-	Consider a perturbation matrix $\E$ whose $(i,j)$ entry is equal to $\varepsilon$ if $i\rightarrow j' \in \bar{H}$, $-\varepsilon$ if $ j\rightarrow i'\in \bar{H}$, and zero otherwise. Define matrices $\Q=\P+\E$ and $\RRd=\P-\E$ as illustrated in Figure~\ref{fig-perturb}. Because $\varepsilon$ is small enough, all elements in $\Q$ and $\RRd$ are nonnegative. By construction, $\E$ has either lines (resp., columns) with all entries equal to $0$ or exactly one entry equal to $\varepsilon$ and another equal to $-\varepsilon$ for those indexed by $i_1,\dots,i_k$ (resp., $j_1,\dots,j_k$). Therefore, $\E$ is such that $\E\ones_{m}=\zeros_{n}$ and $\transp{\E}\ones_{n}=\zeros_{m}$, and we have that $\Q$ and $\RRd$ have the same marginals as $\P$, and are therefore feasible. Finally $\P=(\Q+\RRd)/2$ which, since $\Q,\RRd\ne \P$, contradicts the fact that $\P$ is an extremal point. Since a graph with $k$ nodes and no cycles cannot have more than $k-1$ edges, we conclude that $S(\P)$ cannot have more than $n+m-1$ edges, and therefore $\P$ cannot have more than $n+m-1$ nonzero entries. 
+背理法による。$\P$が多面体$\CouplingsD(\a,\b)$の端点であり、その対応する辺の集合$S(\P)$（簡潔に$F$と書く）に対してグラフ$G=(V\cup V',F)$が巡回を含むと仮定する。すなわち、$k>1$と相異なる添字の列$i_1,\dots,i_{k-1}\in\range{n}$および$j_1,\dots,j_{k-1}\in\range{m}$が存在し、以下に示す辺の集合$H$が$F$の部分集合を形成する。$$H=\left\{(i_1,j_1'), (i_2,j_1'), (i_2,j_2'),\dots,(i_k,j_k'),(i_1,j_k')\right\}.$$
+	ここで、$\P=(\Q+\RRd)/2$を満たす二つの実行可能行列$\Q$と$\RRd$を構成する。そのために、$H$に対応する\emph{有向}巡回$\bar{H}$、すなわち対の列$i_1\rightarrow j_1', j_1' \rightarrow i_2, i_2 \rightarrow j_2',\dots, i_k \rightarrow j_k' , j_k' \rightarrow i_1$、および基本フロー量$\varepsilon < \min_{(i,j')\in F}\P_{ij}$を考える。
+	摂動行列$\E$を、その$(i,j)$要素が$i\rightarrow j' \in \bar{H}$ならば$\varepsilon$、$j\rightarrow i'\in \bar{H}$ならば$-\varepsilon$、それ以外は零であるように定義する。行列$\Q=\P+\E$と$\RRd=\P-\E$を図~\ref{fig-perturb}に示されるように定義する。$\varepsilon$が十分小さいため、$\Q$と$\RRd$のすべての要素は非負である。構成上、$\E$はすべての要素がゼロの行（もしくは列）を持つか、$i_1,\dots,i_k$（もしくは$j_1,\dots,j_k$）で添字付けられた行（もしくは列）について、一つの要素が$\varepsilon$でもう一つが$-\varepsilon$であるかのいずれかである。したがって、$\E$は$\E\ones_{m}=\zeros_{n}$かつ$\transp{\E}\ones_{n}=\zeros_{m}$を満たし、$\Q$と$\RRd$は$\P$と同じ周辺分布を持ち、よって実行可能である。最後に$\P=(\Q+\RRd)/2$であり、$\Q,\RRd\ne \P$であるから、$\P$が端点であるという事実に矛盾する。$k$個のノードを持ち巡回のないグラフは$k-1$本を超える辺を持てないため、$S(\P)$は$n+m-1$本を超える辺を持てず、したがって$\P$は$n+m-1$個を超える非零要素を持てない。
 \end{proof}
 
-\subsection{The North-West Corner Rule}\label{subsec-northwest}
-The north-west (NW) corner rule is a heuristic that produces a vertex of the polytope $\CouplingsD(\a,\b)$ in up to $n+m$ operations. This heuristic can play a role in initializing any algorithm working on the primal, such as the network simplex outlined in the next section. 
+\subsection{北西隅法}\label{subsec-northwest}
+北西（NW）隅法は、最大$n+m$回の操作で多面体$\CouplingsD(\a,\b)$の頂点を生成するヒューリスティックである。このヒューリスティックは、次節で概説するネットワークシンプレックスのような、主変数に基づいて動作するアルゴリズムの初期化において役割を果たす。
 
-The rule starts by giving the highest possible value to $\P_{1,1}$ by setting it to $\min(\a_1,\b_1)$. At each step, the entry $\P_{i,j}$ is chosen to saturate either the row constraint at $i$, the column constraint at $j$, or both if possible. The indices $i,j$ are then updated as follows: $i$ is incremented in the first case, $j$ is in the second, and both $i$ and $j$ are in the third case. The rule proceeds until $\P_{n,m}$ has received a value. 
+この規則は、$\P_{1,1}$に可能な限り大きな値を与えることから始まり、$\min(\a_1,\b_1)$に設定する。各ステップにおいて、要素$\P_{i,j}$は行制約$i$、列制約$j$、または可能であれば両方を飽和させるように選ばれる。添字$i,j$は次のように更新される：第一の場合は$i$を増やし、第二の場合は$j$を増やし、第三の場合は$i$と$j$の両方を増やす。この規則は$\P_{n,m}$に値が割り当てられるまで続く。
 
-Formally, the algorithm works as follows: $i$ and $j$ are initialized to $1$, $r\leftarrow\a_1,c\leftarrow \b_1$. While $i\leq n$ and $j\leq m$, set $t\leftarrow \min(r,c)$, $\P_{i,j}\leftarrow t$, $r\leftarrow r-t$, $c\leftarrow s-t$; if $r=0$ then increment $i$, and update $r\leftarrow\a_i$ if $i\leq n$; if $c=0$ then increment $j$, and update $c\leftarrow \b_j$ if $j\leq n$; repeat. Here is an example of this sequence assuming $\a=[0.2,0.5,0.3]$  and $\b=[0.5,0.1,0.4]$:
+形式的には、アルゴリズムは以下のように動作する：$i$と$j$を$1$に初期化し、$r\leftarrow\a_1,c\leftarrow \b_1$とする。$i\leq n$かつ$j\leq m$の間、$t\leftarrow \min(r,c)$、$\P_{i,j}\leftarrow t$、$r\leftarrow r-t$、$c\leftarrow s-t$とし、$r=0$ならば$i$を増やし、$i\leq n$ならば$r\leftarrow\a_i$と更新する；$c=0$ならば$j$を増やし、$j\leq n$ならば$c\leftarrow \b_j$と更新する；繰り返す。以下は$\a=[0.2,0.5,0.3]$および$\b=[0.5,0.1,0.4]$を仮定した場合のこの手順の例である：
 $$\begin{aligned}\begin{bmatrix} \bullet & 0 & 0 \\ 0 & 0 & 0 \\ 0& 0 & 0\end{bmatrix} &\rightarrow \begin{bmatrix} 0.2 & 0 & 0 \\ \bullet & 0 & 0 \\ 0& 0 & 0\end{bmatrix} &\rightarrow \begin{bmatrix} 0.2 & 0 & 0 \\ 0.3 & \bullet & 0 \\ 0& 0 & 0\end{bmatrix}\\ &\rightarrow \begin{bmatrix} 0.2 & 0 & 0 \\ 0.3 &0.1 &\bullet \\ 0& 0 & 0\end{bmatrix} &\rightarrow \begin{bmatrix} 0.2 & 0 & 0 \\ 0.3 &0.1 &0.1 \\ 0& 0 & \bullet\end{bmatrix} & \rightarrow \begin{bmatrix} 0.2 & 0 & 0 \\ 0.3 &0.1 &0.1 \\ 0& 0 & 0.3\end{bmatrix}\end{aligned}$$
-We write $\NW(\a,\b)$ for the unique plan that can be obtained through this heuristic. 
+このヒューリスティックにより得られる一意な計画を$\NW(\a,\b)$と書く。
 
-Note that there is, however, a much larger number of NW corner solutions that can be obtained by permuting arbitrarily the order of $\a$ and $\b$ first, computing the corresponding NW corner table, and recovering a table of $\CouplingsD(\a,\b)$ by inverting again the order of columns and rows: setting $\sigma=(3,1,2),\sigma'=(3,2,1)$ gives $\a_\sigma=[0.3,0.2,0.5], \b_{\sigma'}=[0.4,0.1,0.5]$, and $\sigma^{-1}=(2,3,1),\sigma'=(3,2,1)$. Observe that
+しかし、$\a$と$\b$の順序を任意に置換し、対応するNW隅テーブルを計算し、列と行の順序を再度反転してテーブルを$\CouplingsD(\a,\b)$に復元することで、はるかに多くのNW隅解を得られることに注意されたい：$\sigma=(3,1,2),\sigma'=(3,2,1)$とすると、$\a_\sigma=[0.3,0.2,0.5], \b_{\sigma'}=[0.4,0.1,0.5]$、および$\sigma^{-1}=(2,3,1),\sigma'=(3,2,1)$となる。以下を観察されたい：
 \begin{gather*}
 \NW(\a_\sigma,\b_{\sigma'}) = \begin{bmatrix} 0.3 & 0 & 0 \\ 0.1 & 0.1 & 0 \\ 0& 0 & 0.5\end{bmatrix} \in \CouplingsD(\a_\sigma,\b_{\sigma'}),\\
 \NW_{\sigma^{-1}\sigma'^{-1}}(\a_\sigma,\b_{\sigma'})= \begin{bmatrix} 0 & 0.1 & 0.1 \\ 0.5 & 0 & 0 \\ 0& 0 & 0.3\end{bmatrix}\in \CouplingsD(\a,\b).
 \end{gather*}
 
-Let $\mathcal{N}(\a,\b)$ be the set of all NW corner solutions that can be produced this way:
+$\mathcal{N}(\a,\b)$をこの方法で生成可能なすべてのNW隅解の集合とする：
 $$\mathcal{N}(\a,\b)\eqdef\{ \NW_{\sigma^{-1}\sigma'^{-1}}(r_\sigma,c_{\sigma'}), \sigma,\sigma'\in S_d\}.$$
-All NW corner solutions have by construction up to $n+m-1$ nonzero elements. The NW corner rule produces a table which is by construction unique for $\a_\sigma$ and $\b_\sigma'$, but there is an exponential number of pairs or row/column permutations $(\sigma,\sigma')$ that may yield the same table~\citep[p. 2]{stougie2002polynomial}. $\mathcal{N}(\a,\b)$ forms a subset of (usually strictly included in) the set of extreme points of $\CouplingsD(\a,\b)$~\citep[Cor. 8.1.4]{brualdi2006combinatorial}.
+すべてのNW隅解は、構成上、最大$n+m-1$個の非零要素を持つ。NW隅法は$\a_\sigma$と$\b_\sigma'$に対して構成上一意なテーブルを生成するが、同じテーブルを与える行・列置換の対$(\sigma,\sigma')$は指数的に多く存在し得る~\citep[p. 2]{stougie2002polynomial}。$\mathcal{N}(\a,\b)$は$\CouplingsD(\a,\b)$の端点集合の（通常は真の）部分集合を形成する~\citep[Cor. 8.1.4]{brualdi2006combinatorial}。
 
 
 
-\section{A Heuristic Description of the Network Simplex}\label{s-networksimplex}
+\section{ネットワークシンプレックスのヒューリスティックな説明}\label{s-networksimplex}
 
-Consider a feasible matrix $\P$ whose graph $G(\P)=(V\cup V',S(\P))$ has no cycles. $\P$ has therefore no more than $n+m-1$ nonzero entries and is a vertex of $\CouplingsD(\a,\b)$ by Proposition~\ref{prop-extremal}. 
+グラフ$G(\P)=(V\cup V',S(\P))$が巡回を持たない実行可能行列$\P$を考える。$\P$は$n+m-1$個以下の非零要素を持ち、命題~\ref{prop-extremal}により$\CouplingsD(\a,\b)$の頂点である。
 %
-Following Proposition~\ref{prop-primal-dual-optimality}, it is therefore sufficient to obtain a dual solution $(\fD,\gD)$ which is feasible (\ie $\C-\fD\oplus\gD$ has nonnegative entries) and complementary to $\P$ (pairs of indices $(i,j')$ in $S(\P)$ are such that $\C_{i,j}=\fD_i+\gD_j$), to prove that $\P$ is optimal. 
+命題~\ref{prop-primal-dual-optimality}に従えば、$\P$が最適であることを証明するには、実行可能（すなわち$\C-\fD\oplus\gD$が非負の要素を持つ）かつ$\P$に相補的（$S(\P)$の添字対$(i,j')$が$\C_{i,j}=\fD_i+\gD_j$を満たす）な双対解$(\fD,\gD)$を得れば十分である。
 %
-The network simplex relies on two simple principles: to each feasible primal solution $\P$ one can associate a complementary pair $(\fD,\gD)$. 
+ネットワークシンプレックスは二つの単純な原理に基づいている：各実行可能な主解$\P$に対して相補的な対$(\fD,\gD)$を関連付けることができる。
 %
-If that pair is feasible, then we have reached optimality. If not, one can consider a modification of $\P$ that remains feasible and whose complementary pair $(\fD,\gD)$ is modified so that it becomes closer to feasibility.
+その対が実行可能であれば最適に到達している。そうでなければ、$\P$を実行可能性を保ちつつ修正し、その相補的な対$(\fD,\gD)$が実行可能性に近づくように変更することを考える。
 
-\subsection{Obtaining a Dual Pair Complementary to $\P$}\label{subsec-obtaining}
-The simplex proceeds by associating first to any extremal solution $\P$ a pair of $(\fD,\gD)$ complementary dual variables. This is simply carried out by finding two vectors $\fD$ and $\gD$ such that for any $(i,j')$ in $S(\P)$, $\fD_i+\gD_j$ is equal to $\C_{i,j}$. Note that this, in itself, does not guarantee that $(\fD,\gD)$ is feasible.
+\subsection{$\P$に相補的な双対対の取得}\label{subsec-obtaining}
+シンプレックス法はまず、任意の端点解$\P$に相補的な双対変数の対$(\fD,\gD)$を関連付けることから始める。これは、$S(\P)$の任意の$(i,j')$に対して$\fD_i+\gD_j$が$\C_{i,j}$に等しくなるような二つのベクトル$\fD$と$\gD$を見つけることで単純に実行される。ただし、これ自体は$(\fD,\gD)$の実行可能性を保証しないことに注意する。
 
 \begin{figure}[h!]
 	\centering
 	\includegraphics[width=\linewidth]{algo-basics-tree-solution/f_of_P}
 	\caption{\label{fig-f_of_P}
-	A feasible transport $\P$ and its corresponding set of edges $S(\P)$ and graph $G(\P)$. As can be seen, the graph $G(\P)=(\{1,\dots,5,1',\dots,6'\},S(\P))$ is a forest, meaning that it can be expressed as the union of tree graphs, three in this case.}
+	実行可能な輸送$\P$と、それに対応する辺の集合$S(\P)$およびグラフ$G(\P)$。見て分かるように、グラフ$G(\P)=(\{1,\dots,5,1',\dots,6'\},S(\P))$は森であり、木グラフの和集合として表せる。この場合は三つの木からなる。}
 \end{figure}
 
 
-Let $s$ be the cardinality of $S(\P)$. Because $\P$ is extremal, $s\leq n+m-1$. Because $G(\P)$ has no cycles, $G(\P)$ is either a tree or a forest (a union of trees), as illustrated in Figure~\ref{fig-f_of_P}. Aiming for a pair $(\fD,\gD)$ that is complementary to $\P$, we consider the following set of $s$ linear equality constraints on $n+m$ variables:
+$s$を$S(\P)$の濃度とする。$\P$が端点であるため、$s\leq n+m-1$である。$G(\P)$が巡回を持たないため、$G(\P)$は図~\ref{fig-f_of_P}に示されるように木または森（木の和集合）である。$\P$に相補的な対$(\fD,\gD)$を目指して、$n+m$個の変数に対する以下の$s$本の線形等式制約を考える：
 \begin{equation}\label{eq-dual-variables}
 	\begin{array}{ccc}
 \fD_{i_1}+\gD_{j_1}&=&\C_{i_1,j_1}\\
@@ -218,181 +218,181 @@ Let $s$ be the cardinality of $S(\P)$. Because $\P$ is extremal, $s\leq n+m-1$. 
 \fD_{i_s}+\gD_{j_s}&=&\C_{i_s,j_s},\\
 \end{array}
 \end{equation}
-where the elements of $S(\P)$ are enumerated as $(i_1,j_1'),\dots,(i_s,j_s')$.
+ここで$S(\P)$の要素は$(i_1,j_1'),\dots,(i_s,j_s')$と列挙されている。
 
-Since $s\leq n+m-1 < n+m$, the linear system~\eqref{eq-dual-variables} above is always undetermined. This degeneracy can be interpreted in part because the parameterization of $\CouplingsD(\a,\b)$ with $n+m$ constraints results in $n+m$ dual variables. A more careful formulation, outlined in Remark~\ref{rem-transportation-polytope}, would have resulted in an equivalent formulation with only $n+m-1$ constraints and therefore $n+m-1$ dual variables. However, $s$ can also be strictly smaller than $n+m-1$: This happens when $G(\P)$ is the disjoint union of two or more trees. For instance, there are $5+6=11$ dual variables (one for each node) in Figure~\ref{fig-f_of_P}, but only $8$ edges among these $11$ nodes, namely $8$ linear equations to define $(\fD,\gD)$. Therefore, there will be as many undetermined dual variables under that setting as there will be connected components in $G(\P)$. 
+$s\leq n+m-1 < n+m$であるから、上記の線形系~\eqref{eq-dual-variables}は常に不定である。この退化は、$\CouplingsD(\a,\b)$の$n+m$個の制約によるパラメータ化が$n+m$個の双対変数をもたらすことから部分的に解釈できる。注~\ref{rem-transportation-polytope}で概説されたより注意深い定式化では、$n+m-1$個の制約のみを持つ等価な定式化が得られ、したがって$n+m-1$個の双対変数となる。しかし、$s$は$n+m-1$よりも真に小さくなることもある：これは$G(\P)$が二つ以上の木の非連結和である場合に生じる。例えば、図~\ref{fig-f_of_P}では$5+6=11$個の双対変数（各ノードに一つ）があるが、これら$11$個のノード間の辺は$8$本、すなわち$(\fD,\gD)$を定義する線形方程式は$8$本しかない。したがって、この設定では$G(\P)$の連結成分の数だけ不定な双対変数が存在する。
 
-Consider a tree among those listed in $G(\P)$. Suppose that tree has $k$ nodes $i_1,\dots,i_k$ among source nodes and $l$ nodes $j_1',\dots,j_{l}'$ among target nodes, resulting in $r\eqdef k+l$, and $r-1$ edges, corresponding to $k$ variables in $\fD$ and $l$ variables in $\gD$, linked with $r-1$ linear equations. To lift an indetermination, we can choose arbitrarily a root node in that tree and assign the value $0$ to its corresponding dual variable. From there, we can traverse the tree using a breadth-first or depth-first search to obtain a sequence of simple variable assignments that determines the values of all other dual variables in that tree, as illustrated in Figure~\ref{fig-tree-linear-solve}. That procedure can then be repeated for all trees in the graph of $\P$ to obtain a pair of dual variables $(\fD,\gD)$ that is complementary to $\P$.
+$G(\P)$に列挙された木の一つを考える。その木がソースノード間に$k$個のノード$i_1,\dots,i_k$、ターゲットノード間に$l$個のノード$j_1',\dots,j_{l}'$を持ち、$r\eqdef k+l$ノードと$r-1$本の辺を持つとする。これは$\fD$の$k$個の変数と$\gD$の$l$個の変数に対応し、$r-1$本の線形方程式で結ばれている。不定性を解消するには、その木の根ノードを任意に選び、対応する双対変数に値$0$を割り当てればよい。そこから、幅優先探索または深さ優先探索を用いて木を走査し、その木内の他のすべての双対変数の値を決定する一連の単純な変数代入を得ることができる。これは図~\ref{fig-tree-linear-solve}に示されている。この手順を$\P$のグラフ内のすべての木に対して繰り返すことで、$\P$に相補的な双対変数の対$(\fD,\gD)$が得られる。
 
 \begin{figure}[h!]
 	\centering
 	\includegraphics[width=\linewidth]{algo-basics-tree-solution/tree-linear-solve}
 	\caption{\label{fig-tree-linear-solve}
- The five dual variables $\fD_1,\fD_2,\gD_1,\gD_2,\gD_3$ corresponding to the five nodes appearing in the first tree of the graph $G(\P)$ illustrated in Figure \ref{fig-f_of_P} are linked through four linear equations that involve corresponding entries in the cost matrix $\C$. Because that system is degenerate, we choose a root in that tree (node 1 in this example) and set its corresponding variable to $0$ and proceed then by traversing the tree (either breadth-first or depth-first) from the root to obtain iteratively the values of the four remaining dual variables.}
+ 図~\ref{fig-f_of_P}に示されたグラフ$G(\P)$の最初の木に現れる五つのノードに対応する五つの双対変数$\fD_1,\fD_2,\gD_1,\gD_2,\gD_3$は、コスト行列$\C$の対応する要素を含む四つの線形方程式で結ばれている。この系は退化しているため、その木の根を選び（この例ではノード1）、対応する変数を$0$に設定し、根から木を走査（幅優先または深さ優先）することで、残りの四つの双対変数の値を反復的に求める。}
 \end{figure}
 
-\subsection{Network Simplex Update}
-The dual pair $(\fD,\gD)$ obtained previously might be feasible, in the sense that for all $i,j$ we have $\fD_i+\gD_j\leq \C_{i,j}$, in which case we have reached the optimum by Proposition~\ref{prop-primal-dual-optimality}. When that is not the case, namely when there exists $i,j$ such that $\fD_i+\gD_j> \C_{i,j}$, the network simplex algorithm kicks in. We first initialize a graph $G$ to be equal to the graph $G(\P)$ corresponding to the feasible solution $\P$ and add the violating edge $(i,j')$ to $G$. Two cases can then arise:
+\subsection{ネットワークシンプレックスの更新}
+前節で得られた双対対$(\fD,\gD)$は、すべての$i,j$に対して$\fD_i+\gD_j\leq \C_{i,j}$が成り立つという意味で実行可能である可能性がある。その場合、命題~\ref{prop-primal-dual-optimality}により最適解に到達している。そうでない場合、すなわち$\fD_i+\gD_j> \C_{i,j}$となる$i,j$が存在する場合、ネットワークシンプレックスアルゴリズムが作動する。まず、グラフ$G$を実行可能解$\P$に対応するグラフ$G(\P)$に等しく初期化し、違反辺$(i,j')$を$G$に追加する。すると二つの場合が生じ得る：
 \begin{enumerate}[label={(\alph*)}]
-	\item $G$ is (still) a forest, which can happen if $(i,j')$ links two existing subtrees. The approach outlined in~\S\ref{subsec-obtaining} can be used on graph $G$ to recover a new complementary dual vector $(\fD,\gD)$. Note that this addition simply removes an indetermination among the $n+m$ dual variables and does not result in any change in the primal variable $\P$. That update is usually called degenerate in the sense that $(i,j')$ has now entered graph $G$ although $\P_{i,j}$ remains $0$. $G(\P)$ is, however, contained in $G$.
-	
-	\item $G$ now has a cycle. In that case, we need to remove an edge in $G$ to ensure that $G$ is still a forest, yet also modify $\P$ so that $\P$ is feasible and $G(\P)$ remains included in $G$. These operations can all be carried out by increasing the value of $\P_{i,j}$ and modifying the other entries of $\P$ appearing in the detected cycle, in a manner very similar to the one we used to prove Proposition~\ref{prop-extremal}. To be more precise, let us write that cycle $(i_1,j_1'), (j_1',i_2), (i_2,j_2'),\dots, (i_l,j_l'),(j_l',i_{l+1})$ with the convention that $i_1=i_{l+1}=i$ to ensure that the path is a cycle that starts and ends at $i$, whereas $j_1=j$, to highlight the fact that the cycle starts with the added edge $\{i,j\}$, going in the right direction. Increase now the flow of all ``positive'' edges $(i_k,j_k')$ (for $k\leq l$), and decrease that of ``negative'' edges $(j_k',i_{k+1})$ (for $k\leq l$), to obtain an updated primal solution $\tilde{\P}$, equal to $\P$ for all but the following entries:
+	\item $G$が（依然として）森である場合。これは$(i,j')$が既存の二つの部分木を繋ぐ場合に生じ得る。\S\ref{subsec-obtaining}で概説したアプローチをグラフ$G$に適用して新しい相補的双対ベクトル$(\fD,\gD)$を得ることができる。この追加は$n+m$個の双対変数の不定性を一つ除去するだけであり、主変数$\P$には何ら変更をもたらさないことに注意する。$(i,j')$はグラフ$G$に入ったが$\P_{i,j}$は$0$のままであるという意味で、この更新は通常退化と呼ばれる。ただし、$G(\P)$は$G$に含まれている。
+
+	\item $G$が巡回を持つ場合。この場合、$G$が依然として森であることを保証するために$G$から辺を除去する必要があり、同時に$\P$を修正して$\P$が実行可能かつ$G(\P)$が$G$に含まれるようにする必要がある。これらの操作はすべて、$\P_{i,j}$の値を増加させ、検出された巡回に現れる$\P$の他の要素を修正することで実行できる。その方法は、命題~\ref{prop-extremal}の証明で用いたものと非常に類似している。より正確には、その巡回を$(i_1,j_1'), (j_1',i_2), (i_2,j_2'),\dots, (i_l,j_l'),(j_l',i_{l+1})$と書く。ただし、$i_1=i_{l+1}=i$として経路が$i$で始まり$i$で終わる巡回であることを保証し、$j_1=j$として巡回が追加された辺$\{i,j\}$から正の方向に始まることを強調する。すべての「正の」辺$(i_k,j_k')$（$k\leq l$に対して）のフローを増加させ、「負の」辺$(j_k',i_{k+1})$（$k\leq l$に対して）のフローを減少させて、更新された主解$\tilde{\P}$を得る。これは以下の要素を除いて$\P$に等しい：
 $$\forall k\leq l,\quad \tilde{\P}_{i_k,j_k}:= \P_{i_k,j_k}+\theta;\quad \tilde{\P}_{i_{k+1},j_k}:= \P_{i_{k+1},j_k}-\theta.$$
-Here, $\theta$ is the largest possible increase at index $i,j$ using that cycle. The value of $\theta$ is controlled by the smallest flow negatively impacted by the cycle, namely $\min_{k} \P_{i_{k+1},j_k}$. That update is illustrated in Figure~\ref{fig-simplex-update}. Let $k^\star$ be an index that achieves that minimum. We then close the update by removing $(i_{k^\star+1},j_{k^\star})$ from $G$, to compute new dual variables $(\fD,\gD)$ using the approach outlined in~\S\ref{subsec-obtaining}.  
+ここで、$\theta$はその巡回を用いて添字$i,j$で可能な最大の増加量である。$\theta$の値は、巡回により負の影響を受ける最小のフロー、すなわち$\min_{k} \P_{i_{k+1},j_k}$で制御される。この更新は図~\ref{fig-simplex-update}に示されている。$k^\star$をその最小値を達成する添字とする。次に、$G$から$(i_{k^\star+1},j_{k^\star})$を除去し、\S\ref{subsec-obtaining}で概説したアプローチを用いて新しい双対変数$(\fD,\gD)$を計算することで更新を終了する。
 \end{enumerate}
-	
-\subsection{Improvement of the Primal Solution} Although this was not necessarily our initial motivation, one can show that the manipulation above can only improve the cost of $\P$. If the added edge has not created a cycle, case {(a)} above, the primal solution remains unchanged. When a cycle is created, case {(b)}, $\P$ is updated to $\tilde{\P}$, and the following equality holds:
+
+\subsection{主解の改善} 必ずしも当初の動機ではなかったが、上記の操作が$\P$のコストを改善することしかできないことを示すことができる。追加された辺が巡回を生じなかった場合、すなわち上記の場合{(a)}では、主解は変更されない。巡回が生じた場合、すなわち場合{(b)}では、$\P$は$\tilde{\P}$に更新され、以下の等式が成り立つ：
 \eq{
 \dotp{\tilde{\P}}{\C}-\dotp{\P}{\C}= \theta \left(\;\sum_{k=1}^{l} \C_{i_k,j_k} - \sum_{k=1}^{l}\C_{i_{k+1},j_k}\right).
 }
-We now use the dual vectors $(\fD,\gD)$ computed at the end of the previous iteration. They are such that $\f_{i_k}+\g_{i_k}=\C_{i_k,j_k}$ and $\f_{i_{k+1}}+\g_{i_k}=\C_{i_{k+1},j_k}$ for \emph{all} edges initially in $G$, resulting in the identity
+ここで、前回の反復の最後に計算された双対ベクトル$(\fD,\gD)$を用いる。これらは$\f_{i_k}+\g_{i_k}=\C_{i_k,j_k}$かつ$\f_{i_{k+1}}+\g_{i_k}=\C_{i_{k+1},j_k}$をもともと$G$にあった\emph{すべての}辺に対して満たし、以下の等式をもたらす：
 \eq{
 \begin{aligned}\sum_{k=1}^{l} \C_{i_k,j_k} - \sum_{k=1}^{l}\C_{i_{k+1},j_k} &= \C_{i,j} + \sum_{k=2}^{l} \fD_{i_k}+\gD_{j_k} - \sum_{k=1}^{l} \fD_{i_{k+1}}+\gD_{j_k}\\
 	&= \C_{i,j} - (\fD_{i} +\gD_{j}).
 \end{aligned}
 }
-That term is, by definition, negative, since $i,j$ were chosen because $C_{i,j} < \fD_{i} -\gD_{j}$. Therefore, if $\theta>0$, we have that \eq{\dotp{\tilde{\P}}{\C}=\dotp{\P}{\C}+\theta\left(\C_{i,j}-(\fD_{i} -\fD_{g})\right)<\dotp{\P}{\C}.} 
-If $\theta=0$, which can happen if $G$ and $G(\P)$ differ, the graph $G$ is simply changed, but $\P$ is not.
+この項は、定義上、$i,j$が$C_{i,j} < \fD_{i} -\gD_{j}$であるために選ばれたことから負である。したがって、$\theta>0$ならば、\eq{\dotp{\tilde{\P}}{\C}=\dotp{\P}{\C}+\theta\left(\C_{i,j}-(\fD_{i} -\fD_{g})\right)<\dotp{\P}{\C}.}
+$\theta=0$の場合（$G$と$G(\P)$が異なる場合に生じ得る）、グラフ$G$が変更されるだけで$\P$は変化しない。
 
 
 \begin{figure}[h!]
 	\centering
 	\includegraphics[width=\linewidth]{algo-basics-tree-solution/simplex-update}
 	\caption{\label{fig-simplex-update}
-Adding an edge $\{i,j\}$ to the graph $G(\P)$ can result in either (a) the graph remains a forest after this addition, in which case $\fD,\gD$ can be recomputed following the approach outlined in~\S\ref{subsec-obtaining}; (b.1) the addition of that edge creates a cycle, from which we can define a directed path; (b.2) the path can be used to increase the value of $\P_{i,j}$ and propagate that change along the cycle to maintain the flow feasibility constraints, until the flow of one of the edges that is negatively impacted by the cycle is decreased to $0$. This removes the cycle and updates $\P$.}
+辺$\{i,j\}$をグラフ$G(\P)$に追加すると、(a) この追加後もグラフが森のままとなる場合があり、その場合は\S\ref{subsec-obtaining}で概説したアプローチに従って$\fD,\gD$を再計算できる；(b.1) この辺の追加により巡回が生じ、そこから有向経路を定義できる；(b.2) その経路を用いて$\P_{i,j}$の値を増加させ、フローの実行可能性制約を維持するためにその変更を巡回に沿って伝播させることができる。これは巡回により負の影響を受ける辺の一つのフローが$0$に減少するまで続く。これにより巡回が除去され$\P$が更新される。}
 \end{figure}
 
-The network simplex algorithm can therefore be summarized as follows: Initialize the algorithm with an extremal solution $\P$, given for instance by the NW corner rule as covered in~\S\ref{subsec-northwest}. Initialize the graph $G$ with $G(\P)$. Compute a pair of dual variables $(\fD,\gD)$ that are complementary to $\P$ using the linear system solve using the tree structure(s) in $G$ as described in~\S\ref{subsec-obtaining}. {(i)} Look for a violating pair of indices to the constraint $\C- \fD\oplus \gD\geq 0$; if none, $\P$ is optimal and stop. If there is a violating pair $(i,j')$, {(ii)} add the edge $(i,j')$ to $G$. If $G$ still has no cycles, update $(\fD,\gD)$ accordingly; if there is a cycle, direct it making sure $(i,j')$ is labeled as positive, and remove a negative edge in that cycle with the smallest flow value, updating $\P,G$ as illustrated in Figure~\ref{fig-simplex-update}, then build a complementary pair $\fD,\gD$ accordingly; return to {(i)}. Some of the operations above require graph operations (cycle detection, tree traversals) which can be implemented efficiently in this context, as described in (\cite[\S5]{bertsekas1998network}).
+したがって、ネットワークシンプレックスアルゴリズムは以下のように要約できる：\S\ref{subsec-northwest}で述べたNW隅法などにより与えられる端点解$\P$でアルゴリズムを初期化する。グラフ$G$を$G(\P)$で初期化する。\S\ref{subsec-obtaining}で述べた$G$内の木構造を用いた線形系の解法により、$\P$に相補的な双対変数の対$(\fD,\gD)$を計算する。{(i)} 制約$\C- \fD\oplus \gD\geq 0$に対する違反添字対を探す；見つからなければ$\P$は最適であり停止する。違反対$(i,j')$があれば、{(ii)} 辺$(i,j')$を$G$に追加する。$G$が依然として巡回を持たなければ、$(\fD,\gD)$をそれに応じて更新する；巡回があれば、$(i,j')$が正としてラベル付けされるように向きを付け、その巡回中の最小フロー値を持つ負の辺を除去し、図~\ref{fig-simplex-update}に示されるように$\P,G$を更新し、それに応じて相補的な対$\fD,\gD$を構築する；{(i)}に戻る。上記の操作の一部はグラフ操作（巡回検出、木走査）を必要とし、この文脈で効率的に実装できる。詳細は(\cite[\S5]{bertsekas1998network})に述べられている。
 
-\citet{Orlin1997} was the first to prove the polynomial time complexity of the network simplex.~\citet{Tarjan1997} provided shortly after an improved bound in $O\left(\,(n+m)nm \log(n+m)\log\left((n+m)\|\C\|_\infty\right)\,\right)$ which relies on more efficient data structures to help select pivoting edges.
+\citet{Orlin1997}がネットワークシンプレックスの多項式時間計算量を最初に証明した。\citet{Tarjan1997}はその直後に、ピボット辺の選択を支援するより効率的なデータ構造に依拠する改良された計算量$O\left(\,(n+m)nm \log(n+m)\log\left((n+m)\|\C\|_\infty\right)\,\right)$を示した。
 
 
 
-%\paragraph{Improvement on $\P$.} Introducing a new edge $\{i,j\}$ in $G(\P)$ only because that pair violated the complementary requirement, namely because $\fD_i+\gD_j$ is strictly larger that $\C_{i,j}$, may seem like a valid approach to get closer to the goal of obtaining a feasible pair $(\fD,\gD)$ but it does not necessarily explain why this would result in a better solution $\P$ at all. 
+%\paragraph{Improvement on $\P$.} Introducing a new edge $\{i,j\}$ in $G(\P)$ only because that pair violated the complementary requirement, namely because $\fD_i+\gD_j$ is strictly larger that $\C_{i,j}$, may seem like a valid approach to get closer to the goal of obtaining a feasible pair $(\fD,\gD)$ but it does not necessarily explain why this would result in a better solution $\P$ at all.
 
-\section{Dual Ascent Methods}\label{s-dual-ascent}
+\section{双対上昇法}\label{s-dual-ascent}
 
-Dual ascent methods precede the network simplex by a few decades, since they can be traced back to work by~\citet{borchardt1865investigando} and later K\"onig and Egerv\'ary, as recounted by~\citet{Kuhn1955}. The Hungarian algorithm is the best known algorithm in that family, and it can work only in the particular case when $\a$ and $\b$ are equal and are both uniform, namely $\a=\b=\ones_n/n$. We provide in what follows a concise description of the more general family of dual ascent methods. This requires the knowledge of the maximum flow problem (\cite[\S7.5]{bertsimas1997introduction}). By contrast to the network simplex, presented above in the primal, dual ascent methods maintain at each iteration dual feasible solutions whose objective is progressively improved by adding a sparse vector to $\fD$ and $\gD$. Our presentation is mostly derived from that of (\cite[\S7.7]{bertsimas1997introduction}) and starts with the following definition.
+双対上昇法はネットワークシンプレックスに数十年先立つものであり、\citet{borchardt1865investigando}の研究、および後に\citet{Kuhn1955}によって再述されたK\"onigとEgerv\'aryの研究にまで遡ることができる。ハンガリアン法はこの族で最もよく知られたアルゴリズムであり、$\a$と$\b$が等しくともに一様分布である特殊な場合、すなわち$\a=\b=\ones_n/n$の場合にのみ動作する。以下では、より一般的な双対上昇法の族の簡潔な説明を行う。これには最大流問題の知識が必要である(\cite[\S7.5]{bertsimas1997introduction})。上述の主問題で提示されたネットワークシンプレックスとは対照的に、双対上昇法は各反復において双対実行可能解を維持し、$\fD$と$\gD$に疎なベクトルを加えることでその目的関数値を徐々に改善する。我々の説明は主に(\cite[\S7.7]{bertsimas1997introduction})に基づいており、以下の定義から始まる。
 
-\begin{defn} For $S\subset\range{n},S'\subset\range{m}'\eqdef \{1',\dots,m'\}$ we write $\ones_S$ for the vector in $\RR^n$ of zeros except for ones at the indices enumerated in $S$, and likewise for the vector $\ones_{S'}$ in $\RR^m$ with indices in $S'$. 
-\end{defn}	
+\begin{defn} $S\subset\range{n},S'\subset\range{m}'\eqdef \{1',\dots,m'\}$に対して、$\ones_S$を$S$に列挙される添字で$1$、それ以外で$0$の$\RR^n$のベクトル、同様に$\ones_{S'}$を$S'$の添字を持つ$\RR^m$のベクトルと書く。
+\end{defn}
 
-In what follows, $(\fD,\gD)$ is a feasible dual pair in $\PotentialsD(\C)$. Recall that this simply means that for all pairs $(i,j')\in\range{n}\times\range{m}'$, $\fD_i+\gD_j\leq\C_{ij}$. We say that $(i,j')$ is a \emph{balanced} pair (or edge) if $\fD_i+\gD_j=\C_{ij}$ and \emph{inactive} otherwise, namely if $\fD_i+\gD_j<\C_{ij}$. With this convention, we start with a simple result describing how a feasible dual pair $(\fD,\gD)$ can be perturbed using sparse vectors indexed by sets $S$ and $S'$ and still remain feasible.
-	
+以下では、$(\fD,\gD)$を$\PotentialsD(\C)$の実行可能な双対対とする。これは、すべての対$(i,j')\in\range{n}\times\range{m}'$に対して$\fD_i+\gD_j\leq\C_{ij}$が成り立つことを意味する。$(i,j')$が$\fD_i+\gD_j=\C_{ij}$のとき\emph{均衡}対（または辺）と呼び、$\fD_i+\gD_j<\C_{ij}$のとき\emph{非活性}と呼ぶ。この規約のもと、実行可能な双対対$(\fD,\gD)$が集合$S$と$S'$で添字付けられた疎なベクトルを用いて摂動されても実行可能であり続ける条件を記述する簡単な結果から始める。
+
 \begin{prop}\label{prop-feasibility-dual-pair}
-$(\tilde{\fD},\tilde{\gD})\eqdef(\fD,\gD)+\varepsilon(\ones_S,-\ones_{S'})$ is dual feasible for a small enough $\varepsilon>0$ if for all $i\in S$, the fact that $(i,j')$ is balanced implies that $j'\in S'$.
+$(\tilde{\fD},\tilde{\gD})\eqdef(\fD,\gD)+\varepsilon(\ones_S,-\ones_{S'})$が十分小さい$\varepsilon>0$に対して双対実行可能であるための条件は、すべての$i\in S$に対して$(i,j')$が均衡であれば$j'\in S'$であることである。
 \end{prop}
 \begin{proof}
-For any $i\in S$, consider the set $\mathcal{I}_{i}$ of all $j'\in\range{m}'$ such that $(i,j')$ is inactive, namely such that $\fD_i+\gD_j<\C_{ij}$. Define $\varepsilon_i \eqdef \min_{j\in I_{i}} \C_{i,j}-\fD_i-\gD_j$, the smallest margin by which $\fD_i$ can be increased without violating the constraints corresponding to $j'\in \mathcal{I}_i$. Indeed, one has that if $\varepsilon\leq \varepsilon_i$ then $\tilde{\fD}_i+\tilde{\gD}_j<\C_{i,j}$ for any $j'\in \mathcal{I}_i$. Consider now the set $\mathcal{B}_i$ of balanced edges associated with $i$. Note that $\mathcal{B}_i=\range{m}'\setminus \mathcal{I}_i$. The assumption above is that $j'\in\mathcal{B}_i\Rightarrow j'\in S'$. Therefore, one has that for $j'\in\mathcal{B}_i$, $\tilde{\fD}_i+\tilde{\gD}_j=\fD_i+\gD_j=\C_{i,j}$. As a consequence, the inequality $\tilde{\fD}_i+\tilde{\gD}_j\leq \C_{i,j}$ is ensured for any $j\in \range{m}'$. Choosing now an increase $\varepsilon$ smaller than the smallest possible allowed, namely $\min_{i\in S} \varepsilon_i$, we recover that $(\tilde{\fD},\tilde{\gD})$ is dual feasible.
+任意の$i\in S$に対して、$(i,j')$が非活性であるすべての$j'\in\range{m}'$、すなわち$\fD_i+\gD_j<\C_{ij}$であるすべての$j'$の集合$\mathcal{I}_{i}$を考える。$\varepsilon_i \eqdef \min_{j\in I_{i}} \C_{i,j}-\fD_i-\gD_j$を、$j'\in \mathcal{I}_i$に対応する制約を違反することなく$\fD_i$を増加させることのできる最小のマージンと定義する。実際、$\varepsilon\leq \varepsilon_i$ならば任意の$j'\in \mathcal{I}_i$に対して$\tilde{\fD}_i+\tilde{\gD}_j<\C_{i,j}$が成り立つ。次に、$i$に関連する均衡辺の集合$\mathcal{B}_i$を考える。$\mathcal{B}_i=\range{m}'\setminus \mathcal{I}_i$であることに注意する。上記の仮定は$j'\in\mathcal{B}_i\Rightarrow j'\in S'$である。したがって、$j'\in\mathcal{B}_i$に対して$\tilde{\fD}_i+\tilde{\gD}_j=\fD_i+\gD_j=\C_{i,j}$が成り立つ。結果として、不等式$\tilde{\fD}_i+\tilde{\gD}_j\leq \C_{i,j}$は任意の$j\in \range{m}'$に対して保証される。許容される最小の増加量、すなわち$\min_{i\in S} \varepsilon_i$よりも小さい増加$\varepsilon$を選ぶと、$(\tilde{\fD},\tilde{\gD})$が双対実行可能であることが回復される。
 \end{proof}
 
-The main motivation behind the iteration of the network simplex presented in \S\ref{subsec-obtaining} is to obtain, starting from a feasible primal solution $\P$, a complementary feasible dual pair $(\fD,\gD)$. To reach that goal, $\P$ is progressively modified such that its complementary dual pair reaches dual feasibility. A symmetric approach, starting from a feasible dual variable to obtain a feasible primal $\P$, motivates dual ascent methods. The proposition below is the main engine of dual ascent methods in the sense that it guarantees (constructively) the existence of an ascent direction for $(\fD,\gD)$ that maintains feasibility. That direction is built, similarly to the network simplex, by designing a candidate primal solution $\P$ whose infeasibility guides an update for $(\fD,\gD)$.
+\S\ref{subsec-obtaining}で示したネットワークシンプレックスの反復の主な動機は、実行可能な主解$\P$から出発して相補的な実行可能双対対$(\fD,\gD)$を得ることである。その目標を達成するため、$\P$はその相補的双対対が双対実行可能性に到達するよう徐々に修正される。対称的なアプローチ、すなわち実行可能な双対変数から出発して実行可能な主変数$\P$を得るアプローチが、双対上昇法の動機となっている。以下の命題は双対上昇法の主要なエンジンであり、$(\fD,\gD)$に対して実行可能性を維持する上昇方向の存在を（構成的に）保証する。その方向は、ネットワークシンプレックスと同様に、候補の主解$\P$を設計し、その非実行可能性が$(\fD,\gD)$の更新を導くことで構築される。
 
-\begin{prop}\label{prop-dual-ascent-dir} Either $(\fD,\gD)$ is optimal for Problem~\eqref{eq-dual-discrete-split} or there exists $S\subset\range{n},S'\subset\range{m}'$ such that $(\tilde{\fD},\tilde{\gD})\eqdef(\fD,\gD)+\varepsilon(\ones_S,-\ones_{S'})$ is feasible for a small enough $\varepsilon>0$ and has a strictly better objective.
+\begin{prop}\label{prop-dual-ascent-dir} $(\fD,\gD)$が問題~\eqref{eq-dual-discrete-split}に対して最適であるか、または$S\subset\range{n},S'\subset\range{m}'$が存在して$(\tilde{\fD},\tilde{\gD})\eqdef(\fD,\gD)+\varepsilon(\ones_S,-\ones_{S'})$が十分小さい$\varepsilon>0$に対して実行可能でありかつ真に良い目的関数値を持つかのいずれかである。
 \end{prop}
 \begin{proof}
-We consider first a complementary primal variable $\P$ to $(\fD,\gD)$. To that effect, let $\mathcal{B}$ be the set of balanced edges, namely all pairs $(i,j')\in\range{n}\times\range{m}'$ such that $\fD_i+\gD_j=\C_{i,j}$, and form the bipartite graph whose vertices $\{1,\dots,n,1',\dots,m'\}$ are linked with edges in $\mathcal{B}$ only, complemented by a source node $s$ connected with \emph{capacitated} edges to all nodes $i\in\range{n}$ with respective capacities $\a_i$, and a terminal node $t$ also connected to all nodes $j'\in\range{m}'$ with edges of respective capacities $\b_j$, as seen in Figure~\ref{fig-dualascent}. The Ford--Fulkerson algorithm (\cite[p. 305]{bertsimas1997introduction}) can be used to compute a maximal flow $\mathbf{F}$ on that network, namely a family of $n+m+|\mathcal{B}|$ nonnegative values indexed by $(i,j')\in \mathcal{B}$ as $f_{si}\leq \a_i, f_{ij'}, f_{j't}\leq\b_j$ that obey flow constraints and such that $\sum_i f_{si}$ is maximal. If the throughput of that flow $\mathbf{F}$ is equal to $1$, then a feasible primal solution $\P$, complementary to $\fD,\gD$ by construction, can be extracted from $\mathbf{F}$ by defining $\P_{i,j}=f_{ij'}$ for $(i,j')\in \mathcal{B}$ and zero elsewhere, resulting in the optimality of $(\fD,\gD)$ and $\P$ by Proposition~\ref{prop-primal-dual-optimality}. If the throughput of $\mathbf{F}$ is strictly smaller than $1$, the labeling algorithm proceeds by labeling (identifying) those nodes reached iteratively from $s$ for which $\mathbf{F}$ does not saturate capacity constraints, as well as those nodes that contribute flow to any of the labeled nodes. Labeled nodes are stored in a nonempty set $Q$, which does not contain the terminal node $t$ per optimality of $\mathbf{F}$ (see \citealt[p. 308]{bertsimas1997introduction}, for a rigorous presentation of the algorithm). $Q$ can be split into two sets $S=Q\cap\range{n}$ and $S'=Q\cap\range{m}'$. Because we have assumed that the total throughput is strictly smaller than $1$, $S\ne\emptyset$. Note first that if $i\in S$ and $(i,j)$ is balanced, then $j'$ is necessarily in $S'$. Indeed, since all edges $(i,j')$ have infinite capacity by construction, the labeling algorithm will necessarily reach $j'$ if it includes $i$ in $S$. By Proposition~\ref{prop-feasibility-dual-pair}, there exists thus a small enough $\varepsilon$ to ensure the feasibility of $\tilde{\fD},\tilde{\gD}$. One still needs to prove that $\transp{\ones_S}{\a}-\transp{\ones_{S'}}{\b}>0$ to ensure that $(\tilde{\fD},\tilde{\gD})$ has a better objective than $(\fD,\gD)$. Let $\bar{S}=\range{n}\setminus S$ and $\bar{S'}=\range{m}'\setminus S'$ and define
+まず、$(\fD,\gD)$に相補的な主変数$\P$を考える。そのために、均衡辺の集合$\mathcal{B}$、すなわち$\fD_i+\gD_j=\C_{i,j}$であるすべての対$(i,j')\in\range{n}\times\range{m}'$を定め、頂点$\{1,\dots,n,1',\dots,m'\}$が$\mathcal{B}$の辺のみで結ばれた二部グラフを形成する。これに、ソースノード$s$をすべてのノード$i\in\range{n}$に\emph{容量制限付き}辺（容量$\a_i$）で接続し、ターミナルノード$t$をすべてのノード$j'\in\range{m}'$に容量$\b_j$の辺で接続して補完する。図~\ref{fig-dualascent}に示される通りである。Ford--Fulkersonアルゴリズム(\cite[p. 305]{bertsimas1997introduction})をこのネットワークに適用して最大流$\mathbf{F}$を計算できる。すなわち、$(i,j')\in \mathcal{B}$で添字付けられる$n+m+|\mathcal{B}|$個の非負値の族$f_{si}\leq \a_i, f_{ij'}, f_{j't}\leq\b_j$で、流量保存制約を満たし$\sum_i f_{si}$が最大であるものを求める。この流$\mathbf{F}$のスループットが$1$に等しければ、$\fD,\gD$に構成上相補的な実行可能主解$\P$が$\mathbf{F}$から抽出でき、$(i,j')\in \mathcal{B}$に対して$\P_{i,j}=f_{ij'}$、それ以外では零と定義する。これにより命題~\ref{prop-primal-dual-optimality}から$(\fD,\gD)$と$\P$の最適性が得られる。$\mathbf{F}$のスループットが$1$より真に小さい場合、ラベリングアルゴリズムは$s$から反復的に到達可能で$\mathbf{F}$が容量制約を飽和させないノード、およびラベル付けされたノードにフローを供給するノードをラベル付け（識別）する。ラベル付けされたノードは空でない集合$Q$に格納され、$\mathbf{F}$の最適性によりターミナルノード$t$は含まれない（厳密な提示は\citealt[p. 308]{bertsimas1997introduction}を参照）。$Q$は二つの集合$S=Q\cap\range{n}$と$S'=Q\cap\range{m}'$に分割できる。総スループットが$1$より真に小さいと仮定しているため、$S\ne\emptyset$である。まず、$i\in S$かつ$(i,j)$が均衡であれば、$j'$は必然的に$S'$に属することに注意する。実際、すべての辺$(i,j')$は構成上無限容量を持つため、ラベリングアルゴリズムは$i$を$S$に含めると必然的に$j'$にも到達する。命題~\ref{prop-feasibility-dual-pair}により、$\tilde{\fD},\tilde{\gD}$の実行可能性を保証する十分小さい$\varepsilon$が存在する。$(\tilde{\fD},\tilde{\gD})$が$(\fD,\gD)$よりも良い目的関数値を持つことを保証するためには、$\transp{\ones_S}{\a}-\transp{\ones_{S'}}{\b}>0$を証明する必要がある。$\bar{S}=\range{n}\setminus S$、$\bar{S'}=\range{m}'\setminus S'$とし、
 $$A = \sum_{i\in S} f_{si}, \quad B = \sum_{i\in \bar{S}} f_{si}, \quad C = \sum_{j'\in S'} f_{j't}, \quad D = \sum_{j'\in \bar{S'}} f_{j't}.$$
-The total maximal flow starts from $s$ and is therefore equal to $A+B$, but also arrives at $t$ and is therefore equal to $C+D$. Flow conservation constraints also impose that the very same flow is equal to $B+C$, therefore $A=C$. On the other hand, by definition of the labeling algorithm, we have for all $i$ in $S$ that $f_{si}<\a_i$, whereas $f_{j't}=\b_j$ for $j'\in \bar{S}'$ because $t$ cannot be in $S'$ by optimality of the considered flow. We therefore have $A<\transp{\ones_S}\a$ and $C=\transp{\ones_S'}\b$. Therefore $\transp{\ones_S}\a-\transp{\ones_S'}\b>A-C=0$.
+と定義する。総最大流は$s$から出発するため$A+B$に等しく、同時に$t$に到着するため$C+D$にも等しい。流量保存制約により、同じ流はまた$B+C$にも等しく、したがって$A=C$である。一方、ラベリングアルゴリズムの定義により、$S$のすべての$i$に対して$f_{si}<\a_i$であり、$\bar{S}'$の$j'$に対しては$t$が最適流により$S'$に含まれないため$f_{j't}=\b_j$である。したがって$A<\transp{\ones_S}\a$かつ$C=\transp{\ones_S'}\b$である。よって$\transp{\ones_S}\a-\transp{\ones_S'}\b>A-C=0$が成り立つ。
 \end{proof}
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=\linewidth]{algo-basics-tree-solution/dual_ascent}
 \caption{\label{fig-dualascent}
-Consider a transportation problem involving the marginals introduced first in Figure~\ref{fig-f_of_P}, with $n=5, m=6$. Given two feasible dual vectors $\fD,\gD$, we try to obtain the ``best'' flow matrix $P$ that is complementary to $(\fD,\gD)$. Recall that this means that $\P$ can only take positive values on those edges $(i,j')$ corresponding to indices for which $\fD_i+\gD_j=\C_{i,j}$, here represented with dotted lines in plot (a). The best flow that can be achieved with that graph structure can be formulated as a max-flow problem in a capacitated network, starting from an abstract source node $s$ connected to all nodes labeled $i\in\range{n}$, terminating at an abstract terminal node $t$ connected to all nodes labeled $j'$, where $j\in\range{m'}$, and such that the capacities of edge $(s,i),(j',t), i\in \range{n},j\in\range{m}$ are respectively $\a_i,\b_j$ and all others infinite. The Ford--Fulkerson algorithm (\cite[p. 305]{bertsimas1997introduction}) can be applied to compute such a max-flow, which, as represented in plot (b), only achieves $0.74$ units of mass out of $1$ needed to solve the problem. One of the subroutines used by max-flow algorithms, the labeling algorithm (\cite[p. 308]{bertsimas1997introduction}), can be used to identify nodes that receive an unsaturated flow from $s$ (and recursively, all of its successors), denoted by orange lines in plot (c). The labeling algorithm also adds by default nodes that send a positive flow to any labeled node, which is the criterion used to select node $3$, which contributes with a red line to $3'$. Labeled nodes can be grouped in sets $S,S'$ to identify nodes which can be better exploited to obtain a higher flow, by modifying $\fD,\gD$ to obtain a different graph. The proof involves partial sums of flows described in plot (d)}
+図~\ref{fig-f_of_P}で最初に導入した周辺分布を含む輸送問題を考える。$n=5, m=6$である。二つの実行可能な双対ベクトル$\fD,\gD$が与えられたとき、$(\fD,\gD)$に相補的な「最良の」フロー行列$P$を求めようとする。これは$\P$が$\fD_i+\gD_j=\C_{i,j}$となる添字に対応する辺$(i,j')$でのみ正の値を取れることを意味する。これはプロット(a)で点線で表されている。そのグラフ構造で達成できる最良のフローは、抽象的なソースノード$s$から$i\in\range{n}$とラベル付けされたすべてのノードへの辺、抽象的なターミナルノード$t$から$j\in\range{m'}$の$j'$とラベル付けされたすべてのノードへの辺を持つ容量制限付きネットワークにおける最大流問題として定式化できる。ここで辺$(s,i),(j',t), i\in \range{n},j\in\range{m}$の容量はそれぞれ$\a_i,\b_j$であり、他はすべて無限である。Ford--Fulkersonアルゴリズム(\cite[p. 305]{bertsimas1997introduction})を適用してそのような最大流を計算できるが、プロット(b)に示されるように、問題を解くために必要な$1$単位の質量のうち$0.74$単位しか達成できない。最大流アルゴリズムで使われるサブルーチンの一つであるラベリングアルゴリズム(\cite[p. 308]{bertsimas1997introduction})を用いて、$s$から飽和していないフローを受け取るノード（および再帰的にそのすべての後続ノード）を識別でき、プロット(c)ではオレンジの線で示されている。ラベリングアルゴリズムはまた、ラベル付けされたノードに正のフローを送るノードもデフォルトで追加する。この基準によりノード$3$が選択され、$3'$への赤い線で示されている。ラベル付けされたノードは集合$S,S'$にグループ化でき、$\fD,\gD$を変更して異なるグラフを得ることで、より高いフローを得るためにより良く活用できるノードを識別する。証明にはプロット(d)に記述された部分フロー和が関わる。}
 \end{figure}
 
-The dual ascent method proceeds by modifying any feasible solution $(\fD,\gD)$ by any vector generated by sets $S,S'$ that ensure feasibility and improve the objective. When the sets $S,S'$ are those given by construction in the proof of Proposition~\ref{prop-dual-ascent-dir}, and the steplength $\varepsilon$ is defined as in the proof of Proposition~\ref{prop-feasibility-dual-pair}, we recover a method known as the \emph{primal-dual} method. That method reduces to the Hungarian algorithm for matching problems. Dual ascent methods share similarities with the dual variant of the network simplex, yet they differ in at least two important aspects. Simplex-type methods always ensure that the current solution is an \emph{extreme point} of the feasible set, $\PotentialsD(\C)$ for the dual, whereas dual ascent as presented here does not make such an assumption, and can freely produce iterates that lie in the interior of the feasible set. Additionally, whereas the dual network simplex would proceed by modifying $(\fD,\gD)$ to produce a primal solution $\P$ that satisfies linear (marginal constraints) but only nonnegativity upon convergence, dual ascent builds instead a primal solution $\P$ that is always nonnegative but which does not necessarily satisfy marginal constraints.
+双対上昇法は、実行可能性を保証し目的関数を改善する集合$S,S'$により生成される任意のベクトルで実行可能解$(\fD,\gD)$を修正することで進む。集合$S,S'$が命題~\ref{prop-dual-ascent-dir}の証明で構成的に与えられたものであり、ステップ長$\varepsilon$が命題~\ref{prop-feasibility-dual-pair}の証明で定義されたものである場合、\emph{主双対法}として知られる方法が回復される。この方法はマッチング問題に対してはハンガリアン法に帰着される。双対上昇法はネットワークシンプレックスの双対変形と類似点を持つが、少なくとも二つの重要な点で異なる。シンプレックス型の方法は、現在の解が常に実行可能集合の\emph{端点}（双対の場合は$\PotentialsD(\C)$）であることを保証するが、ここで提示された双対上昇法はそのような仮定を置かず、実行可能集合の内部にある反復点を自由に生成できる。さらに、双対ネットワークシンプレックスが$(\fD,\gD)$を修正して線形（周辺制約）を満たす主解$\P$を生成し、非負性は収束時にのみ満たされるのに対して、双対上昇法は常に非負であるが必ずしも周辺制約を満たさない主解$\P$を構築する。
 
-\section{Auction Algorithm}\label{s-auction}
-The auction algorithm was originally proposed by~\citet{bertsekas1981new} and later refined in~\citep{bertsekas1988dual}. Several economic interpretations of this algorithm have been proposed (see \emph{e.g.} \citet{bertsekas1992auction}). The algorithm can be adapted for arbitrary marginals, but we present it here in its formulation to solve optimal assignment problems.
+\section{競売アルゴリズム}\label{s-auction}
+競売アルゴリズムは~\citet{bertsekas1981new}によって最初に提案され、後に~\citep{bertsekas1988dual}で改良された。このアルゴリズムにはいくつかの経済学的解釈が提案されている（例えば\citet{bertsekas1992auction}を参照）。このアルゴリズムは任意の周辺分布に対して適用可能であるが、ここでは最適割当問題を解くための定式化で提示する。
 
-\paragraph{Complementary slackness.} Notice that in the optimal assignment problem, the primal-dual conditions presented for the optimal transport problem become easier to formulate, because any extremal solution $\P$ is \todoK{there always exist a permutation solution, but the converse it not true} necessarily a permutation matrix $\P_\si$ for a given $\si$ (see Equation~\eqref{prop-primal-dual-optimality}). Given primal $\P_{\si^\star}$ and dual $\fD^\star,\gD^\star$ optimal solutions we necessarily have that
+\paragraph{相補スラック性。} 最適割当問題では、最適輸送問題に対して示した主双対条件がより定式化しやすくなることに注意する。任意の端点解$\P$は\todoK{there always exist a permutation solution, but the converse it not true}必然的にある$\si$に対する置換行列$\P_\si$である（式~\eqref{prop-primal-dual-optimality}を参照）。最適な主変数$\P_{\si^\star}$と双対変数$\fD^\star,\gD^\star$が与えられると、
 $$
 \fD^\star_i + \gD^\star_{\si^\star_i} = \C_{i,{\si_i^\star}}.
 $$
-Recall also that, because of the principle of $\C$-transforms enunciated in~\S\ref{sec-c-transforms}, that one can choose $\fD^\star$ to be equal to $\gD^{\bar\C}$. We therefore have that
+が必然的に成り立つ。また、\S\ref{sec-c-transforms}で述べた$\C$変換の原理により、$\fD^\star$は$\gD^{\bar\C}$に等しく選ぶことができることを想起されたい。したがって、
 \eql{\label{eq-dual-conditions-assign-1}
-\C_{i,\si^\star_i} - \gD^\star_{\si_i}  = \min_{j} \C_{i,j} - \gD^\star_{j}. 
+\C_{i,\si^\star_i} - \gD^\star_{\si_i}  = \min_{j} \C_{i,j} - \gD^\star_{j}.
 }
-On the contrary, it is easy to show that if there exists a vector $\gD$ and a permutation $\sigma$ such that 
+逆に、あるベクトル$\gD$と置換$\sigma$が存在して
 \eql{\label{eq-dual-conditions-assign}
-\C_{i,\si_i} - \gD_{\si_i}  = \min_{j} \C_{i,j} - \gD_{j} 
+\C_{i,\si_i} - \gD_{\si_i}  = \min_{j} \C_{i,j} - \gD_{j}
 }
-holds, then they are both optimal, in the sense that $\si$ is an optimal assignment and $\gD^{\bar\C},\gD$ is an optimal dual pair. 
+が成り立つならば、それらはともに最適であること、すなわち$\si$が最適割当であり$\gD^{\bar\C},\gD$が最適双対対であることが容易に示される。
 
 
-\paragraph{Partial assignments and $\varepsilon$-complementary slackness.} The goal of the auction algorithm is to modify iteratively a triplet $S,\xi,\gD$, where $S$ is a subset of $\range{n}$, $\xi$ a partial assignment vector, namely an injective map from $S$ to $\range{n}$, and $\gD$ a dual vector. The dual vector is meant to converge toward a solution satisfying an \emph{approximate} complementary slackness property~\eqref{eq-dual-conditions-assign}, whereas $S$ grows to cover $\range{n}$ as $\xi$ describes a permutation. The algorithm works by maintaining the three following properties after each iteration:
+\paragraph{部分割当と$\varepsilon$-相補スラック性。} 競売アルゴリズムの目標は、三つ組$S,\xi,\gD$を反復的に修正することである。ここで$S$は$\range{n}$の部分集合、$\xi$は部分割当ベクトル（$S$から$\range{n}$への単射）、$\gD$は双対ベクトルである。双対ベクトルは\emph{近似的な}相補スラック性~\eqref{eq-dual-conditions-assign}を満たす解に収束することを意図しており、$S$は$\xi$が置換を記述するにつれて$\range{n}$を覆うように成長する。アルゴリズムは各反復後に以下の三つの性質を維持することで動作する：
 \begin{enumerate}[label={(\alph*)}]
-	\item $\forall i\in S,\quad \C_{i,\xi_i} - \gD_{\xi_i}  \leq \varepsilon + \min_{j} \C_{i,j} - \gD_{j}$ ($\varepsilon$-CS).
-	\item The size of $S$ can only increase at each iteration.
-	\item There exists an index $i$ such that $\gD_i$ decreases by at least $\varepsilon$.
+	\item $\forall i\in S,\quad \C_{i,\xi_i} - \gD_{\xi_i}  \leq \varepsilon + \min_{j} \C_{i,j} - \gD_{j}$（$\varepsilon$-CS）。
+	\item $S$のサイズは各反復で増加することしかできない。
+	\item ある添字$i$が存在して$\gD_i$が少なくとも$\varepsilon$だけ減少する。
 \end{enumerate}
 
-\paragraph{Auction algorithm updates.} Given a point $j$ the auction algorithm uses not only the optimum appearing in the usual $\C$-transform but also a second best,
+\paragraph{競売アルゴリズムの更新。} 点$j$が与えられると、競売アルゴリズムは通常の$\C$変換に現れる最適値だけでなく、二番目に良い値も使用する：
 $$j^1_i \in \argmin_{j} \C_{i,j} - \gD_{j}, \quad j^2_i \in \argmin_{j\ne j^1_i} \C_{i,j} - \gD_{j}, $$
-to define the following updates on $\gD$ for an index $i\notin S$, as well as on $S$ and $\xi$:
-\begin{enumerate}\item \textbf{update $\gD$}: Remove to the $j^1_i$th entry of $\gD$ the sum of $\varepsilon$ and the difference between the second lowest and lowest adjusted cost $\{\C_{i,j}-\gD_j\}_j$,
+以下の更新を、$i\notin S$である添字$i$に対する$\gD$の更新、および$S$と$\xi$の更新として定義する：
+\begin{enumerate}\item \textbf{$\gD$の更新}：$\gD$の第$j^1_i$要素から、$\varepsilon$と調整コスト$\{\C_{i,j}-\gD_j\}_j$の最低値と二番目の最低値の差の和を引く：
 \eql{
 \begin{aligned}
 	\gD_{j^1_{i}} &\leftarrow \gD_{j^1_{i}} - \underbrace{\left((\C_{i,j^2_{i}}-\gD_{j^2_{i}})-(\C_{i,j^1_{i}}-\gD_{j^1_{i}})+\varepsilon\right)}_{\geq \varepsilon >0}\label{eq-auction-update}\\
 	&= \C_{i,j^1_{i}} - (\C_{i,j^2_{i}}-\gD_{j^2_{i}}) -\varepsilon.\\
 \end{aligned}
 }
-\item \textbf{update $S$ and $\xi$}: If there exists an index $i'\in S$ such that $\xi_{i'}=j^1_{i}$, remove it by updating $S\leftarrow S\setminus \{i'\}$. Set $\xi_{i}=j^1_{i}$ and add $i$ to $S$, $S\leftarrow S \cup \{i\}.$
+\item \textbf{$S$と$\xi$の更新}：$\xi_{i'}=j^1_{i}$となる添字$i'\in S$が存在すれば、$S\leftarrow S\setminus \{i'\}$として除去する。$\xi_{i}=j^1_{i}$と設定し、$i$を$S$に追加する。$S\leftarrow S \cup \{i\}.$
 \end{enumerate}
 
-\paragraph{Algorithmic properties.} The algorithm proceeds by starting from an empty set of assigned points $S=\emptyset$ with no assignment and empty partial assignment vector $\xi$, and $\gD=\zeros_n$, terminates when $S=\range{n}$, and loops through both steps above until it terminates. The fact that properties {(b)} and {(c)} are valid after each iteration is made obvious by the nature of the updates (it suffices to look at Equation~\eqref{eq-auction-update}). $\varepsilon$-complementary slackness is easy to satisfy at the first iteration since in that case $S=\emptyset$. The fact that iterations preserve that property is shown by the following proposition.
+\paragraph{アルゴリズムの性質。} アルゴリズムは割当点の空集合$S=\emptyset$、割当なし、空の部分割当ベクトル$\xi$、および$\gD=\zeros_n$から開始し、$S=\range{n}$で終了し、終了するまで上記の両ステップを繰り返す。性質{(b)}と{(c)}が各反復後に成り立つことは、更新の性質から明らかである（式~\eqref{eq-auction-update}を見れば十分である）。$\varepsilon$-相補スラック性は最初の反復で容易に満たされる。この場合$S=\emptyset$であるためである。反復がこの性質を保存するという事実は以下の命題で示される。
 %Show::: $(\fD^{\,\tau})_i < (\fD^{\,\C\bar{\C}})_i$
-\begin{prop} The auction algorithm maintains $\varepsilon$-complementary slackness at each iteration. 
+\begin{prop} 競売アルゴリズムは各反復において$\varepsilon$-相補スラック性を維持する。
 \end{prop}
-\begin{proof} 
-	Let $\gD,\xi,S$ be the three variables at the beginning of a given iteration. We therefore assume that for any $i'\in S$ the relationship 
+\begin{proof}
+	$\gD,\xi,S$をある反復の開始時の三つの変数とする。したがって、任意の$i'\in S$に対して
 	$$\C_{i,\xi_{i'}} - \gD_{\xi_{i'}}  \leq \varepsilon + \min_{j} \C_{{i'},j} - \gD_{j} $$
-holds. Consider now the particular $i\notin S$ considered in an iteration. Three updates happen: $\gD,\xi,S$ are updated to $\gD^{\text{n}},\xi^{\text{n}},S^{\text{n}}$ using indices $j^1_i$ and $j^2_i$. More precisely, $\gD^{\text{n}}$ is equal to $\gD$ except for element $j^1_i$, whose value is equal to
+が成り立つと仮定する。ここで反復で考慮される特定の$i\notin S$を考える。三つの更新が行われる：$\gD,\xi,S$は添字$j^1_i$と$j^2_i$を用いて$\gD^{\text{n}},\xi^{\text{n}},S^{\text{n}}$に更新される。より正確には、$\gD^{\text{n}}$は要素$j^1_i$を除いて$\gD$に等しく、その値は
 $$\gD_{j^1_{i}}^\text{n} = \gD_{j^1_{i}} - \left((\C_{i,j^2_{i}}-\gD_{j^2_{i}})-(\C_{i,j^1_{i}}-\gD_{j^1_{i}})\right)-\varepsilon \leq \gD_{j^1_{i}}-\varepsilon$$,
-$\xi^{\text{n}}$ is equal to $\xi$ except for its $i$th element equal to $j^1_i$, and $S^{\text{n}}$ is equal to the union of $\{i\}$ with $S$ (with possibly one element removed). The update of $\gD^{\text{n}}$ can be rewritten
+$\xi^{\text{n}}$は第$i$要素が$j^1_i$に等しい点を除いて$\xi$に等しく、$S^{\text{n}}$は$\{i\}$と$S$の和集合に等しい（一つの要素が除去される可能性がある）。$\gD^{\text{n}}$の更新は次のように書き直せる：
 $$\gD^{\text{n}}_{j^1_i}= \C_{i,j^1_{i}} - (\C_{i,j^2_{i}}-\gD_{j^2_{i}}) -\varepsilon;$$
-therefore we have
+したがって
 $$\C_{i,j^1_{i}} - \gD^{\text{n}}_{j^1_i}=  \varepsilon + (\C_{i,j^2_{i}}-\gD_{j^2_{i}}) = \varepsilon+\min_{j\ne j^1_i} (\C_{i,j}-\gD_{j}).$$
-Since $-\gD\leq -\gD^{\text{n}}$ this implies that 
+$-\gD\leq -\gD^{\text{n}}$であるから、
 $$\C_{i,j^1_{i}} - \gD^{\text{n}}_{j^1_i} = \varepsilon + \min_{j\ne j^1_i} (\C_{i,j}-\gD_{j})\leq \varepsilon+\min_{j\ne j^1_i} (\C_{i,j}-\gD^{\text{n}}_{j}),$$
-and since the inequality is also obviously true for $j=j^1_i$ we therefore obtain the $\varepsilon$-complementary slackness property for index $i$. For other indices $i'\ne i$, we have again that since $\gD^{\text{n}}\leq\gD$ the sequence of inequalities holds,
+が得られ、$j=j^1_i$に対しても不等式は明らかに成り立つため、添字$i$に対する$\varepsilon$-相補スラック性が得られる。他の添字$i'\ne i$に対しては、同様に$\gD^{\text{n}}\leq\gD$であるから、以下の不等式の列が成り立つ：
 $$\C_{i,\xi^{\text{n}}_{i'}} - \gD^{\text{n}}_{\xi^{\text{n}}_{i'}} = \C_{i,\xi_{i'}} - \gD_{\xi_{i'}} \leq \varepsilon + \min_{j} \C_{{i'},j} - \gD_{j} \leq \varepsilon + \min_{j} \C_{{i'},j} - \gD^{n}_{j}. $$
 \end{proof}
 
-\begin{prop} The number of steps of the auction algorithm is at most $N=n\|\C\|_\infty/\varepsilon$.
+\begin{prop} 競売アルゴリズムのステップ数は最大$N=n\|\C\|_\infty/\varepsilon$である。
 \end{prop}
-\begin{proof}Suppose that the algorithm has not stopped after $T>N$ steps. Then there exists an index $j$ which is not in the image of $\xi$, namely whose price coordinate $\gD_j$ has never been updated and is still $\gD_j=0$. In that case, there cannot exist an index $j'$ such that $\gD_{j'}$ was updated $n$ times with $n>\|\C\|_\infty/\varepsilon$. Indeed, if that were the case then for any index $i$
+\begin{proof}アルゴリズムが$T>N$ステップ後に停止していないと仮定する。すると、$\xi$の像に含まれない添字$j$が存在し、その価格座標$\gD_j$は一度も更新されず$\gD_j=0$のままである。この場合、$n>\|\C\|_\infty/\varepsilon$回更新された添字$j'$は存在し得ない。実際、もしそうであれば任意の添字$i$に対して
 $$\gD_{j'}\leq-n\varepsilon<-\|\C\|_\infty\leq -\C_{i,j} = \gD_j-\C_{i,j},$$
-which would result in, for all $i$,
+が成り立ち、すべての$i$に対して
 $$\C_{i,j'}-\gD_{j'}> \C_{i,j}+ (\C_{i,j}-\gD_j),$$
-which contradicts $\varepsilon$-CS. Therefore, since there cannot be more than $\|C\|_\infty/\varepsilon$ updates for each variable, the total number of iterations $T$ cannot be larger than $n\|\C\|_\infty/\varepsilon=N$.
+となるが、これは$\varepsilon$-CSに矛盾する。したがって、各変数の更新回数は$\|C\|_\infty/\varepsilon$を超えないため、総反復回数$T$は$n\|\C\|_\infty/\varepsilon=N$を超えることができない。
 \end{proof}
 
-\begin{rem} Note that this result yields a naive number of operations of $N^3\|\C\|_\infty/\varepsilon$ for the algorithm to terminate. That complexity can be reduced to $N^3 \log\|\C\|_\infty$ when using a clever method known as $\varepsilon$-scaling, designed to decrease the value of $\varepsilon$ with each iteration (\cite[p. 264]{bertsekas1998network}).
+\begin{rem} この結果は、アルゴリズムが終了するための素朴な演算回数として$N^3\|\C\|_\infty/\varepsilon$を与えることに注意されたい。この計算量は、$\varepsilon$の値を各反復で減少させる巧妙な方法である$\varepsilon$スケーリングを用いることで$N^3 \log\|\C\|_\infty$に削減できる(\cite[p. 264]{bertsekas1998network})。
 \end{rem}
 
-\begin{prop} The auction algorithm finds an assignment whose cost is $n\varepsilon$ suboptimal.
+\begin{prop} 競売アルゴリズムは、コストが$n\varepsilon$だけ準最適な割当を見つける。
 \end{prop}
 \begin{proof}
-	Let $\sigma,\gD^\star$ be the primal and dual optimal solutions of the assignment problem of matrix $\C$, with optimum $$t^\star=\sum \C_{i,\sigma_i} = \sum_i \min_{j}\C_{i,j}-\gD^\star_j+\sum_j\gD^\star_j.$$ 
-Let $\xi,\gD$ be the solutions output by the auction algorithm upon termination. The $\varepsilon$-CS conditions yield that for any $i\in S$, 
+	$\sigma,\gD^\star$をコスト行列$\C$の割当問題の主および双対最適解とし、最適値を$$t^\star=\sum \C_{i,\sigma_i} = \sum_i \min_{j}\C_{i,j}-\gD^\star_j+\sum_j\gD^\star_j.$$とする。
+$\xi,\gD$を終了時に競売アルゴリズムが出力する解とする。$\varepsilon$-CS条件により、任意の$i\in S$に対して
 $$\min_{j} \C_{i,j} - \gD_{j}\geq \C_{i,\xi_i} - \gD_{\xi_i} -\varepsilon.$$
-Therefore by simple suboptimality of $\gD$ we first have
+が成り立つ。したがって、$\gD$の準最適性によりまず
 	$$\begin{aligned}t^\star&\geq \sum_i \left(\min_{j} \C_{i,j}-\gD_{j}\right) + \sum_j \gD_j\\
-&\geq 
+&\geq
 	\sum_i -\varepsilon+\left(\C_{i,\xi_i}-\gD_{\xi_i}\right) + \sum_j \gD_j = -n\varepsilon + \sum_i \C_{i,\xi_j} \geq  - n\varepsilon + t^\star.\end{aligned},$$
-where the second inequality comes from $\varepsilon$-CS, the next equality by cancellation of the sum of terms in $\gD_{\xi_i}$ and $\gD_{j}$, and the last inequality by the suboptimality of $\xi$ as a permutation.	
+が得られる。ここで第二の不等式は$\varepsilon$-CSから、次の等式は$\gD_{\xi_i}$の項と$\gD_{j}$の和の打消しから、最後の不等式は置換としての$\xi$の準最適性から従う。
 \end{proof}
 
 
-The auction algorithm can therefore be regarded as an alternative way to use the machinery of $\C$-transforms. Next we explore another approach grounded on regularization, the so-called Sinkhorn algorithm, which also bears similarities with the auction algorithm as discussed in~\citep{schmitzer2016stabilized}.
+したがって、競売アルゴリズムは$\C$変換の機構を利用する別の方法と見なすことができる。次に、正則化に基づく別のアプローチ、いわゆるシンクホーンアルゴリズムを探究する。これは~\citep{schmitzer2016stabilized}で議論されているように、競売アルゴリズムとも類似点がある。
 % $\fD^{\,\C\bar{\C}\C}\geq \fD^{\,\C}$ implies that $\fD^{\,\C\bar{\C}\C\bar{\C}}\leq \fD^{\,\C\bar{\C}}$
 %
 
-Note finally that, on low-dimensional regular grids in Euclidean space, it is possible to couple these classical linear solvers with multiscale strategies, to obtain a significant speed-up~\citep{schmitzer2016sparse,oberman2015efficient}.
+最後に、ユークリッド空間の低次元正則格子上では、これらの古典的な線形ソルバーにマルチスケール戦略を組み合わせることで、大幅な高速化が可能であることを注記する~\citep{schmitzer2016sparse,oberman2015efficient}。
 
 
 
@@ -414,4 +414,3 @@ Note finally that, on low-dimensional regular grids in Euclidean space, it is po
 % $$
 % For a thorough and rigorous duality argument we refer the reader to~\cite[\S4.3]{bertsimas1997introduction}:
 % \end{rem}
-

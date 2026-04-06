@@ -1,7 +1,10 @@
-\documentclass[openany]{now} % creates 
-\pdfoutput=1
+\documentclass[openany]{now} % creates
+%\pdfoutput=1 % not needed for lualatex
+\usepackage{luatexja}
+\usepackage[match]{luatexja-fontspec}
+\setmainjfont{Hiragino Mincho ProN}
 \usepackage{enumerate}
-\usepackage{graphicx} \usepackage{bmpsize} 
+\usepackage{graphicx} \usepackage{bmpsize}
 %\usepackage[draft]{graphicx} % uncomment to avoid including images
 
 \graphicspath{{./images/}}
@@ -49,8 +52,8 @@ author = {Gabriel Peyr\'e and Marco Cuturi}
 \input{chapters/variational.tex}
 \input{chapters/extensions.tex}
 
-\chapter*{Acknowledgements}
-We would like to thank the many colleagues, collaborators and students who have helped us at various stages when preparing this survey. Some of their inputs have shaped this work, and we would like to thank in particular Jean-David Benamou, Yann Brenier, Guillaume Carlier, Vincent Duval and the entire MOKAPLAN team at Inria; Francis Bach, Espen Bernton, Mathieu Blondel, Nicolas Courty, R\'emi Flamary, Alexandre Gramfort, Young-Heon Kim, Daniel Matthes, Philippe Rigollet, Filippo Santambrogio, Justin Solomon, Jonathan Weed; as well as the feedback by our current and former students on these subjects, in particular Gwendoline de Bie, L\'ena\"ic Chizat, Aude Genevay, Hicham Janati, Th\'eo Lacombe, Boris Muzellec, Fran\c ois-Pierre Paty, Vivien Seguy.
+\chapter*{謝辞}
+本調査論文の準備の様々な段階で助力してくださった多くの同僚、共同研究者、学生の皆様に感謝申し上げたい。彼らの意見の一部は本研究を形作っており、特に以下の方々に感謝したい：Jean-David Benamou、Yann Brenier、Guillaume Carlier、Vincent Duval、およびInriaのMOKAPLANチーム全体；Francis Bach、Espen Bernton、Mathieu Blondel、Nicolas Courty、R\'emi Flamary、Alexandre Gramfort、Young-Heon Kim、Daniel Matthes、Philippe Rigollet、Filippo Santambrogio、Justin Solomon、Jonathan Weed；そしてこれらのテーマに関する現在および過去の学生からのフィードバック、特にGwendoline de Bie、L\'ena\"ic Chizat、Aude Genevay、Hicham Janati、Th\'eo Lacombe、Boris Muzellec、Fran\c ois-Pierre Paty、Vivien Seguyの各氏。
 
 
 \bibliographystyle{plainnat}

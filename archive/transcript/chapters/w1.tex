@@ -3,123 +3,123 @@
 \todoK{results about embeddings, Will Leeb's work, Naor's work?}
 \todoK{Indyk's embeddings for W1}
 
-\chapter{$\Wass_1$ Optimal Transport}
+\chapter{$\Wass_1$ 最適輸送}
 \label{c-w1}
 
-This chapter focuses on optimal transport problems in which the ground cost is equal to a distance.  Historically, this corresponds to the original problem posed by~\citeauthor{Monge1781} in \citeyear{Monge1781}; this setting was also that chosen in early applications of optimal transport in computer vision~\citep{RubTomGui00} under the name of ``earth mover's distances''.
+本章では、基底コストが距離に等しい最適輸送問題に焦点を当てる。歴史的に、これは~\citeauthor{Monge1781}が\citeyear{Monge1781}年に提起した元来の問題に対応している。この設定は、コンピュータビジョンにおける最適輸送の初期の応用においても、「earth mover's distances」という名称のもとで選ばれたものである~\citep{RubTomGui00}。
 
-Unlike the case where the ground cost is a \emph{squared} Hilbertian distance  (studied in particular in Chapter~\ref{c-dynamic}), transport problems where the cost is a metric are more difficult to analyze theoretically.
+基底コストがヒルベルト距離の\emph{二乗}である場合（特に第~\ref{c-dynamic}~章で研究される）とは異なり、コストが距離である輸送問題は理論的に解析がより困難である。
 %
-In contrast to Remark~\ref{rem-exist-mongemap} that states the uniqueness of a transport map or coupling between two absolutely continuous measures when using a squared metric, the optimal Kantorovich coupling is in general not unique when the cost is the ground distance itself.  Hence, in this regime it is often impossible to recover a uniquely defined Monge map, making this class of problems ill-suited for interpolation of measures.
+注意~\ref{rem-exist-mongemap}は、二乗距離を用いた場合に二つの絶対連続測度間の輸送写像またはカップリングの一意性を述べているが、コストが基底距離そのものである場合、最適カントロヴィッチカップリングは一般に一意ではない。したがって、この状況では一意に定まるモンジュ写像を復元することがしばしば不可能であり、この種の問題は測度の補間には適していない。
 %
-We refer to works by~\citet{trudinger2001monge,caffarelli2002constructing,sudakov1979geometric,evans1999differential} for proofs of existence of optimal $\Wass_1$ transportation plans and detailed analyses of their geometric structure. 
+最適 $\Wass_1$ 輸送計画の存在証明とその幾何学的構造の詳細な解析については、~\citet{trudinger2001monge,caffarelli2002constructing,sudakov1979geometric,evans1999differential}の研究を参照されたい。
 
-Although more difficult to analyze in theory, optimal transport with a linear ground distance is usually more robust to outliers and noise than a quadratic cost. Furthermore, a cost that is a metric results in an elegant dual reformulation involving local flow, divergence constraints, or Lipschitzness of the dual potential, suggesting cheaper numerical algorithms that align with \emph{minimum-cost flow} methods over networks in graph theory.
+理論的には解析がより困難であるものの、線形基底距離を用いた最適輸送は、二次コストよりも外れ値やノイズに対して通常より頑健である。さらに、コストが距離であることにより、局所的なフロー、発散制約、または双対ポテンシャルのリプシッツ性を含む洗練された双対再定式化が可能となり、グラフ理論におけるネットワーク上の\emph{最小費用フロー}手法と整合する、より計算コストの低い数値アルゴリズムが示唆される。
 %
-This setting is also  popular because the associated OT distances define a norm that can compare arbitrary distributions, even if they are not positive; this property is shared by a larger class of so-called \emph{dual norms} (see \S\ref{sec-dual-norms} and Remark~\ref{rem-unb-dualnorms} for more details).
+この設定はまた、関連するOT距離が任意の分布（正でないものも含む）を比較できるノルムを定義するため、広く利用されている。この性質は、いわゆる\emph{双対ノルム}のより広いクラスに共有されている（詳細は\S\ref{sec-dual-norms}および注意~\ref{rem-unb-dualnorms}を参照）。
 
 %%%%%%%%%%%%%%%%%%
-\section{$\Wass_1$ on Metric Spaces}
+\section{距離空間上の $\Wass_1$}
 \label{sec-w1-metric}
 
-Here we assume that $d$ is a distance on $\Xx=\Yy$, and we solve the OT problem with the ground cost $c(x,y)=d(x,y)$. The following proposition highlights key properties of the $c$-transform~\eqref{eq-c-transform} in this setup. In the following, we denote the Lipschitz constant of a function $f \in \Cc(\Xx)$ as
+ここでは $d$ が $\Xx=\Yy$ 上の距離であると仮定し、基底コスト $c(x,y)=d(x,y)$ を用いてOT問題を解く。以下の命題は、この設定における $c$-変換~\eqref{eq-c-transform}の重要な性質を示す。以下では、関数 $f \in \Cc(\Xx)$ のリプシッツ定数を次のように表す：
 \eq{
 	\Lip(f) \eqdef \sup \enscond{ \frac{|\f(x)-\f(y)|}{d(x,y)} }{ (x,y) \in \X^2, x \neq y }.
 }
-We define Lipschitz functions to be those functions $f$ satisfying $\Lip(f) < +\infty$; they form a convex subset of $\Cc(\X)$.
+$\Lip(f) < +\infty$ を満たす関数 $f$ をリプシッツ関数と定義する。これらは $\Cc(\X)$ の凸部分集合をなす。
 
-\begin{prop}Suppose $\X=\Y$ and $c(x,y)=d(x,y)$. 
-Then, there exists $g$ such that $\f = g^c$ if and only $\Lip(f) \leq 1$. 
-Furthermore, if $\Lip(f)\leq1$, then $f^c=-f$.
+\begin{prop}$\X=\Y$ かつ $c(x,y)=d(x,y)$ と仮定する。
+このとき、$\f = g^c$ となる $g$ が存在するための必要十分条件は $\Lip(f) \leq 1$ である。
+さらに、$\Lip(f)\leq1$ ならば $f^c=-f$ である。
 \end{prop}
 
 \begin{proof}
-First, suppose $f=g^c$.  Then, for $x,y\in \X$,
+まず、$f=g^c$ と仮定する。このとき、$x,y\in \X$ に対して、
 \begin{align*}
 |f(x)-f(y)|&=\left|\inf_{z\in\X} d(x,z)-g(z) \;\; - \;\;\inf_{z\in \X} d(y,z)-g(z) \right|\\
 &\leq \sup_{z\in\X} |d(x,z)-d(y,z)|\leq d(x,y).
 \end{align*}
-The first equality follows from the definition of $g^c$, the next inequality from the identity $|\inf f-\inf g|\leq\sup|f-g|$, and the last from the triangle inequality. This shows that $\Lip(f)\leq1$.
+最初の等号は $g^c$ の定義に従い、次の不等式は恒等式 $|\inf f-\inf g|\leq\sup|f-g|$ に従い、最後の不等式は三角不等式に従う。これにより $\Lip(f)\leq1$ が示される。
 
-Now, suppose $\Lip(f)\leq1$, and define $g\eqdef -f$. By the Lipschitz property, for all $x,y\in\X$,
-$f(y)-d(x,y)\leq f(x)\leq f(y)+d(x,y)$.
-Applying these inequalities,
+次に、$\Lip(f)\leq1$ と仮定し、$g\eqdef -f$ と定義する。リプシッツ性より、すべての $x,y\in\X$ に対して
+$f(y)-d(x,y)\leq f(x)\leq f(y)+d(x,y)$ が成り立つ。
+これらの不等式を適用すると、
 \begin{align*}
 g^c(y)&=\inf_{x\in\X}\left[ d(x,y) + f(x) \right]
 \geq\inf_{x\in \X} \left[  d(x,y)+f(y)-d(x,y)\right]=f(y),\\
 g^c(y)&=\inf_{x\in\X}\left[ d(x,y) + f(x) \right]
 \leq \inf_{x\in\X}\left[ d(x,y) + f(y)+d(x,y) \right]=f(y).
 \end{align*}
-Hence, $f=g^c$ with $g=-f$.  Using the same inequalities shows
+よって、$g=-f$ として $f=g^c$ が成り立つ。同じ不等式を用いると
 \begin{align*}
 f^c(y)&=\inf_{x\in\X}\left[ d(x,y) - f(x) \right]
 \geq\inf_{x\in \X} \left[  d(x,y)-f(y)-d(x,y)\right]=-f(y),\\
 f^c(y)&=\inf_{x\in\X}\left[ d(x,y) - f(x) \right]
 \leq \inf_{x\in\X}\left[ d(x,y) - f(y)+d(x,y) \right]=-f(y).
 \end{align*}
-This shows $f^c=-f$.
+これにより $f^c=-f$ が示される。
 \end{proof}
 
-Starting from the single potential formulation~\eqref{eq-semi-dual-cont}, one can iterate the construction and replace the couple $(\g,\g^c)$ by $(\g^c,(\g^c)^c)$. The last proposition shows that one can thus use $(\g^c,-\g^c)$, which in turn is equivalent to any pair $(f,-f)$ such that $\Lip(f) \leq 1$. This leads to the following alternative expression for the $\Wass_1$ distance:
+単一ポテンシャルの定式化~\eqref{eq-semi-dual-cont}から出発して、構成を反復し、組 $(\g,\g^c)$ を $(\g^c,(\g^c)^c)$ で置き換えることができる。前の命題より、$(\g^c,-\g^c)$ を用いることができ、これは $\Lip(f) \leq 1$ を満たす任意の組 $(f,-f)$ と等価である。これにより、$\Wass_1$ 距離の以下の代替的な表現が得られる：
 %Plugging the relationship $f^c=-f$ into~\eqref{eq-semi-dual-cont} shows
 \eql{\label{eq-w1-metric}
-	\Wass_1(\al,\be) = 
+	\Wass_1(\al,\be) =
 	\umax{f} \enscond{ \int_{\Xx} f(x) (\d\al(x)-\d\be(x)) }{ \Lip(f) \leq 1 }.
 }
-This expression shows that $\Wass_1$ is actually a norm, \ie $\Wass_1(\al,\be) = \norm{\al-\be}_{\Wass_1}$, and that it is still valid for any measures (not necessary positive) as long as $\int_{\Xx} \al=\int_{\Xx} \be$.  This norm is often called the \citeauthor{kantorovich1958space} norm~\citeyearpar{kantorovich1958space}.
+この表現は、$\Wass_1$ が実際にはノルム、すなわち $\Wass_1(\al,\be) = \norm{\al-\be}_{\Wass_1}$ であることを示しており、$\int_{\Xx} \al=\int_{\Xx} \be$ である限り、任意の測度（必ずしも正でなくてもよい）に対して有効である。このノルムはしばしば\citeauthor{kantorovich1958space}ノルム~\citeyearpar{kantorovich1958space}と呼ばれる。
 
-For discrete measures of the form~\eqref{eq-discr-meas}, writing $\al-\be = \sum_{k} \VectMode{m}_k \de_{z_k}$ with $z_k \in \Xx$ and $\sum_k \VectMode{m}_k=0$, the optimization~\eqref{eq-w1-metric} can be rewritten as
-\eql{\label{eq-w1-discr}	
-	\Wass_1(\al,\be) = 
-	\umax{ (\fD_k)_k } \enscond{ \sum_k \fD_k \VectMode{m}_k }{ \foralls (k,\ell), 
+~\eqref{eq-discr-meas}の形の離散測度に対して、$\al-\be = \sum_{k} \VectMode{m}_k \de_{z_k}$（ただし $z_k \in \Xx$、$\sum_k \VectMode{m}_k=0$）と書くと、最適化~\eqref{eq-w1-metric}は次のように書き直すことができる：
+\eql{\label{eq-w1-discr}
+	\Wass_1(\al,\be) =
+	\umax{ (\fD_k)_k } \enscond{ \sum_k \fD_k \VectMode{m}_k }{ \foralls (k,\ell),
 		\abs{\fD_k-\fD_\ell} \leq d(z_k,z_\ell), }
 }
-which is a finite-dimensional convex program with quadratic-cone constraints.  It can be solved using interior point methods or, as we detail next for a similar problem, using proximal methods. 
+これは二次錐制約を持つ有限次元凸計画問題である。これは内点法を用いて、あるいは次に類似の問題について詳述するように、近接法を用いて解くことができる。
 
-When using $d(x,y)=|x-y|$ with $\X=\RR$, we can reduce the number of constraints by ordering the $z_k$'s via $z_1 \leq z_2 \leq \ldots$.  In this case, we only have to solve
-\eq{	
-	\Wass_1(\al,\be) = 
-	\umax{ (\fD_k)_k } \enscond{ \sum_k \fD_k \VectMode{m}_k }{ \foralls k, \abs{\fD_{k+1}-\fD_k} \leq z_{k+1}-z_k }, 
+$\X=\RR$ 上で $d(x,y)=|x-y|$ を用いる場合、$z_k$ を $z_1 \leq z_2 \leq \ldots$ と順序づけることで制約の数を削減できる。この場合、解くべき問題は
+\eq{
+	\Wass_1(\al,\be) =
+	\umax{ (\fD_k)_k } \enscond{ \sum_k \fD_k \VectMode{m}_k }{ \foralls k, \abs{\fD_{k+1}-\fD_k} \leq z_{k+1}-z_k },
 }
-which is a linear program. 
+となり、これは線形計画問題である。
 %
-Note that furthermore, in this 1-D case, a closed form expression for $\Wass_1$ using cumulative functions is given in~\eqref{eq-w1-1d}.
+さらに、この1次元の場合、累積分布関数を用いた $\Wass_1$ の閉じた形の表現が~\eqref{eq-w1-1d}で与えられていることに注意されたい。
 
-\begin{rem}[$\Wass_p$ with $0<p \leq 1$]
-	If $0<p \leq 1$, then $\tilde d(x,y) \eqdef d(x,y)^p$ satisfies the triangular inequality, and hence $\tilde d$ is itself a distance. One can thus apply the results and algorithms detailed above for $\Wass_1$ to compute $\Wass_p$ by simply using $\tilde d$ in place of $d$. This is equivalent to stating that $\Wass_p$ is the dual of $p$-H\"older functions $\ensconds{f}{\Lip_p(f) \leq 1}$, where
+\begin{rem}[$0<p \leq 1$ の場合の $\Wass_p$]
+	$0<p \leq 1$ のとき、$\tilde d(x,y) \eqdef d(x,y)^p$ は三角不等式を満たし、したがって $\tilde d$ 自体が距離となる。このため、上述の $\Wass_1$ に対する結果とアルゴリズムを、$d$ の代わりに $\tilde d$ を用いることで $\Wass_p$ の計算に適用できる。これは、$\Wass_p$ が $p$-ヘルダー関数 $\ensconds{f}{\Lip_p(f) \leq 1}$ の双対であるという主張と等価であり、ここで
 	\eq{
 		\Lip_p(f) \eqdef \sup \enscond{ \frac{|\f(x)-\f(y)|}{d(x,y)^p} }{ (x,y) \in \X^2, x \neq y }.
 	}
 \end{rem}
 
 %%%%%%%%%%%%%%%%%%
-\section{$\Wass_1$ on Euclidean Spaces}
+\section{ユークリッド空間上の $\Wass_1$}
 \label{sec-w1-eucl}
 
 
-In the special case of Euclidean spaces $\X=\Y=\RR^\dim$, using $\c(x,y) = \norm{x-y}$, the global Lipschitz constraint appearing in~\eqref{eq-w1-metric} can be made local as a uniform bound on the gradient of $f$, 
+ユークリッド空間 $\X=\Y=\RR^\dim$ で $\c(x,y) = \norm{x-y}$ を用いる特別な場合、~\eqref{eq-w1-metric}に現れる大域的リプシッツ制約は、$f$ の勾配に対する一様な上界として局所化できる：
 \eql{\label{eq-w1-cont}
-	\Wass_1(\al,\be) = 
+	\Wass_1(\al,\be) =
 	\umax{f} \enscond{ \int_{\RR^\dim} \f(x) (\d\al(x)-\d\be(x)) }{ \norm{\nabla \f}_\infty \leq 1 }.
 }
-Here the constraint $\norm{\nabla \f}_\infty \leq 1$ signifies that the norm of the gradient of $\f$ at any point $x$ is upper bounded by $1$, $\norm{\nabla \f(x)}_2 \leq 1$ for any $x$.
+ここで制約 $\norm{\nabla \f}_\infty \leq 1$ は、任意の点 $x$ における $\f$ の勾配のノルムが $1$ で上から抑えられること、すなわちすべての $x$ に対して $\norm{\nabla \f(x)}_2 \leq 1$ であることを意味する。
 
-Considering the dual problem to~\eqref{eq-w1-cont}, one obtains an optimization problem under fixed divergence constraint
+~\eqref{eq-w1-cont}の双対問題を考えると、固定された発散制約の下での最適化問題が得られる：
 \eql{\label{eq-w1-cont-div}
-	\Wass_1(\al,\be) = 
-	\umin{\flow} \enscond{ \int_{\RR^\dim} \norm{\flow(x)}_2 \d x }{  \diverg(\flow)=\al-\be }, 
+	\Wass_1(\al,\be) =
+	\umin{\flow} \enscond{ \int_{\RR^\dim} \norm{\flow(x)}_2 \d x }{  \diverg(\flow)=\al-\be },
 }
-which is often called the Beckmann formulation~\citep{Beckmann52}.
+これはしばしばベックマンの定式化~\citep{Beckmann52}と呼ばれる。
 %
-Here the vectorial function $\flow(x) \in \RR^2$ can be interpreted as a flow field, describing locally the movement of mass. Outside the support of the two input measures, $\diverg(\flow)=0$, which is the conservation of mass constraint. 
+ここでベクトル値関数 $\flow(x) \in \RR^2$ はフロー場として解釈でき、質量の局所的な移動を記述する。二つの入力測度の台の外側では $\diverg(\flow)=0$ であり、これは質量保存の制約である。
 %
-Once properly discretized using finite elements, Problems~\eqref{eq-w1-cont} and~\eqref{eq-w1-cont-div} become nonsmooth convex optimization problems. 
+有限要素を用いて適切に離散化すると、問題~\eqref{eq-w1-cont}および~\eqref{eq-w1-cont-div}は非滑らかな凸最適化問題となる。
 %
-It is possible to use an off-the-shelf interior points quadratic-cone optimization solver, but as advocated in~\S\ref{sec-prox-solvers}, large-scale problems require the use of simpler but more adapted first order methods. One can thus use, for instance, Douglas--Rachford (DR) iterations~\eqref{eq-dr-iters} or the related alternating direction method of multipliers method. Note that on a uniform grid, projecting on the divergence constraint is conveniently handled using the fast Fourier transform. We refer to~\citet{SolomonEMDSurfaces2014} for a detailed account for these approaches and application to OT on triangulated meshes.
+既成の内点法二次錐最適化ソルバーを使用することもできるが、\S\ref{sec-prox-solvers}で提唱されているように、大規模問題にはより単純だがより適合した一次法の使用が必要である。そこで、例えばダグラス・ラックフォード (DR) 反復~\eqref{eq-dr-iters}や関連する交互方向乗数法を使用できる。一様格子上では、発散制約への射影は高速フーリエ変換を用いて便利に処理できることに注意されたい。これらのアプローチの詳細な説明と三角形メッシュ上のOTへの応用については~\citet{SolomonEMDSurfaces2014}を参照されたい。
 %
-See also~\citet{LiRyuOsherYinGangbo2017_parallel,Ryu2017a,Ryu2017b} for similar approaches using primal-dual splitting schemes.
+主双対分離スキームを用いた類似のアプローチについては~\citet{LiRyuOsherYinGangbo2017_parallel,Ryu2017a,Ryu2017b}も参照されたい。
 %
-Approximation schemes that relax the Lipschitz constraint on the dual potentials $\f$ have also been proposed, using, for instance, a constraint on wavelet coefficients leading to an explicit formula~\citep{shirdhonkar2008approximate}, or by considering only functions $\f$ parameterized as multilayer neural networks with ``rectified linear'' $\max(0,\cdot)$ activation function and clipped weights~\citep{WassersteinGAN}.
+双対ポテンシャル $\f$ に対するリプシッツ制約を緩和する近似スキームも提案されている。例えば、ウェーブレット係数に対する制約を用いて明示的な公式を導く手法~\citep{shirdhonkar2008approximate}や、「整流線形」$\max(0,\cdot)$ 活性化関数と制限された重みを持つ多層ニューラルネットワークとしてパラメータ化された関数 $\f$ のみを考える手法~\citep{WassersteinGAN}がある。
 
 %%%%%%%%%%%%%%%%%%
 % \section{$\Wass_1$ on Smooth Manifolds}
@@ -127,48 +127,48 @@ Approximation schemes that relax the Lipschitz constraint on the dual potentials
 
 
 %%%%%%%%%%%%%%%%%%
-\section{$\Wass_1$ on a Graph}
+\section{グラフ上の $\Wass_1$}
 
-The previous formulations~\eqref{eq-w1-cont} and~\eqref{eq-w1-cont-div} of $\Wass_1$ can be generalized to the setting where $\X$ is a geodesic space, \ie $\c(x,y)=\dist(x,y)$ where $\dist$ is a geodesic distance. We refer to~\citet{FeldmanMacCann02} for a theoretical analysis in the case where $\X$ is a Riemannian manifold.
+前述の $\Wass_1$ の定式化~\eqref{eq-w1-cont}および~\eqref{eq-w1-cont-div}は、$\X$ が測地線空間である設定、すなわち $\c(x,y)=\dist(x,y)$（ここで $\dist$ は測地線距離）である場合に一般化できる。$\X$ がリーマン多様体である場合の理論的解析については~\citet{FeldmanMacCann02}を参照されたい。
 %
-When $\X=\range{1,n}$ is a discrete set, equipped with undirected edges $(i,j) \in \Edges \subset \X^2$ labeled with a weight (length) $\weight_{i,j}$, we recover the important case where $\X$ is a graph equipped with the geodesic distance (or shortest path metric):
+$\X=\range{1,n}$ が離散集合であり、重み（長さ）$\weight_{i,j}$ が付けられた無向辺 $(i,j) \in \Edges \subset \X^2$ を備えている場合、$\X$ が測地線距離（または最短路距離）を備えたグラフであるという重要な場合が得られる：
 \eq{
 	\distD_{i,j} \eqdef \umin{K \geq 0, (i_k)_k : i \rightarrow j }
 	 \enscond{ \sum_{k=1}^{K-1} \weight_{i_k,i_{k+1}} }{ \foralls k \in \range{1,K-1}, (i_k,i_{k+1}) \in \Ee  },
 }
-where $i \rightarrow j$ indicates that $i_1=i$ and $i_K=j$, namely that the path starts at $i$ and ends at $j$.
+ここで $i \rightarrow j$ は $i_1=i$ かつ $i_K=j$ を意味し、すなわちパスが $i$ から始まり $j$ で終わることを示す。
 
-We consider two vectors $(\a,\b) \in (\RR^n)^2$ defining (signed) discrete measures on the graph $\X$ such that $\sum_i \a_i = \sum_i \b_i$ (these weights do not need to be positive). 
+グラフ $\X$ 上の（符号付き）離散測度を定義する二つのベクトル $(\a,\b) \in (\RR^n)^2$ で $\sum_i \a_i = \sum_i \b_i$ を満たすものを考える（これらの重みは正である必要はない）。
 %
-The goal is now to compute $\WassD_1(\a,\b)$, as introduced in~\eqref{eq-wass-p-disc} for $p=1$, when the ground metric is the graph geodesic distance. This computation should be carried out without going as far as having to compute a ``full'' coupling $\P$ of size $n \times n$, to rely instead on local operators thanks to the underlying connectivity of the graph. These operators are discrete formulations for the  gradient and divergence differential operators.
+ここでの目標は、基底距離がグラフの測地線距離である場合に、$p=1$ として~\eqref{eq-wass-p-disc}で導入された $\WassD_1(\a,\b)$ を計算することである。この計算は、$n \times n$ の大きさの「完全な」カップリング $\P$ を計算するまでに至ることなく、代わりにグラフの基礎となる接続性を利用した局所的な作用素に依拠すべきである。これらの作用素は勾配と発散の微分作用素の離散的な定式化である。
 
-A discrete dual Kantorovich potential $\fD \in \RR^n$ is a vector indexed by all vertices of the graph. The gradient operator $\nabla : \RR^n \rightarrow \RR^{\Edges}$ is defined as
+離散双対カントロヴィッチポテンシャル $\fD \in \RR^n$ はグラフのすべての頂点で添字づけられたベクトルである。勾配作用素 $\nabla : \RR^n \rightarrow \RR^{\Edges}$ は次のように定義される：
 \eq{
 	\foralls (i,j) \in \Edges, \quad (\nabla \fD)_{i,j} \eqdef \fD_i-\fD_j.
 }
-A flow $\flowD = (\flowD_{i,j})_{i,j}$ is defined on edges, and the divergence operator $\diverg : \RR^{\Edges} \rightarrow \RR^n$, which is the adjoint of the gradient $\nabla$, maps flows to vectors defined on vertices and is defined as
+フロー $\flowD = (\flowD_{i,j})_{i,j}$ は辺上で定義され、発散作用素 $\diverg : \RR^{\Edges} \rightarrow \RR^n$（これは勾配 $\nabla$ の随伴作用素）はフローを頂点上で定義されたベクトルに写像し、次のように定義される：
 \eq{
 	\foralls i \in \range{1,n}, \quad \diverg(\flowD)_i \eqdef \sum_{j: (i,j) \in \Edges} (\flowD_{i,j} - \flowD_{j,i}) \in \RR^n.
 }
 
 
-Problem~\eqref{eq-w1-cont} becomes, in the graph setting, 
+問題~\eqref{eq-w1-cont}はグラフの設定では次のようになる：
 \eql{\label{eq-w1-graph-potential}
-	\WassD_1(\a,\b) = 
+	\WassD_1(\a,\b) =
 	\umax{\fD \in \RR^n} \enscond{ \sum_{i=1}^n \fD_i (\a_i-\b_i)   }{  \forall (i,j) \in \Edges, \, |(\nabla \fD)_{i,j}| \leq \weight_{i,j}  }.
 }
-The associated dual problem, which is analogous to Formula~\eqref{eq-w1-cont-div}, is then
+関連する双対問題は、公式~\eqref{eq-w1-cont-div}に対応するものであり、次の通りである：
 \eql{\label{eq-w1-graph-div}
-	\WassD_1(\a,\b) = 
+	\WassD_1(\a,\b) =
 	\umin{\flowD \in \RR_+^\Edges} \enscond{ \sum_{(i,j) \in \Ee} \weight_{i,j} \flowD_{i,j}  }{  \diverg(\flowD)=\a-\b }.
 }
-This is a linear program and more precisely an instance of min-cost flow problems. Highly efficient dedicated simplex solvers have been devised to solve it; see, for instance,~\citep{TreeEMD2007}. % \todoK{detail this}
-% 
-Figure~\ref{fig-planar-graph} shows an example of primal and dual solutions. 
+これは線形計画問題であり、より正確には最小費用フロー問題のインスタンスである。これを解くために高度に効率的な専用単体法ソルバーが開発されている。例えば~\citep{TreeEMD2007}を参照されたい。% \todoK{detail this}
 %
-Formulation~\eqref{eq-w1-graph-div} is the so-called Beckmann formulation~\citep{Beckmann52} and has been used and extended to define and study traffic congestion models; see, for instance,~\citep{CarlierSantambrogioOTCongestion2008}.
+図~\ref{fig-planar-graph}に主問題と双対問題の解の例を示す。
+%
+定式化~\eqref{eq-w1-graph-div}はいわゆるベックマンの定式化~\citep{Beckmann52}であり、交通渋滞モデルの定義と研究に使用され拡張されてきた。例えば~\citep{CarlierSantambrogioOTCongestion2008}を参照されたい。
 
- 
+
 
 
 \begin{figure}[h!]
@@ -176,20 +176,18 @@ Formulation~\eqref{eq-w1-graph-div} is the so-called Beckmann formulation~\citep
 \begin{tabular}{@{}c@{\hspace{10mm}}c@{}}
 \includegraphics[width=.45\linewidth]{w1-graph/potential}&
 \includegraphics[width=.45\linewidth]{w1-graph/flow}\\
-$\fD$ & $({\color{red}\a},{\color{blue}\b})$ and $\flowD$ 
+$\fD$ & $({\color{red}\a},{\color{blue}\b})$ および $\flowD$
 \end{tabular}
 \caption{\label{fig-planar-graph}
-Example of computation of $\WassD_1(\a,\b)$ on a planar graph with uniform weights $\weight_{i,j}=1$.
+一様な重み $\weight_{i,j}=1$ を持つ平面グラフ上での $\WassD_1(\a,\b)$ の計算例。
 %
-Left: potential $\fD$ solution of~\eqref{eq-w1-graph-potential} (increasing value from red to blue). The green color of the edges is proportional to $|(\nabla \fD)_{i,j}|$. 
+左：~\eqref{eq-w1-graph-potential}の解であるポテンシャル $\fD$（赤から青へ値が増加）。辺の緑色は $|(\nabla \fD)_{i,j}|$ に比例する。
 %
-Right: flow $\flowD$ solution of~\eqref{eq-w1-graph-div}, 
-where bold black edges display nonzero $\flowD_{i,j}$, which saturate to $\weight_{i,j}=1$.
+右：~\eqref{eq-w1-graph-div}の解であるフロー $\flowD$。太い黒線の辺は非零の $\flowD_{i,j}$ を示し、$\weight_{i,j}=1$ に飽和する。
 %
-These saturating flow edge on the right match the light green edge on the left where $|(\nabla \fD)_{i,j}|=1$.
+右側のこれらの飽和フロー辺は、左側の $|(\nabla \fD)_{i,j}|=1$ となる薄い緑の辺に対応する。
 }
 \end{figure}
-
 
 
 

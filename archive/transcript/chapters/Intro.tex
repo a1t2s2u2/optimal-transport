@@ -1,6 +1,6 @@
 % !TEX root = ../ComputationalOTFnT.tex
 
-\chapter{Introduction}
+\chapter{序論}
 \label{c-intro} % a label for the chapter, to refer to it later
 
 
@@ -27,30 +27,30 @@
 %
 %Ref to~\ref{rem-test2}
 
-The shortest path principle guides most decisions in life and sciences: When a commodity, a person or a single bit of information is available at a given point and needs to be sent at a target point, one should favor using the least possible effort. This is typically reached by moving an item along a straight line when in the plane or along geodesic curves in more involved metric spaces. The theory of optimal transport generalizes that intuition in the case where, instead of moving only one item at a time, one is concerned with the problem of moving simultaneously several items (or a continuous distribution thereof) from one configuration onto another. As schoolteachers might attest, planning the transportation of a group of individuals, with the constraint that they reach a given target configuration upon arrival, is substantially more involved than carrying it out for a single individual. Indeed, thinking in terms of groups or distributions requires a more advanced mathematical formalism which was first hinted at in the seminal work of~\citet{Monge1781}. Yet, no matter how complicated that formalism might look at first sight, that problem has deep and concrete connections with our daily life. Transportation, be it of people, commodities or information, very rarely involves moving only one item. All major economic problems, in logistics, production planning or network routing, involve moving distributions, and that thread appears in all of the seminal references on optimal transport. Indeed~\citet{tolstoi1930methods},~\citet{Hitchcock41} and~\citet{Kantorovich42} were all guided by practical concerns. It was only a few years later, mostly after the 1980s, that mathematicians discovered, thanks to the works of~\citet{Brenier91} and others, that this theory provided a fertile ground for research, with deep connections to convexity, partial differential equations and  statistics. At the turn of the millenium, researchers in computer, imaging and more generally data sciences understood that optimal transport theory provided very powerful tools to study distributions in a different and more abstract context, that of comparing distributions readily available to them under the form of bags-of-features or descriptors.
+最短経路の原理は、人生と科学におけるほとんどの意思決定を導く：ある商品、人、または一つの情報がある地点で利用可能であり、目標地点に送る必要がある場合、可能な限り少ない労力を用いることが望ましい。これは通常、平面上では直線に沿って、より複雑な距離空間では測地線に沿ってアイテムを移動させることで達成される。最適輸送の理論は、一度に一つのアイテムだけを移動させるのではなく、複数のアイテム（またはその連続的な分布）をある配置から別の配置へ同時に移動させる問題に関わる場合に、その直感を一般化する。学校の教師が証言できるように、個人のグループの輸送を計画し、到着時に指定された目標配置に到達するという制約のもとで行うことは、一人の個人に対して行うよりもかなり複雑である。実際、グループや分布の観点で考えることは、\citet{Monge1781}の先駆的な研究で最初に示唆された、より高度な数学的形式主義を必要とする。しかし、その形式主義が一見どれほど複雑に見えようとも、この問題は我々の日常生活と深く具体的なつながりを持っている。輸送は、人であれ商品であれ情報であれ、一つのアイテムだけを移動させることは非常に稀である。物流、生産計画、ネットワークルーティングにおけるすべての主要な経済問題は分布の移動を伴い、その系譜は最適輸送に関するすべての先駆的な文献に現れている。実際、\citet{tolstoi1930methods}、\citet{Hitchcock41}、\citet{Kantorovich42}はすべて実用的な関心に導かれていた。それからわずか数年後、主に1980年代以降になって、数学者たちは\citet{Brenier91}らの研究のおかげで、この理論が凸性、偏微分方程式、統計学との深いつながりを持つ、研究のための肥沃な土壌を提供することを発見した。ミレニアムの変わり目に、コンピュータ科学、画像科学、そしてより一般的にデータ科学の研究者たちは、最適輸送理論が、特徴量の集合や記述子という形で容易に利用可能な分布を、異なるより抽象的な文脈で研究するための非常に強力なツールを提供することを理解した。
 %
 
-Several reference books have been written on optimal transport, including the two recent monographs by~\citeauthor{Villani03} (\citeyear{Villani03,Villani09}), those by~\citeauthor{rachev1998mass} (\citeyear{rachev1998mass,rachev1998mass2}) and more recently that by~\citet{SantambrogioBook}. As exemplified by these books, the more formal and abstract concepts in that theory deserve in and by themselves several hundred pages. Now that optimal transport has gradually established itself as an applied tool (for instance, in economics, as put forward recently by~\citet{galichon2016optimal}), we have tried to balance that rich literature with a computational viewpoint, centered on applications to data science, notably imaging sciences and machine learning. We follow in that sense the motivation of the recent review by~\citet{kolouri2017optimal} but try to cover more ground.
+最適輸送に関するいくつかの参考書が執筆されており、\citeauthor{Villani03}（\citeyear{Villani03,Villani09}）による二つの最近の専門書、\citeauthor{rachev1998mass}（\citeyear{rachev1998mass,rachev1998mass2}）によるもの、そしてより最近では\citet{SantambrogioBook}によるものがある。これらの書籍に例示されるように、この理論におけるより形式的で抽象的な概念は、それ自体で数百ページに値する。最適輸送が応用ツールとして次第に確立されてきた今（例えば経済学において、最近\citet{galichon2016optimal}が提唱したように）、我々はその豊かな文献と計算的な観点のバランスを取ることを試み、データ科学、特に画像科学と機械学習への応用を中心に据えた。この意味で、\citet{kolouri2017optimal}による最近のレビューの動機に従いつつ、より広い範囲をカバーすることを試みる。
 %
-Ultimately, our goal is to present an overview of the main theoretical insights that support the practical effectiveness of OT and spend more time explaining how to turn these insights into fast computational schemes. 
+究極的に、我々の目標はOTの実用的な有効性を支える主要な理論的洞察の概観を提示し、これらの洞察を高速な計算スキームに変換する方法の説明により多くの時間を費やすことである。
 %
-The main body of Chapters \ref{c-continuous}, \ref{c-algo-basics}, \ref{c-entropic}, \ref{c-variational}, and \ref{c-extensions} is devoted solely to the study of the geometry induced by optimal transport in the space of probability vectors or discrete histograms. 
+第\ref{c-continuous}章、第\ref{c-algo-basics}章、第\ref{c-entropic}章、第\ref{c-variational}章、第\ref{c-extensions}章の本体は、確率ベクトルまたは離散ヒストグラムの空間における最適輸送が誘導する幾何学の研究に専ら充てられている。
 %
-Targeting more advanced readers, we also give in the same chapters,  in light gray boxes, a more general mathematical exposition of optimal transport tailored for discrete measures. Discrete measures are defined by their probability weights, but also by the location at which these weights are defined. These locations are usually taken in a continuous metric space, giving a second important degree of freedom to model random phenomena.
+より上級の読者を対象として、同じ章内で薄い灰色のボックスにおいて、離散測度に特化した最適輸送のより一般的な数学的解説も与える。離散測度はその確率の重みによって定義されるが、それらの重みが定義される位置によっても定義される。これらの位置は通常、連続的な距離空間内に取られ、ランダム現象をモデル化するための第二の重要な自由度を与える。
 %This corresponds to the case where the support of the considered measures can take arbitrary values in a continuous space, giving a second important degree of freedom, beyond just weights, when comparing probability measures.
 %
-Lastly, the third and most technical layer of exposition is indicated in dark gray boxes and deals with arbitrary measures that need not be discrete, and which can have in particular a density w.r.t. a base measure. This is traditionally the default setting for most classic textbooks on OT theory, but one that plays a less important role in general for practical applications.
+最後に、第三のそして最も技術的な解説の層は濃い灰色のボックスで示され、離散である必要のない任意の測度を扱い、特に基底測度に関する密度を持つことができる。これは伝統的にOT理論に関するほとんどの古典的教科書のデフォルトの設定であるが、実用的な応用においては一般にそれほど重要な役割を果たさない。
 %
-Chapters~\ref{c-algo-semidiscr} to~\ref{c-statistical} deal with the interplay between continuous and discrete measures and are thus targeting a more mathematically inclined audience. 
+第\ref{c-algo-semidiscr}章から第\ref{c-statistical}章は、連続測度と離散測度の相互作用を扱い、したがってより数学的な志向を持つ読者を対象としている。
 
-The field of computational optimal transport is at the time of this writing still an extremely active one. There are therefore a wide variety of topics that we have not touched upon in this survey. Let us cite in no particular order the subjects of distributionally robust optimization \citep{NIPS2015_5745,esfahani2018data,NIPS2018_7534,NIPS2018_8015}, in which parameter estimation is carried out by minimizing the worst posssible empirical risk of any data measure taken within a certain Wasserstein distance of the input data; convergence of the Langevin Monte Carlo sampling algorithm in the Wasserstein geometry \citep{dalalyan2017user,pmlr-v65-dalalyan17a,pmlr-v75-bernton18a}; other numerical methods to solve OT with a squared Euclidian cost in low-dimensional settings using the Monge-Amp\`ere equation~\citep{froese2011convergent,benamou2014numerical,sulman2011efficient} which are only briefly mentioned in Remark~\ref{rem:MA}.
+計算最適輸送の分野は、本稿執筆時点において依然として極めて活発な分野である。したがって、この調査で触れていない多種多様なトピックが存在する。順不同で挙げると、分布的にロバストな最適化\citep{NIPS2015_5745,esfahani2018data,NIPS2018_7534,NIPS2018_8015}（パラメータ推定が、入力データの一定のワッサーシュタイン距離内にある任意のデータ測度の最悪の経験的リスクを最小化することで行われる）、ワッサーシュタイン幾何学におけるランジュバン・モンテカルロサンプリングアルゴリズムの収束\citep{dalalyan2017user,pmlr-v65-dalalyan17a,pmlr-v75-bernton18a}、低次元設定における二乗ユークリッドコストを持つOTをモンジュ・アンペール方程式を用いて解く他の数値手法\citep{froese2011convergent,benamou2014numerical,sulman2011efficient}（注意~\ref{rem:MA}で簡単に言及されるのみ）がある。
 
 
 %\begin{figure}[h!]
 %\centering
 %\begin{tabular}{@{}c@{\hspace{5mm}}c@{}}
 %\includegraphics[width=.45\linewidth]{barycenters-1d/bary-eucl}  &
-%\includegraphics[width=.45\linewidth]{barycenters-1d/bary-ot} 
+%\includegraphics[width=.45\linewidth]{barycenters-1d/bary-ot}
 %\end{tabular}
 %\caption{\label{fig-w-vs-eucl}
 %Comparison of Wasserstein vs. Euclidean average. \todo{Blabla}
@@ -59,40 +59,40 @@ The field of computational optimal transport is at the time of this writing stil
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section*{Notation}
+\section*{記法}
 
 \begin{itemize}
-	\item $\range{n}$: set of integers $\{1,\dots,n\}$.
-	\item $\ones_{n,m}$: matrix of $\RR^{n\times m}$ with all entries identically set to $1$. $\ones_{n}$: vector of ones.
-	\item $\Identity_n$: identity matrix of size $n\times n$. 
-	\item For $u\in\RR^n$, $\diag(u)$ is the $n\times n$ matrix with diagonal $u$ and zero otherwise.
-	\item $\simplex_n$: probability simplex with $n$ bins, namely the set of probability vectors in $\RR^n_+$.	
-	\item $(\a,\b)$:  histograms in the simplices $\simplex_n \times \simplex_m$. 
-	\item $(\al,\be)$:  measures, defined on spaces $(\X,\Y)$.
-	\item $\frac{\d\al}{\d\be}$: relative density of a measure $\al$ with respect to $\be$.
-	\item $\density{\al} = \frac{\d\al}{\d x}$: density of a measure $\al$ with respect to Lebesgue measure.
-	\item $(\al=\sum_i \a_i \delta_{x_i},\be=\sum_j \b_j \delta_{y_j})$: discrete measures supported on $x_1,\dots,x_n\in\X$ and $y_1,\dots,y_m\in\Y$.
-	\item $\c(x,y)$: ground cost, with associated pairwise cost matrix $\C_{i,j}=(\c(x_i,y_j))_{i,j}$ evaluated on the support of $\al,\be$.
-	\item $\pi$: coupling measure between $\al$ and $\be$, namely such that for any $A\subset\X, \pi(A\times \Y)= \al(A)$, and for any subset $B\subset \Y, \pi(\X\times B)= \be(B)$. For discrete measures $\pi = \sum_{i,j} \P_{i,j}\delta_{(x_i,y_j)}$.
-	\item $\Couplings(\al,\be)$: set of coupling measures, for discrete measures $\CouplingsD(\a,\b)$.
-	\item $\Potentials(\c)$: set of admissible dual potentials; for discrete measures $\PotentialsD(\C)$.
-	\item $\T : \X \rightarrow \Y$: Monge map, typically such that $\T_\sharp \al = \be$.
-	\item $(\al_t)_{t=0}^1$: dynamic measures, with $\al_{t=0}=\al_0$ and $\al_{t=1}=\al_1$.
-	\item $\speed$: speed for Benamou--Brenier formulations; $\Moment=\al \speed$: momentum.
-	\item $(\f,\g)$: dual potentials, for discrete measures $(\fD,\gD)$ are dual variables.
-	\item $(\uD,\vD) \eqdef (e^{\fD/\varepsilon},e^{\gD/\varepsilon})$: Sinkhorn scalings.
-	\item $\K \eqdef e^{-\C/\varepsilon}$: Gibbs kernel for Sinkhorn.
+	\item $\range{n}$：整数の集合$\{1,\dots,n\}$。
+	\item $\ones_{n,m}$：$\RR^{n\times m}$のすべての要素が$1$に等しい行列。$\ones_{n}$：全要素が1のベクトル。
+	\item $\Identity_n$：サイズ$n\times n$の単位行列。
+	\item $u\in\RR^n$に対して、$\diag(u)$は対角成分が$u$でそれ以外が零の$n\times n$行列。
+	\item $\simplex_n$：$n$個のビンを持つ確率単体、すなわち$\RR^n_+$における確率ベクトルの集合。
+	\item $(\a,\b)$：単体$\simplex_n \times \simplex_m$におけるヒストグラム。
+	\item $(\al,\be)$：空間$(\X,\Y)$上に定義された測度。
+	\item $\frac{\d\al}{\d\be}$：測度$\al$の$\be$に関する相対密度。
+	\item $\density{\al} = \frac{\d\al}{\d x}$：測度$\al$のルベーグ測度に関する密度。
+	\item $(\al=\sum_i \a_i \delta_{x_i},\be=\sum_j \b_j \delta_{y_j})$：$x_1,\dots,x_n\in\X$および$y_1,\dots,y_m\in\Y$上に台を持つ離散測度。
+	\item $\c(x,y)$：地上コスト、関連するペアワイズコスト行列$\C_{i,j}=(\c(x_i,y_j))_{i,j}$は$\al,\be$の台上で評価される。
+	\item $\pi$：$\al$と$\be$の間のカップリング測度、すなわち任意の$A\subset\X$に対して$\pi(A\times \Y)= \al(A)$、かつ任意の部分集合$B\subset \Y$に対して$\pi(\X\times B)= \be(B)$を満たす。離散測度に対して$\pi = \sum_{i,j} \P_{i,j}\delta_{(x_i,y_j)}$。
+	\item $\Couplings(\al,\be)$：カップリング測度の集合、離散測度に対して$\CouplingsD(\a,\b)$。
+	\item $\Potentials(\c)$：許容双対ポテンシャルの集合；離散測度に対して$\PotentialsD(\C)$。
+	\item $\T : \X \rightarrow \Y$：モンジュ写像、典型的には$\T_\sharp \al = \be$を満たす。
+	\item $(\al_t)_{t=0}^1$：動的測度、$\al_{t=0}=\al_0$かつ$\al_{t=1}=\al_1$。
+	\item $\speed$：ベナムー・ブレニエ定式化における速度；$\Moment=\al \speed$：運動量。
+	\item $(\f,\g)$：双対ポテンシャル、離散測度に対して$(\fD,\gD)$は双対変数。
+	\item $(\uD,\vD) \eqdef (e^{\fD/\varepsilon},e^{\gD/\varepsilon})$：シンクホーンスケーリング。
+	\item $\K \eqdef e^{-\C/\varepsilon}$：シンクホーンのためのギブスカーネル。
 	% entropy
-	\item $\flow$: flow for $\Wass_1$-like problem (optimization under divergence constraints).
-	\item $\MKD_\C(\a,\b)$ and $\MK_\c(\al,\be)$: value of the optimization problem associated to the OT with cost $\C$ (histograms) and $\c$ (arbitrary measures).
-	\item $\WassD_p(\a,\b)$ and $\Wass_p(\al,\be)$: $p$-Wasserstein distance associated to ground distance matrix $\distD$ (histograms) and distance $\dist$ (arbitrary measures).
-	\item $\lambda\in\simplex_S$: weight vector used to compute the barycenters of $S$ measures.
-	\item $\dotp{\cdot}{\cdot}$: for the usual Euclidean dot-product between vectors; for two matrices of the same size $A$ and $B$, $\dotp{A}{B} \eqdef \trace(A^\top B)$ is the Frobenius dot-product.
-	\item $\f\oplus \g(x,y) \eqdef f(x)+g(y)$, for two functions $\f : \X \rightarrow \RR, \g : \Y \rightarrow \RR$, defines
-		$\f \oplus \g : \X\times \Y \rightarrow \RR$.
-	\item $\fD \oplus \gD \eqdef \fD \ones_m^\top + \ones_n \gD^\top \in \RR^{n\times m}$ for two vectors $\fD\in\RR^n$, $\gD\in\RR^m$.
-	\item $\al \otimes \be$ is the product measure on $\X \times \Y$, \ie 
-		$\int_{\X \times \Y} g(x,y) \d(\al\otimes\be)(x,y) \eqdef \int_{\X \times \Y} g(x,y) \d\al(x) \d\be(y)$.
-	\item $\a \otimes \b \eqdef \a \b^\top \in \RR^{n \times m}$. 
-	\item $\uD \odot \vD = (\uD_i \vD_i) \in \RR^n$ for $(\uD, \vD) \in (\RR^n)^2$.
+	\item $\flow$：$\Wass_1$型問題（ダイバージェンス制約下の最適化）のためのフロー。
+	\item $\MKD_\C(\a,\b)$および$\MK_\c(\al,\be)$：コスト$\C$（ヒストグラム）および$\c$（任意の測度）を持つOTに関連する最適化問題の値。
+	\item $\WassD_p(\a,\b)$および$\Wass_p(\al,\be)$：地上距離行列$\distD$（ヒストグラム）および距離$\dist$（任意の測度）に関連する$p$-ワッサーシュタイン距離。
+	\item $\lambda\in\simplex_S$：$S$個の測度の重心を計算するために使用される重みベクトル。
+	\item $\dotp{\cdot}{\cdot}$：通常のユークリッド内積；同じサイズの二つの行列$A$と$B$に対して、$\dotp{A}{B} \eqdef \trace(A^\top B)$はフロベニウス内積。
+	\item $\f\oplus \g(x,y) \eqdef f(x)+g(y)$、二つの関数$\f : \X \rightarrow \RR, \g : \Y \rightarrow \RR$に対して、
+		$\f \oplus \g : \X\times \Y \rightarrow \RR$を定義する。
+	\item $\fD \oplus \gD \eqdef \fD \ones_m^\top + \ones_n \gD^\top \in \RR^{n\times m}$、二つのベクトル$\fD\in\RR^n$、$\gD\in\RR^m$に対して。
+	\item $\al \otimes \be$は$\X \times \Y$上の積測度、\ie
+		$\int_{\X \times \Y} g(x,y) \d(\al\otimes\be)(x,y) \eqdef \int_{\X \times \Y} g(x,y) \d\al(x) \d\be(y)$。
+	\item $\a \otimes \b \eqdef \a \b^\top \in \RR^{n \times m}$。
+	\item $\uD \odot \vD = (\uD_i \vD_i) \in \RR^n$、$(\uD, \vD) \in (\RR^n)^2$に対して。
 \end{itemize}
