@@ -43,7 +43,7 @@
 %
 第\ref{c-algo-semidiscr}章から第\ref{c-statistical}章は、連続測度と離散測度の相互作用を扱い、したがってより数学的な志向を持つ読者を対象としている。
 
-計算最適輸送の分野は、本稿執筆時点において依然として極めて活発な分野である。したがって、この調査で触れていない多種多様なトピックが存在する。順不同で挙げると、分布的にロバストな最適化\citep{NIPS2015_5745,esfahani2018data,NIPS2018_7534,NIPS2018_8015}（パラメータ推定が、入力データの一定のワッサーシュタイン距離内にある任意のデータ測度の最悪の経験的リスクを最小化することで行われる）、ワッサーシュタイン幾何学におけるランジュバン・モンテカルロサンプリングアルゴリズムの収束\citep{dalalyan2017user,pmlr-v65-dalalyan17a,pmlr-v75-bernton18a}、低次元設定における二乗ユークリッドコストを持つOTをモンジュ・アンペール方程式を用いて解く他の数値手法\citep{froese2011convergent,benamou2014numerical,sulman2011efficient}（注意~\ref{rem:MA}で簡単に言及されるのみ）がある。
+計算最適輸送の分野は、本稿執筆時点において依然として極めて活発な分野である。したがって、この調査で触れていない多種多様なトピックが存在する。順不同で挙げると、分布的にロバストな最適化\citep{NIPS2015_5745,esfahani2018data,NIPS2018_7534,NIPS2018_8015}（パラメータ推定が、入力データの一定のWasserstein距離内にある任意のデータ測度の最悪の経験的リスクを最小化することで行われる）、Wasserstein幾何学におけるLangevin・モンテカルロサンプリングアルゴリズムの収束\citep{dalalyan2017user,pmlr-v65-dalalyan17a,pmlr-v75-bernton18a}、低次元設定における二乗Euclidコストを持つOTをMonge-Ampère方程式を用いて解く他の数値手法\citep{froese2011convergent,benamou2014numerical,sulman2011efficient}（注意~\ref{rem:MA}で簡単に言及されるのみ）がある。
 
 
 %\begin{figure}[h!]
@@ -70,24 +70,24 @@
 	\item $(\a,\b)$：単体$\simplex_n \times \simplex_m$におけるヒストグラム。
 	\item $(\al,\be)$：空間$(\X,\Y)$上に定義された測度。
 	\item $\frac{\d\al}{\d\be}$：測度$\al$の$\be$に関する相対密度。
-	\item $\density{\al} = \frac{\d\al}{\d x}$：測度$\al$のルベーグ測度に関する密度。
+	\item $\density{\al} = \frac{\d\al}{\d x}$：測度$\al$のLebesgue測度に関する密度。
 	\item $(\al=\sum_i \a_i \delta_{x_i},\be=\sum_j \b_j \delta_{y_j})$：$x_1,\dots,x_n\in\X$および$y_1,\dots,y_m\in\Y$上に台を持つ離散測度。
 	\item $\c(x,y)$：地上コスト、関連するペアワイズコスト行列$\C_{i,j}=(\c(x_i,y_j))_{i,j}$は$\al,\be$の台上で評価される。
 	\item $\pi$：$\al$と$\be$の間のカップリング測度、すなわち任意の$A\subset\X$に対して$\pi(A\times \Y)= \al(A)$、かつ任意の部分集合$B\subset \Y$に対して$\pi(\X\times B)= \be(B)$を満たす。離散測度に対して$\pi = \sum_{i,j} \P_{i,j}\delta_{(x_i,y_j)}$。
 	\item $\Couplings(\al,\be)$：カップリング測度の集合、離散測度に対して$\CouplingsD(\a,\b)$。
 	\item $\Potentials(\c)$：許容双対ポテンシャルの集合；離散測度に対して$\PotentialsD(\C)$。
-	\item $\T : \X \rightarrow \Y$：モンジュ写像、典型的には$\T_\sharp \al = \be$を満たす。
+	\item $\T : \X \rightarrow \Y$：Monge写像、典型的には$\T_\sharp \al = \be$を満たす。
 	\item $(\al_t)_{t=0}^1$：動的測度、$\al_{t=0}=\al_0$かつ$\al_{t=1}=\al_1$。
-	\item $\speed$：ベナムー・ブレニエ定式化における速度；$\Moment=\al \speed$：運動量。
+	\item $\speed$：Benamou-Brenier定式化における速度；$\Moment=\al \speed$：運動量。
 	\item $(\f,\g)$：双対ポテンシャル、離散測度に対して$(\fD,\gD)$は双対変数。
-	\item $(\uD,\vD) \eqdef (e^{\fD/\varepsilon},e^{\gD/\varepsilon})$：シンクホーンスケーリング。
-	\item $\K \eqdef e^{-\C/\varepsilon}$：シンクホーンのためのギブスカーネル。
+	\item $(\uD,\vD) \eqdef (e^{\fD/\varepsilon},e^{\gD/\varepsilon})$：Sinkhornスケーリング。
+	\item $\K \eqdef e^{-\C/\varepsilon}$：SinkhornのためのGibbsカーネル。
 	% entropy
 	\item $\flow$：$\Wass_1$型問題（ダイバージェンス制約下の最適化）のためのフロー。
 	\item $\MKD_\C(\a,\b)$および$\MK_\c(\al,\be)$：コスト$\C$（ヒストグラム）および$\c$（任意の測度）を持つOTに関連する最適化問題の値。
-	\item $\WassD_p(\a,\b)$および$\Wass_p(\al,\be)$：地上距離行列$\distD$（ヒストグラム）および距離$\dist$（任意の測度）に関連する$p$-ワッサーシュタイン距離。
+	\item $\WassD_p(\a,\b)$および$\Wass_p(\al,\be)$：地上距離行列$\distD$（ヒストグラム）および距離$\dist$（任意の測度）に関連する$p$-Wasserstein距離。
 	\item $\lambda\in\simplex_S$：$S$個の測度の重心を計算するために使用される重みベクトル。
-	\item $\dotp{\cdot}{\cdot}$：通常のユークリッド内積；同じサイズの二つの行列$A$と$B$に対して、$\dotp{A}{B} \eqdef \trace(A^\top B)$はフロベニウス内積。
+	\item $\dotp{\cdot}{\cdot}$：通常のEuclid内積；同じサイズの二つの行列$A$と$B$に対して、$\dotp{A}{B} \eqdef \trace(A^\top B)$はFrobenius内積。
 	\item $\f\oplus \g(x,y) \eqdef f(x)+g(y)$、二つの関数$\f : \X \rightarrow \RR, \g : \Y \rightarrow \RR$に対して、
 		$\f \oplus \g : \X\times \Y \rightarrow \RR$を定義する。
 	\item $\fD \oplus \gD \eqdef \fD \ones_m^\top + \ones_n \gD^\top \in \RR^{n\times m}$、二つのベクトル$\fD\in\RR^n$、$\gD\in\RR^m$に対して。

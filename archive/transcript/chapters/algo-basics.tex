@@ -9,7 +9,7 @@
 
 線形計画法の目的は、目的関数が線形であり、制約が関心のある変数に関する線形（不）等式であるような最適化問題を解くことである。最適輸送問題はこの記述に適合するため、この広いクラスの問題の特殊な場合である。しかしながら、最適輸送はすべての線形計画の中でも真に特別であると言える。第一に、\citeauthor{dantzig1991}が線形計画を解こうとした初期の動機は、輸送問題を解くこととと密接に関連していた~\citep[p. 210]{dantzig49econometrica}。第二に、特殊な場合に過ぎないにもかかわらず、最適輸送問題は最適化の分野で注目され続けた。それは、最適輸送問題が最小費用ネットワークフローとして知られる線形計画の重要なクラスと関連し、実際には等価であることが、~\citet{ford1962flows}の結果により~\citep[p. 213, Lem. 9.3]{korte2012combinatorial}間もなく理解されたためである。そのため、OT問題は数理計画法の誕生~\citep{Dantzig51}以来、特に注目されてきており、新しい読者に最適化を紹介するために今なお広く用いられている~\citep[\S1, p. 4]{nocedal}。
 
-\section{カントロヴィッチの線形計画}\label{s-kantorovich}
+\section{Kantorovichの線形計画}\label{s-kantorovich}
 式~\eqref{eq-mk-discr}で主OT問題を既に導入した：
 \eql{\label{eq-mk-discr-algo}
 	\MKD_{\C}(\a,\b) =
@@ -51,7 +51,7 @@ $$\P\in \RR^{n\times m}\in \CouplingsD(\a,\b) \Leftrightarrow \p\in\RR^{nm}_+, \
 $$\LagrangeMKD(\hD)\eqdef \umin{\p \in \RR^{nm}_+} \transp{\cc}\p-\transp{\hD}(\mathbf{A}\p-\q).$$
 まず、この緩和問題は$\p$に対する周辺制約を持たないことに注意する。この最小化はより多くの$\p$の解を許容するため、$\LagrangeMKD(\hD)$は$\bar{z}=\MKD_{\C}(\a,\b)$よりも小さくなることが期待される。実際、主問題\eqref{eq-mk-discr-algo}の任意の最適解を$\p^\star$と書くと、
 $$\umin{\p \in \RR^{nm}_+} \transp{\cc}\p-\transp{\hD}(\mathbf{A}\p-\q) \leq \transp{\cc}\p^\star-\transp{\hD}(\mathbf{A}\p^\star-\q)=\transp{\cc}\p^\star=\bar{z}.$$
-したがって、上記のアプローチは、任意のコストベクトル$\hD$に対して元の問題~\eqref{eq-mk-discr-algo}の最適な上界を計算するための問題を定義する。この関数は$\MKD$のラグランジュ双対関数と呼ばれる。
+したがって、上記のアプローチは、任意のコストベクトル$\hD$に対して元の問題~\eqref{eq-mk-discr-algo}の最適な上界を計算するための問題を定義する。この関数は$\MKD$のLagrange双対関数と呼ばれる。
 双対理論の目的は、\emph{任意の}コストベクトル$\hD$に対して$\LagrangeMKD$を\emph{最大化}することにより、最良の下界$\underline{z}$を計算することである。すなわち
 $$
 	\underline{z}=\umax{\hD} \pa{ \LagrangeMKD(\hD)=\umax{\hD} \transp{\hD}\q + \umin{\p \in \RR^{nm}_+} \transp{(\cc-\transp{A}\hD)}\p }.
@@ -388,11 +388,11 @@ $$\min_{j} \C_{i,j} - \gD_{j}\geq \C_{i,\xi_i} - \gD_{\xi_i} -\varepsilon.$$
 \end{proof}
 
 
-したがって、競売アルゴリズムは$\C$変換の機構を利用する別の方法と見なすことができる。次に、正則化に基づく別のアプローチ、いわゆるシンクホーンアルゴリズムを探究する。これは~\citep{schmitzer2016stabilized}で議論されているように、競売アルゴリズムとも類似点がある。
+したがって、競売アルゴリズムは$\C$変換の機構を利用する別の方法と見なすことができる。次に、正則化に基づく別のアプローチ、いわゆるSinkhornアルゴリズムを探究する。これは~\citep{schmitzer2016stabilized}で議論されているように、競売アルゴリズムとも類似点がある。
 % $\fD^{\,\C\bar{\C}\C}\geq \fD^{\,\C}$ implies that $\fD^{\,\C\bar{\C}\C\bar{\C}}\leq \fD^{\,\C\bar{\C}}$
 %
 
-最後に、ユークリッド空間の低次元正則格子上では、これらの古典的な線形ソルバーにマルチスケール戦略を組み合わせることで、大幅な高速化が可能であることを注記する~\citep{schmitzer2016sparse,oberman2015efficient}。
+最後に、Euclid空間の低次元正則格子上では、これらの古典的な線形ソルバーにマルチスケール戦略を組み合わせることで、大幅な高速化が可能であることを注記する~\citep{schmitzer2016sparse,oberman2015efficient}。
 
 
 

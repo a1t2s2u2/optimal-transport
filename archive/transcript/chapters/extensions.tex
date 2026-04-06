@@ -444,11 +444,11 @@ Radon変換~\eqref{eq-barycenter-radon-sliced}（Euler離散化）、Lagrange離
 %%%
 \paragraph{スライスWassersteinカーネル}
 
-計算の単純さに加えて、スライスWasserstein距離のもう一つの利点は、注意~\ref{rem-1d-ot-generic}、特に公式~\eqref{eq-wass-cumul}で詳述されているように、ユークリッド距離と等距であること（すなわち「ヒルベルト的」計量であること）である。
+計算の単純さに加えて、スライスWasserstein距離のもう一つの利点は、注意~\ref{rem-1d-ot-generic}、特に公式~\eqref{eq-wass-cumul}で詳述されているように、Euclid距離と等距であること（すなわち「Hilbert的」計量であること）である。
 %
-~\S\ref{sec-non-embeddability}で強調されたように、これは$\RR^\dim$上のWasserstein距離$\Wass_2$と対照的であり、$\Wass_2$は次元$\dim \geq 2$においてヒルベルト的ではない。
+~\S\ref{sec-non-embeddability}で強調されたように、これは$\RR^\dim$上のWasserstein距離$\Wass_2$と対照的であり、$\Wass_2$は次元$\dim \geq 2$においてHilbert的ではない。
 %
-したがって、このスライス距離を用いて、分布の空間$\Mm_1^+(\RR^\dim)$に再生核ヒルベルト空間構造を与えることが可能である（~\S\ref{sec-non-embeddability}で詳述されている通り）。
+したがって、このスライス距離を用いて、分布の空間$\Mm_1^+(\RR^\dim)$に再生核Hilbert空間構造を与えることが可能である（~\S\ref{sec-non-embeddability}で詳述されている通り）。
 %
 例えば、指数カーネルとエネルギー距離カーネル
 \eq{
@@ -469,7 +469,7 @@ Radon変換~\eqref{eq-barycenter-radon-sliced}（Euler離散化）、Lagrange離
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{ベクトルと行列の輸送}
 
-実数値測度$\al \in \Mm(\Xx)$は、ベクトル値測度$\al \in \Mm(\Xx;\VV)$に容易に一般化される。ここで$\VV$はあるベクトル空間である。記法の簡潔さのため、$\VV$はユークリッド空間であり、ある内積$\dotp{\cdot}{\cdot}$を備えていると仮定する（典型的には$\VV=\RR^\dim$であり、内積は標準的なものである）。この内積のおかげで、ベクトル値測度は連続関数$g : \Xx \rightarrow \VV$の双対と同一視される。すなわち、任意のそのような$g$に対して、測度との積分は
+実数値測度$\al \in \Mm(\Xx)$は、ベクトル値測度$\al \in \Mm(\Xx;\VV)$に容易に一般化される。ここで$\VV$はあるベクトル空間である。記法の簡潔さのため、$\VV$はEuclid空間であり、ある内積$\dotp{\cdot}{\cdot}$を備えていると仮定する（典型的には$\VV=\RR^\dim$であり、内積は標準的なものである）。この内積のおかげで、ベクトル値測度は連続関数$g : \Xx \rightarrow \VV$の双対と同一視される。すなわち、任意のそのような$g$に対して、測度との積分は
 \eql{\label{eq-integration-vec-valued}
 	\int_\Xx g(x) \d\al(x) \in \RR,
 }

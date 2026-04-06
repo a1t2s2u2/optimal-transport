@@ -1,17 +1,17 @@
 % !TEX root = ../ComputationalOTFnT.tex
 
 \begin{abstract}
-最適輸送（OT）理論は、フランスの数学者ガスパール・モンジュ（1746--1818）の言葉を借りて非公式に説明することができる：シャベルを手にした作業員が、建設現場に積まれた大きな砂山を移動させなければならない。作業員の目標は、その砂をすべて使って、指定された形状（例えば、巨大な砂の城）の目標となる砂山を築くことである。当然ながら、作業員は総労力を最小化したいと考え、それは例えばシャベル一杯の砂を運ぶのに要する総距離や総時間として定量化される。
+最適輸送（OT）理論は、フランスの数学者ガスパール・Monge（1746--1818）の言葉を借りて非公式に説明することができる：シャベルを手にした作業員が、建設現場に積まれた大きな砂山を移動させなければならない。作業員の目標は、その砂をすべて使って、指定された形状（例えば、巨大な砂の城）の目標となる砂山を築くことである。当然ながら、作業員は総労力を最小化したいと考え、それは例えばシャベル一杯の砂を運ぶのに要する総距離や総時間として定量化される。
 %
 OTに関心を持つ数学者たちは、この問題を二つの確率分布——同じ体積を持つ二つの異なる砂山——を比較する問題として定式化する。彼らは、最初の砂山を二番目の砂山へと変形、\emph{輸送}、または再形成するあらゆる可能な方法を考慮し、砂の一粒をある場所から別の場所へ移動させるのにどれだけのコストがかかるかという「局所的な」考慮を用いて、そのような各輸送に「大域的な」コストを関連付ける。数学者たちは、その最小コストの輸送の性質と、その効率的な計算に関心を持っている。
 %
-その最小コストは分布間の距離を定義するだけでなく、確率分布の空間上に豊かな幾何学的構造をもたらす。その構造は、これらの分布が定義される基礎となる「地上」空間の重要な幾何学的性質を借用するという意味で正準的である。例えば、基礎空間がユークリッド空間である場合、補間、重心、凸性、関数の勾配といった重要な概念は、OT幾何学を備えた分布の空間に自然に拡張される。
+その最小コストは分布間の距離を定義するだけでなく、確率分布の空間上に豊かな幾何学的構造をもたらす。その構造は、これらの分布が定義される基礎となる「地上」空間の重要な幾何学的性質を借用するという意味で正準的である。例えば、基礎空間がEuclid空間である場合、補間、重心、凸性、関数の勾配といった重要な概念は、OT幾何学を備えた分布の空間に自然に拡張される。
 
 %To illustrate this problem, consider the ``mines and factories'' problem: Suppose that the first distribution describes the spatial distribution of a raw resource. Typically, such a raw resource is dug from the earth at several mines. definitionThese resources must be transformed to be of any use, and this is carried out at factories. Ideally, each mine would have next to it a factory able to process its production of raw resources so as to minimize any transportation cost. This is of course not the case in general: factories of varying size and locations are likely to form a distribution with very different caracteristics , whose consumption and locations describe a second distribution. In this example, the cost function might describe
 
 % Despite this relatively abstract description, optimal transport theory answers many basic questions related to the way our economy works, such as in the ``mines and factories'' problem: The first pile of sand is distributed across an entire country, and each grain of sand represents a unit of a useful raw resource; the target pile is peaked where those resources are needed, typically in factories, where they are meant to be processed. In that scenario, one seeks the least costly way to move all these resources, given the knowledge of all costs needed to ship a unit of resource from any storage point to any factory.
 
-OTは多くの場面で、異なる形で（再）発見されてきており、豊かな歴史を持っている。モンジュの先駆的な仕事は工学的問題に動機づけられていたが、1920年代のトルストイ、1940年代のヒッチコック、カントロヴィッチ、クープマンスが物流と経済学におけるその重要性を確立した。ダンツィグは1949年に線形計画法の枠組みの中でこれを数値的に解き、OTに最適化における確固たる基盤を与えた。OTはその後1990年代に解析学者たち、特にブレニエによって再検討され、同時にコンピュータビジョンの分野ではアースムーバー距離の名前で知られるようになった。
+OTは多くの場面で、異なる形で（再）発見されてきており、豊かな歴史を持っている。Mongeの先駆的な仕事は工学的問題に動機づけられていたが、1920年代のトルストイ、1940年代のヒッチコック、Kantorovich、クープマンスが物流と経済学におけるその重要性を確立した。Dantzigは1949年に線形計画法の枠組みの中でこれを数値的に解き、OTに最適化における確固たる基盤を与えた。OTはその後1990年代に解析学者たち、特にBrenierによって再検討され、同時にコンピュータビジョンの分野ではアースムーバー距離の名前で知られるようになった。
 %
 近年、大規模な問題次元にスケール可能な近似ソルバーの登場により、OTの普及にさらなる革命が起きている。その結果、OTは画像科学（色やテクスチャ処理など）、グラフィックス（形状操作）、機械学習（回帰、分類、生成モデリング）における様々な問題を解決するためにますます活用されるようになっている。
 

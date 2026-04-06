@@ -12,6 +12,26 @@
 \usepackage{amsmath,amssymb}
 \usepackage{notations}
 
+% フォントサイズを若干小さく (11pt→10pt)
+\makeatletter
+\renewcommand\normalsize{%
+   \@setfontsize\normalsize\@xpt{13}%
+   \abovedisplayskip 9\p@ \@plus2\p@ \@minus5\p@
+   \abovedisplayshortskip \z@ \@plus3\p@
+   \belowdisplayshortskip 5\p@ \@plus3\p@ \@minus3\p@
+   \belowdisplayskip \abovedisplayskip
+   \let\@listi\@listI
+}
+\renewcommand\small{%
+   \@setfontsize\small\@ixpt{11.5}%
+   \abovedisplayskip 8\p@ \@plus2\p@ \@minus4\p@
+   \abovedisplayshortskip \z@ \@plus2\p@
+   \belowdisplayshortskip 4\p@ \@plus2\p@ \@minus2\p@
+   \belowdisplayskip \abovedisplayskip
+}
+\makeatother
+\normalsize
+
 \floatstyle{ruled}
 \newfloat{boxfloat}{h}{boxfloat}[chapter]{
 \title{Computational Optimal Transport}
