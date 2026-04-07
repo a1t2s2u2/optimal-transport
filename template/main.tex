@@ -1,0 +1,69 @@
+\documentclass[uplatex, dvipdfmx]{jsreport}
+
+\input{preamble}
+
+\title{タイトル}
+\author{著者名}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+概要をここに記述する．
+\end{abstract}
+
+\tableofcontents
+
+% --- 章の読み込み ---
+% \input{chapters/01_chapter}
+
+% --- サンプル: 各環境の使い方 ---
+\chapter{サンプル}
+
+\begin{definition}{連続関数}{continuous}
+  関数 $f \colon \R \to \R$ が点 $a$ で\textbf{連続}であるとは，
+  任意の $\varepsilon > 0$ に対してある $\delta > 0$ が存在し，
+  $\abs{x - a} < \delta$ ならば $\abs{f(x) - f(a)} < \varepsilon$
+  が成り立つことをいう．
+\end{definition}
+
+\begin{theorem}{中間値の定理}{ivt}
+  $f$ が閉区間 $[a,b]$ 上で連続であり，$f(a) \neq f(b)$ ならば，
+  $f(a)$ と $f(b)$ の間の任意の値 $c$ に対して，
+  $f(\xi) = c$ となる $\xi \in (a,b)$ が存在する．
+\end{theorem}
+
+\begin{proof}
+  ここに証明を記述する．
+\end{proof}
+
+\begin{proposition}{有界性}{bounded}
+  閉区間上の連続関数は有界である．
+\end{proposition}
+
+\begin{remark}{}{rem-sample}
+  注意事項をここに記述する．
+\end{remark}
+
+\begin{example}{}{ex-sample}
+  $f(x) = x^2$ は $\R$ 上で連続である．
+\end{example}
+
+\begin{setting}{}{set-sample}
+  以下では $(X, d)$ を完備距離空間とする．
+\end{setting}
+
+\begin{algorithm}{alg:sample}
+  \textbf{Input:} 入力データ \\
+  \textbf{Output:} 出力結果 \\[4pt]
+  1. 初期化を行う \\
+  2. 反復処理を実行する \\
+  3. 結果を返す
+\end{algorithm}
+
+% --- 参考文献 ---
+% \bibliographystyle{plainnat}
+% \bibliography{references}
+
+\end{document}
