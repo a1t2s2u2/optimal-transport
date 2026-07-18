@@ -234,47 +234,59 @@ $\int d^p\,\d\pi$ と略記する．
 \end{lemma}
 
 \begin{proof}
-  $\varepsilon>0$ を任意に取る．
-  $A$ は tight だから，compact 集合 $K\subset\mathcal{X}$ が存在して
+  $\varepsilon>0$ とする．定義~\ref{def:meas-tight}を
+  $A,B$ にそれぞれ $\varepsilon/2$ で適用すると，
   \[
-    \mu(K^c)\leq\frac{\varepsilon}{2}
-    \qquad(\forall\mu\in A).
+    \begin{gathered}
+      K_{\varepsilon/2}\subset\mathcal{X},\quad
+      L_{\varepsilon/2}\subset\mathcal{Y},
+      \qquad K_{\varepsilon/2},L_{\varepsilon/2}\text{ は compact},\\
+      \eta(\mathcal{X}\setminus K_{\varepsilon/2})
+      \leq\frac{\varepsilon}{2}\quad(\forall\eta\in A),
+      \qquad
+      \rho(\mathcal{Y}\setminus L_{\varepsilon/2})
+      \leq\frac{\varepsilon}{2}\quad(\forall\rho\in B)
+    \end{gathered}
   \]
-  同様に $B$ は tight だから，compact 集合 $L\subset\mathcal{Y}$ が存在して
+  となる $K_{\varepsilon/2},L_{\varepsilon/2}$ が存在する．
+
+  $\pi\in\Couplings(A,B)$ を任意に取る．その第1周辺分布は $A$ に，
+  第2周辺分布は $B$ に属するから，
   \[
-    \nu(L^c)\leq\frac{\varepsilon}{2}
-    \qquad(\forall\nu\in B).
+    \pi\bigl((\mathcal{X}\setminus K_{\varepsilon/2})
+      \times\mathcal{Y}\bigr)
+    \leq\frac{\varepsilon}{2},
+    \qquad
+    \pi\bigl(\mathcal{X}\times
+      (\mathcal{Y}\setminus L_{\varepsilon/2})\bigr)
+    \leq\frac{\varepsilon}{2}.
   \]
 
-  ここで $\pi\in\Couplings(A,B)$ を任意に取る．定義より，ある
-  $\mu\in A$，$\nu\in B$ が存在して $\pi\in\Couplings(\mu,\nu)$ となる．
-  すなわち $\pi$ の第1周辺分布は $\mu$，第2周辺分布は $\nu$ である．
-  一方，
-  \[
-    (K\times L)^c
-    \subset(K^c\times\mathcal{Y})\cup(\mathcal{X}\times L^c)
-  \]
-  であるから，
+  $K_{\varepsilon/2},L_{\varepsilon/2}$ は compact だから
+  $K_{\varepsilon/2}\times L_{\varepsilon/2}$ も compact である．また，
   \[
     \begin{aligned}
-      \pi\bigl((K\times L)^c\bigr)
-      &\leq\pi(K^c\times\mathcal{Y})+\pi(\mathcal{X}\times L^c)\\
-      &=\mu(K^c)+\nu(L^c)\\
+      \pi\bigl((\mathcal{X}\times\mathcal{Y})
+        \setminus(K_{\varepsilon/2}\times L_{\varepsilon/2})\bigr)
+      &=\pi\Bigl(
+        \bigl((\mathcal{X}\setminus K_{\varepsilon/2})\times\mathcal{Y}\bigr)
+        \cup
+        \bigl(\mathcal{X}\times
+          (\mathcal{Y}\setminus L_{\varepsilon/2})\bigr)
+        \Bigr)\\
+      &\leq
+      \pi\bigl((\mathcal{X}\setminus K_{\varepsilon/2})\times\mathcal{Y}\bigr)
+      +\pi\bigl(\mathcal{X}\times
+        (\mathcal{Y}\setminus L_{\varepsilon/2})\bigr)
+      &&\text{（$\pi$ の劣加法性）}\\
       &\leq\frac{\varepsilon}{2}+\frac{\varepsilon}{2}
       =\varepsilon.
     \end{aligned}
   \]
-  この評価は $\pi$ の取り方によらないから
-  \[
-    \sup_{\pi\in\Couplings(A,B)}\pi\bigl((K\times L)^c\bigr)\leq\varepsilon.
-  \]
-
-  また $K,L$ は compact だから $K\times L$ も
-  $\mathcal{X}\times\mathcal{Y}$ で compact である
-  （定義~\ref{def:meas-continuous-compact}）．
-  よって任意の $\varepsilon>0$ に対し，すべての
-  $\pi\in\Couplings(A,B)$ がその外側に置く質量を $\varepsilon$ 以下にする
-  compact 集合 $K\times L$ が存在するから，$\Couplings(A,B)$ は tight である．
+  この評価は任意の $\pi\in\Couplings(A,B)$ に対して成り立つ．
+  任意の $\varepsilon>0$ に対してこのような compact 集合
+  $K_{\varepsilon/2}\times L_{\varepsilon/2}$ が取れたので，
+  定義~\ref{def:meas-tight}より $\Couplings(A,B)$ は tight である．
 \end{proof}
 
 \begin{theorem}{$\Wass_p$ の最適 coupling の存在（Villani Thm 4.1）}{wp-optimal-coupling-existence}
