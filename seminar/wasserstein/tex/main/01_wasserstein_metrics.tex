@@ -180,16 +180,33 @@ $\int d^p\,\d\pi$ と略記する．
 \end{lemma}
 
 \begin{proof}
-  各 $m\in\N$ に対し $c_m(x,y):=\min\{d(x,y)^p,m\}$ とおく．$d$ は連続
-  （注意~\ref{rem:wp-welldef}）だから $c_m$ は有界連続である．
-  したがって弱収束の定義と $0\leq c_m\leq d^p$ より
+  $d^p$ は連続だが有界とは限らないので，弱収束の定義をそのまま使うことは
+  できない．そこで各 $m\in\N$ に対し
   \[
-    \int c_m\,\d\pi
-    =\lim_{k\to\infty}\int c_m\,\d\pi_k
-    \leq\liminf_{k\to\infty}\int d^p\,\d\pi_k.
+    c_m(x,y):=\min\{d(x,y)^p,m\}
   \]
-  $c_m\uparrow d^p$ だから，左辺に単調収束定理
-  （定理~\ref{thm:meas-mct}）を適用して $m\to\infty$ とすれば
+  と切り捨てた関数を考え，$m\to\infty$ とする．
+  $d$ は連続（注意~\ref{rem:wp-welldef}）だから $c_m$ も連続であり，
+  $0\leq c_m\leq m$ より有界である．
+
+  以下 $m$ を固定する．$c_m$ は有界連続だから，弱収束の定義
+  （定義~\ref{def:meas-weak-convergence}）より
+  \[
+    \lim_{k\to\infty}\int c_m\,\d\pi_k=\int c_m\,\d\pi.
+  \]
+  一方 $c_m\leq d^p$ だから，各 $k$ で
+  $\int c_m\,\d\pi_k\leq\int d^p\,\d\pi_k$ である．
+  よって $\liminf$ の単調性（定義~\ref{def:meas-limsup}）を
+  $a_k=\int c_m\,\d\pi_k$，$b_k=\int d^p\,\d\pi_k$ に適用すると，
+  $(a_k)$ は収束するので $\lim_ka_k=\liminf_ka_k\leq\liminf_kb_k$，すなわち
+  \[
+    \int c_m\,\d\pi\leq\liminf_{k\to\infty}\int d^p\,\d\pi_k.
+  \]
+
+  この右辺は $m$ によらない．また $c_m$ は $m$ について非負非減少で
+  $c_m\uparrow d^p$（各点）だから，単調収束定理
+  （定理~\ref{thm:meas-mct}）より左辺は $m\to\infty$ で
+  $\int d^p\,\d\pi$ に収束する．したがって $m\to\infty$ として
   \[
     \int d^p\,\d\pi
     \leq\liminf_{k\to\infty}\int d^p\,\d\pi_k
@@ -197,38 +214,67 @@ $\int d^p\,\d\pi$ と略記する．
   を得る．
 \end{proof}
 
+\begin{remark}{記法：測度の族}{wp-family-symbol}
+  Villani は測度の族を $\mathcal{P},\mathcal{Q}$ と書くが，
+  本資料では確率測度全体を $\Prob(\mathcal{X})$ と書いているため
+  記号が衝突する．そこで以下では族を $A,B$ で表す．
+\end{remark}
+
 \begin{lemma}{輸送計画の tightness（Villani Lem 4.4）}{wp-plans-tight}
   $\mathcal{X},\mathcal{Y}$ を Polish 空間とし，
-  $\mathcal{P}\subset\Prob(\mathcal{X})$，
-  $\mathcal{Q}\subset\Prob(\mathcal{Y})$ を
-  tight な部分集合とする．このとき，
-  周辺分布がそれぞれ $\mathcal{P}$，$\mathcal{Q}$ に属する
-  coupling の全体
+  $A\subset\Prob(\mathcal{X})$，$B\subset\Prob(\mathcal{Y})$ を
+  tight（定義~\ref{def:meas-tight}）な確率測度の族とする．
+  周辺分布がそれぞれ $A$，$B$ に属する coupling の全体を
   \[
-    \Couplings(\mathcal{P},\mathcal{Q})
-    :=\bigcup_{\mu\in\mathcal{P},\,\nu\in\mathcal{Q}}
-    \Couplings(\mu,\nu)
+    \Couplings(A,B)
+    :=\bigcup_{\mu\in A,\,\nu\in B}\Couplings(\mu,\nu)
   \]
-  は $\Prob(\mathcal{X}\times\mathcal{Y})$ で tight である．
+  と定めると，$\Couplings(A,B)$ は $\Prob(\mathcal{X}\times\mathcal{Y})$
+  で tight である．
 \end{lemma}
 
 \begin{proof}
-  $\varepsilon>0$ に対し，compact 集合 $K\subset\mathcal{X}$，
-  $L\subset\mathcal{Y}$ を，すべての $\mu\in\mathcal{P}$，
-  $\nu\in\mathcal{Q}$ について
-  $\mu(K^c)\leq\varepsilon/2$，$\nu(L^c)\leq\varepsilon/2$
-  となるように取る．すると任意の $\mu\in\mathcal{P}$，$\nu\in\mathcal{Q}$，
-  $\pi\in\Couplings(\mu,\nu)$ に対し
+  $\varepsilon>0$ を任意に取る．
+  $A$ は tight だから，compact 集合 $K\subset\mathcal{X}$ が存在して
   \[
-    \pi((K\times L)^c)
-    \leq
-    \pi(K^c\times\mathcal{Y})+\pi(\mathcal{X}\times L^c)
-    =\mu(K^c)+\nu(L^c)\leq\varepsilon.
+    \mu(K^c)\leq\frac{\varepsilon}{2}
+    \qquad(\forall\mu\in A).
   \]
-  ここで最初の不等式は
-  $(K\times L)^c\subset(K^c\times\mathcal{Y})\cup(\mathcal{X}\times L^c)$
-  による．$K\times L$ は compact であり，この集合は
-  $\pi$ の取り方によらないから，coupling の全体は tight である．
+  同様に $B$ は tight だから，compact 集合 $L\subset\mathcal{Y}$ が存在して
+  \[
+    \nu(L^c)\leq\frac{\varepsilon}{2}
+    \qquad(\forall\nu\in B).
+  \]
+
+  ここで $\pi\in\Couplings(A,B)$ を任意に取る．定義より，ある
+  $\mu\in A$，$\nu\in B$ が存在して $\pi\in\Couplings(\mu,\nu)$ となる．
+  すなわち $\pi$ の第1周辺分布は $\mu$，第2周辺分布は $\nu$ である．
+  一方，
+  \[
+    (K\times L)^c
+    \subset(K^c\times\mathcal{Y})\cup(\mathcal{X}\times L^c)
+  \]
+  であるから，
+  \[
+    \begin{aligned}
+      \pi\bigl((K\times L)^c\bigr)
+      &\leq\pi(K^c\times\mathcal{Y})+\pi(\mathcal{X}\times L^c)\\
+      &=\mu(K^c)+\nu(L^c)\\
+      &\leq\frac{\varepsilon}{2}+\frac{\varepsilon}{2}
+      =\varepsilon.
+    \end{aligned}
+  \]
+  この評価は $\pi$ の取り方によらないから
+  \[
+    \sup_{\pi\in\Couplings(A,B)}\pi\bigl((K\times L)^c\bigr)\leq\varepsilon.
+  \]
+
+  また $K,L$ は compact だから $K\times L$ も
+  $\mathcal{X}\times\mathcal{Y}$ で compact である
+  （定義~\ref{def:meas-continuous-compact}）．
+  よって任意の $\varepsilon>0$ に対し，すべての
+  $\pi\in\Couplings(A,B)$ がその外側に置く質量を $\varepsilon$ 以下にする
+  compact 集合 $K\times L$ が存在するから，$\Couplings(A,B)$ は tight である．
 \end{proof}
 
 \begin{theorem}{$\Wass_p$ の最適 coupling の存在（Villani Thm 4.1）}{wp-optimal-coupling-existence}
