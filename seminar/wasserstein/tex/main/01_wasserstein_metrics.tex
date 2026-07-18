@@ -263,19 +263,17 @@ $\int d^p\,\d\pi$ と略記する．
   \]
 
   $K_{\varepsilon/2},L_{\varepsilon/2}$ は compact だから
-  $K_{\varepsilon/2}\times L_{\varepsilon/2}$ も compact であり，
-  \[
-    (\mathcal{X}\times\mathcal{Y})
-    \setminus(K_{\varepsilon/2}\times L_{\varepsilon/2})
-    =\bigl((\mathcal{X}\setminus K_{\varepsilon/2})\times\mathcal{Y}\bigr)
-    \cup
-    \bigl(\mathcal{X}\times(\mathcal{Y}\setminus L_{\varepsilon/2})\bigr).
-  \]
-  したがって
+  $K_{\varepsilon/2}\times L_{\varepsilon/2}$ も compact である．また，
   \[
     \begin{aligned}
       \pi\bigl((\mathcal{X}\times\mathcal{Y})
         \setminus(K_{\varepsilon/2}\times L_{\varepsilon/2})\bigr)
+      &=\pi\Bigl(
+        \bigl((\mathcal{X}\setminus K_{\varepsilon/2})\times\mathcal{Y}\bigr)
+        \cup
+        \bigl(\mathcal{X}\times
+          (\mathcal{Y}\setminus L_{\varepsilon/2})\bigr)
+        \Bigr)\\
       &\leq
       \pi\bigl((\mathcal{X}\setminus K_{\varepsilon/2})\times\mathcal{Y}\bigr)
       +\pi\bigl(\mathcal{X}\times
@@ -285,13 +283,7 @@ $\int d^p\,\d\pi$ と略記する．
       =\varepsilon.
     \end{aligned}
   \]
-  $\pi$ は任意だったから，
-  \[
-    \pi\bigl((\mathcal{X}\times\mathcal{Y})
-      \setminus(K_{\varepsilon/2}\times L_{\varepsilon/2})\bigr)
-    \leq\varepsilon
-    \qquad(\forall\pi\in\Couplings(A,B)).
-  \]
+  この評価は任意の $\pi\in\Couplings(A,B)$ に対して成り立つ．
   任意の $\varepsilon>0$ に対してこのような compact 集合
   $K_{\varepsilon/2}\times L_{\varepsilon/2}$ が取れたので，
   定義~\ref{def:meas-tight}より $\Couplings(A,B)$ は tight である．
