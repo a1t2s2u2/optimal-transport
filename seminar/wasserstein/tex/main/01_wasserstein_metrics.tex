@@ -234,47 +234,38 @@ $\int d^p\,\d\pi$ と略記する．
 \end{lemma}
 
 \begin{proof}
-  $\varepsilon>0$ を任意に取る．
-  $A$ は tight だから，compact 集合 $K\subset\mathcal{X}$ が存在して
+  $\varepsilon>0$ とする．$A,B$ の tightness より，
   \[
-    \mu(K^c)\leq\frac{\varepsilon}{2}
-    \qquad(\forall\mu\in A).
+    \begin{gathered}
+      K\subset\mathcal{X},\quad L\subset\mathcal{Y},
+      \qquad K,L\text{ は compact},\\
+      \mu(K^c)\leq\frac{\varepsilon}{2}\quad(\forall\mu\in A),
+      \qquad
+      \nu(L^c)\leq\frac{\varepsilon}{2}\quad(\forall\nu\in B)
+    \end{gathered}
   \]
-  同様に $B$ は tight だから，compact 集合 $L\subset\mathcal{Y}$ が存在して
+  となる $K,L$ が存在する．任意の $\pi\in\Couplings(A,B)$ に対し，
   \[
-    \nu(L^c)\leq\frac{\varepsilon}{2}
-    \qquad(\forall\nu\in B).
+    \exists(\mu,\nu)\in A\times B
+    \colon \pi\in\Couplings(\mu,\nu).
   \]
-
-  ここで $\pi\in\Couplings(A,B)$ を任意に取る．定義より，ある
-  $\mu\in A$，$\nu\in B$ が存在して $\pi\in\Couplings(\mu,\nu)$ となる．
-  すなわち $\pi$ の第1周辺分布は $\mu$，第2周辺分布は $\nu$ である．
-  一方，
-  \[
-    (K\times L)^c
-    \subset(K^c\times\mathcal{Y})\cup(\mathcal{X}\times L^c)
-  \]
-  であるから，
+  したがって
   \[
     \begin{aligned}
       \pi\bigl((K\times L)^c\bigr)
+      &=\pi\bigl((K^c\times\mathcal{Y})
+        \cup(\mathcal{X}\times L^c)\bigr)\\
       &\leq\pi(K^c\times\mathcal{Y})+\pi(\mathcal{X}\times L^c)\\
       &=\mu(K^c)+\nu(L^c)\\
-      &\leq\frac{\varepsilon}{2}+\frac{\varepsilon}{2}
-      =\varepsilon.
+      &\leq\varepsilon.
     \end{aligned}
   \]
-  この評価は $\pi$ の取り方によらないから
+  $K\times L$ は compact であり，$\pi$ は任意だから，
   \[
-    \sup_{\pi\in\Couplings(A,B)}\pi\bigl((K\times L)^c\bigr)\leq\varepsilon.
+    \pi(K\times L)\geq1-\varepsilon
+    \qquad(\forall\pi\in\Couplings(A,B)).
   \]
-
-  また $K,L$ は compact だから $K\times L$ も
-  $\mathcal{X}\times\mathcal{Y}$ で compact である
-  （定義~\ref{def:meas-continuous-compact}）．
-  よって任意の $\varepsilon>0$ に対し，すべての
-  $\pi\in\Couplings(A,B)$ がその外側に置く質量を $\varepsilon$ 以下にする
-  compact 集合 $K\times L$ が存在するから，$\Couplings(A,B)$ は tight である．
+  よって $\Couplings(A,B)$ は tight である．
 \end{proof}
 
 \begin{theorem}{$\Wass_p$ の最適 coupling の存在（Villani Thm 4.1）}{wp-optimal-coupling-existence}
