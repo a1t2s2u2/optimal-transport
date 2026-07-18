@@ -1,0 +1,403 @@
+% ============================================================
+%  preamble.tex — Peyré–Cuturi "Computational Optimal Transport"
+%  日本語訳用プリアンブル
+%
+%  原論文の mystyle.sty / notations.sty / now.cls のマクロ・定理環境を
+%  uplatex + dvipdfmx 環境へ移植したもの．本文中の数式・記法・ラベルは
+%  原論文と一字一句同一にし，地の文のみ日本語化する方針に対応する．
+% ============================================================
+
+% --- 数式 (AMS) ---
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathrsfs}
+\usepackage{mathtools}
+\usepackage{dsfont}
+\usepackage{stmaryrd}
+\usepackage{bbold}      % \mathbb{1} など（原論文の黒板太字フォントに合わせる）
+
+% --- 体裁・列挙・図表 ---
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{bmpsize}    % dvipdfmx で jpg/png のサイズ取得
+\usepackage{color}
+\usepackage{xcolor}
+\usepackage{mdframed}   % gray box
+
+% 原論文の図は ../original/images/ を参照する
+\graphicspath{{../original/images/}}
+
+% --- ハイパーリンク（日本語対応） ---
+\usepackage[dvipdfmx,hidelinks]{hyperref}
+\usepackage{pxjahyper}
+
+% --- 参考文献（原論文の \citet/\citep を維持） ---
+\usepackage[numbers,sort&compress]{natbib}
+
+% ============================================================
+%  定理環境（now.cls / mystyle.sty 由来）
+% ============================================================
+% 長い名前（now.cls）と短い名前（mystyle.sty）の両方を定義し，
+% 短い名前は同じカウンタを共有させて番号付けを統一する．
+\newtheorem{theorem}{定理}[chapter]
+\newtheorem{proposition}{命題}[chapter]
+\newtheorem{definition}{定義}[chapter]
+\newtheorem{remark}{注意}[chapter]
+\newtheorem{example}{例}[chapter]
+\newtheorem{lemma}[theorem]{補題}
+\newtheorem{corollary}[theorem]{系}
+
+\newtheorem{thm}[theorem]{定理}
+\newtheorem{prop}[proposition]{命題}
+\newtheorem{defn}[definition]{定義}
+\newtheorem{rem}[remark]{注意}
+\newtheorem{exmp}[example]{例}
+\newtheorem{lem}[theorem]{補題}
+\newtheorem{cor}[theorem]{系}
+
+% --- 灰色ボックス（離散測度・一般測度の発展的解説） ---
+\mdfsetup{backgroundcolor=gray!5}
+\mdfdefinestyle{mystyle}{backgroundcolor=gray!15}
+
+\newenvironment{rem1}[1]{%
+  \begin{rem}[#1]\begin{mdframed}%
+}{%
+  \end{mdframed}\end{rem}}
+\newenvironment{rem11}[2]{%
+  \begin{rem}[#1]\label{#2}\begin{mdframed}%
+}{%
+  \end{mdframed}\end{rem}}
+\newenvironment{rem2}[1]{%
+  \begin{rem}[#1]\begin{mdframed}[style=mystyle]%
+}{%
+  \end{mdframed}\end{rem}}
+
+% boxed なリスト用フロート（mystyle.sty 由来）
+\floatstyle{boxed}
+\newfloat{listing}{H}{loi}
+\floatname{listing}{表}
+
+% ============================================================
+%  コメント・編集用マクロ（no-op 化）
+% ============================================================
+\newcommand{\todo}[1]{}
+\newcommand{\gab}[1]{}
+\newcommand{\marco}[1]{}
+\newcommand{\todoK}[1]{}
+\newcommand{\citeme}[0]{}
+\newcommand{\addreference}[0]{}
+
+% ============================================================
+%  記法（notations.sty 由来）
+% ============================================================
+\newcommand{\VectMode}[1]{\mathrm{\textbf{#1}}}
+
+\newcommand{\U}{U}
+\newcommand{\R}{R}
+\newcommand{\E}{\mathbf{E}}
+\newcommand{\q}{\VectMode{q}}
+
+% 定数ベクトル・行列
+\newcommand{\ones}{\mathbb{1}}
+\newcommand{\zeros}{\mathbb{0}}
+\newcommand{\Identity}{\mathbb{I}}
+
+% 単体・入力測度・ヒストグラム
+\newcommand{\simplex}{\Si}
+\renewcommand{\mu}{\al}
+\renewcommand{\nu}{\be}
+\renewcommand{\a}{\VectMode{a}}
+\renewcommand{\b}{\VectMode{b}}
+
+\let\ccedilla\c           % 元の \c（セディーユ）を退避（謝辞などで使用）
+\renewcommand{\c}{c}      % コスト関数 c（notations.sty の最終定義に合わせる）
+\newcommand{\e}{\VectMode{e}}
+\newcommand{\z}{\VectMode{z}}
+
+\newcommand{\alledges}{\mathcal{E}}
+\def\NW{\mathbf{NW}}
+
+% 入力空間
+\newcommand{\X}{\Xx}
+\newcommand{\Y}{\Yy}
+\newcommand{\Z}{\mathcal{Z}}
+\newcommand{\RKHS}{\mathcal{H}}
+
+% 距離
+\newcommand{\dist}{d}
+\newcommand{\distD}{\VectMode{D}}
+
+% Monge 写像
+\newcommand{\T}{T}
+
+% カップリング測度・行列
+\renewcommand{\P}{\VectMode{P}}
+\newcommand{\Q}{\VectMode{Q}}
+\newcommand{\RRd}{\VectMode{R}}
+\renewcommand{\SS}{\VectMode{S}}
+\newcommand{\p}{\VectMode{p}}
+\newcommand{\Couplings}{\Uu}
+\newcommand{\CouplingsD}{\VectMode{U}}
+
+% コスト・行列
+\newcommand{\C}{\VectMode{C}}
+\newcommand{\cc}{\VectMode{c}}
+\newcommand{\D}{\VectMode{D}}
+\newcommand{\J}{\VectMode{J}}
+
+\newcommand{\A}{\VectMode{A}}
+\newcommand{\B}{\VectMode{B}}
+
+% 双対変数
+\newcommand{\fD}{\VectMode{f}}
+\newcommand{\gD}{\VectMode{g}}
+\newcommand{\hD}{\VectMode{h}}
+\newcommand{\zD}{\VectMode{z}}
+
+% softmin
+\newcommand{\smine}{\text{min}_\epsilon\,}
+\newcommand{\SMINEc}{\text{Min}^{\text{col}}_\epsilon\,}
+\newcommand{\SMINEr}{\text{Min}^{\text{row}}_\epsilon\,}
+
+\def\ie{\emph{i.e.} }
+\def\eg{\emph{e.g.} }
+
+% 双対連続関数・ポテンシャル
+\newcommand{\f}{f}
+\newcommand{\g}{g}
+\newcommand{\PotentialsD}{\VectMode{R}}
+\newcommand{\Potentials}{\Rr}
+
+% Wasserstein 距離・最適輸送値
+\DeclareMathOperator{\Wass}{\mathcal{W}}
+\DeclareMathOperator{\WassD}{\mathrm{W}}
+\newcommand{\MK}{\mathcal{L}}
+\newcommand{\MKD}{\mathrm{L}}
+\newcommand{\LagrangeMKD}{\mathrm{H}}
+
+\newcommand{\SINKHORND}{\mathfrak{D}}
+\newcommand{\SINKHORNP}{\mathfrak{P}}
+
+% Lagrangian
+\newcommand{\Lag}{\mathcal{E}}
+
+% Sinkhorn
+\newcommand{\uD}{\VectMode{u}}
+\newcommand{\vD}{\VectMode{v}}
+\DeclareMathOperator{\LSE}{LSE}
+\newcommand{\K}{\VectMode{K}}
+\newcommand{\logP}{\VectMode{S}}
+\newcommand{\Hilbert}{d_\Hh}
+\newcommand{\UD}{\VectMode{U}}
+\newcommand{\VD}{\VectMode{V}}
+
+% 密度・累積
+\newcommand{\density}[1]{\rho_{#1}}
+\newcommand{\cumul}[1]{\Cc_{#1}}
+
+% 動的定式化
+\newcommand{\speed}{v}
+\newcommand{\Moment}{J}
+\newcommand{\MomentD}{\VectMode{J}}
+\newcommand{\BBConstr}{\Cc}
+\newcommand{\BBConstrD}{\VectMode{C}}
+\newcommand{\InterpBB}{\Ii}
+
+% Prox / Proj / Lip / 次元 / 置換
+\DeclareMathOperator{\Prox}{Prox}
+\DeclareMathOperator{\Proj}{Proj}
+\DeclareMathOperator{\Lip}{Lip}
+\renewcommand{\dim}{d}
+\newcommand{\Perm}{\mathrm{Perm}}
+
+% W1 フロー
+\newcommand{\flow}{s}
+\newcommand{\flowD}{\VectMode{s}}
+
+% グラフ
+\newcommand{\Edges}{\Ee}
+\newcommand{\weight}{\VectMode{w}}
+
+% エントロピー・KL・ダイバージェンス
+\renewcommand{\H}{H}
+\newcommand{\HD}{\VectMode{H}}
+\DeclareMathOperator{\KL}{KL}
+\newcommand{\KLD}{\VectMode{KL}}
+\newcommand{\Divergm}{\Dd}
+\newcommand{\DivergmD}{\VectMode{D}}
+\DeclareMathOperator{\TV}{TV}
+\newcommand{\Hellinger}{\mathfrak{h}}
+
+% RKHS
+\newcommand{\Krkhs}{k}
+\newcommand{\KrkhsD}{\VectMode{k}}
+
+% Unbalanced
+\DeclareMathOperator{\WFR}{WFR}
+
+% ガウス測度
+\newcommand{\Gaussian}{\Nn}
+\newcommand{\mean}{\mathbf{m}}
+\newcommand{\cov}{\mathbf{\Sigma}}
+
+% Sliced / Gromov–Wasserstein
+\DeclareMathOperator{\SW}{SW}
+\DeclareMathOperator{\GW}{\mathcal{GW}}
+\DeclareMathOperator{\GWD}{\mathrm{GW}}
+
+% 半離散
+\newcommand{\Laguerre}{\LL}
+
+% 反復添字
+\newcommand{\itL}[1]{#1^{(L)}}
+\renewcommand{\it}[1]{#1^{(\ell)}}
+\newcommand{\itt}[1]{#1^{(\ell+1)}}
+\newcommand{\ittt}[1]{#1^{(\ell+2)}}
+\newcommand{\init}[1]{#1^{(0)}}
+
+% ============================================================
+%  一般記法（mystyle.sty 由来）
+% ============================================================
+% 黒板太字
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\CC}{\mathbb{C}}
+\newcommand{\GG}{\mathbb{G}}
+\newcommand{\LL}{\mathbb{L}}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\QQ}{\mathbb{Q}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\VV}{\mathbb{V}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\FF}{\mathbb{F}}
+\newcommand{\KK}{\mathbb{K}}
+\newcommand{\TT}{\mathbb{T}}
+\newcommand{\UU}{\mathbb{U}}
+\newcommand{\EE}{\mathbb{E}}
+\newcommand{\XX}{\mathbb{X}}
+\newcommand{\YY}{\mathbb{Y}}
+
+% カリグラフィー
+\newcommand{\Aa}{\mathcal{A}}
+\newcommand{\Bb}{\mathcal{B}}
+\newcommand{\Cc}{\mathcal{C}}
+\newcommand{\Dd}{\mathcal{D}}
+\newcommand{\Ee}{\mathcal{E}}
+\newcommand{\Ff}{\mathcal{F}}
+\newcommand{\Gg}{\mathcal{G}}
+\newcommand{\Hh}{\mathcal{H}}
+\newcommand{\Ii}{\mathcal{I}}
+\newcommand{\Jj}{\mathcal{J}}
+\newcommand{\Kk}{\mathcal{K}}
+\newcommand{\Ll}{\mathcal{L}}
+\newcommand{\Mm}{\mathcal{M}}
+\newcommand{\Nn}{\mathcal{N}}
+\newcommand{\Oo}{\mathcal{O}}
+\newcommand{\Pp}{\mathcal{P}}
+\newcommand{\Qq}{\mathcal{Q}}
+\newcommand{\Rr}{\mathcal{R}}
+\newcommand{\Ss}{\mathcal{S}}
+\newcommand{\Tt}{\mathcal{T}}
+\newcommand{\Uu}{\mathcal{U}}
+\newcommand{\Vv}{\mathcal{V}}
+\newcommand{\Ww}{\mathcal{W}}
+\newcommand{\Xx}{\mathcal{X}}
+\newcommand{\Yy}{\mathcal{Y}}
+\newcommand{\Zz}{\mathcal{Z}}
+
+% ギリシャ文字の略記
+\newcommand{\al}{\alpha}
+\newcommand{\la}{\lambda}
+\newcommand{\ga}{\gamma}
+\newcommand{\Ga}{\Gamma}
+\newcommand{\La}{\Lambda}
+\newcommand{\si}{\sigma}
+\newcommand{\Si}{\Sigma}
+\newcommand{\be}{\beta}
+\newcommand{\de}{\delta}
+\newcommand{\De}{\Delta}
+\let\tphi\phi
+\renewcommand{\phi}{\varphi}
+\renewcommand{\th}{\theta}
+\newcommand{\om}{\omega}
+\newcommand{\Om}{\Omega}
+
+% 演算子・記号
+\newcommand{\guill}[1]{``#1''}
+\renewcommand{\epsilon}{\varepsilon}
+\newcommand{\Id}{\mathrm{Id}}
+\newcommand{\eqdef}{\ensuremath{\stackrel{\mbox{\upshape\tiny def.}}{=}}}
+\DeclareMathOperator{\Ker}{Ker}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\trace}{tr}
+\DeclareMathOperator{\Tr}{Tr}
+\DeclareMathOperator{\Supp}{Supp}
+\DeclareMathOperator{\Sign}{Sign}
+\DeclareMathOperator{\sign}{sign}
+\DeclareMathOperator{\support}{supp}
+\DeclareMathOperator{\diverg}{div}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\dom}{dom}
+\newcommand{\foralls}{\forall \,}
+\renewcommand{\d}{\mathrm{d}}
+\newcommand{\pd}[2]{ \frac{ \partial #1}{\partial #2} }
+\newcommand{\pdd}[2]{ \frac{ \partial^2 #1}{\partial #2^2} }
+\newcommand{\dotp}[2]{\langle #1,\,#2\rangle}
+\newcommand{\norm}[1]{\left\| #1 \right\|}
+\newcommand{\norms}[1]{\| #1 \|}
+\newcommand{\normb}[1]{\Big|\!\Big| #1 \Big |\!\Big|}
+\newcommand{\normB}[1]{\left|\!\left| #1 \right|\!\right|}
+\newcommand{\abs}[1]{\left\lvert#1\right\rvert}
+\newcommand{\absb}[1]{\Big| #1 \Big|}
+\newcommand{\func}[4]{ {\left\{  \begin{array}{ccc} #1 & \longrightarrow & #2 \\ #3 & \longmapsto & #4 \end{array}  \right.} }
+\newcommand{\transp}[1]{ {#1}^{\mathrm{T}} }
+\newcommand{\eq}[1]{\begin{equation*}#1\end{equation*}}
+\newcommand{\eql}[1]{\begin{equation}#1\end{equation}}
+\DeclareMathOperator{\argmin}{argmin}
+\DeclareMathOperator{\argmax}{argmax}
+\newcommand{\uargmin}[1]{\underset{#1}{\argmin}\;}
+\newcommand{\uargmax}[1]{\underset{#1}{\argmax}\;}
+\newcommand{\umin}[1]{\underset{#1}{\min}\;}
+\newcommand{\umax}[1]{\underset{#1}{\max}\;}
+\newcommand{\usup}[1]{\underset{#1}{\sup}\;}
+\newcommand{\uinf}[1]{\underset{#1}{\inf}\;}
+\newcommand{\pa}[1]{\left( #1 \right)}
+\newcommand{\bpa}[1]{\big( #1 \big)}
+\newcommand{\choice}[1]{ \left\{ \begin{array}{l} #1 \end{array} \right. }
+\newcommand{\ens}[1]{ \{ #1 \} }
+\newcommand{\enscond}[2]{ \left\{ #1 \;:\; #2 \right\} }
+\newcommand{\ensconds}[2]{ \{ #1 \;:\; #2 \} }
+\newcommand{\range}[1]{\llbracket#1\rrbracket}
+
+% 文中の定型スペース
+\newcommand{\qandq}{ \quad \text{かつ} \quad }
+\newcommand{\qqandqq}{ \qquad \text{かつ} \qquad }
+\newcommand{\qifq}{ \quad \text{if} \quad }
+\newcommand{\qqifqq}{ \qquad \text{if} \qquad }
+\newcommand{\qwhereq}{ \quad \text{where} \quad }
+\newcommand{\qqwhereqq}{ \qquad \text{where} \qquad }
+\newcommand{\qwithq}{ \quad \text{with} \quad }
+\newcommand{\qqwithqq}{ \qquad \text{with} \qquad }
+\newcommand{\qforq}{ \quad \text{for} \quad }
+\newcommand{\qqforqq}{ \qquad \text{for} \qquad }
+\newcommand{\qqsinceqq}{ \qquad \text{since} \qquad }
+\newcommand{\qsinceq}{ \quad \text{since} \quad }
+\newcommand{\qarrq}{\quad\Longrightarrow\quad}
+\newcommand{\qqarrqq}{\quad\Longrightarrow\quad}
+\newcommand{\qiffq}{\quad\Longleftrightarrow\quad}
+\newcommand{\qqiffqq}{\qquad\Longleftrightarrow\qquad}
+\newcommand{\qsubjq}{ \quad \text{subject to} \quad }
+\newcommand{\qqsubjqq}{ \qquad \text{subject to} \qquad }
+\newcommand{\qstq}{ \quad \text{s.\ t.\ }\quad }
+
+% 図版補助
+\newcommand{\myfigure}[3]{%
+    \begin{figure}[ht]\begin{center}#1\end{center}\caption{\textit{#2}}\label{#3}\end{figure}}
+\newcommand{\figitem}[1]{\textsf{\textbf{(#1)}}}
+\newcommand{\figitemraise}[2]{\raisebox{#1}{\figitem{#2}}}
+\newcommand{\itemraise}[2]{\raisebox{#1}{#2}}
+\newcommand{\imgBox}[1]{\setlength{\fboxsep}{0pt}\fbox{#1}}

@@ -1,0 +1,220 @@
+\chapter{凸性と線形代数}
+\label{ch:found-convex}
+
+\begin{definition}{有限集合と濃度}{sem-finite}
+  集合 $S$ が\textbf{有限集合}であるとは，ある $n \in \N$ と
+  全単射 $f \colon \range{n} \to S$ が存在することをいう
+  （ここで $\range{n} \defeq \{1, 2, \ldots, n\}$）．
+  この $n$ を $S$ の\textbf{濃度}といい $|S|$ で表す．
+\end{definition}
+
+\begin{claim}{有限集合の最小元}{sem-finite-min}
+  $\R$ の空でない有限部分集合 $S$（定義~\ref{def:sem-finite}）には
+  最小元が存在する：
+  \[
+    \exists\, s^* \in S \;\;\text{s.t.}\;\; \forall\, s \in S,\; s^* \leq s.
+  \]
+\end{claim}
+
+\begin{proof}
+  $|S|$ に関する帰納法で示す．
+
+  \textbf{$|S| = 1$ の時．} $S$ の唯一の元がそのまま最小元．
+
+  \textbf{$|S| \geq 2$ の時．}
+  $\R$ の任意の空でない有限部分集合 $T$ について $|T| < |S|$ ならば最小元を持つと仮定する．
+  $a \in S$ を任意に取り $S' \defeq S \setminus \{a\}$ とおくと $|S'| = |S| - 1$ なので，
+  仮定が $S'$ に対して適用でき最小元 $b \in S'$ を持つ．
+  $a, b \in \R$ より $b \leq a$ か $a < b$ のいずれかが成り立つので，
+  \[
+    s^* \defeq
+    \begin{cases}
+      b & (b \leq a), \\
+      a & (a < b)
+    \end{cases}
+  \]
+  とおけば $s^* \in S$ かつ任意の $s \in S$ について $s^* \leq s$．
+\end{proof}
+
+\begin{definition}{置換}{sem-permutation}
+  $n \in \N$ について，全単射
+  $\sigma \colon \range{n} \to \range{n}$ を $\range{n}$ 上の\textbf{置換}という．
+  置換全体の集合を
+  \[
+    \Perm(n) \defeq \{\sigma \colon \range{n} \to \range{n} \mid \sigma \text{ は全単射}\}
+  \]
+  で表す．$\Perm(n)$ は $|\Perm(n)| = n!$ の有限集合
+  （定義~\ref{def:sem-finite}）である．
+\end{definition}
+
+\begin{definition}{線形関数}{sem-linear-function}
+  ベクトル空間 $V$ から $\R$ への関数 $f \colon V \to \R$ が
+  \textbf{線形関数}であるとは，
+  任意の $v_1, v_2 \in V$ と $\lambda \in \R$ に対して
+  \begin{enumerate}
+    \item[(i)] 加法性：$f(v_1 + v_2) = f(v_1) + f(v_2)$，
+    \item[(ii)] 斉次性：$f(\lambda v_1) = \lambda f(v_1)$
+  \end{enumerate}
+  が成り立つことをいう．
+\end{definition}
+
+\begin{definition}{全成分 $1$ のベクトル}{sem-ones-vector}
+  $n \in \N$ に対し，$\R^n$ の全成分が $1$ のベクトルを
+  \[
+    \ones_n \defeq (1, 1, \ldots, 1)^\top \in \R^n
+  \]
+  で表す．
+\end{definition}
+
+\begin{definition}{フロベニウス内積}{sem-frobenius-inner}
+  同じサイズの2つの行列 $\mathbf{A}, \mathbf{B} \in \R^{n \times m}$ に対し，
+  \textbf{フロベニウス内積}を
+  \[
+    \inner{\mathbf{A}}{\mathbf{B}}
+    \defeq \tr(\mathbf{A}^\top \mathbf{B})
+    = \sum_{i=1}^{n} \sum_{j=1}^{m} A_{i,j} B_{i,j}
+  \]
+  で定める．
+\end{definition}
+
+\begin{definition}{対角行列 $\diag(\mathbf{u})$}{sem-diag}
+  ベクトル $\mathbf{u} = (u_1, \ldots, u_n)^\top \in \R^n$ に対し，
+  その成分を対角に並べ，他の成分を $0$ とした $n \times n$ 行列を
+  \[
+    \diag(\mathbf{u}) \defeq
+    \begin{pmatrix}
+      u_1 &        & \\
+          & \ddots & \\
+          &        & u_n
+    \end{pmatrix},
+    \qquad\text{すなわち}\qquad
+    \diag(\mathbf{u})_{i,j} =
+    \begin{cases}
+      u_i & (i = j), \\
+      0   & (i \neq j)
+    \end{cases}
+  \]
+  で表す．対角行列を左右から掛けることは行・列のスケーリングにあたり，
+  $\mathbf{u} \in \R^n$, $\mathbf{v} \in \R^m$, $\mathbf{K} \in \R^{n \times m}$ に対して
+  \[
+    \bigl(\diag(\mathbf{u})\,\mathbf{K}\,\diag(\mathbf{v})\bigr)_{i,j} = u_i\, K_{i,j}\, v_j
+  \]
+  が成り立つ（左から掛けると第 $i$ 行が $u_i$ 倍，右から掛けると第 $j$ 列が $v_j$ 倍される）．
+\end{definition}
+
+\begin{definition}{凸集合}{sem-convex}
+  ベクトル空間 $V$ の部分集合 $S \subset V$ が\textbf{凸}であるとは，
+  任意の $v_1, v_2 \in S$ と任意の $t \in [0,1]$ に対して
+  \[
+    t v_1 + (1-t) v_2 \in S
+  \]
+  が成り立つことをいう．
+\end{definition}
+
+\begin{definition}{凸関数と狭義凸関数}{sem-convex-function}
+  凸集合（定義~\ref{def:sem-convex}）$S \subset V$ 上の関数 $f \colon S \to \R$ が
+  \textbf{凸関数}であるとは，任意の $v_1, v_2 \in S$ と
+  任意の $t \in [0,1]$ に対して
+  \[
+    f\bigl(t v_1 + (1-t)v_2\bigr)
+    \leq
+    t f(v_1) + (1-t) f(v_2)
+  \]
+  が成り立つことをいう．さらに，任意の相異なる
+  $v_1 \neq v_2$ と任意の $t \in (0,1)$ に対して
+  \[
+    f\bigl(t v_1 + (1-t)v_2\bigr)
+    <
+    t f(v_1) + (1-t) f(v_2)
+  \]
+  が成り立つとき，$f$ は\textbf{狭義凸関数}であるという．
+\end{definition}
+
+\begin{proposition}{狭義凸関数の最小点の一意性}{sem-strict-convex-unique-min}
+  凸集合 $S$ 上の狭義凸関数 $f$ が
+  $S$ 上で最小値を達成するならば，その最小点は一意である．
+\end{proposition}
+
+\begin{proof}
+  $\mathbf{x}, \mathbf{y} \in S$ がともに $f$ の最小点とし，
+  $\mathbf{x} \neq \mathbf{y}$ と仮定する．
+  $S$ の凸性から
+  $\tfrac{1}{2}(\mathbf{x}+\mathbf{y}) \in S$ であり，
+  狭義凸性から
+  \[
+    f\!\left(\tfrac{\mathbf{x}+\mathbf{y}}{2}\right)
+    < \tfrac{1}{2}f(\mathbf{x}) + \tfrac{1}{2}f(\mathbf{y})
+    = f(\mathbf{x})
+  \]
+  となり，$\mathbf{x}$ の最小性に矛盾する．
+\end{proof}
+
+\begin{theorem}{等式制約付き最小化の 1 階必要条件（Lagrange の未定乗数法）}{sem-lagrange-foc}
+  $U \subseteq \R^N$ を開集合，$f \colon U \to \R$ を微分可能な関数とする．
+  ベクトル $\mathbf{a}_1, \dots, \mathbf{a}_r \in \R^N$ と実数 $c_1, \dots, c_r$ による
+  $r$ 個の 1 次式の等式制約
+  \[
+    \mathbf{a}_k^\top \mathbf{x} = c_k \qquad (k = 1, \dots, r)
+  \]
+  の下で，$f$ が点 $\mathbf{x}^* \in U$ で局所最小値をとるとする．
+  このとき，ある実数 $\mu_1, \dots, \mu_r$ が存在して
+  \[
+    \nabla f(\mathbf{x}^*) = \sum_{k=1}^{r} \mu_k\, \mathbf{a}_k
+  \]
+  が成り立つ．ここで $\nabla f \defeq \bigl(\tfrac{\partial f}{\partial x_1}, \dots, \tfrac{\partial f}{\partial x_N}\bigr)^\top$
+  は $f$ の\textbf{勾配}，すなわち各変数による偏微分を並べたベクトルである．
+  制約ベクトル $\mathbf{a}_k$ が 1 次独立でなくても乗数は存在する（ただし一意とは限らない）．
+\end{theorem}
+
+\begin{proof}
+  すべての制約を保つ方向，すなわち各 $k$ で $\mathbf{a}_k^\top \mathbf{d} = 0$ をみたす任意の
+  $\mathbf{d} \in \R^N$ をとる．$U$ は開集合で $\mathbf{x}^* \in U$ だから，十分小さい $|t|$ では
+  $\mathbf{x}^* + t\mathbf{d} \in U$ であり，
+  $\mathbf{a}_k^\top(\mathbf{x}^* + t\mathbf{d}) = c_k + t\,\mathbf{a}_k^\top\mathbf{d} = c_k$ ゆえ
+  各制約をみたしたままである．
+  1 変数関数 $g(t) \defeq f(\mathbf{x}^* + t\mathbf{d})$ は $t = 0$ で局所最小値をとり，
+  $f$ の微分可能性と連鎖律より $g'(0) = \nabla f(\mathbf{x}^*)^\top \mathbf{d}$ だから，$g'(0) = 0$，
+  すなわち $\nabla f(\mathbf{x}^*)^\top \mathbf{d} = 0$ を得る．
+  つまり $\nabla f(\mathbf{x}^*)$ は，$\mathbf{a}_1, \dots, \mathbf{a}_r$ のすべてと直交するベクトル
+  $\mathbf{d}$ とことごとく直交する．これは $\nabla f(\mathbf{x}^*)$ が
+  $\mathbf{a}_1, \dots, \mathbf{a}_r$ の張る空間に属することと同値（線形代数の基本事実；
+  $\mathbf{a}_k$ の 1 次独立性は不要）だから，ある実数 $\mu_1, \dots, \mu_r$ により
+  $\nabla f(\mathbf{x}^*) = \sum_{k=1}^{r} \mu_k \mathbf{a}_k$ と書ける．
+\end{proof}
+
+\begin{theorem}{行列変数版：等式制約付き最小化の 1 階必要条件}{sem-lagrange-foc-matrix}
+  $U \subseteq \R^{n\times m}$ を開集合，$F \colon U \to \R$ を微分可能な関数とする．
+  行列 $\mathbf{A}_1,\dots,\mathbf{A}_r \in \R^{n\times m}$ と実数 $c_1,\dots,c_r$ による
+  $r$ 個の 1 次式の等式制約
+  \[
+    \inner{\mathbf{A}_k}{\mathbf{P}} = c_k
+    \qquad (k=1,\dots,r)
+  \]
+  の下で，$F$ が点 $\mathbf{P}^* \in U$ で局所最小値をとるとする．
+  このとき，ある実数 $\mu_1,\dots,\mu_r$ が存在して
+  \[
+    \nabla F(\mathbf{P}^*) = \sum_{k=1}^{r}\mu_k\,\mathbf{A}_k
+  \]
+  が成り立つ．ここで
+  \[
+    \nabla F(\mathbf{P}^*)
+    \defeq
+    \left(\frac{\partial F}{\partial P_{i,j}}(\mathbf{P}^*)\right)_{i,j}
+  \]
+  は行列成分で偏微分を並べた行列である．
+  制約行列 $\mathbf{A}_k$ が 1 次独立でなくても乗数は存在する（ただし一意とは限らない）．
+\end{theorem}
+
+\begin{proof}
+  行列の成分を行ごとに並べることで，$\R^{n\times m}$ を $\R^{nm}$ と同一視する．
+  この同一視の下で，制約
+  $\inner{\mathbf{A}_k}{\mathbf{P}}=c_k$ は
+  $\operatorname{vec}(\mathbf{A}_k)^\top\operatorname{vec}(\mathbf{P})=c_k$ と書ける．
+  よって定理~\ref{thm:sem-lagrange-foc} を適用すると，
+  ある $\mu_1,\dots,\mu_r$ が存在する．
+  ベクトルとしての勾配を行列の形に戻すと，
+  \[
+    \nabla F(\mathbf{P}^*) = \sum_{k=1}^{r}\mu_k\,\mathbf{A}_k
+  \]
+  が成り立つ．
+\end{proof}

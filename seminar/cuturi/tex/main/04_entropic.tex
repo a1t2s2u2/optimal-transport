@@ -1,0 +1,928 @@
+\chapter{エントロピー正則化}
+\label{ch:seminar-03-entropic}
+
+%% ============================================================
+%% 3.1 エントロピー正則化
+%% ============================================================
+\section{エントロピー正則化}
+\label{sec:sem-entropic-regularization}
+
+\begin{definition}{離散エントロピー}{sem-discrete-entropy}
+  非負行列 $\mathbf{P} \in \Rnn^{n \times m}$ に対して，
+  \textbf{離散エントロピー}を
+  \[
+    \Hb(\mathbf{P})
+    \defeq
+    - \sum_{i=1}^{n} \sum_{j=1}^{m}
+      P_{i,j}\bigl(\log P_{i,j} - 1\bigr)
+  \]
+  で定める．ただし $0\log 0 = 0$ と約束する．
+\end{definition}
+
+\begin{remark}{通常の Shannon エントロピーとの違い}{sem-entropy-convention}
+  確率行列では $\sum_{i,j}P_{i,j}=1$ なので，
+  \[
+    \Hb(\mathbf{P})
+    =
+    -\sum_{i,j} P_{i,j}\log P_{i,j} + 1
+  \]
+  であり，通常の Shannon エントロピーとは定数 $1$ だけ異なる．
+  この定数は最適化の解には影響しない．この形を使う理由は，
+  $-\Hb$ の微分が
+  \[
+    \frac{\partial(-\Hb)}{\partial P_{i,j}} = \log P_{i,j}
+  \]
+  と簡単になるからである．
+\end{remark}
+
+\begin{remark}{$\varphi(x)=x\log x-x$ の連続性}{sem-phi-continuous}
+  $-\Hb$ の各項 $\varphi(x) \defeq x\log x - x$ は $[0,\infty)$ 上で連続である．
+  実際，$(0,\infty)$ 上では連続関数の積・和として連続であり，
+  $x = 0$ では，約束 $0\log 0 = 0$ により $\varphi(0) = 0$ と定めると，
+  $\lim_{x\to0+} x\log x = 0$ から
+  \[
+    \lim_{x \to 0+} \varphi(x)
+    = \lim_{x \to 0+}\bigl(x\log x - x\bigr) = 0 = \varphi(0)
+  \]
+  となって $x = 0$ でも（右）連続である．
+  ゆえに $-\Hb(\mathbf{P}) = \sum_{i,j}\varphi(P_{i,j})$ は
+  $\Rnn^{n\times m}$ 上で連続である．
+\end{remark}
+
+\begin{definition}{エントロピー正則化された離散最適輸送}{sem-entropic-ot}
+  $\mathbf{a} \in \Rpos^n$（$\sum_{i=1}^n a_i = 1$），
+  $\mathbf{b} \in \Rpos^m$（$\sum_{j=1}^m b_j = 1$），
+  $\mathbf{C} \in \Rnn^{n \times m}$，$\varepsilon > 0$ とし，
+  \[
+    \CouplingsD(\mathbf{a}, \mathbf{b})
+    \defeq
+    \left\{
+      \mathbf{P} \in \Rnn^{n \times m}
+      \;\middle|\;
+      \mathbf{P}\ones_m = \mathbf{a},\;
+      \mathbf{P}^\top\ones_n = \mathbf{b}
+    \right\}
+  \]
+  とおく．離散エントロピー（定義~\ref{def:sem-discrete-entropy}）$\Hb$ を用いて，
+  \textbf{エントロピー正則化された離散 Kantorovich 問題}を
+  \[
+    \MKD_{\mathbf{C}}^\varepsilon(\mathbf{a}, \mathbf{b})
+    \defeq
+    \min_{\mathbf{P} \in \CouplingsD(\mathbf{a}, \mathbf{b})}
+    \left\{
+      \inner{\mathbf{C}}{\mathbf{P}}
+      - \varepsilon \Hb(\mathbf{P})
+    \right\}
+  \]
+  と定める．
+\end{definition}
+
+\begin{claim}{負エントロピーの狭義凸性}{sem-neg-entropy-strict-convex}
+  負エントロピー
+  \[
+    -\Hb(\mathbf{P}) = \sum_{i,j}\varphi(P_{i,j}),
+    \qquad \varphi(x) \defeq x\log x - x
+  \]
+  は $\CouplingsD(\mathbf{a}, \mathbf{b})$ 上で狭義凸である．
+\end{claim}
+
+\begin{proof}
+  $-\Hb(\mathbf{P}) = \sum_{i,j}\varphi(P_{i,j})$（$\varphi(x) = x\log x - x$）であるから，
+  \textbf{(1)} $\varphi$ が $[0,\infty)$ 上で狭義凸であること，
+  \textbf{(2)} そこから和 $\sum_{i,j}\varphi(P_{i,j})$ が狭義凸になること，
+  の順に示す．
+
+  \textbf{(1) $\varphi$ の狭義凸性．}
+  $\varphi$ は $(0,\infty)$ 上で $C^2$ 級かつ $\varphi''(x) = 1/x > 0$ をみたすから，
+  2階導関数の符号による判定で（厳密に）狭義凸である．
+  ただし以下ではこの判定を用いず，導関数 $\varphi' = \log$ が狭義単調増加であることと
+  平均値定理のみで示す．こちらは $\varphi$ が $C^1$ 級で導関数が狭義単調増加でありさえ
+  すれば（$\varphi''$ の存在＝$C^2$ 級を要さず）成り立つため，仮定が弱く一般性が高い．
+  $\varphi$ は $[0,\infty)$ 上で連続（注意~\ref{rem:sem-phi-continuous}），
+  $(0,\infty)$ 上で微分可能（定義~\ref{def:sem-differentiable}）で，
+  $\varphi'(x) = \log x$ は $(0,\infty)$ 上で狭義単調増加である．
+  相異なる $x_1, x_2 \in [0,\infty)$ と $\lambda \in (0,1)$ をとり，
+  $x^* \defeq \lambda x_1 + (1-\lambda)x_2 \in (0,\infty)$ とおく．
+  目標は
+  \[
+    \varphi(x^*) < \lambda\varphi(x_1) + (1-\lambda)\varphi(x_2)
+  \]
+  を示すことである．
+
+  $\varphi$ は閉区間 $[x_1, x^*]$, $[x^*, x_2]$ 上で連続，その内部で微分可能だから，
+  平均値定理（定理~\ref{thm:sem-mvt}）より
+  \[
+    \varphi(x_1) - \varphi(x^*) = \varphi'(c_1)\,(x_1 - x^*),
+    \qquad
+    \varphi(x_2) - \varphi(x^*) = \varphi'(c_2)\,(x_2 - x^*)
+  \]
+  をみたす $c_1$（$x_1$ と $x^*$ の間），$c_2$（$x^*$ と $x_2$ の間）が存在する．
+  $x_1 = 0$ のときも $c_1 \in (0, x^*)$ は $0$ より大きいので $\varphi'(c_1) = \log c_1$ は定義される．
+
+  $x^* = \lambda x_1 + (1-\lambda)x_2$ より
+  $x_1 - x^* = (1-\lambda)(x_1 - x_2)$,
+  $x_2 - x^* = -\lambda(x_1 - x_2)$
+  である．これらを上の 2 式に代入し，第 1 式を $\lambda$ 倍，第 2 式を $(1-\lambda)$ 倍して加えると
+  \begin{align*}
+    \lambda\varphi(x_1) + (1-\lambda)\varphi(x_2) - \varphi(x^*)
+    &= \lambda(1-\lambda)(x_1 - x_2)\,\varphi'(c_1)
+       - (1-\lambda)\lambda(x_1 - x_2)\,\varphi'(c_2) \\
+    &= \lambda(1-\lambda)(x_1 - x_2)\bigl(\varphi'(c_1) - \varphi'(c_2)\bigr)
+  \end{align*}
+  を得る（左辺は $\lambda + (1-\lambda) = 1$ より $\varphi(x^*)$ がまとまる）．
+
+  最後にこの符号を調べる．$c_1, c_2$ は $x^*$ をはさんで反対側にあるから
+  $c_1 - c_2$ は $x_1 - x_2$ と同符号であり，$\varphi'$ が狭義単調増加だから
+  $\varphi'(c_1) - \varphi'(c_2)$ も $c_1 - c_2$（ひいては $x_1 - x_2$）と同符号である．
+  ゆえに $(x_1 - x_2)\bigl(\varphi'(c_1) - \varphi'(c_2)\bigr) > 0$ となり，
+  $\lambda(1-\lambda) > 0$ と合わせて右辺は正．したがって目標の不等式が成り立ち，
+  $\varphi$ は $[0,\infty)$ 上で狭義凸である．
+
+  \textbf{(2) $-\Hb$ の狭義凸性．}
+  相異なる $\mathbf{P}, \mathbf{Q} \in \CouplingsD(\mathbf{a}, \mathbf{b})$ と $t \in (0,1)$ をとり，
+  凸結合 $(1-t)\mathbf{P} + t\mathbf{Q}$ における $-\Hb$ を評価する．
+  $-\Hb(\mathbf{R}) = \sum_{i,j}\varphi(R_{i,j})$ であり，
+  行列 $(1-t)\mathbf{P} + t\mathbf{Q}$ の $(i,j)$ 成分は $(1-t)P_{i,j} + tQ_{i,j}$ だから，
+  \begin{align*}
+    -\Hb\bigl((1-t)\mathbf{P} + t\mathbf{Q}\bigr)
+    &= \sum_{i,j}\varphi\bigl((1-t)P_{i,j} + tQ_{i,j}\bigr) \\
+    &\leq \sum_{i,j}\bigl[(1-t)\varphi(P_{i,j}) + t\varphi(Q_{i,j})\bigr] \\
+    &= (1-t)\sum_{i,j}\varphi(P_{i,j}) + t\sum_{i,j}\varphi(Q_{i,j}) \\
+    &= (1-t)\bigl(-\Hb(\mathbf{P})\bigr) + t\bigl(-\Hb(\mathbf{Q})\bigr)
+  \end{align*}
+  となる．等号の各行は $-\Hb = \sum_{i,j}\varphi$ の定義と和の線形性（スカラーのくくり出し）による．
+  第 2 行の不等号は，各成分に (1) の狭義凸性
+  $\varphi\bigl((1-t)P_{i,j}+tQ_{i,j}\bigr) \leq (1-t)\varphi(P_{i,j}) + t\varphi(Q_{i,j})$
+  を適用したもので，$P_{i,j} \neq Q_{i,j}$ の成分では狭義（$<$），
+  $P_{i,j} = Q_{i,j}$ の成分では等号である．
+  $\mathbf{P} \neq \mathbf{Q}$ より狭義となる成分が少なくとも 1 つあるので，
+  上の不等号は全体として狭義であり，
+  \[
+    -\Hb\bigl((1-t)\mathbf{P} + t\mathbf{Q}\bigr)
+    < (1-t)\bigl(-\Hb(\mathbf{P})\bigr) + t\bigl(-\Hb(\mathbf{Q})\bigr).
+  \]
+  よって $-\Hb$ は $\CouplingsD(\mathbf{a}, \mathbf{b})$ 上で狭義凸である．
+\end{proof}
+
+\begin{proposition}{正則化解の存在と一意性}{sem-entropic-existence-unique}
+  任意の $\varepsilon > 0$ に対して，
+  $\MKD_{\mathbf{C}}^\varepsilon(\mathbf{a}, \mathbf{b})$ は一意な最適解
+  \[
+    \mathbf{P}_\varepsilon
+    \defeq
+    \argmin_{\mathbf{P} \in \CouplingsD(\mathbf{a}, \mathbf{b})}
+    \left\{
+      \inner{\mathbf{C}}{\mathbf{P}}
+      - \varepsilon \Hb(\mathbf{P})
+    \right\}
+    \;\in\; \CouplingsD(\mathbf{a}, \mathbf{b})
+  \]
+  を持つ．
+\end{proposition}
+
+\begin{proof}
+  \textbf{存在．}
+  $\CouplingsD(\mathbf{a}, \mathbf{b})$ は空でないコンパクト集合である
+  （主張~\ref{clm:sem-discrete-kantorovich-existence} の証明）．
+  $\varphi(x) = x\log x - x$ は $[0,\infty)$ 上で連続（注意~\ref{rem:sem-phi-continuous}）だから，
+  目的関数
+  \[
+    F(\mathbf{P})
+    \defeq
+    \inner{\mathbf{C}}{\mathbf{P}} - \varepsilon \Hb(\mathbf{P})
+    =
+    \inner{\mathbf{C}}{\mathbf{P}}
+    + \varepsilon \sum_{i,j} \varphi(P_{i,j})
+  \]
+  も連続である．
+  コンパクト集合上の連続関数は最小値を達成するから，
+  最適解が存在する．
+
+  \textbf{一意性．}
+  正則化項がコストの線形性を破り，目的関数 $F$ を狭義凸化する点が鍵である．
+  $\mathbf{P}^\star, \mathbf{Q}^\star \in \CouplingsD(\mathbf{a}, \mathbf{b})$ をともに最適解とし，
+  最適値を $m \defeq \MKD_{\mathbf{C}}^\varepsilon(\mathbf{a}, \mathbf{b}) = F(\mathbf{P}^\star) = F(\mathbf{Q}^\star)$ とおく．
+  $\mathbf{P}^\star \neq \mathbf{Q}^\star$ と仮定する．
+  中点 $\mathbf{R} \defeq \tfrac{1}{2}(\mathbf{P}^\star + \mathbf{Q}^\star)$ は，
+  $\CouplingsD(\mathbf{a}, \mathbf{b})$ の凸性（主張~\ref{clm:sem-coupling-convex}）よりこれに属する．
+  主張~\ref{clm:sem-neg-entropy-strict-convex}（$-\Hb$ の狭義凸性）を
+  中点 $\mathbf{R} = \tfrac{1}{2}\mathbf{P}^\star + \tfrac{1}{2}\mathbf{Q}^\star$ に適用すると，
+  $\mathbf{P}^\star \neq \mathbf{Q}^\star$ より狭義不等号
+  \[
+    -\Hb(\mathbf{R})
+    < \tfrac{1}{2}\bigl(-\Hb(\mathbf{P}^\star)\bigr) + \tfrac{1}{2}\bigl(-\Hb(\mathbf{Q}^\star)\bigr)
+  \]
+  が成り立つ．また $\inner{\mathbf{C}}{\cdot}$ は線形だから
+  \[
+    \inner{\mathbf{C}}{\mathbf{R}}
+    = \tfrac{1}{2}\inner{\mathbf{C}}{\mathbf{P}^\star} + \tfrac{1}{2}\inner{\mathbf{C}}{\mathbf{Q}^\star}
+  \]
+  が等号で成り立つ．これらより（$\varepsilon > 0$ は不等号の向きを保つ）
+  \begin{align*}
+    F(\mathbf{R})
+    &= \inner{\mathbf{C}}{\mathbf{R}} - \varepsilon\Hb(\mathbf{R}) \\
+    &= \Bigl(\tfrac{1}{2}\inner{\mathbf{C}}{\mathbf{P}^\star} + \tfrac{1}{2}\inner{\mathbf{C}}{\mathbf{Q}^\star}\Bigr)
+       - \varepsilon\Hb(\mathbf{R}) \\
+    &< \Bigl(\tfrac{1}{2}\inner{\mathbf{C}}{\mathbf{P}^\star} + \tfrac{1}{2}\inner{\mathbf{C}}{\mathbf{Q}^\star}\Bigr)
+       + \tfrac{1}{2}\bigl(-\varepsilon\Hb(\mathbf{P}^\star)\bigr)
+       + \tfrac{1}{2}\bigl(-\varepsilon\Hb(\mathbf{Q}^\star)\bigr) \\
+    &= \tfrac{1}{2}\bigl(\inner{\mathbf{C}}{\mathbf{P}^\star} - \varepsilon\Hb(\mathbf{P}^\star)\bigr)
+       + \tfrac{1}{2}\bigl(\inner{\mathbf{C}}{\mathbf{Q}^\star} - \varepsilon\Hb(\mathbf{Q}^\star)\bigr) \\
+    &= \tfrac{1}{2}F(\mathbf{P}^\star) + \tfrac{1}{2}F(\mathbf{Q}^\star) = m
+  \end{align*}
+  を得る．ここで第 2 行で線形性の等式を $\inner{\mathbf{C}}{\mathbf{R}}$ に代入し，
+  第 3 行で $-\varepsilon\Hb(\mathbf{R})$ を狭義凸性（の $\varepsilon$ 倍）で上から押さえた．しかし $\mathbf{R} \in \CouplingsD(\mathbf{a}, \mathbf{b})$ かつ $m$ は $F$ の最小値だから
+  $F(\mathbf{R}) \geq m$ でなければならず，矛盾．
+  よって $\mathbf{P}^\star = \mathbf{Q}^\star$，すなわち最適解は一意である．
+\end{proof}
+
+%% ============================================================
+%% 3.2 KL ダイバージェンスによる定式化
+%% ============================================================
+\section{KL ダイバージェンスによる定式化}
+\label{sec:sem-kl-formulation}
+
+\begin{definition}{離散 KL ダイバージェンス}{sem-kl-divergence}
+  非負行列 $\mathbf{P}, \mathbf{K} \in \Rnn^{n \times m}$ に対して，
+  \textbf{KL ダイバージェンス}を
+  \[
+    \KLD(\mathbf{P} \| \mathbf{K})
+    \defeq
+    \sum_{i,j}
+    \left(
+      P_{i,j}\log\frac{P_{i,j}}{K_{i,j}}
+      - P_{i,j} + K_{i,j}
+    \right)
+  \]
+  で定める．ただし $0\log 0 = 0$ と約束し，
+  $P_{i,j} > 0$ かつ $K_{i,j}=0$ となる成分がある場合は
+  $\KLD(\mathbf{P}\|\mathbf{K}) = +\infty$ とする．
+\end{definition}
+
+\begin{definition}{Gibbs カーネル}{sem-gibbs-kernel}
+  コスト行列 $\mathbf{C}$ と $\varepsilon > 0$ に対して，
+  \textbf{Gibbs カーネル} $\mathbf{K} \in \Rpos^{n \times m}$ を
+  \[
+    K_{i,j} \defeq \exp\!\left(-\frac{C_{i,j}}{\varepsilon}\right)
+  \]
+  で定める．
+\end{definition}
+
+\begin{proposition}{正則化 OT は KL 射影である}{sem-entropic-kl-projection}
+  $\mathbf{K} = \exp(-\mathbf{C}/\varepsilon)$ とすると，
+  $\MKD_{\mathbf{C}}^\varepsilon(\mathbf{a}, \mathbf{b})$ の最適解は
+  \[
+    \mathbf{P}_\varepsilon
+    =
+    \argmin_{\mathbf{P} \in \CouplingsD(\mathbf{a}, \mathbf{b})}
+    \KLD(\mathbf{P}\|\mathbf{K})
+  \]
+  と書ける．
+\end{proposition}
+
+\begin{proof}
+  $\log K_{i,j} = -C_{i,j}/\varepsilon$ より
+  \begin{align*}
+    \varepsilon \KLD(\mathbf{P}\|\mathbf{K})
+    &=
+    \varepsilon\sum_{i,j}
+    \left(
+      P_{i,j}\log P_{i,j}
+      - P_{i,j}\log K_{i,j}
+      - P_{i,j}
+      + K_{i,j}
+    \right) \\
+    &=
+    \sum_{i,j} C_{i,j}P_{i,j}
+    + \varepsilon\sum_{i,j} P_{i,j}(\log P_{i,j}-1)
+    + \varepsilon\sum_{i,j} K_{i,j} \\
+    &=
+    \inner{\mathbf{C}}{\mathbf{P}} - \varepsilon \Hb(\mathbf{P})
+    + \varepsilon\sum_{i,j} K_{i,j}.
+  \end{align*}
+  最後の項は $\mathbf{P}$ に依存しない定数なので，
+  両者の最小化問題は同じ最適解を持つ．
+\end{proof}
+
+最適解の具体的な形を導く準備として，まず最適解の全成分が正であることを示す．成分が $0$ にならないとわかれば，不等式制約 $\mathbf{P} \geq 0$ はどこも等号で効かないので無視でき，残る等式制約（周辺条件）だけに対して Lagrange の未定乗数法（定理~\ref{thm:sem-lagrange-foc-matrix}）が使える．
+
+\begin{lemma}{正則化解の正値性}{sem-entropic-positivity}
+  定義~\ref{def:sem-entropic-ot} の仮定（$\mathbf{a} \in \Rpos^n$, $\mathbf{b} \in \Rpos^m$）の下で，
+  命題~\ref{prop:sem-entropic-existence-unique} の一意解
+  \[
+    \mathbf{P}_\varepsilon
+    =
+    \argmin_{\mathbf{P} \in \CouplingsD(\mathbf{a}, \mathbf{b})}
+    \left\{
+      \inner{\mathbf{C}}{\mathbf{P}}
+      - \varepsilon \Hb(\mathbf{P})
+    \right\}
+  \]
+  は全成分が正である：
+  \[
+    (\mathbf{P}_\varepsilon)_{i,j} > 0 \qquad (\forall i, j).
+  \]
+  すなわちどの成分も $0$ をとらず，不等式制約 $\mathbf{P} \geq 0$ が等号で効く成分は一つもない．
+\end{lemma}
+
+\begin{proof}
+  $F(\mathbf{P}) = \inner{\mathbf{C}}{\mathbf{P}} - \varepsilon\Hb(\mathbf{P}) = \inner{\mathbf{C}}{\mathbf{P}} + \varepsilon\sum_{i,j}\varphi(P_{i,j})$，$\varphi(x) = x\log x - x$（定義~\ref{def:sem-entropic-ot}）とおく．
+  背理法として，$(\mathbf{P}_\varepsilon)_{i,j} = 0$ なる成分が少なくとも一つあると仮定する．
+
+  $\mathbf{Q} \defeq \mathbf{a}\mathbf{b}^\top$ とおくと，$\sum_i a_i = \sum_j b_j = 1$ より
+  \[
+    \mathbf{Q}\ones_m = \mathbf{a}, \qquad
+    \mathbf{Q}^\top\ones_n = \mathbf{b}, \qquad
+    Q_{i,j} = a_i b_j > 0
+  \]
+  ゆえ $\mathbf{Q} \in \CouplingsD(\mathbf{a}, \mathbf{b})$．凸性（主張~\ref{clm:sem-coupling-convex}）より，$t \in [0,1]$ で
+  \[
+    \mathbf{P}^t \defeq (1-t)\mathbf{P}_\varepsilon + t\mathbf{Q} \in \CouplingsD(\mathbf{a}, \mathbf{b}),
+    \qquad
+    P^t_{i,j} = (\mathbf{P}_\varepsilon)_{i,j} + t\bigl(a_i b_j - (\mathbf{P}_\varepsilon)_{i,j}\bigr) .
+  \]
+
+  \emph{方針．}小さな $t > 0$ で $F(\mathbf{P}^t) < F(\mathbf{P}_\varepsilon)$ を示す．$\mathbf{P}_\varepsilon$ は最小値だから，これは矛盾を与える．
+
+  $t \in (0,1]$ では $P^t_{i,j} \ge t\,a_i b_j > 0$ ゆえ $t \mapsto F(\mathbf{P}^t)$ は微分可能（定義~\ref{def:sem-differentiable}）で，連鎖律より
+  \begin{align*}
+    \frac{d}{dt} F(\mathbf{P}^t)
+    &= \sum_{i,j} \frac{\partial F}{\partial P_{i,j}}(\mathbf{P}^t)\,\frac{dP^t_{i,j}}{dt} \\
+    &= \sum_{i,j}
+       \frac{\partial}{\partial P^t_{i,j}}\Bigl( \inner{\mathbf{C}}{\mathbf{P}^t} + \varepsilon\!\sum_{k,l}\varphi(P^t_{k,l}) \Bigr)
+       \cdot \frac{d}{dt}\Bigl( (\mathbf{P}_\varepsilon)_{i,j} + t\bigl(a_i b_j - (\mathbf{P}_\varepsilon)_{i,j}\bigr) \Bigr) \\
+    &= \sum_{i,j} \bigl( C_{i,j} + \varepsilon\log P^t_{i,j} \bigr)\bigl( a_i b_j - (\mathbf{P}_\varepsilon)_{i,j} \bigr)
+  \end{align*}
+  （$\varphi'(x) = \log x$，注意~\ref{rem:sem-entropy-convention}）．$t \to 0+$ で，$(\mathbf{P}_\varepsilon)_{i,j} > 0$ の項は $\log P^t_{i,j} \to \log (\mathbf{P}_\varepsilon)_{i,j}$ ゆえ有限，$(\mathbf{P}_\varepsilon)_{i,j} = 0$ の項は $P^t_{i,j} = t\,a_i b_j$ より $\bigl(C_{i,j} + \varepsilon\log(t\,a_i b_j)\bigr)a_i b_j \to -\infty$（$a_i b_j > 0$）．仮定よりこの型の項が少なくとも一つあるから
+  \[
+    \frac{d}{dt} F(\mathbf{P}^t) \xrightarrow{\ t \to 0+\ } -\infty .
+  \]
+  ゆえにある $\delta \in (0,1)$ で $\dfrac{d}{dt} F(\mathbf{P}^t) < 0$（$0 < t < \delta$）．$t \mapsto F(\mathbf{P}^t)$ は $[0,\delta]$ で連続（$\varphi$ の連続性，注意~\ref{rem:sem-phi-continuous}）・$(0,\delta)$ で微分可能だから，$0 < t < \delta$ を固定して $[0,t]$ に平均値定理（定理~\ref{thm:sem-mvt}）を適用すると，ある $c \in (0,t)$ で
+  \[
+    F(\mathbf{P}^t) - F(\mathbf{P}^0)
+    = t \sum_{i,j}\bigl(C_{i,j} + \varepsilon\log P^c_{i,j}\bigr)\bigl(a_i b_j - (\mathbf{P}_\varepsilon)_{i,j}\bigr) < 0
+  \]
+  （$c \in (0,\delta)$ より和は負，$t > 0$）．よって $F(\mathbf{P}^t) < F(\mathbf{P}^0) = F(\mathbf{P}_\varepsilon)$．これは $\mathbf{P}_\varepsilon$ の最小性に反する．ゆえに $\mathbf{P}_\varepsilon$ の全成分は正である．
+\end{proof}
+
+これと KL 射影としての表現（命題~\ref{prop:sem-entropic-kl-projection}）を用いると，最適解の具体的な形が定まる．
+
+\begin{proposition}{正則化解の形（スケーリング形）}{sem-entropic-scaling-form}
+  定義~\ref{def:sem-entropic-ot} の仮定（$\mathbf{a} \in \Rpos^n$, $\mathbf{b} \in \Rpos^m$）
+  の下で，Gibbs カーネルを $\mathbf{K} = \exp(-\mathbf{C}/\varepsilon)$
+  （定義~\ref{def:sem-gibbs-kernel}）とおく．このとき
+  $\MKD_{\mathbf{C}}^\varepsilon(\mathbf{a}, \mathbf{b})$ の最適解 $\mathbf{P}_\varepsilon$ は，
+  ある $\mathbf{u} \in \Rpos^n$, $\mathbf{v} \in \Rpos^m$ を用いて
+  \[
+    (\mathbf{P}_\varepsilon)_{i,j} = u_i\, K_{i,j}\, v_j,
+    \qquad\text{すなわち}\qquad
+    \mathbf{P}_\varepsilon = \diag(\mathbf{u})\,\mathbf{K}\,\diag(\mathbf{v})
+  \]
+  と書ける（対角行列 $\diag(\cdot)$ は定義~\ref{def:sem-diag}）．
+\end{proposition}
+
+\begin{proof}
+  補題~\ref{lem:sem-entropic-positivity} より $\mathbf{P}_\varepsilon$ は全成分が正である．
+  したがって $\mathbf{P}_\varepsilon$ の十分近くでは非負制約は自動的に満たされるので，
+  局所的には周辺条件だけを等式制約として扱えばよい．
+  命題~\ref{prop:sem-entropic-kl-projection} より，目的関数は
+  \[
+    G(\mathbf{P})
+    \defeq
+    \KLD(\mathbf{P}\|\mathbf{K})
+    =
+    \sum_{i,j}
+    \left(
+      P_{i,j}\log\frac{P_{i,j}}{K_{i,j}}
+      - P_{i,j}
+      + K_{i,j}
+    \right)
+    \qquad (P_{i,j}>0)
+  \]
+  としてよい．これは開集合
+  \[
+    U \defeq \{\mathbf{P}\in\R^{n\times m}\mid P_{i,j}>0\ (\forall i,j)\}
+  \]
+  上で微分可能である．
+  条件 $P_{i,j}>0$ は，この開集合 $U$ の中で考えるための条件であり，
+  Lagrange 条件に渡す等式制約ではない．
+
+  Lagrange 条件に渡す等式制約は，行和制約と列和制約
+  \[
+    \sum_{\ell=1}^{m} P_{i,\ell} = a_i
+    \qquad (i=1,\dots,n),
+    \qquad
+    \sum_{p=1}^{n} P_{p,j} = b_j
+    \qquad (j=1,\dots,m)
+  \]
+  である．定理~\ref{thm:sem-lagrange-foc-matrix} の記号との対応は
+  \[
+    r=n+m,\qquad
+    F=G,\qquad
+    \mathbf{P}^*=\mathbf{P}_\varepsilon
+  \]
+  であり，制約は上に書いた順に
+  \[
+  \begin{aligned}
+    \text{定理中の } \inner{\mathbf{A}_i}{\mathbf{P}}=c_i
+    &\quad\longleftrightarrow\quad
+    \sum_{\ell=1}^{m}P_{i,\ell}=a_i
+    &&(c_i=a_i,\ i=1,\dots,n),\\
+    \text{定理中の } \inner{\mathbf{A}_{n+j}}{\mathbf{P}}=c_{n+j}
+    &\quad\longleftrightarrow\quad
+    \sum_{p=1}^{n}P_{p,j}=b_j
+    &&(c_{n+j}=b_j,\ j=1,\dots,m).
+  \end{aligned}
+  \]
+  ここで $\mathbf{A}_k$ は定理中の係数行列を表す記号である．
+  行制約に対応する定理中の $\mathbf{A}_i$ は
+  第 $i$ 行だけが $1$ の行列，すなわち
+  \[
+    (\mathbf{A}_i)_{p,\ell}
+    =
+    \begin{cases}
+      1 & (p=i),\\
+      0 & (p\neq i)
+    \end{cases}
+  \]
+  と選んでいる．したがって
+  \[
+    \inner{\mathbf{A}_i}{\mathbf{P}}
+    =
+    \sum_{p,\ell}(\mathbf{A}_i)_{p,\ell}P_{p,\ell}
+    =
+    \sum_{\ell=1}^{m}P_{i,\ell}
+  \]
+  となる．同様に，列制約に対応する定理中の $\mathbf{A}_{n+j}$ は
+  第 $j$ 列だけが $1$ の行列，すなわち
+  \[
+    (\mathbf{A}_{n+j})_{p,\ell}
+    =
+    \begin{cases}
+      1 & (\ell=j),\\
+      0 & (\ell\neq j)
+    \end{cases}
+  \]
+  と選ぶので，
+  $\inner{\mathbf{A}_{n+j}}{\mathbf{P}}=\sum_{p=1}^{n}P_{p,j}$ となる．
+  以下の計算では制約左辺を直接偏微分する．
+  よって定理~\ref{thm:sem-lagrange-foc-matrix} をこの $n+m$ 個の 1 次等式制約に 1 回適用すると，
+  定理の乗数 $\mu_1,\dots,\mu_{n+m}$ が存在する．
+  制約を上の順に並べているので，最初の $n$ 個は行制約に対応し，
+  残りの $m$ 個は列制約に対応する．そこで
+  \[
+    \alpha_i \defeq \mu_i \quad (i=1,\dots,n),
+    \qquad
+    \beta_j \defeq \mu_{n+j} \quad (j=1,\dots,m)
+  \]
+  と名前を付ける．定理の条件を $(i,j)$ 成分で読むと，各制約左辺の
+  $P_{i,j}$ による係数が現れるので，
+  \begin{align*}
+    \frac{\partial G}{\partial P_{i,j}}(\mathbf{P}_\varepsilon)
+    &=
+    \sum_{i'=1}^{n}\alpha_{i'}\,
+    \frac{\partial}{\partial P_{i,j}}
+    \left(\sum_{\ell=1}^{m}P_{i',\ell}\right)
+    +
+    \sum_{j'=1}^{m}\beta_{j'}\,
+    \frac{\partial}{\partial P_{i,j}}
+    \left(\sum_{p=1}^{n}P_{p,j'}\right) \\
+    &=
+    \alpha_i+\beta_j
+    \qquad (\forall i,j).
+  \end{align*}
+  最後の等号では，行和の左辺は $i'=i$ のときだけ $P_{i,j}$ を含み，
+  列和の左辺は $j'=j$ のときだけ $P_{i,j}$ を含むことを用いた．
+  一方，$G$ の定義から
+  \[
+    \frac{\partial G}{\partial P_{i,j}}(\mathbf{P})
+    =
+    \log\frac{P_{i,j}}{K_{i,j}}
+    \qquad (\mathbf{P}\in U)
+  \]
+  である．したがって
+  \[
+    \log\frac{(\mathbf{P}_\varepsilon)_{i,j}}{K_{i,j}}
+    =
+    \alpha_i+\beta_j
+    \qquad (\forall i,j).
+  \]
+  両辺を指数化し，$u_i \defeq e^{\alpha_i} > 0$，$v_j \defeq e^{\beta_j} > 0$ とおけば
+  \[
+    (\mathbf{P}_\varepsilon)_{i,j}
+    =
+    e^{\alpha_i} K_{i,j} e^{\beta_j}
+    =
+    u_i K_{i,j} v_j .
+  \]
+  これは行列表示で
+  $\mathbf{P}_\varepsilon = \diag(\mathbf{u})\,\mathbf{K}\,\diag(\mathbf{v})$
+  である．
+\end{proof}
+
+\begin{remark}{スケーリングベクトルの一意性（定数倍の自由度）}{sem-entropic-uv-freedom}
+  最適解 $\mathbf{P}_\varepsilon$ 自体は一意だが，その分解を与えるスケーリングベクトル
+  $(\mathbf{u}, \mathbf{v})$ は一意でない．任意の $\lambda > 0$ に対し
+  \[
+    (\lambda u_i)\, K_{i,j}\, (\lambda^{-1} v_j) = u_i\, K_{i,j}\, v_j = (\mathbf{P}_\varepsilon)_{i,j}
+  \]
+  ゆえ $(\lambda\mathbf{u}, \lambda^{-1}\mathbf{v})$ も同じ $\mathbf{P}_\varepsilon$ を与える．
+  逆にこれが唯一の自由度である：$w_{i,j} \defeq u_i v_j = (\mathbf{P}_\varepsilon)_{i,j}/K_{i,j} > 0$ は
+  $\mathbf{P}_\varepsilon$ から確定し，比 $u_i/u_{i'} = w_{i,j}/w_{i',j}$ が $j$ に依らないことから
+  $\mathbf{u}$ は正の定数倍を除いて一意で，$v_j = w_{i,j}/u_i$ も定まる．
+\end{remark}
+
+\begin{remark}{正則化解の指数表示}{sem-entropic-exp-form}
+  上の 1 階条件 $\log\bigl((\mathbf{P}_\varepsilon)_{i,j}/K_{i,j}\bigr) = \alpha_i + \beta_j$ は，乗数を $f_i \defeq \varepsilon\alpha_i$, $g_j \defeq \varepsilon\beta_j$ と
+  スケールし直すと，元のコスト $\mathbf{C}$ を用いた指数表示
+  \[
+    (\mathbf{P}_\varepsilon)_{i,j}
+    = \exp\!\left(\frac{f_i + g_j - C_{i,j}}{\varepsilon}\right)
+    = e^{f_i / \varepsilon}\, K_{i,j}\, e^{g_j / \varepsilon}
+  \]
+  に書き換えられる（$u_i = e^{f_i / \varepsilon}$, $v_j = e^{g_j / \varepsilon}$）．
+  すなわち「コストとポテンシャルの差 $f_i + g_j - C_{i,j}$ を $\varepsilon$ で割って指数化する」形である．
+  この式は，KL 射影（命題~\ref{prop:sem-entropic-kl-projection}）を経由せず，
+  元の目的関数 $F(\mathbf{P}) = \inner{\mathbf{C}}{\mathbf{P}} - \varepsilon\Hb(\mathbf{P})$ に
+  直接 1 階条件（$\partial(-\Hb)/\partial P_{i,j} = \log P_{i,j}$，注意~\ref{rem:sem-entropy-convention}）
+  を当てても同じく得られ，スケーリング形が定式化の選び方に依らないことを示す．
+  なお $\mathbf{f}, \mathbf{g}$ は周辺制約に付随する双対変数の役割をもつが，双対理論は後の章で扱う．
+\end{remark}
+
+\begin{remark}{連続版：Schr\"odinger 問題}{sem-entropic-schrodinger}
+  連続版（$\X, \Y$ を定義~\ref{def:sem-polish}とする）でも対応する主張が成り立ち，最適カップリング $\pi$ は
+  基準測度に対する密度が $u(x)\, e^{-c(x,y)/\varepsilon}\, v(y)$ という積の形をとる．
+  この問題は \textbf{Schr\"odinger 問題}（1931）と呼ばれ，離散の 1 階条件
+  $\log\bigl((\mathbf{P}_\varepsilon)_{i,j} / K_{i,j}\bigr) = \alpha_i + \beta_j$ に対応する 1 階条件は，
+  変分法（オイラー–ラグランジュ方程式）によって与えられる．
+  本セミナーでは離散版に限って扱う．
+\end{remark}
+
+%% ============================================================
+%% 3.3 正則化パラメータの極限
+%% ============================================================
+\section{正則化パラメータの極限}
+\label{sec:sem-epsilon-limits}
+
+非正則化定義~\ref{def:sem-kantorovich}が複数の最適解を持つとき，
+エントロピー正則化はそのうちの一つ——
+エントロピーが最大のもの——を自然に選び出す．
+正則化パラメータ $\varepsilon$ の二つの極限はそれぞれ異なる解を選ぶ：
+$\varepsilon \to 0$ では非正則化最適解の中で最大エントロピーをもつものに，
+$\varepsilon \to +\infty$ では周辺分布のみで定まる独立カップリングに収束する．
+
+\begin{claim}{独立カップリングはエントロピー最大解}{sem-max-entropy-independent}
+  独立カップリング $\mathbf{a}\mathbf{b}^\top = (a_i b_j)_{i,j}$ は
+  $\CouplingsD(\mathbf{a},\mathbf{b})$ に属し，その上で離散エントロピー（定義~\ref{def:sem-discrete-entropy}）$\Hb$ を
+  最大化する唯一の元である：
+  \[
+    \mathbf{a}\mathbf{b}^\top
+    = \argmax_{\mathbf{P} \in \CouplingsD(\mathbf{a}, \mathbf{b})} \Hb(\mathbf{P}).
+  \]
+\end{claim}
+
+\begin{proof}
+  \textbf{$\mathbf{a}\mathbf{b}^\top \in \CouplingsD(\mathbf{a},\mathbf{b})$ であること．}
+  $\sum_i a_i = \sum_j b_j = 1$ より
+  $(\mathbf{a}\mathbf{b}^\top)\ones_m = \mathbf{a}(\mathbf{b}^\top\ones_m) = \mathbf{a}$，
+  $(\mathbf{a}\mathbf{b}^\top)^\top\ones_n = \mathbf{b}(\mathbf{a}^\top\ones_n) = \mathbf{b}$．
+  また $\mathbf{a}, \mathbf{b} \in \Rpos$ より $a_i b_j > 0$．
+
+  \textbf{KL ダイバージェンスによる表示．}
+  $\mathbf{K} \defeq \mathbf{a}\mathbf{b}^\top \in \Rpos^{n \times m}$ とおく．
+  方針は，$\Hb(\mathbf{P})$ を「$\mathbf{P}$ に依らない定数から
+  $\KLD(\mathbf{P}\|\mathbf{K})$ を引いたもの」と書くことである．
+  そうすれば，$\Hb$ の最大化は $\KLD(\mathbf{P}\|\mathbf{K})$ の最小化に帰着する．
+  任意の $\mathbf{P} \in \CouplingsD(\mathbf{a},\mathbf{b})$ に対し，
+  周辺条件 $\sum_j P_{i,j} = a_i$, $\sum_i P_{i,j} = b_j$ と
+  $\sum_{i,j} P_{i,j} = \sum_{i,j} a_i b_j = 1$ を用いると，
+  定義~\ref{def:sem-kl-divergence} と同じく $P_{i,j}=0$ の成分では
+  $0\log0=0$ と読むことで，
+  \begin{align*}
+    \KLD(\mathbf{P}\|\mathbf{K})
+    &= \sum_{i,j}
+       \left( P_{i,j}\log\frac{P_{i,j}}{a_i b_j} - P_{i,j} + a_i b_j \right) \\
+    &= \sum_{i,j} P_{i,j}\log P_{i,j}
+       - \sum_i a_i \log a_i - \sum_j b_j \log b_j \\
+    &= \bigl(1 - \Hb(\mathbf{P})\bigr)
+       - \sum_i a_i \log a_i - \sum_j b_j \log b_j
+  \end{align*}
+  となる．第 2 等号は
+  $-\sum_{i,j}P_{i,j} + \sum_{i,j}a_i b_j = -1 + 1 = 0$ と，周辺条件による
+  $\sum_{i,j} P_{i,j}\log(a_i b_j) = \sum_i a_i\log a_i + \sum_j b_j\log b_j$ から従う．
+  第 3 等号は
+  $\Hb(\mathbf{P}) = -\sum_{i,j}P_{i,j}(\log P_{i,j}-1) = 1 - \sum_{i,j}P_{i,j}\log P_{i,j}$
+  （$\sum_{i,j}P_{i,j}=1$）による．したがって
+  \[
+    \Hb(\mathbf{P})
+    = \underbrace{\,1 - \sum_i a_i \log a_i - \sum_j b_j \log b_j\,}
+        _{\mathbf{P} \text{ に依らない定数}}
+      - \KLD(\mathbf{P}\|\mathbf{K}).
+  \]
+
+  \textbf{非負性と一意性．}
+  $k > 0$ を固定し，
+  \[
+    g_k(p) \defeq p\log(p/k) - p + k \qquad (p \geq 0)
+  \]
+  とおく．ここでも $p=0$ では $0\log0=0$ と読むので $g_k(0)=k$ である．
+  $p>0$ では $g_k'(p)=\log(p/k)$ だから，$g_k$ は $(0,k)$ で減少し，
+  $(k,\infty)$ で増加する．よって最小値は $p=k$ でのみ達成され，
+  $g_k(k)=0$ である．したがって $g_k(p)\geq0$ であり，等号は $p=k$ のときに限る．
+
+  これを各成分で $k=a_i b_j$，$p=P_{i,j}$ として用いると，
+  \[
+  \begin{aligned}
+    \KLD(\mathbf{P}\|\mathbf{K})
+    &=
+    \sum_{i,j}
+    \left(
+      P_{i,j}\log\frac{P_{i,j}}{a_i b_j}
+      - P_{i,j}
+      + a_i b_j
+    \right) \\
+    &=
+    \sum_{i,j} g_{a_i b_j}(P_{i,j})
+    \geq 0
+  \end{aligned}
+  \]
+  であり，最後の不等号は各項 $g_{a_i b_j}(P_{i,j})$ が非負であることによる．
+  また等号は各項がすべて $0$，すなわち全成分で $P_{i,j}=a_i b_j$，
+  すなわち $\mathbf{P}=\mathbf{a}\mathbf{b}^\top$ のときに限る．
+  先ほどの表示では $\Hb(\mathbf{P})$ は
+  定数から $\KLD(\mathbf{P}\|\mathbf{K})$ を引いたものだったので，
+  $\Hb$ は $\mathbf{P} = \mathbf{a}\mathbf{b}^\top$ で唯一の最大値をとる．
+\end{proof}
+
+\begin{lemma}{摂動つき最小化の極限}{sem-perturbed-min-limit}
+  $K$ をコンパクト集合とし，$f, g \colon K \to \mathbb{R}$ を連続関数とする．
+  \[
+    S \defeq \argmin_{x \in K} f(x)
+  \]
+  とおく．
+  また，$\hat{x} \in S$ が $S$ 上で $g$ を最大化する一意な点であるとする．
+
+  $x_\varepsilon \in K$ が
+  \[
+    f(x_\varepsilon) \to \min_K f,
+    \qquad
+    g(x_\varepsilon) \geq g(\hat{x})
+  \]
+  をみたすなら，$x_\varepsilon \to \hat{x}$（$\varepsilon \to 0$）である．
+\end{lemma}
+
+\begin{proof}
+  任意の列 $\varepsilon_k \to 0$ をとる．
+  $K$ はコンパクトだから，必要なら部分列をとって
+  $x_{\varepsilon_k} \to \bar{x}$ とできる．
+
+  $f$ の連続性と $f(x_{\varepsilon_k}) \to \min_K f$ より
+  $f(\bar{x}) = \min_K f$ であり，$\bar{x} \in S$ である．
+  また，仮定より $g(x_{\varepsilon_k}) \geq g(\hat{x})$ だから，
+  $g$ の連続性より $g(\bar{x}) \geq g(\hat{x})$ が従う．
+  一方 $\hat{x}$ は $S$ 上の $g$ の最大点であり $\bar{x} \in S$ だから
+  $g(\bar{x}) \leq g(\hat{x})$．
+  よって $g(\bar{x}) = g(\hat{x})$ であり，
+  最大点の一意性から $\bar{x} = \hat{x}$．
+
+  以上より，$\varepsilon_k \to 0$ の任意の列から
+  とれる収束部分列の極限は必ず $\hat{x}$ である．
+  もし $x_\varepsilon \to \hat{x}$ でないなら，
+  ある $\delta > 0$ と $\varepsilon_k \to 0$ が存在して
+  $\|x_{\varepsilon_k} - \hat{x}\| \geq \delta$ となるが，
+  $K$ のコンパクト性よりこの列は収束部分列を持ち，
+  その極限は $\hat{x}$ でなければならず矛盾する．
+  よって $x_\varepsilon \to \hat{x}$ である．
+\end{proof}
+
+\begin{theorem}{正則化パラメータ $\varepsilon$ の極限による収束}{sem-entropic-convergence-eps-zero}
+  各 $\varepsilon > 0$ に対し，$\mathbf{P}_\varepsilon$ を
+  $\MKD_{\mathbf{C}}^\varepsilon(\mathbf{a}, \mathbf{b})$ の一意解とし，
+  非正則化問題の最適解集合を
+  \[
+    S^* \defeq \bigl\{ \mathbf{P} \in \CouplingsD(\mathbf{a},\mathbf{b}) \bigm|
+      \inner{\mathbf{C}}{\mathbf{P}} = \MKD_{\mathbf{C}}(\mathbf{a},\mathbf{b}) \bigr\}
+  \]
+  とおく．このとき，以下が成り立つ．
+
+  \begin{enumerate}
+    \item[(i)]
+      最適値は収束する：
+      $\displaystyle
+        \lim_{\varepsilon \to 0}
+        \MKD_{\mathbf{C}}^\varepsilon(\mathbf{a},\mathbf{b})
+        =
+        \MKD_{\mathbf{C}}(\mathbf{a},\mathbf{b}).
+      $
+    \item[(ii)]
+      $\varepsilon \to 0$ のとき，$\mathbf{P}_\varepsilon$ は
+      $S^*$ の中でエントロピー $\Hb$ を最大化する
+      一意な解に収束する：
+      \[
+        \lim_{\varepsilon \to 0} \mathbf{P}_\varepsilon
+        =
+        \argmax_{\mathbf{P} \in S^*} \Hb(\mathbf{P}).
+      \]
+    \item[(iii)]
+      $\varepsilon \to +\infty$ のとき，$\mathbf{P}_\varepsilon$ は
+      独立カップリングに収束する：
+      \[
+        \lim_{\varepsilon \to +\infty} \mathbf{P}_\varepsilon
+        =
+        \mathbf{a}\mathbf{b}^\top = (a_i b_j)_{i,j}.
+      \]
+  \end{enumerate}
+\end{theorem}
+
+\begin{proof}
+  $S^*$ は凸かつコンパクト（主張~\ref{clm:sem-optimal-face}）である．
+  $\CouplingsD(\mathbf{a},\mathbf{b})$ はコンパクト
+  （主張~\ref{clm:sem-discrete-kantorovich-existence} の証明）であり，
+  内積 $\inner{\mathbf{C}}{\cdot}$ は線形ゆえ連続
+  （命題~\ref{prop:sem-finite-dim-linear-continuous}），
+  $\Hb(\mathbf{P}) = -\sum_{i,j}\varphi(P_{i,j})$ は
+  $\varphi$ の連続性（注意~\ref{rem:sem-phi-continuous}）より連続である．
+  特に両者はコンパクト集合 $\CouplingsD(\mathbf{a},\mathbf{b})$ 上で有界である．
+
+  \textbf{(i).}
+  任意の最適解 $\mathbf{P}^* \in S^*$ をとり，挟み撃ちで
+  $\inner{\mathbf{C}}{\mathbf{P}_\varepsilon} \to \MKD_{\mathbf{C}}(\mathbf{a},\mathbf{b})$ を示す．
+
+  \emph{上からの評価．}$\mathbf{P}_\varepsilon$ の最適性より
+  \[
+    \inner{\mathbf{C}}{\mathbf{P}_\varepsilon} - \varepsilon\Hb(\mathbf{P}_\varepsilon)
+    \leq
+    \inner{\mathbf{C}}{\mathbf{P}^*} - \varepsilon\Hb(\mathbf{P}^*).
+  \]
+  コストの項を左辺に，エントロピーの項を右辺に移し，
+  $\inner{\mathbf{C}}{\mathbf{P}^*} = \MKD_{\mathbf{C}}(\mathbf{a},\mathbf{b})$ を代入すると
+  \[
+    \inner{\mathbf{C}}{\mathbf{P}_\varepsilon} - \MKD_{\mathbf{C}}(\mathbf{a},\mathbf{b})
+    \leq
+    \varepsilon\bigl(\Hb(\mathbf{P}_\varepsilon) - \Hb(\mathbf{P}^*)\bigr).
+  \]
+
+  \emph{下からの評価．}$\MKD_{\mathbf{C}}(\mathbf{a},\mathbf{b})$ はコスト $\inner{\mathbf{C}}{\cdot}$ の最小値であり，
+  $\mathbf{P}_\varepsilon \in \CouplingsD(\mathbf{a},\mathbf{b})$ も実行可能だから
+  \[
+    \inner{\mathbf{C}}{\mathbf{P}_\varepsilon} - \MKD_{\mathbf{C}}(\mathbf{a},\mathbf{b}) \geq 0 .
+  \]
+
+  二つを合わせると，同じ量
+  $\inner{\mathbf{C}}{\mathbf{P}_\varepsilon} - \MKD_{\mathbf{C}}(\mathbf{a},\mathbf{b})$
+  が上下から挟まれて
+  \[
+    0
+    \leq
+    \inner{\mathbf{C}}{\mathbf{P}_\varepsilon} - \MKD_{\mathbf{C}}(\mathbf{a},\mathbf{b})
+    \leq
+    \varepsilon\bigl(\Hb(\mathbf{P}_\varepsilon) - \Hb(\mathbf{P}^*)\bigr)
+  \]
+  を得る．$\Hb$ は有界だから右辺は $\varepsilon \to 0$ で $0$ に収束し，
+  $\inner{\mathbf{C}}{\mathbf{P}_\varepsilon} \to \MKD_{\mathbf{C}}(\mathbf{a},\mathbf{b})$．
+  さらに $\varepsilon\Hb(\mathbf{P}_\varepsilon) \to 0$ ゆえ
+  \[
+    \MKD_{\mathbf{C}}^\varepsilon(\mathbf{a},\mathbf{b})
+    = \inner{\mathbf{C}}{\mathbf{P}_\varepsilon} - \varepsilon\Hb(\mathbf{P}_\varepsilon)
+    \to \MKD_{\mathbf{C}}(\mathbf{a},\mathbf{b})
+  \]
+  となり (i) を得る．
+  なお上の挟み撃ちの左辺は非負だから，$\varepsilon > 0$ で割ると
+  \[
+    \Hb(\mathbf{P}_\varepsilon) \geq \Hb(\mathbf{P}^*)
+    \qquad (\forall \mathbf{P}^* \in S^*,\ \forall \varepsilon > 0)
+  \]
+  も従う（$\mathbf{P}^* \in S^*$ は任意だった）．
+
+  \textbf{(ii).}
+  $S^*$ はコンパクト凸集合であり，
+  $-\Hb$ は狭義凸（主張~\ref{clm:sem-neg-entropy-strict-convex}）かつ連続だから，
+  $\widehat{\mathbf{P}} \defeq \argmax_{\mathbf{P} \in S^*}\Hb(\mathbf{P})$
+  は一意に存在する．
+  (i) の証明より
+  $\inner{\mathbf{C}}{\mathbf{P}_\varepsilon} \to \MKD_{\mathbf{C}}(\mathbf{a},\mathbf{b})$
+  である．
+  また (i) の挟み撃ちの不等式
+  \[
+    0
+    \leq
+    \inner{\mathbf{C}}{\mathbf{P}_\varepsilon} - \MKD_{\mathbf{C}}(\mathbf{a},\mathbf{b})
+    \leq
+    \varepsilon\bigl(\Hb(\mathbf{P}_\varepsilon) - \Hb(\mathbf{R})\bigr)
+    \qquad (\forall \mathbf{R} \in S^*)
+  \]
+  において，左辺 $\geq 0$ かつ $\varepsilon > 0$ だから
+  $\varepsilon$ で割ると
+  $\Hb(\mathbf{P}_\varepsilon) \geq \Hb(\mathbf{R})$
+  が任意の $\mathbf{R} \in S^*$ に対して成り立つ．
+  特に $\Hb(\mathbf{P}_\varepsilon) \geq \Hb(\widehat{\mathbf{P}})$ である．
+
+  したがって，補題~\ref{lem:sem-perturbed-min-limit} を
+  \[
+    K = \CouplingsD(\mathbf{a},\mathbf{b}),\qquad
+    f(\mathbf{P}) = \inner{\mathbf{C}}{\mathbf{P}},\qquad
+    g(\mathbf{P}) = \Hb(\mathbf{P})
+  \]
+  に適用すると，
+  $\mathbf{P}_\varepsilon \to \widehat{\mathbf{P}}
+  = \argmax_{\mathbf{P} \in S^*} \Hb(\mathbf{P})$（$\varepsilon \to 0$）を得る．
+
+  \textbf{(iii).}
+  目的関数を $\varepsilon$ で割ると，
+  $\inner{\mathbf{C}}{\mathbf{P}} - \varepsilon\Hb(\mathbf{P})$ の最小化は
+  $\Hb(\mathbf{P}) - \tfrac{1}{\varepsilon}\inner{\mathbf{C}}{\mathbf{P}}$
+  の最大化と同値である．
+  すなわち $\mathbf{P}_\varepsilon$ は
+  \[
+    \argmax_{\mathbf{P} \in \CouplingsD(\mathbf{a},\mathbf{b})}
+    \bigl\{\Hb(\mathbf{P})
+    - \tfrac{1}{\varepsilon}\inner{\mathbf{C}}{\mathbf{P}}\bigr\}
+  \]
+  の元である．
+
+  $\varepsilon_k \to +\infty$ となる任意の正の列 $(\varepsilon_k)_{k \geq 1}$ をとる．
+  $\CouplingsD(\mathbf{a},\mathbf{b})$ はコンパクトだから，
+  ある部分列 $(\varepsilon_{k_j})_j$ と
+  $\mathbf{P}^\infty \in \CouplingsD(\mathbf{a},\mathbf{b})$ が存在して
+  $\mathbf{P}_{\varepsilon_{k_j}} \to \mathbf{P}^\infty$ となる．
+
+  任意の $\mathbf{Q} \in \CouplingsD(\mathbf{a},\mathbf{b})$ をとる．
+  $\mathbf{P}_{\varepsilon_{k_j}}$ の最大性より
+  \[
+    \Hb(\mathbf{P}_{\varepsilon_{k_j}})
+    - \tfrac{1}{\varepsilon_{k_j}}\inner{\mathbf{C}}{\mathbf{P}_{\varepsilon_{k_j}}}
+    \geq
+    \Hb(\mathbf{Q})
+    - \tfrac{1}{\varepsilon_{k_j}}\inner{\mathbf{C}}{\mathbf{Q}}.
+  \]
+  ここで $\inner{\mathbf{C}}{\cdot}$ は
+  コンパクト集合 $\CouplingsD(\mathbf{a},\mathbf{b})$ 上で有界であり，
+  $1/\varepsilon_{k_j} \to 0$ だから，
+  \[
+    \tfrac{1}{\varepsilon_{k_j}}\inner{\mathbf{C}}{\mathbf{P}_{\varepsilon_{k_j}}} \to 0,
+    \qquad
+    \tfrac{1}{\varepsilon_{k_j}}\inner{\mathbf{C}}{\mathbf{Q}} \to 0.
+  \]
+  また $\Hb$ は連続なので，極限をとると
+  $\Hb(\mathbf{P}^\infty) \geq \Hb(\mathbf{Q})$ を得る．
+  これは任意の $\mathbf{Q} \in \CouplingsD(\mathbf{a},\mathbf{b})$
+  について成り立つ．
+  したがって，$\mathbf{P}^\infty$ は
+  $\CouplingsD(\mathbf{a},\mathbf{b})$ 上で $\Hb$ を最大化する．
+  主張~\ref{clm:sem-max-entropy-independent} より，
+  $\CouplingsD(\mathbf{a},\mathbf{b})$ 上で $\Hb$ を最大化する唯一の元は
+  独立カップリング $\mathbf{a}\mathbf{b}^\top$ であるから，
+  $\mathbf{P}^\infty = \mathbf{a}\mathbf{b}^\top$．
+
+  以上より，$\varepsilon_k \to +\infty$ となる任意の列に対して，
+  その任意の収束部分列の極限は $\mathbf{a}\mathbf{b}^\top$ に等しい．
+  したがって
+  $\mathbf{P}_\varepsilon \to \mathbf{a}\mathbf{b}^\top$（$\varepsilon \to +\infty$）を得る．
+\end{proof}
+
+\begin{remark}{(iii) の証明で用いた収束の議論}{sem-convergence-technique-iii}
+  (iii) の証明は，以下の概念に基づいている．
+
+  \begin{itemize}
+    \item \textbf{収束列}（定義~\ref{def:sem-convergence}）：
+      列 $(x_n)$ が $x$ に収束するとは，
+      $\|x_n - x\| \to 0$ となることをいう．
+    \item \textbf{コンパクト性}（定義~\ref{def:sem-compact}）：
+      コンパクト集合内の任意の点列は，
+      その集合内の点に収束する部分列を持つ．
+    \item \textbf{部分列の極限の一意性からの収束}
+      （主張~\ref{clm:sem-subseq-limit-unique}）：
+      コンパクト集合内の点列 $(x_k)$ について，
+      収束する部分列の極限がすべて同じ点 $x^\star$ であるならば，
+      $(x_k)$ 自身が $x^\star$ に収束する．
+  \end{itemize}
+
+  (iii) の証明では，まずコンパクト性から
+  $\mathbf{P}_{\varepsilon_{k_j}} \to \mathbf{P}^\infty$
+  となる収束部分列を取り出し，
+  極限 $\mathbf{P}^\infty$ が必ず $\mathbf{a}\mathbf{b}^\top$ になることを示した．
+  この議論は出発点の列 $(\varepsilon_k)$ や部分列の取り方によらないから，
+  3つ目の性質より全体の収束が従う．
+\end{remark}
+
+\begin{remark}{正則化パラメータ $\varepsilon$ の役割}{sem-eps-role}
+  (ii) と (iii) は，$\varepsilon$ がコスト最小化とエントロピー最大化の
+  バランスを制御していることを示している．
+
+  $\varepsilon$ が小さいとき，コスト項 $\inner{\mathbf{C}}{\mathbf{P}}$ が支配的であり，
+  $\mathbf{P}_\varepsilon$ は非正則化問題の最適解に近づく．
+  ただし非正則化問題の最適解は一般に複数存在しうるが，
+  (ii) はその中からエントロピー最大の解が自然に選ばれることを述べている．
+  つまりエントロピー正則化は，最適輸送問題の解の不定性を
+  解消する選択原理としても機能する．
+
+  一方 $\varepsilon$ が大きいとき，エントロピー項 $-\varepsilon\Hb(\mathbf{P})$ が支配的であり，
+  $\mathbf{P}_\varepsilon$ はコスト構造を無視してエントロピーのみを最大化する方向に向かう．
+  (iii) はその極限が独立カップリング $\mathbf{a}\mathbf{b}^\top$，
+  すなわち輸送の情報が完全に失われた状態であることを示している．
+
+  実用上は，$\varepsilon$ を小さくとるほど元の最適輸送問題に忠実な解が得られるが，
+  計算上の利点（Sinkhorn アルゴリズムの適用など）は
+  $\varepsilon$ がある程度大きいほうが顕著になるため，
+  両者の兼ね合いで $\varepsilon$ を選ぶ必要がある．
+\end{remark}

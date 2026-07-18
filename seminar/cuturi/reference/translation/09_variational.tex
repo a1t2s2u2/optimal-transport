@@ -1,0 +1,940 @@
+% 原文: chapters/variational.tex
+
+\chapter{変分 Wasserstein 問題}
+\label{c-variational} % a label for the chapter, to refer to it later
+
+データ解析では，確率測度の間のよく知られた divergence（\emph{たとえば} Euclid，total variation，Hellinger，Kullback--Leibler）が，あてはめ誤差やパラメータ推定問題における損失を測るためにしばしば用いられる．本章までに，最適輸送の幾何が，他の情報 divergence にはない固有の能力，すなわち物理的な発想（質量の移動）と幾何（観測あるいはビンの間の地上費用）を活用して測度を比較する能力をもつことを論じてきた．この二つの事実が組み合わさることで，Wasserstein 距離を損失関数として用いることは非常に魅力的になる．この発想は近年さまざまな応用問題に対して探究されてきた．しかし，この発想に伴う主たる技術的課題は，Wasserstein 距離を効率的に近似し微分することにある．本章はいくつかの動機づけとなる例から始め，本書の最初の章で示したさまざまな数値スキームが，変分 Wasserstein 問題を解くためにどのように使えるかを示す．
+
+画像処理では，Wasserstein 距離は，合成された統計量と入力例の統計量との食い違いを考慮するために，テクスチャ合成の損失として用いることができる~\citep{2016-tartavel-siims}．また，画像領域の統計的均質性を考慮するために画像分割にも用いられている~\citep{SchnorSegmentation,RabinPapadakisSSVM,peyre2012wasserstein,ni2009local,schmitzer2013object,liimage}．
+%
+Wasserstein 距離はまた，測定値が確率測度である場合の逆問題に対して，非常に自然な忠実度項にもなる．たとえば，画像復元~\citep{lellmann2014imaging}，トモグラフィ逆変換~\citep{AbrahamRadon}，密度の正則化~\citep{Burger-JKO}，粒子画像流速測定~\citep{saumier2015optimal}，スパース復元と圧縮センシング~\citep{indyk2011k}，地震波逆解析~\citep{metivier2016optimal} などである．
+%
+測度間の距離（\S\ref{sec-mmd} で示すように，主にカーネルに基づくもの）は，計算解剖学における形状照合（しばしば current と呼ばれる，持ち上げた空間上の測度として表現される）に日常的に用いられている~\citep{vaillant2005surface}．しかし OT 距離は興味深い代替手段を提供する~\citep{2017-feydy-miccai}．
+%
+ヒストグラムからなるデータセットの次元を削減するために，\citeauthor{lee1999learning} は，非負値行列分解問題が，再構成損失を定量化する Kullback--Leibler divergence を用いて定式化できることを示した~\citep{lee1999learning}．それらのヒストグラムのビンの幾何に関する事前情報が利用できる場合には，代わりに Wasserstein 距離を用いることができ，著しく異なる結果が得られる~\citep{Sandler09,ZenICPR14,pmlr-v51-rolet16}．
+
+これらの問題はいずれも，Wasserstein 距離の勾配，あるいはその近似へのアクセスを必要とする点で共通している．本節はそのような勾配を近似する手法を示すことから始め，続いて変分 Wasserstein 問題として定式化できる三つの重要な応用を扱う．
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Wasserstein 損失の微分}
+
+統計，テキスト処理，あるいは画像処理においては，測定から生じる確率分布 $\be$ を，モデル，すなわちパラメータづけられた分布の族 $\{\al_\th,\th\in\Theta\}$（ここで $\Theta$ は Euclid 空間の部分集合）と比較しなければならないことが多い．このような比較は「損失」あるいは「忠実度」項を通じて行われ，本節ではそれが Wasserstein 距離である．
+%
+最も単純な状況では，適切なパラメータ $\th$ の計算は，次を直接最小化することで得られる．
+\eql{\label{eq-wloss-generic}
+	\umin{\th \in \Theta} \Ee(\th) \eqdef \MK_\c(\al_\th,\be).
+}
+もちろん，より複雑な問題を考えることもできる．たとえば \S\ref{sec-bary} で述べる重心問題は，このような項の和からなる．しかし，これらのより発展的な問題のほとんどは，上記の基本的な場合に対して定義した道具を，連鎖律を用いて導関数を陽に計算するか，あるいは \S\ref{rem-auto-diff} で推奨する自動微分を用いるかのいずれかによって適応させることで，通常は解くことができる．
+
+\paragraph{凸性．} 二つのヒストグラムあるいは二つの密度の間の Wasserstein 距離は，\eqref{eq-dual} および \eqref{eq-dual-generic} がそれぞれ示すように，その二つの入力に関して凸である．したがって，パラメータ $\theta$ それ自体がヒストグラムである場合，すなわち $\Theta=\simplex_n$ かつ $\al_\theta=\theta$ である場合，あるいはより一般に $\theta$ が単体内の $K$ 個の重みを表し，$\Theta=\simplex_K$ かつ $\alpha_\theta=\sum_{i=1}^K \theta_i \alpha_i$ が $\simplex_N$ 内の既知のアトム $\alpha_1,\dots,\alpha_K$ の凸結合である場合には，問題~\eqref{eq-wloss-generic} は凸のままである（第一の場合は重心問題に，第二の場合は Wasserstein 損失をもつ辞書学習問題の 1 反復に対応する~\citep{pmlr-v51-rolet16}）．しかし，より一般のパラメータづけ $\th\mapsto \al_\th$ に対しては，問題~\eqref{eq-wloss-generic} は一般には凸でない．
+
+
+\paragraph{単純な場合．} Wasserstein 距離が閉形式をもつ単純な場合，たとえば一変量（\S\ref{rem-1d-ot-generic} を参照）あるいは楕円輪郭をもつ（\S\ref{rem-dist-gaussians} を参照）分布の場合には，単純な回避策が存在する．それらは主に，Wasserstein 距離を，これらの分布の適切な表現の間のより単純な距離として書き直し（一変量測度に対しては分位関数上の Euclid 距離，同じ族に属する楕円輪郭分布に対しては共分散行列の Bures 計量），そのような表現の上で問題~\eqref{eq-wloss-generic} を直接解くものである．
+
+しかしほとんどの場合，問題~\eqref{eq-wloss-generic} の局所最小点を計算するためには，$\al_\th$ の注意深い離散化に頼らなければならない．二つのアプローチが考えられる．Euler 的か Lagrange 的かである．図~\ref{fig-eulerian-lagrangian} は，これら二つの基本的な離散化スキームの違いを示している．この議論を過度に単純化する危険を冒して言えば，Euler 的離散化は，測度が低次元空間に台をもつ場合（形状や色空間を扱うとき）や，本質的に離散的な問題（文字列やテキスト解析から生じるものなど）に対して最も適していると言える．観測値が高次元空間内で連続的な値を取りうるあてはめ問題に適用する場合には，通常 Lagrange 的観点が唯一の適切な選択となる．
+%were already discussed in~\S\ref{sec-grad-flows} above in the context of gradient flows discretization, and we use the same strategies here.
+%
+
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\linewidth]{eulerian-lagrangian/eulerian-lagrangian.pdf}
+\caption{\label{fig-eulerian-lagrangian}
+密度をもつ連続分布（紫，左）を，Lagrange 表現 $\frac{1}{n}\sum_i \de_{x_i}$（青，上）と，$x_i$ が次第に大きくなるグリッドのセルを表す Eulerian 表現 $\sum_i \a_i \de_{x_i}$（赤，下）を用いて，次第に細かく離散化したもの．Euler 的観点は，ピクセル化された画像から始まり，元の密度にほぼ一致するほど解像度の細かいものへと至る．重み $\a_i$ は各ピクセルセルの強度に直接比例する．
+}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Euler 的離散化}
+
+問題を離散化する第一の方法は，両分布 $\be=\sum_{j=1}^m \b_j \de_{y_j}$ と $\al_\th=\sum_{i=1}^n \a(\th)_i \de_{x_i}$ が，固定された位置 $(x_i)_i$ と $(y_j)_j$ の上で定義された離散分布であると仮定することである．そのような位置は，観測の全空間をグリッドに分割するセルを表すかもしれないし，連続空間内の有限個の関心点の部分集合（たとえば，ある辞書内のすべての単語に対するベクトル埋め込みの族~\citep{kusner2015word,pmlr-v51-rolet16}）を表すかもしれない．この場合，パラメータづけられた測度 $\al_\th$ は，重みベクトル $\a : \th \mapsto \a(\th) \in \Si_n$ を通じて完全に表現される．これは実際には，グリッドが大きい場合には非常に疎であるかもしれない．この設定はいわゆる Euler 的離散化法のクラスに対応する．その本来の形では，問題~\eqref{eq-wloss-generic} の目的関数は微分可能でない．滑らかな最小化問題を得るために，エントロピー正則化 OT を用い，\eqref{eq-wloss-generic} を次で近似する．
+\eq{
+	\umin{\th \in \Theta} \Ee_E(\th) \eqdef \MKD_\C^\epsilon(\a(\th),\b)
+	\qwhereq
+	\C_{i,j} \eqdef c(x_i,y_j).
+}
+命題~\ref{prop-convexity-dual} は，エントロピー損失関数が入力ヒストグラムに関して微分可能かつ凸であり，その勾配が次で与えられることを示していることを思い出す．
+
+%%%%%%%%%%
+\begin{proposition}[ヒストグラムに関する導関数]
+$\epsilon>0$ に対して，$(\a,\b) \mapsto \MKD_\C^\epsilon(\a,\b)$ は凸かつ微分可能である．その勾配は
+\eql{\label{eq-diff-marginals}
+		\nabla \MKD_\C^\epsilon(\a,\b) = (\fD,\gD),
+}
+と書ける．ここで $(\fD,\gD)$ は \eqref{eq-dual-formulation} の一意な解であり，$\sum_i \fD_i=\sum_j \gD_j=0$ となるように中心化されている．$\epsilon=0$ に対しては，この式は $\MKD_\C^\epsilon$ の劣微分の要素を定義し，それらが一意であれば関数は微分可能である．
+\end{proposition}
+
+$(\fD,\gD)$ に対する平均ゼロの条件は，勾配降下を用いる際に質量の保存を保証するために重要である．
+%
+% \todoK{
+% \begin{proof}
+% 	Use the dual formulation~\eqref{eq-dual-formulation}. \todoK{write me}
+% \end{proof}
+% }
+% %%%%%%%%%%
+連鎖律を用いることで，$\Ee_E$ が滑らかであり，その勾配が
+\eql{\label{eq-diff-loss-eul}
+	\nabla \Ee_E(\th) = [ \partial \a(\th) ]^\top( \fD\, ),
+}
+であることが得られる．ここで $\partial \a(\th) \in \RR^{n \times \text{dim}(\Theta)}$ は写像 $\a(\th)$ の Jacobi 行列（微分）であり，$\fD \in \RR^n$ は費用行列 $\C$（Euler 的設定では固定されており，特に $\th$ に依存しない）に対する $\a(\th)$ と $\b$ の間の双対エントロピー OT~\eqref{eq-dual-formulation} に付随する双対ポテンシャルベクトルである．
+%
+この結果は，勾配降下を通じて $\Ee_E$ を局所的に最小化するために用いることができる．
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Lagrange 的離散化}
+
+別のアプローチは，代わりに固定された（典型的には一様な）重みを用い，入力測度 $\alpha$ を経験測度 $\al_\th = \frac{1}{n}\sum_i \de_{x(\th)_i}$ として近似することである．これは点群のパラメータづけ写像 $x : \th \mapsto x(\th) = (x(\th)_i)_{i=1}^n \in \Xx^n$ によるものであり，ここでは $\X$ が Euclid 的であると仮定する．問題~\eqref{eq-wloss-generic} はこうして次で近似される．
+\eql{\label{eq-lagr-sinkloss}
+	\umin{\th} \Ee_L(\th) \eqdef \MKD_{\C(x(\th))}^\epsilon(\ones_n/n,\b)
+	\qwhereq
+	\C(x)_{i,j} \eqdef c(x(\theta)_i,y_j).
+}
+ここで費用行列 $\C(x(\th))$ は，$\al_\th$ の台が $\theta$ とともに変化するため，いまや $\th$ に依存することに注意する．
+%
+次の命題は，エントロピー OT 損失が費用行列の滑らかな関数であることを示し，その勾配の表式を与える．
+
+%%%%%%%%%%
+\begin{proposition}[費用に関する導関数]
+固定された入力ヒストグラム $(\a,\b)$ に対して，$\epsilon>0$ のとき，写像 $\C \mapsto \Rr(\C) \eqdef \MKD_\C^\epsilon(\a,\b)$ は凹かつ滑らかであり，
+\eql{\label{eq-diff-cost}
+	\nabla \Rr(\C) = \P,
+}
+である．ここで $\P$ は \eqref{eq-regularized-discr} の一意な最適解である．
+%
+$\epsilon=0$ に対しては，この式は上方勾配の集合を定義する．
+\end{proposition}
+%%%%%%%%%%
+
+
+\todoK{
+\begin{proof}
+	Use the primal formulation~\eqref{eq-regularized-discr}. \todoK{write me}
+	Formula~\eqref{eq-diff-positions} follows using the chain rule.
+\end{proof}
+}
+
+$(\X,\Y)$ が $\RR^\dim$ の凸部分集合であると仮定すると，\eqref{eq-pair-discr} の形の離散測度 $(\al,\be)$ に対して，連鎖律を用いて $x = (x_i)_{i=1}^n  \in \X^n \mapsto \Ff(x) \eqdef  \MKD_{\C(x)}(\ones_n/n,\b)$ が滑らかであり，かつ
+\eql{\label{eq-diff-positions}
+	\nabla \Ff(x) = \pa{ \sum_{j=1}^m \P_{i,j} \nabla_1 \c(x_i,y_j) }_{i=1}^n \in \X^n,
+}
+であることが得られる．ここで $\nabla_1 \c$ は第一変数に関する勾配である．
+%
+たとえば，$\X=\Y=\RR^d$ に対して，$\X=\Y=\RR^d$ 上の $\c(s,t) = \norm{s-t}^2$ に対しては，
+\eql{\label{eq-diff-positions-eucl}
+	\nabla \Ff(x) = 2 \pa{ \a_i x_i - \sum_{j=1}^m \P_{i,j} y_j }_{i=1}^n,
+}
+となる．ここでは $\a_i=1/n$ である．
+%
+この勾配は，定数倍を除いて $\Id-\T$ であることに注意する．ここで $\T$ は \eqref{eq-baryproj} で定義される重心射影である．
+%
+連鎖律を用いることで，Lagrange 的に離散化された問題~\eqref{eq-lagr-sinkloss} が滑らかであり，その勾配が
+\eql{\label{eq-diff-loss-lagr}
+	\nabla \Ee_L(\th) = [ \partial x(\th) ]^\top( \nabla \Ff( x(\th) ) ),
+}
+であることが得られる．ここで $\partial x(\th) \in \RR^{\text{dim}(\Theta) \times (n\dim)}$ は写像 $x(\th)$ の Jacobi 行列であり，$\nabla \Ff$ は，$\al_\th$ と $\be$ の間の最適結合行列を $\P$ として用いて，\eqref{eq-diff-positions} あるいは \eqref{eq-diff-positions-eucl} のように実装される．
+%
+こうして，$\Ee_L$ の局所最小点を計算するために勾配降下を実装することができる．これはたとえば~\citep{CuturiBarycenter} で用いられている．
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{自動微分}
+\label{rem-auto-diff}
+
+式~\eqref{eq-diff-loss-eul} および \eqref{eq-diff-loss-lagr} を適用する際の難しさは，これらの式が有効であるためには厳密な最適解 $\fD$ あるいは $\P$ を計算する必要があるが，これは非常に多数の Sinkhorn 反復を用いてのみ許容できる精度で達成できる点にある．
+%
+比較すべきヒストグラムの大きさと数が大きい困難な状況では，単一の Wasserstein 距離を計算するための計算予算は通常限られており，したがって Sinkhorn 反復は数回しか許されない．その場合，ある反復で得られた値を用いて勾配~\eqref{eq-dual-formulation} を近似するよりも，逆モード自動微分を用いて Sinkhorn アルゴリズムの出力を直接微分する方が通常はよい．これは，正則化された最適輸送のエントロピーを取り込んだ \eqref{eq-regularized-discr} の量 $\MKD_\C^\varepsilon$ ではなく，\eqref{eq-algorithmic-loss} で導入した「アルゴリズム的」Sinkhorn divergence を用い，入力，すなわち Euler 的な場合にはヒストグラム，Lagrange 的な場合には費用行列を用いて，それを単純な写像の合成として直接微分することに対応する．\S\ref{sec-regularized-cost} で導入した定義を用いると，これは，それぞれ Euler 的な場合と Lagrange 的な場合に，十分大きな $L$ に対して
+$$\itL{\SINKHORND_{\C}}(\a(\theta),\b) \quad\text{ あるいは }\quad \itL{\SINKHORND_{\C(x(\theta))}}(\a,\b)$$
+を $\theta$ に関して微分することと等価である．
+
+Sinkhorn divergence を含む汎関数の勾配を計算する費用は，汎関数自体の計算費用と同じである．このアプローチのいくつかの応用については，たとえば~\citep{2016-bonneel-barycoord,2017-Genevay-AutoDiff} を参照されたい．費用行列に関して Sinkhorn 反復を微分する（Lagrange 的枠組みで行われるように）初期の研究とランキング学習への応用については~\citep{adams2011ranking} も参照されたい．
+%
+自動微分に関するさらなる詳細は~\citep{griewank2008evaluating,rall1981automatic,Neidinger10} に見られる．特に勾配を計算する最速の方法である「逆モード」についてである．
+%
+実装の観点では，最近の深層学習用の Python フレームワークはすべて最先端の逆モード微分と GPU/TPU 計算のサポートを備えており~\citep{theano2016,abadi2016tensorflow,pytorch}，Sinkhorn 損失の大規模な応用には必ずこれらを採用すべきである．
+%
+我々はそのような自動微分の手法を用いることを強く推奨する．なぜならそれらは \eqref{eq-diff-loss-eul} と \eqref{eq-diff-loss-lagr} を計算するのと同じ計算量であり，これらの式は主に自動微分が何を計算しているかを理論的に理解するために有用だからである．唯一の欠点は，逆モード自動微分がメモリを大量に消費すること（メモリが反復回数に比例して増大すること）である．しかし，この問題を緩和する部分標本化の戦略が存在する~\citep{griewank1992achieving}．
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Wasserstein 重心，クラスタリング，辞書学習}
+\label{sec-bary}
+
+教師なし学習の基本的な問題は，いくつかのデータ点の「平均」あるいは「重心」を計算することである．距離空間 $(\X,d)$（ここで $d$ は距離，あるいはより一般に divergence）に属する点 $(x_s)_{s=1}^S \in \X^S$ のそのような加重平均を定義する古典的な方法は，変分問題
+\eql{\label{eq-frechet-means}
+	\umin{x \in \X} \sum_{s=1}^S \la_s d(x,x_s)^p
+}
+を解くことである．ここで $(\la_s)_s \in \simplex_S$ は与えられた重みの族であり，$p$ はしばしば $p=2$ に設定される．
+%
+$\X=\RR^d$ かつ $d(x,y)=\norm{x-y}_2$ のとき，これは $p=2$ に対しては通常の線形平均 $x=\sum_s \la_s x_s$ の定義につながり，$p=1$ のときにはより込み入った中央点の定義につながる．この形式を用いて，さまざまな平均の概念（\emph{たとえば} $\X=\RR_+$ 上の調和平均や幾何平均）を復元することができる．
+%
+この過程はしばしば「Fr\'echet」平均あるいは「Karcher」平均と呼ばれる（歴史的経緯については~\citet{karcher2014riemannian} を参照）．一般の距離 $d$ に対して，問題~\eqref{eq-frechet-means} は通常，難しい非凸最適化問題である．幸いなことに，最適輸送距離の場合には，問題は凸計画として定式化でき，存在を証明でき，効率的な数値スキームが存在する．
+
+
+%%%%%%%%%%%%
+\paragraph{Wasserstein 空間上の Fr\'echet 平均．}
+
+入力ヒストグラム $\{\b_s\}_{s=1}^S$（ここで $b_s \in \simplex_{n_s}$）と重み $\la \in \simplex_S$ が与えられたとき，Wasserstein 重心は次を最小化することで計算される．
+\eql{\label{eq-wass-discr}
+	\umin{\a \in \simplex_n} \sum_{s=1}^S \la_s \MKD_{\C_s}(\a,\b_s),
+}
+ここで費用行列 $\C_s \in \RR^{n \times n_s}$ は指定される必要がある．
+%
+典型的な設定は「Euler 的」であり，すべての重心が同じグリッド上で定義され，$n_s=n$，$\C_s=\C=\distD^p$ が距離行列に設定され，次を解く．
+\eq{
+	\umin{\a \in \simplex_n} \sum_{s=1}^S \la_s \WassD_p^p(\a,\b_s).
+}
+
+重心問題~\eqref{eq-wass-discr} は，\citet{carlierekelandmatching} のより早い発想に従って，任意の測度を含むより一般的な形で~\citet{Carlier_wasserstein_barycenter} において導入された．その提示は注意~\ref{rem-bary-carlier} に譲る． % They proved in particular uniqueness of the barycenter for $c(x,y)=\norm{x-y}^2$ over $\X=\RR^d$, if one of the input measure has a density with respect to the Lebesgue measure (and more generally under the same hypothesis as the one guaranteeing the existence of a Monge map, see Remark~\ref{rem-exist-mongemap}). ---> THIS SHOULD APPEAR IN THE GREY BOX
+ヒストグラムに対する重心問題~\eqref{eq-wass-discr} は，実際には線形計画である．なぜなら，各入力と重心自体との間の $S$ 個の結合 $(\P_s)_s$ を探すことができ，これらは構成上，同じ行周辺分布を共有するように制約されなければならないからである．
+\eq{
+	\umin{\a \in \simplex_n, (\P_s \in \RR^{n \times n_s})_s } \enscond{
+		\sum_{s=1}^S \la_s \dotp{\P_s}{\C_s}
+	}{
+		\foralls s, \P_s^\top \ones_{n_s}=\a, \P_s^\top \ones_{n} = \b_s
+	}.
+}
+この問題は LP であるが，その規模は中規模の問題に対しても汎用ソルバーの使用を妨げる．双対上の劣勾配降下などの一次手法に頼ることができる~\citep{Carlier-NumericsBarycenters}．
+
+%%%%%%%%%%%%%%%%%%
+\begin{rem2}{任意の測度の重心}\label{rem-bary-carlier}
+	ある空間 $\X$ 上で定義された入力測度の集合 $(\be_s)_s$ が与えられたとき，重心問題は次のようになる．
+	\eql{\label{eq-barycenter-generic}
+		\umin{\al \in \Mm_+^1(\X)} \sum_{s=1}^S \la_s \MK_{\c}(\al,\be_s).
+	}
+	$\X=\RR^d$ かつ $c(x,y)=\norm{x-y}^2$ の場合，\citet{Carlier_wasserstein_barycenter} は，入力測度のうちの一つが密度をもてば，この重心が一意であることを示している．
+	%
+	問題~\eqref{eq-barycenter-generic} は，点 $(x_s)_{s=1}^S \in \X^S$ の重心を計算する問題を任意の測度へと一般化したものとみなすことができる．実際，$\be_s=\de_{x_s}$ が単一の Dirac 質量であれば，\eqref{eq-barycenter-generic} の解は $\de_{x^\star}$ である．ここで $x^\star$ は \eqref{eq-frechet-means} を解く Fr\'echet 平均である．
+	%
+	$c(x,y)=\norm{x-y}^2$ に対しては，重心 $\al^\star$ の平均は必然的に平均の重心であること，ããªãã¡	\eq{
+		\int_\Xx x \d\al^\star(x) =  \sum_s \la_s \int_\Xx x \d\al_s(x),
+	}
+	が成り立ち，$\al^\star$ の台は $(\al_s)_s$ の台の凸包の中に位置することに注意する．
+	%
+	入力分布を離散分布で近似する（したがって代わりに \eqref{eq-wass-discr} を解く）ときの，無限次元最適化~\eqref{eq-barycenter-generic} の近似の一致性は，\citet{Carlier-NumericsBarycenters} で研究されている．
+	%
+	また，\eqref{eq-barycenter-generic} を多周辺 OT 問題として書き直すことが可能であることにも注意する．注意~\ref{eq-multimarg-bary} を参照されたい．
+\end{rem2}
+%%%%%%%%%%%%%%%%%%
+
+\begin{rem2}{Wasserstein 変分問題としての $k$-means}\label{rem-bary-kmeans}
+入力測度の族 $(\be_s)_s$ がただ一つの測度 $\be$ に限られ，この測度が $\X=\RR^{\dim}$ の離散有限部分集合に台をもち，費用が二乗 Euclid 距離である場合には，重心問題
+	\eql{\label{eq-barycenter-kmeans}
+		\umin{\al \in \Mm_{k}^1(\X)} \MK_{\c}(\al,\be),
+	}
+（ここで $\al$ は大きさ $k$ までの有限台をもつ離散測度であるように制約される）が，$\be$ を取る通常の $k$-means 問題と等価であることを示すことができる．実際，$k$-means 問題が出力する重心が解 $\al$ の台に対応し，その重みが各重心に割り当てられた $\be$ 内の点の割合に対応することを，容易に示すことができる．エントロピー正則化を用いて $\MK_{\c}$ を近似すると，混合 Gaussian~\citep{dessein2017parameter} のような $k$-means のソフトクラスタリング版に現れる，滑らかにされた割り当てが得られることを示すことができる．
+\end{rem2}
+
+%%%%%%%%%%%%%%%%%%
+\begin{rem2}{分布の分布と一致性}
+	\eqref{eq-barycenter-generic} を，おそらく無限個の測度の集まりへと一般化することが可能である．この問題は，確率分布の空間 $\Mm_+^1(\X)$ 上の確率分布 $M$，ããªãã¡$M \in \Mm_+^1(\Mm_+^1(\X))$ を考えることで記述される．そのとき重心は次の解である．
+	\eql{\label{eq-bary-infinite}
+		\umin{\al \in \Mm_+^1(\X)} \EE_M( \MK_{\c}(\al,\be) ) = \int_{\Mm_+^1(\X)} \MK_{\c}(\al,\be) \d M(\be),
+	}
+	ここで $\be$ は $M$ に従って分布する確率測度である．$M$ に従って有限個 $S$ の入力測度 $(\be_s)_{s=1}^S$ を一様無作為に引くと，一様重み $\la_s=1/S$ に対する \eqref{eq-barycenter-generic} の解として $\hat \be_S$ を定義することができる（ここで $\hat \be_S$ 自体が確率測度であることに注意する）．
+	%
+	問題~\eqref{eq-barycenter-generic} は，「離散」測度 $M=\sum_s \la_s \de_{\be_s}$ という特別な場合に対応する．
+	%
+	$\MK_{\c}(\hat\be_S,\al)$ がゼロへ（ここで $\al$ は \eqref{eq-bary-infinite} の一意な解）（期待値の意味で，あるいは高確率で）収束することは，重心の一致性に対応し，\citep{BigotBarycenter,leGouic2016existence,bigot2012characterization} で証明されている．
+	%
+	これは Wasserstein 空間上の大数の法則として解釈できる．この結果の中心極限定理への拡張は重要な問題である．この問題の最近の定式化と，特別な場合（1 次元分布と Gaussian 測度）における解については~\citep{panaretos2016amplitude} および~\citep{agueh2017vers} を参照されたい．
+\end{rem2}
+%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%
+\begin{rem2}{不動点写像}
+地上費用 $\c(x,y)=\norm{x-y}^2$ をもつ Euclid 空間 $\X=\RR^\dim$ を扱う場合，輸送写像を用いて重心問題を研究することが可能である．実際，$\al$ が密度をもてば，注意~\ref{rem-exist-mongemap} に従って，$\al$ と $\al_s$ の間の最適輸送写像 $\T_s$ を，特に $\T_{s,\sharp}\al = \al_s$ となるように定義することができる．平均写像
+\eq{
+	\T^{(\al)} \eqdef \sum_{s=1}^S \la_s \T_s
+}
+（上の記法はこの写像の $\al$ への依存を明示している）自体が，$\al$ と $\T^{(\al)}_\sharp \al$ の間の最適写像である（最適写像の正の結合は，Brenier の定理（注意~\ref{rem-exist-mongemap}）により凸関数の勾配の和に等しく，これは凸関数の和の勾配に等しく，したがって再び Brenier の定理により最適である）．
+\citep{Carlier_wasserstein_barycenter} で示されているように，重心問題~\eqref{eq-bary-infinite} の一次最適性条件は，実際には最適測度 $\al^\star$（重心）において $\T^{(\al^\star)}=\Identity_{\RR^\dim}$（恒等写像）と書ける．そして~\citep{alvarez2016fixed} では，重心 $\al^\star$ が不動点方程式
+\eql{\label{eq-fixed-point-bary}
+	G(\al) = \al
+	\qwhereq
+	G(\al) \eqdef \T^{(\al)}_\sharp \al,
+}
+の一意な解（\citep[Theo. 2]{zemel2017fr} で明確化された正則性条件のもとで）であることが示されている．入力測度に関する穏やかな条件のもとで，\citet{alvarez2016fixed} および~\citet{zemel2017fr} は，$\al$ が重心でなければ $\al \mapsto G(\al)$ が \eqref{eq-bary-infinite} の目的関数を狭義に減少させること，および不動点反復 $\itt{\al} \eqdef G( \it{\al} )$ が重心 $\al^\star$ に収束することを示している．
+%
+この不動点アルゴリズムは，最適輸送写像が閉形式で知られている場合（\emph{たとえば} Gaussian の場合）に用いることができる．このアルゴリズムを同じ大きさの経験測度に対して適応させると，Monge 写像の代わりに最適割り当てを計算することになる．より一般の任意の大きさの離散測度に対しては，重心射影~\eqref{eq-baryproj} を用いてこのスキームを適応させることもできる~\citep{CuturiBarycenter}．
+\end{rem2}
+%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%
+\paragraph{特別な場合．}
+
+一般に，\eqref{eq-wass-discr} あるいは \eqref{eq-barycenter-generic} を解くことは容易でないが，解が陽あるいは単純となるいくつかの特別な場合が存在する．
+
+
+%%%%%%%%%%%%%%%%%%
+\begin{rem1}{Gaussian の重心}
+	\citep{Carlier_wasserstein_barycenter} では，二乗 Euclid 費用 $c(x,y)=\norm{x-y}^2$ に対して，Gaussian 分布 $\al_s = \Nn(\mean_s,\cov_s)$ の重心がそれ自体 Gaussian $\Nn(\mean^\star,\cov^\star)$ であることが示されている．
+	%
+	\eqref{eq-dist-gauss} を用いると，重心の平均が入力の平均
+	\eq{
+		\mean^\star = \sum_s \la_s \mean_s
+	}
+	であり，一方で共分散が
+	\eq{
+		\umin{ \cov } \sum_s \la_s \Bb(\cov,\cov_s)^2,
+	}
+	を最小化することがわかる．ここで $\Bb$ は Bures 計量~\eqref{eq-bure-defn} である．\citep{Carlier_wasserstein_barycenter} で研究されているように，この凸問題の一次最適性条件は，$\cov^\star$ が写像
+	\eq{
+		\cov^\star = \Psi(\cov^\star)
+		\qwhereq
+		\Psi(\cov) \eqdef \sum_s \la_s ( \cov^{\frac{1}{2}} \cov_s \cov^{\frac{1}{2}}  )^{\frac{1}{2}},
+	}
+	の一意な正定値不動点であることを示す．ここで $\cov^{\frac{1}{2}}$ は半正定値行列の平方根である．
+	%
+	この結果は~\citep{KnottSmith,RuschendorfUckelmann} から知られており，\citep{Carlier_wasserstein_barycenter} で証明されている．
+	%
+	$\Psi$ は狭義縮小ではないが，この不動点写像を反復すること，ããªãã¡$\itt{\cov} \eqdef \Psi( \it{\cov} )$ と定義することは，実際には解 $\cov^\star$ に収束する．
+	% has been shown by~\citet{SuvritSra} to converge to the solution $\cov^\star$.
+		%
+	この手法は~\citep{2014-xia-siims} においてテクスチャ合成に応用された．\citet{alvarez2016fixed} はまた，反復 $\itt{\cov} \eqdef \bar\Psi( \it{\cov} )$ が収束する別の写像
+	\eq{
+		\bar\Psi(\cov) \eqdef
+		\cov^{-\frac{1}{2}}
+		\Big( \sum_s \la_s ( \cov^{\frac{1}{2}} \cov_s \cov^{\frac{1}{2}}  )^{\frac{1}{2}} \Big)^2
+		\cov^{-\frac{1}{2}}
+	}
+	を用いることを提案している．
+	%
+	これは，\eqref{eq-fixed-point-bary} で定義された不動点写像 $G$ が Gaussian 分布を保ち，実際に
+	\eq{
+		G( \Nn(\mean,\cov) ) = \Nn(\mean^\star,\bar\Psi(\cov)).
+	}
+	が成り立つからである．
+	%
+	図~\ref{fig-bary-gaussian} は，四つの 2 次元 Gaussian の間の重心の計算の二つの例を示している．
+\end{rem1}
+%%%%%%%%%%%%%%%%%%
+
+
+
+\begin{figure}[h!]
+\centering
+\begin{tabular}{@{}c@{\hspace{20mm}}c@{}}
+\includegraphics[width=.3\linewidth]{barycenters-gaussians/tensor-interp-70} &
+\includegraphics[width=.3\linewidth]{barycenters-gaussians/tensor-interp-98}
+\end{tabular}
+\caption{\label{fig-bary-gaussian}
+2 次元の四つの Gaussian 分布の間の重心．各 Gaussian は共分散の主軸に整列した楕円を用いて表示されており，その伸びは対応する固有値に比例する．
+}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%
+\begin{rem1}{1 次元の場合}\label{rem-bary-1d}
+	1 次元分布に対しては，注意~\ref{rem-1d-ot-generic} で詳述するように輸送が単調再配置であるという事実を用いて，$\Wass_p$ 重心をほぼ閉形式で計算することができる．
+	%
+	最も単純な場合は $n$ 点をもつ経験測度，ããªãã¡$\be_s = \frac{1}{n}\sum_{i=1}^n \de_{y_{s,i}}$ である．ここで点は $y_{s,1} \leq y_{s,2} \leq \ldots$ とソートされていると仮定する．\eqref{eq-1d-empirical} を用いると，重心 $\al_\la$ もまた $n$ 点上の経験測度
+	\eq{
+		\al_\la = \frac{1}{n}\sum_{i=1}^n \de_{x_{\la,i}}
+		\qwhereq
+		x_{\la,i} = A_\la(x_{s,i})_s,
+	}
+	となる．ここで $A_\la$ は重心写像
+	\eq{
+	 	A_\la(x_s)_s \eqdef \uargmin{x \in \RR} \sum_{s=1}^S \la_s |x-x_{s}|^p.
+	}
+	である．たとえば $p=2$ に対しては $x_{\la,i} = \sum_{s=1}^S \la_s x_{s,i}$ となる．
+	%
+	一般の場合には，\eqref{eq-cumul-defn} で定義される累積関数を用いる必要があり，\eqref{eq-wass-cumul} を用いると
+	\eq{
+		\foralls r \in [0,1], \quad
+		\cumul{\al_\la}^{-1}(r) = A_\la( \cumul{\al_s}^{-1}(r) )_{s=1}^S,
+	}
+	が成り立つ．これは，たとえば，単純なソート手続きを用いて，$n$ 点未満に台をもつ離散測度の間の重心を $O(n\log(n))$ 演算で計算するために用いることができる．
+\end{rem1}
+%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%
+\begin{rem1}{単純な場合}
+	$\T_{r,u} : x \mapsto rx+u$ をスケーリングと平行移動とし，$\al_{s} = T_{r_s,u_s,\sharp} \al_0$ が初期テンプレート測度をスケーリングおよび平行移動して得られると仮定すると，重心 $\al_\la$ もまたスケーリングと平行移動を用いて得られる \todoK{to check}
+	\eq{
+		\al_\la = T_{r^\star,u^\star,\sharp} \al_0
+		\qwhereq
+		\choice{
+			r^\star = (\sum_s \la_s/r_s)^{-1},  \\
+			u^\star = \sum_s \la_s u_s.
+		}
+	}
+\end{rem1}
+%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%
+\begin{rem1}{$S=2$ の場合}
+	$\X=\RR^d$ かつ $c(x,y)=\norm{x-y}^2$ の場合（これはより一般に測地空間へ拡張できる），$S=2$ 個の測度 $(\al_0,\al_1)$ の間の重心は，\eqref{eq-mc-cann-interp} ですでに導入した McCann 補間である．Monge 写像を $\T_\sharp \al_0=\al_1$ と書くと，重心 $\al_\la$ は $\al_\la = (\la_1 \Id + \la_2 \T)_{\sharp} \al_0$ と書ける．
+	%
+	式~\eqref{eq-mccann-discrete} は離散の場合に計算をどのように行うかを説明している．
+\end{rem1}
+%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%
+\paragraph{重心のエントロピー近似．}
+
+エントロピー平滑化を用いて，\eqref{eq-wass-discr} の解を，ある $\epsilon>0$ に対して
+\eql{\label{eq-entropic-bary}
+	\umin{\a \in \simplex_n} \sum_{s=1}^S \la_s \MKD_{\C_s}^\epsilon(\a,\b_s)
+}
+を用いて近似することができる．
+%
+これは滑らかな凸最小化問題であり，勾配降下を用いて取り組むことができる~\citep{CuturiBarycenter,GramfortPC15}．別の選択肢は，準双対上で降下法（典型的には準 Newton 法）を用いることである~\citep{2016-Cuturi-siims}．これは，重心に対する追加の正則化を組み込むため，たとえば与えられたノルムに関するある種の滑らかさを課すために有用である．
+%
+\citet{2015-benamou-cisc} が指摘したように，より単純でありながら非常に効果的なアプローチは，\eqref{eq-entropic-bary} を（重みつき）KL 射影問題
+\eql{\label{eq-bary-entropy-couplings}
+	\umin{ (\P_s)_s } \enscond{ \sum_{s} \la_s \epsilon \KLD( \P_s|\K_s ) }{
+		\foralls s, \transp{\P_s}\ones_m = \b_s, \:
+		\P_1\ones_1 =  \cdots = \P_S\ones_S,
+	}
+}
+として書き直すことである．ここで $\K_s \eqdef e^{-\C_s/\epsilon}$ と書いた．ここで重心 $\a$ は，すべての結合 $\P_s \in \RR^{n \times n_s}$ の行周辺分布の中に $\a = \P_1\ones_1 =  \cdots = \P_S\ones_S$ として暗黙的に符号化されている．
+%
+\citet{2015-benamou-cisc} が詳述しているように，Sinkhorn をこの問題へ一般化することができ，これもまた反復射影に対応する．これは \S\ref{sec-generalized} で詳述する一般化 Sinkhorn の特別な場合とみなすこともできる．
+%
+\eqref{eq-bary-entropy-couplings} を解く最適結合 $(\P_s)_s$ はスケーリング形式で
+\eql{\label{eq-bary-opt}
+	\P_s=\diag(\uD_s)\K\diag(\vD_s),
+}
+として計算され，スケーリングは逐次的に
+\begin{align}\label{eq-sinkhorn-bary}
+	\foralls s \in \range{1,S}, \quad \itt{\vD}_s &\eqdef \frac{\b_s}{\transp{\K}_s \it{\uD}_s}, \\
+	\foralls s \in \range{1,S}, \quad  \itt{\uD}_s &\eqdef \frac{\itt{\a}}{\K_s \itt{\vD}_s}, \label{eq-sinkhorn-bary-2}\\
+		\qwhereq
+		\itt{\a} &\eqdef \prod_s (  \K_s \itt{\vD}_s )^{\la_s}. \label{eq-sinkhorn-bary-3}
+\end{align}
+として更新される．これらの反復を導出する別の方法は，双対問題の変数上で交互最小化を行うことであり，それは次の命題で詳述する．
+
+\begin{prop}
+	\eqref{eq-bary-opt} に現れる最適な $(\uD_s,\vD_s)$ は，$(\uD_s,\vD_s) = ( e^{\fD_s/\epsilon},e^{\gD_s/\epsilon} )$ と書ける．ここで $( \fD_s,\gD_s )_s$ は次の計画（その値は \eqref{eq-entropic-bary} のものと一致する）の解である．
+	\eql{\label{eq-dual-bary-entropy}
+		\umax{ ( \fD_s,\gD_s )_s } \enscond{
+		\sum_s \la_s \pa{
+			\dotp{\gD_s}{\b_s} - \epsilon \dotp{\K_s e^{\gD_s/\epsilon}}{e^{\fD_s/\epsilon}}
+		}
+		}{
+			\sum_s \la_s \fD_s = 0
+		}.
+	}
+\end{prop}
+
+\begin{proof}	\eqref{eq-bary-entropy-couplings} に Lagrange 乗数を導入すると次が得られる．
+	\begin{align*}
+		\umin{ (\P_s)_s, \a }
+		\umax{ ( \fD_s,\gD_s )_s }
+		\sum_{s} \la_s \Big(
+			\epsilon \KLD( \P_s|\K_s )
+			+
+			\dotp{\a - \P_s\ones_m}{ \fD_s } \\
+		\qquad\qquad	+
+			\dotp{\b_s - \transp{\P_s}\ones_m}{ \gD_s }
+		\Big).
+	\end{align*}
+	強双対性が成り立つので，min と max を入れ替えることができ，次が得られる．
+		\begin{align*}
+		&\umax{ ( \fD_s,\gD_s )_s }
+			\sum_s \la_s \pa{
+				 \dotp{\gD_s}{\b_s}
+		+
+		\umin{\P_s} \epsilon \KLD( \P_s|\K_s ) - \dotp{\P_s}{\fD_s \oplus \gD_s }
+		} \\
+	&\qquad\qquad	+ \umin{\a}
+			\dotp{ \sum_{s} \la_s \fD_s }{\a}.
+	\end{align*}
+	$\a$ に関する陽な最小化は，制約 $\sum_{s} \la_s \fD_s=0$ とともに次を与える．
+	\begin{align*}
+		\umax{ ( \fD_s,\gD_s )_s }
+			\sum_s \la_s
+				 \dotp{\gD_s}{\b_s}
+		-
+		\epsilon \KLD^*\pa{ \frac{\fD_s \oplus \gD_s}{\epsilon}|\K_s },
+	\end{align*}
+	ここで $\KLD^*(\cdot|\K_s)$ は関数 $\KLD^*(\cdot|\K_s)$ の Legendre 変換~\eqref{eq-legendre} である．
+	%
+	この Legendre 変換は
+	\eql{\label{eq-legendre-kl}
+		\KLD^*(\VectMode{U}|\K) = \sum_{i,j} \K_{i,j} (e^{\VectMode{U}_{i,j}}-1),
+	}
+	と書け，これが所望の式を示す．
+	%
+	\eqref{eq-legendre-kl} を示すには，この関数が分離可能であるので，
+	\eq{
+		\foralls (u,k) \in \RR_+^2, \quad
+		\KLD^*(u|k) \eqdef \umax{r} ur -   \pa{ r \log(r/k) - r + k  }
+	}
+	を計算すればよい．その最適性条件は $u=\log(r/k)$，ããªãã¡$r = k e^{u}$ と書け，これより結果が得られる．
+\end{proof}
+
+\eqref{eq-dual-bary-entropy} を各 $\gD_s$ に関して，他のすべての変数を固定したまま最小化することは，\eqref{eq-sinkhorn-bary} によって閉形式で得られる．
+%
+\eqref{eq-dual-bary-entropy} をすべての $(\fD_s)_s$ に関して最小化するには，\eqref{eq-sinkhorn-bary-3} を用いて $\a$ について解く必要があり，これは表式~\eqref{eq-sinkhorn-bary-2} につながる．
+
+
+
+図~\ref{fig-barycenters-images} と~\ref{fig-barycenters-shapes} は，2 次元および 3 次元の形状補間への応用を示している．図~\ref{fig-barycenters-surfaces} は，地上費用が測地距離の二乗である曲面上での重心の計算を示している．この図では，計算は注意~\ref{rem-geod-heat} で詳述する熱による測地線近似を用いて行われている．より詳しい説明やコンピュータグラフィックスおよび画像科学への他の応用については~\citep{2015-solomon-siggraph} を参照されたい．
+
+%
+\newcommand{\FigBaryImA}[2]{\includegraphics[width=.088\linewidth]{barycenters-2d/annulus-cross-heart-2disk/shape-#1-#2}}
+\newcommand{\FigBaryImLineA}[1]{\FigBaryImA{#1}{1} & \FigBaryImA{#1}{2} & \FigBaryImA{#1}{3} & \FigBaryImA{#1}{4} & \FigBaryImA{#1}{5}}
+\newcommand{\FigBaryImB}[2]{\includegraphics[width=.088\linewidth]{barycenters-2d/cat-star8-thinspiral-trefle/shape-#1-#2}}
+\newcommand{\FigBaryImLineB}[1]{\FigBaryImB{#1}{1} & \FigBaryImB{#1}{2} & \FigBaryImB{#1}{3} & \FigBaryImB{#1}{4} & \FigBaryImB{#1}{5}}
+
+
+\begin{figure}[h!]
+\centering
+\fbox{
+\begin{tabular}{@{}c@{}c@{}c@{}c@{}c@{}}
+\FigBaryImLineA{1} \\
+\FigBaryImLineA{2} \\
+\FigBaryImLineA{3} \\
+\FigBaryImLineA{4} \\
+\FigBaryImLineA{5}
+\end{tabular}
+}
+\fbox{
+\begin{tabular}{@{}c@{}c@{}c@{}c@{}c@{}}
+\FigBaryImLineB{1} \\
+\FigBaryImLineB{2} \\
+\FigBaryImLineB{3} \\
+\FigBaryImLineB{4} \\
+\FigBaryImLineB{5}
+\end{tabular}
+}
+\caption{\label{fig-barycenters-images}
+エントロピー正則化~\eqref{eq-entropic-bary} を用いた，四つの入力 2 次元形状の間の重心．二値形状を表示するため，表示画像はしきい値処理した密度を示している．
+%
+重み $(\la_s)_s$ は正方形の四隅に関して双線形である．
+}
+\end{figure}
+
+
+
+% trim=left bottom right height
+\newcommand{\FigBaryShapeA}[2]{\includegraphics[width=.09\linewidth,trim=130 78 110 60,clip]{barycenters-shapes/duck-spiky-moomoo_s0-double-torus/barycenter-#1-#2}}
+\newcommand{\FigBaryShapeLineA}[1]{\FigBaryShapeA{#1}{0} & \FigBaryShapeA{#1}{1} & \FigBaryShapeA{#1}{2} & \FigBaryShapeA{#1}{3} & \FigBaryShapeA{#1}{4}}
+%
+\newcommand{\FigBaryShapeB}[2]{\includegraphics[width=.087\linewidth,trim=160 65 150 55,clip]{barycenters-shapes/mushroom-torus-hand1-trim-star/barycenter-#1-#2}}
+\newcommand{\FigBaryShapeLineB}[1]{\FigBaryShapeB{#1}{0} & \FigBaryShapeB{#1}{1} & \FigBaryShapeB{#1}{2} & \FigBaryShapeB{#1}{3} & \FigBaryShapeB{#1}{4}}
+
+\begin{figure}[h!]
+\centering
+%%% VOLUMETRIC SHAPES %%%
+\fbox{
+\begin{tabular}{@{}c@{}c@{}c@{}c@{}c@{}}
+\FigBaryShapeLineA{0} \\
+\FigBaryShapeLineA{1} \\
+\FigBaryShapeLineA{2} \\
+\FigBaryShapeLineA{3} \\
+\FigBaryShapeLineA{4}
+\end{tabular}
+}
+\fbox{
+\begin{tabular}{@{}c@{}c@{}c@{}c@{}c@{}}
+\FigBaryShapeLineB{0} \\
+\FigBaryShapeLineB{1} \\
+\FigBaryShapeLineB{2} \\
+\FigBaryShapeLineB{3} \\
+\FigBaryShapeLineB{4}
+\end{tabular}
+}
+\caption{\label{fig-barycenters-shapes}
+エントロピー正則化~\eqref{eq-entropic-bary} を用いた，四つの入力 3 次元形状の間の重心．重み $(\la_s)_s$ は正方形の四隅に関して双線形である．
+%
+形状は，形状の境界内では一様，外では零となる測度として表現されている．
+}
+\end{figure}
+Wasserstein 重心の効率的な計算は，現時点でも活発な研究課題であり続けている~\citep{NIPS2017_6858,NIPS2018_8274}．方法論的な関心を超えて，Wasserstein 重心は形状解析の分野の外でも多くの応用を見出してきた．画像処理~\citep{rabin-ssvm-11}，特に色の変更~\citep{2015-solomon-siggraph}（図~\ref{fig-colors} を参照），測度を要約するための Bayes 計算~\citep{srivastava2015scalable,srivastava2015wasp}，そして入力測度を他の既知の測度の Wasserstein 重心として表現する非線形次元削減~\citep{2016-bonneel-barycoord} に用いられている．これらの問題はいずれも込み入った非凸目的関数につながるが，自動微分を用いて精度よく最適化することができる（注意~\ref{rem-auto-diff} を参照）．
+%
+重心の計算と密接に関連する問題には，Wasserstein 空間上の主成分分析の計算（たとえば~\citep{SeguyCuturi,bigot2017geodesic} を参照）や，テンプレートモデルの統計的推定~\citep{boissard2015distribution} がある．重心を計算できることは，確率測度の空間上の $k$-means~\citep{del2016robust,ho2017multilevel} のような，より発展的なクラスタリング手法を可能にする．
+
+
+
+
+\begin{figure}[h!]
+\centering
+\begin{tabular}{@{}c@{}c@{}c@{}c@{}c@{}}
+\includegraphics[width=.195\linewidth]{barycenters-surfaces/scisor-1}&
+\includegraphics[width=.195\linewidth]{barycenters-surfaces/scisor-2}&
+\includegraphics[width=.195\linewidth]{barycenters-surfaces/scisor-3}&
+\includegraphics[width=.195\linewidth]{barycenters-surfaces/scisor-4}&
+\includegraphics[width=.195\linewidth]{barycenters-surfaces/scisor-5}
+\end{tabular}
+\caption{\label{fig-barycenters-surfaces}
+熱による測地線の高速カーネル近似（注意~\ref{rem-geod-heat} を参照）を用いて計算した，曲面上の二つの入力測度の間の重心補間．\citep{2015-solomon-siggraph} より抜粋．
+}
+\end{figure}
+
+
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1\linewidth]{colors/colors-bary}
+\caption{\label{fig-colors}
+二つの入力画像の二つの 3 次元色経験ヒストグラムの間の補間（ここでは簡単のため 2 次元の色度射影のみを可視化している）．変更されたヒストグラムは，注意~\ref{rem-barycenric-proj} で詳述する重心射影を用いて入力画像に適用される．\citep{2015-solomon-siggraph} より抜粋．
+}
+\end{figure}
+
+
+
+%%%%%%%%%%%%%%%%%%
+\begin{rem1}{Wasserstein 伝播}
+	\citet{Solomon-ICML} で研究されているように，重心問題~\eqref{eq-wass-discr} を一般化することが可能である．そこでは，補集合 $V$ のノード上の固定された入力分布の集合 $(\b_v)_{v \in V}$ が与えられたとき，グラフ $\Gg$ のあるノード集合 $U$ における分布 $(\b_u)_{u \in U}$ を探す．未知量は，グラフ内で辺を形成するすべてのノード対 $(r,s) \in \Gg$ の間の総輸送距離を最小化することで決定される．
+	\eql{\label{eq-w-propag}
+		\umin{(\b_u  \in \simplex_{n_u})_{u \in U}}
+			\sum_{(r,s) \in \Gg}  \MKD_{\C_{r,s}}(\b_r,\b_s),
+	}
+	ここで費用行列 $\C_{r,s} \in \RR^{n_r \times n_s}$ は利用者が指定する必要がある．
+	%
+	重心問題~\eqref{eq-wass-discr} は，考えるグラフ $\Gg$ が「星形」である特別な場合であり，そこでは $U$ が他のすべての頂点 $V$ に接続された単一の頂点である（$\b_s$ に付随する重み $\la_s$ は費用行列に吸収させることができる）．
+	%
+	各辺 $(r,s) \in \Gg$ に対して結合 $\P_{r,s} \in \CouplingsD( \b_r,\b_s )$ を陽に導入し，エントロピー正則化を用いると，この問題を \eqref{eq-bary-entropy-couplings} と同様に書き直すことができ，Sinkhorn 反復~\eqref{eq-sinkhorn-bary} をこの問題へ拡張することができる（これは，\S\ref{sec-generalized} で詳述する一般化 Sinkhorn アルゴリズムの形でこの問題を書き直すことによっても導出できる）．
+	%
+	\todoK{show a graphical illustration}
+	%post
+	%
+	グラフ上のこの離散変分問題~\eqref{eq-w-propag} は，グラフを連続領域に置き換えると Dirichlet エネルギーを定義するように一般化できる~\citep{solomon2013dirichlet}．これは次いで，画像および曲面処理に応用される測度値調和関数の定義につながる．理論的解析については~\citet{Lavenant2017} を，非二次（total-variation）汎関数への拡張と画像処理への応用については~\citet{vogt2017measure} も参照されたい．
+\end{rem1}
+%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{勾配流}
+\label{sec-grad-flows}
+
+滑らかな関数 $\a \mapsto F(\a)$ が与えられたとき，標準的な勾配降下
+\eql{\label{eq-explicit-euclidean}
+	\itt{\a} \eqdef \it{\a} - \tau \nabla F(\it{\a}),
+}
+を用いることができる．ここで $\tau$ は十分小さなステップ幅である．これはいわゆる「陽的」最小化スキームに対応し，滑らかな関数 $F$ に対してのみ適用できる．滑らかでない関数に対しては，代わりに「陰的」スキームを用いることができ，これは近接点アルゴリズムとも呼ばれる（たとえば~\citet{BauschkeCombettes11} を参照）．
+\eql{\label{eq-implicit-euclidean}
+	\itt{\a} \eqdef \Prox_{\tau F}^{\norm{\cdot}}(\it{\a}) \eqdef \uargmin{\a} \frac{1}{2}\norm{\a-\it{\a}}^2 + \tau F(\a).
+}
+これは，すでに \eqref{eq-prox-eucl} で出会った Euclid 近接作用素に対応することに注意する．
+%
+更新~\eqref{eq-explicit-euclidean} は陽的作用素 $\Id-\tau\nabla F$ を反復することとして理解でき，一方で \eqref{eq-implicit-euclidean} は陰的作用素 $(\Id+\tau\nabla F)^{-1}$ を用いる．凸な $F$ に対しては，反復~\eqref{eq-implicit-euclidean} は任意の $\tau>0$ の値に対して常に収束する．
+
+関数 $F$ がヒストグラムの単体 $\simplex_n$ 上で定義されている場合，\eqref{eq-implicit-euclidean} の $\ell^2$ ノルム $\norm{\cdot}$ の代わりに最適輸送計量を用いて，
+\eql{\label{eq-grad-flow-discr}
+	\itt{\a} \eqdef \uargmin{\a} \WassD_p(\a,\it{\a})^p + \tau F(\a).
+}
+を解くことには意味がある．
+
+%%%%%%%%%%%%%%%%%%
+\begin{rem2}{Wasserstein 勾配流}
+方程式~\eqref{eq-grad-flow-discr} は，$\Mm_+^1(\X)$ 上で定義されたある関数 $F$ に対して反復
+\eql{\label{eq-grad-flow-stepping-cont}
+	\itt{\al} \eqdef \uargmin{\al} \Wass_p(\al,\it{\al})^p + \tau F(\al)
+}
+を定義することで，任意の測度へと一般化できる．この陰的時間刻みは，形式的に極限 $\tau \rightarrow 0$ を取り，時間 $t=\tau \ell$ を導入することで連続流を構成するための有用な道具であり，$\it{\al}$ は連続流 $t \in \RR_+ \mapsto \al_t$ を近似することを意図している．$p=2$ かつ $\X=\RR^d$ の特別な場合には，形式的な計算によって $\al_t$ が次の形の PDE
+\eql{\label{eq-grad-flow-cont}
+	\pd{\al_t}{t} = \diverg( \al_t \nabla( F'(\al_t) ) ),
+}
+を解くことが期待されることが示される．ここで $F'(\al)$ は関数 $F$ の導関数を表し，それは
+\eq{
+	F(\al+\epsilon\xi) = F(\al) + \epsilon \int_\X F'(\al) \d\xi(x) + o(\epsilon).
+}
+となるような連続関数 $F'(\al) \in \Cc(\X)$ であるという意味での導関数である．典型的な例は $F=-\H$ を用いる場合である．ここで $\H(\al)=\KL(\al|\Ll_{\RR^d})$ は $\X=\RR^\dim$ 上の Lebesgue 測度 $\Ll_{\RR^d}$ に関する相対エントロピー
+\eql{\label{eq-entropy-cont}
+	\H(\al) = - \int_{\RR^\dim} \density{\al}(x) (\log(\density{\al}(x)) - 1) \d x
+}
+である（$\al$ が密度をもたないときは $\H(\al)=-\infty$ と設定する）．このとき \eqref{eq-grad-flow-cont} は，この負エントロピーの勾配流が線形熱拡散
+\eql{\label{eq-heat}
+	\pd{\al_t}{t} = \Delta \al_t,
+}
+であることを示す．ここで $\Delta$ は空間 Laplacian である．
+%
+したがって熱拡散は，Dirichlet エネルギー $\int_{\RR^\dim} \|\nabla \density{\al}(x)\|^2 \d x$ の「古典的」Euclid 流（ある意味で質量振幅に関する「垂直」運動を行う）として解釈することもできるし，あるいは最適輸送流に対するエントロピー（ある意味で質量位置に関する「水平」運動）として解釈することもできる．
+%
+Wasserstein 勾配流への関心は，Jordan，Kinderlehrer，Otto の独創的な論文~\citep{jordan1998variational} によって喚起され，これらの発展は彼らの研究にちなんでしばしば「JKO 流」と呼ばれる．\citet{ambrosio2006gradient} のモノグラフで詳しく示されているように，JKO 流は距離空間における勾配流の特別な場合である．最近のサーベイ論文~\citep{santambrogio2017euclidean} も参照されたい．
+%
+JKO 流は，特に多孔質媒体方程式~\citep{otto2001geometry}，total variation 流~\citep{carlier2017total}，量子ドリフト~\citep{GianazzaARMA}，多様体上の熱発展~\citep{ErbarHeatManifold} のような非線形発展方程式を研究するために用いることができる．その柔軟な形式は，解に対する制約を許容する．たとえば，\citeauthor{maury2010macroscopic} が群衆運動をモデル化するために用いた混雑制約（任意の点における密度の上界）である~\citep{maury2010macroscopic}（レビュー論文~\citep{SantambrogioCrowdReview} も参照）．
+\end{rem2}
+%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%
+\begin{rem2}{距離空間における勾配流}
+陰的刻み~\eqref{eq-grad-flow-stepping-cont} は，\citep{ambrosio2006gradient} で詳述されているように，距離空間 $(\Xx,\dist)$（ここで $\dist$ は距離）上で勾配流を定義するより一般的な形式の特別な場合である．
+%
+$x \in \Xx$ に対して定義されたある関数 $F(x)$ に対して，陰的離散最小化刻みは次のように定義される．
+\eql{\label{eq-implicit-metricflow}
+	\itt{x} \in \uargmin{x \in \Xx} \dist(\it{x},x)^2 + \tau F(x).
+}
+JKO 刻み~\eqref{eq-grad-flow-stepping-cont} は，確率分布の空間上での Wasserstein 距離の使用に対応する．いくつかの場合には，\eqref{eq-implicit-metricflow} が $\tau \rightarrow 0$ かつ $k\tau=t$ のときに連続流の極限 $x_t$ を許容することを示すことができる．
+%
+$\Xx$ が Euclid 構造ももつ場合には，$F$ を線形化することで陽的刻みが定義される．
+\eql{\label{eq-explicit-metricflow}
+	\itt{x} = \uargmin{x \in \Xx} \dist(\it{x},x)^2 + \tau \dotp{ \nabla F(\it{x}) }{ x }.
+}
+陰的公式~\eqref{eq-implicit-metricflow} とは際立って対照的に，これは通常は計算が簡単であるが，不安定でありうる．陰的刻みは常に安定であり，滑らかでない $F$ に対しても定義されるが，通常は閉形式では得られない．
+%
+図~\ref{fig-gradflow-metric} は，$\Xx=\RR^2$ 上の関数 $F(x) = \norm{x}^2$ に対して，いくつかの $p$ の値に対する距離 $d(x,y)=\norm{x-y}_p=(|x_1-y_1|^p+|x_2-y_2|^p)^{\frac{1}{p}}$ について，この概念を例示している．
+%
+陽的スキーム~\eqref{eq-explicit-metricflow} は $p=1$ と $p=+\infty$ に対して不安定であり，$p=1$ に対しては軸に整列した刻み（座標ごとの降下）を与える．
+%
+対照的に，陰的スキーム~\eqref{eq-implicit-metricflow} は安定である．特に，$p=1$ に対して二つの座標が等しいとき，次の刻みが対角方向に作用することに注意する．
+\end{rem2}
+%%%%%%%%%%%%%%%%%%
+
+
+\begin{figure}[h!]
+\centering
+\begin{tabular}{cc}
+\includegraphics[width=.45\linewidth]{gradflow-metric/explicit}&
+\includegraphics[width=.45\linewidth]{gradflow-metric/implicit}\\
+Explicit & Implicit
+\end{tabular}
+\caption{\label{fig-gradflow-metric}
+いくつかの $p$ の値に対する距離 $d(x,y)=\norm{x-y}_p$ について，$\Xx=\RR^2$ 上の関数 $f(x) = \norm{x}^2$ を最小化する陽的勾配流と陰的勾配流の比較．
+}
+\end{figure}
+
+
+%%
+\begin{rem1}{粒子系を用いた Lagrange 的離散化}\label{rem-lagr-discretization}
+\eqref{eq-grad-flow-discr} の有限次元問題は，測度の空間上の流れ~\eqref{eq-grad-flow-stepping-cont} の Euler 的離散化として解釈できる．
+%
+問題を離散化する別の方法は，粒子系を用いるいわゆる Lagrange 的方法を用いて，代わりに解を時間とともに動く（離散）経験測度としてパラメータづけることである．そこでは，その測度の（重みではなく）位置が関心の変数となる．実際には，時間で添字づけられた粒子の動的な点群 $\al_t = \frac{1}{n}\sum_{i=1}^n \de_{x_i(t)}$ を考えることができる．
+%
+最初の問題~\eqref{eq-grad-flow-discr} はこのとき，点 $X(t)=(x_i(t))_i \in \X^n$ の動力学を規定する $n$ 個の連立 ODE の組に置き換えられる．
+%
+エネルギー $F$ が離散測度に対して有限であれば，単に $\Ff(X)=F( \frac{1}{n}\sum_{i=1}^n \de_{x_i} )$ と定義することができる．典型的な例は線形関数 $F(\al) = \int_\X V(x) \d\al(x)$ と二次相互作用 $F(\al) = \int_{\X^2} W(x,y) \d\al(x)\d\al(y)$ であり，この場合それぞれ
+\eq{
+	\Ff(X) = \frac{1}{n} \sum_i V(x_i) \qandq \Ff(X) = \frac{1}{n^2} \sum_{i,j} W(x_i,x_j).
+}
+を用いることができる．
+%
+密度をもつ測度に対してのみ有限となる一般化エントロピーのような関数に対しては，点群を密度に変換するために密度推定量を適用すべきであり，これによって $n \rightarrow +\infty$ のときに $F$ と整合する関数 $\Ff(x)$ も定義できる．典型的な例は \eqref{eq-entropy-cont} で定義されるエントロピー $F(\mu) = \H(\al)$ に対するものであり，それに対しては最近傍までの距離の対数を和を取ることで一致推定量（定数項を除いて）を得ることができる．
+\eql{\label{eq-entropy-discretized}
+	\Ff(X) = \frac{1}{n}\sum_{i} \log( d_X(x_i) )
+	\qwhereq d_X(x) = \umin{x' \in X, x' \neq x} \norm{x-x'};
+}
+ノンパラメトリックエントロピー推定量のレビューについては~\citet{beirlant1997nonparametric} を参照されたい．
+%
+$\X=\RR^\dim$ と仮定すると，十分小さなステップ幅 $\tau$ に対して，Wasserstein 距離 $\Wass_2$ は点の上の Euclid 距離と一致する，ããªãã¡$|t-t'|$ が十分小さければ $\Ww_2(\al_t,\al_{t'})=\norm{X(t)-X(t')}$ となる．したがって勾配流は，位置の上の Euclid 流 $X'(t) = -\nabla \Ff(X(t))$ と等価である．これは時刻 $t_k=\tau k$ に対して，陽的 Euler 刻みを用いて \eqref{eq-explicit-euclidean} と同様に離散化される．
+\eq{
+	\itt{X} \eqdef \it{X} - \tau \nabla \Ff(\it{X}).
+}
+%
+図~\ref{fig-flow-lagr} は，線形項とエントロピー項からなる汎関数に対するそのような離散化された陽的発展の例を示しており，Fokker--Planck 方程式の離散化版が得られる．
+%
+この線形 Fokker--Planck 方程式の特別な場合に対しては，確率的 PDE 法に頼ることも可能であり，Gaussian ドリフトをもつ単一のランダム粒子を発展させることで数値的に近似できることに注意する．これらのスキーム（いわゆる Langevin Monte Carlo）の定常分布への収束は，次いで Wasserstein 距離の観点から定量化できる．たとえば~\citep{dalalyan2017user} を参照されたい．\todoK{Detailed this much more.}
+%
+関数 $\Ff$ が滑らかでない場合には，陰的 Euler 刻みを用いて \eqref{eq-implicit-euclidean} と同様に離散化すべきである，ããªãã¡\eq{
+	\itt{X} \eqdef \Prox_{\tau \Ff}^{\norm{\cdot}}(\it{X}) \eqdef \uargmin{Z \in \X^n} \frac{1}{2}\norm{Z-\it{X}}^2 + \tau \Ff(Z).
+}
+を考えるべきである．
+%
+線形関数 $F(\al) = \int_X V(x) \d\al(x)$ という最も単純な場合には，流れは各粒子 $x_i(t)$ の上で独立に作用し，関数 $V$ に対する通常の Euclid 流 $x_i'(t)=-\nabla V(x_i(t))$ に対応する（そしてそれは流れの積分曲線に沿った密度の移流 PDE である）．
+\end{rem1}
+
+\newcommand{\FigLagrFlow}[1]{\includegraphics[width=.19\linewidth]{lagrangian-flows/lagrange-flow-#1}}
+
+
+\begin{figure}[h!]
+\centering
+\begin{tabular}{@{}c@{}c@{}c@{}c@{}c@{}}
+\FigLagrFlow{1} &
+\FigLagrFlow{3} &
+\FigLagrFlow{5} &
+\FigLagrFlow{7} &
+\FigLagrFlow{10} \\
+$t=0$ & $t=0.2$  & $t=0.4$ & $t=0.6$ & $t=0.8$
+\end{tabular}
+\caption{\label{fig-flow-lagr}
+Lagrange 的離散化を用いた勾配流発展の例．関数 $F(\al) = \int V \d\al - H(\al)$，$V(x)=\norm{x}^2$ に対するもの．
+%
+エントロピーは \eqref{eq-entropy-discretized} を用いて離散化されている．
+%
+極限の定常分布は Gaussian である．
+}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%
+\begin{rem2}{測地凸性}
+勾配流に関連する重要な概念は，Wasserstein-2 幾何に関する汎関数 $F$ の凸性，ããªãã¡Wasserstein 測地線（ããªãã¡注意~\ref{rem-displacement} で示す変位補間）に沿った $F$ の凸性である．そのような関数に対する（連続時間の）Wasserstein 勾配流は存在し，一意であり，$\tau \rightarrow 0$ のときの離散刻み~\eqref{eq-grad-flow-stepping-cont} の極限である．それは $t \rightarrow +\infty$ のときに固定された定常分布に収束する．
+%
+エントロピーは測地凸関数の典型的な例であり，凸関数 $V : \X \rightarrow \RR$，$W : \X \times \X \rightarrow \RR$ に対する $F(\al) = \int_\X V(x) \d\al(x)$ の形の線形関数や $F(\al) = \int_{\X \times \X} W(x,y) \d\al(x) \d\al(y)$ の形の二次相互作用関数もそうである．
+%
+線形関数は古典的な意味で凸であるが，二次相互作用関数はそうでないことがあることに注意する．
+%
+典型的な例は $W(x,y)=\norm{x-y}^2$ であり，これは負半定値カーネル（定義~\ref{def-negativedefinitekernel} を参照）であり，したがって $F(\al)$ が通常の意味で凹関数である（一方で測地凸である）ことに対応する．
+%
+\citet{mccann1997convexity} の重要な結果は，$\X=\RR^\dim$ 上の $F(\al) = \int_{\RR^\dim} \phi(\density{\al}(x)) \d x$ の形の一般化「エントロピー」関数が，$\phi$ が凸で，$\phi(0)=0$，$t \rightarrow +\infty$ のとき $\phi(t)/t \rightarrow +\infty$，かつ $s \mapsto s^{\dim} \phi(s^{-\dim})$ が凸減少であれば，測地凸であるというものである．
+\end{rem2}
+%%%%%%%%%%%%%%%%%%%
+
+結果として得られる離散化された流れの数値的解法には重要な文献があり，ここでは代表的な刊行物をいくつか挙げるにとどめる．1 次元問題に対しては，OT が逆累積関数の二次汎関数である（注意~\ref{rem-1d-ot-generic} を参照）ため，非常に精密なソルバーが開発されてきた．\citet{kinderlehrer1999approximation,blanchet2008convergence,agueh2013one,Matthes1D,blanchet2012optimal} である．より高次元では，有限要素法や有限体積法を用いて取り組むことができる．\citet{CarrilloFiniteVolume,burger2010mixed} である．Lagrange 的スキーム（ããªãã¡粒子系）を用いて別のソルバーが得られる．\citet{carrillo2009numerical,JDB-JKO,Westdickenberg2010} である．
+%
+別の方向性は，連続版の性質の一部を保持する離散流（典型的には離散グリッドやグラフ上の）を探すことである．\citet{MielkeCVPDE,ErbarDCDS,ChowHuangLiZhou2012,Maas2011} を参照されたい．
+
+
+エントロピー正則化に依拠して Euler 的に離散化された問題~\eqref{eq-explicit-euclidean} を解く近似的なアプローチは，最初~\citet{2015-Peyre-siims} で提案され，\citet{2016-chizat-sinkhorn} で改良され，\citet{2017-carlier-SIMA} で理論的に解析された．
+%
+エントロピー正則化を用いると，問題~\eqref{eq-grad-flow-discr} は，$G = \iota_{\it{\a}}$ と設定し $F$ を $\tau F$ で置き換えると，\eqref{eq-generalized-ot-regul} の形になる．したがって，\citet{2015-Peyre-siims} で最初に提案されたように，反復~\eqref{eq-gen-sinkh} を用いて $\itt{\a}$ を近似することができる．このスキームの $\epsilon \rightarrow 0$ のときの収束は~\citet{2017-carlier-SIMA} で証明されている．
+%
+図~\ref{fig-jko} はこの手法で計算した発展の例を示している．
+%
+勾配流の機械学習への興味深い応用は，ある密度の動的モデルを最もよく記述する基礎関数 $F$ を学習することである．この学習は，エントロピー正則化輸送と自動微分（注意~\ref{rem-auto-diff} を参照）を用いて滑らかな非凸最適化を解くことで達成できる．\citet{hashimoto2016learning} を参照されたい．
+
+時間と空間の両方で離散化された勾配流の収束を解析することは，一般に難しい．距離を定義する線形計画の多面体的な性質のため，小さすぎるステップ幅を用いると「ロッキング」現象（分布が動かなくなり発展しないこと）につながるので，ステップ幅は小さすぎてはならない（\citep{maury201713} で議論されている）．1 次元における勾配流の離散化法の収束解析については~\citep{Matthes1D,matthes2017convergent} を参照されたい．
+
+
+\begin{figure}[h!]
+\centering
+\begin{tabular}{@{}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{}}
+\includegraphics[width=.19\linewidth]{jko/congestion/holes-potential}&
+\includegraphics[width=.19\linewidth]{jko/congestion/holes-kappa10-1}&
+\includegraphics[width=.19\linewidth]{jko/congestion/holes-kappa10-2}&
+% \includegraphics[width=.19\linewidth]{jko/congestion/holes-kappa10-5}&
+\includegraphics[width=.19\linewidth]{jko/congestion/holes-kappa10-10}&
+\includegraphics[width=.19\linewidth]{jko/congestion/holes-kappa10-20}\\
+\includegraphics[width=.19\linewidth]{jko/surfaces/cosw}&
+\includegraphics[width=.19\linewidth]{jko/surfaces/evol-1}&
+\includegraphics[width=.19\linewidth]{jko/surfaces/evol-2}&
+\includegraphics[width=.19\linewidth]{jko/surfaces/evol-3}&
+\includegraphics[width=.19\linewidth]{jko/surfaces/evol-4}\\
+$\cos(w)$ & $t=0$ & $t=5$ & $t=10$ & $t=20$
+\end{tabular}
+\caption{\label{fig-jko}
+ドリフト $V$ と混雑項をもつ勾配流発展の例（\citet{2015-Peyre-siims} より）であり，$F(\al) = \int_\X V(x) \d \al(x) + \iota_{\leq \kappa}(\density{\al})$ である．
+}
+\end{figure}
+
+
+
+\S\ref{sec-unbalanced} で詳述するように，不均衡最適輸送距離に対する勾配流を計算することも可能である．これは質量の生成や消滅を許容する発展につながり，多くの物理的，生物学的，あるいは化学的現象をモデル化するのに不可欠である． % Figure~\ref{fig-ot-grad-flows} shows
+不均衡勾配流の例は，細胞成長に対する著名な Hele-Shaw モデル~\citep{PerthameTumor} であり，これは~\citep{gallouet2017jko,marino2017tumor} で理論的に研究されている．そのような不均衡勾配流もまた，一般化 Sinkhorn アルゴリズム~\citep{2016-chizat-sinkhorn} を用いて近似できる．
+
+
+%\begin{figure}[h!]
+%\centering
+%\includegraphics[width=.8\linewidth]{jko/heleshaw_profile}
+%\caption{\label{fig-ot-grad-flows}
+%Unbalanced OT gradient flow to solve the Hele-Shaw equation (from~\citep{2016-chizat-sinkhorn}). \todoK{detail the functional involved}
+%}
+%\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{最小 Kantorovich 推定量}
+\label{sec-mke}
+
+ある未知の分布からの離散標本 $(x_i)_{i=1}^n \subset \Xx$ が与えられたとき，目標は，観測された経験入力測度 $\be$ にパラメトリックモデル $\th \mapsto \al_\th \in \Mm(\Xx)$ をあてはめることである．
+\eql{\label{eq-density-fitting}
+	\umin{\th \in \Theta} \Ll(\al_\th,\be)
+	\qwhereq
+	\be = \frac{1}{n} \sum_i \de_{x_i},
+}
+ここで $\Ll$ は離散分布と「連続」（任意の）分布の間のある「損失」関数である（図~\ref{fig-density-fitting} を参照）．
+
+$\al_\th$ が Lebesgue 測度（あるいは他の任意の固定された参照測度）に関する密度 $\density{\th} \eqdef \density{\al_\th}$ をもつ場合，最尤推定量（MLE）は次を解くことで得られる．
+\eq{
+	\umin{\th} \Ll_{\text{MLE}}(\al_\th,\be) \eqdef -\sum_i \log(\density{\th}(x_i)).
+}
+これは Kullback--Leibler 損失の経験的対応物を用いることに対応する．なぜなら，$x_i$ がある $\bar\be$ の i.i.d. 標本であると仮定すると，
+\eq{
+	\Ll_{\text{MLE}}(\al,\be) \overset{n \rightarrow +\infty}{\longrightarrow} \KL(\al|\bar\be).
+}
+となるからである．
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=.4\linewidth]{density-fitting/schematic-fitting}
+\caption{\label{fig-density-fitting}
+密度あてはめ問題~\ref{eq-density-fitting} の概略表示．
+}
+\end{figure}
+
+
+\newcommand{\fPF}{h}
+
+この MLE アプローチは，多くの場合に最適な推定手続きにつながることが知られている（たとえば~\citet{owen2001empirical} を参照）．しかし，特異分布を推定する際には，典型的には $\al_\th$ が密度をもたない（したがって $\Ll_{\text{MLE}}(\al_\th,\be) = +\infty$ となる）とき，あるいは $(x_i)_i$ がある特異な $\bar\be$ からの標本であるとき（したがって $\KL(\al_\th|\bar\be)$ が有限であるためには $\al_\th$ が $\be$ と同じ台を共有すべきだが，この台は通常未知である），それは機能しない．別の問題は，実用上重要ないくつかの場合において，密度 $\density{\th}$ にアクセスできない（あるいは計算が難しすぎる）ことである．
+
+両方の問題（特異な密度と未知の密度）が生じる典型的な設定は，いわゆる生成モデルに対するものである．そこではパラメトリック測度が，固定された参照測度 $\zeta \in \Mm(\Zz)$ の押し出しとして書かれる．
+\eq{
+	\al_\th = \fPF_{\th,\sharp} \zeta \qwhereq \fPF_\th : \Zz \rightarrow \Xx,
+}
+ここで押し出し作用素は定義~\ref{defn-pushfwd} で導入されている．空間 $\Zz$ は通常低次元であるので，$\al_\th$ の台は低次元の「多様体」に沿って局在し，結果として得られる密度は高度に特異である（Lebesgue 測度に関する密度をもたない）．
+%
+さらに，この密度を計算することは通常扱いにくいが，$\al_\th$ からの i.i.d. 標本を生成することは $x_i=\fPF_\th(z_i)$ を計算することで達成される．ここで $(z_i)_i$ は $\zeta$ からの i.i.d. 標本である．
+
+そのような困難な状況に対処するため，MLE 汎関数 $\Ll_{\text{MLE}}$ の代わりに弱い計量を用いなければならず，それは双対形式
+\eql{\label{eq-dual-loss}
+	\Ll(\al,\be) \eqdef
+	\umax{(\f,\g) \in \Cc(\X)^2}
+	\enscond{ \int_{\X} \f(x) \d\al(x) + \int_{\X} \g(x) \d\be(x) }{ (\f,\g) \in \Potentials}.
+}
+で書かれる必要がある．\S\ref{sec-dual-norms} で示す双対ノルムは，
+\eq{
+	\Potentials = \enscond{(\f,-\f)}{\f \in B},
+}
+を課すことに対応し，一方で最適輸送~\eqref{eq-dual-generic} は \eqref{eq-dfn-pot-dual} で定義される $\Potentials = \Potentials(\c)$ と設定する．
+
+固定された $\th$ に対して，そのような損失関数を用いて \eqref{eq-density-fitting} で最小化されるエネルギーを評価することは，半離散最適輸送を解くことに対応し，それは第~\ref{c-algo-semidiscr} 章の焦点である．エネルギーを $\th$ に関して最小化することははるかに込み入っており，典型的には高度に非凸である．
+
+$\Ee(\th) = \Ll(\al_\th,\be)$ を評価するときの \eqref{eq-dual-loss} の解を $\f_\th$ と書くと，劣勾配は次の式を用いて得られる．
+\eql{\label{eq-grad-wass-loss-dual}
+	\nabla \Ee(\th) = \int_\Xx [\partial \fPF_\th(x)]^\top \nabla \f_\th(x) \d\al_\th(x),
+}
+ここで $\partial \fPF_\th(x) \in \RR^{\text{dim}(\Theta) \times \dim}$ は $\th \in \RR^{\text{dim}(\Theta)} \mapsto \fPF_\th(x)$ の（$\th$ に関する）微分であり，一方で $\nabla \f_\th(x)$ は $\f_\th$ の（$x$ に関する）勾配である．
+%
+この式は数値的に用いるのが難しい．まず第一に，半離散問題の解である連続関数 $\f_\th$ をまず計算する必要があるからである．\S\ref{sec-entropy-ot-mmd} で示すように，OT 損失に対しては，これは確率的最適化を用いて達成できるが，これは高次元ではほとんど適用できない．別の選択肢は，このポテンシャルに対してパラメトリックな形を課すことであり，たとえば RKHS における展開（\citet{genevay2016stochastic}）や深層ネットワーク近似（\citep{WassersteinGAN}）である．しかしこれは，まだ理論的に解析されていない重要な近似誤差につながる．
+%
+最後の問題は，双対ポテンシャル $\f_\th$ の勾配 $\nabla \f_\th$ の計算を必要とするため，数値的に不安定であることである．
+
+OT 損失に対しては，次の等価な問題に対する原始最適結合を計算する場合に，別の勾配の式が得られる．
+\eql{\label{eq-ot-couplings-fitting}
+	\MK_\c(\al_\th,\be) = \umin{\ga \in \Mm(\Zz \times \Xx)}
+		\enscond{
+			\int_{\Zz \times \Xx} c(\fPF_\th(z),x) \d\ga(z,x)
+		}{
+			\gamma \in \Couplings(\zeta,\be)
+		}.
+}
+ここで考えている半離散の場合には，最小化される目的関数が実際には次のように分解できることに注意する．
+\eql{\label{eq-ot-couplings-fitting-bis}
+	\umin{(\ga_i)_{i=1}^n} \sum_{i=1}^n \int_\Zz c(\fPF_\th(z),x_i) \d \ga_i(z)
+	\qwhereq
+	\sum_{i=1}^n \ga_i = \zeta, \quad
+	\int_\Zz \d\ga_i(z)  = \frac{1}{n},
+}
+ここで各 $\ga_i \in \Mm_+^1(\Zz)$ である．
+%
+\eqref{eq-ot-couplings-fitting-bis} を解く最適な $(\gamma_{\th,i})_i$ が得られると，$\Ee(\th)$ の勾配は次のように計算される．
+\eq{
+	\nabla \Ee(\th) = \sum_{i=1}^n \int_\Zz [\partial \fPF_\th(z)]^\top \nabla_1 c(\fPF_\th(z),x_i) \d \ga_i(z),
+}
+ここで $\nabla_1 c(x,y) \in \RR^\dim$ は $x \mapsto c(x,y)$ の勾配である．\eqref{eq-grad-wass-loss-dual} とは対照的に，この式は双対 OT 問題の解であるポテンシャルの勾配の計算を含まないことに注意する．
+
+$\Ll=\MK_\c$ を用いて得られる推定量のクラスは，しばしば「最小 Kantorovich 推定量」と呼ばれ，最初~\citep{bassetti2006minimum} で導入された．\citep{CanasRosasco} も参照されたい．これは生成モデルの文脈で，制限 Boltzmann マシンを訓練するために~\citep{CuturiBoltzman} で用いられ，また近似 Bayes 計算と組み合わせて~\citep{bernton2017inference} で用いられた．深層ネットワークを用いたこれらの計算の近似は，GAN~\citep{WassersteinGAN} と VAE~\citep{Bousquet2017} の両方に対して深層生成モデルを訓練するために用いられている．\citep{2017-Genevay-AutoDiff,2017-Genevay-gan-vae,salimans2018improving} も参照されたい．パラメトリックモデルあてはめのための Sinkhorn divergence の使用は，形状照合や位置合わせに日常的に用いられていることに注意する．\citep{gold1998new,chui2000new,myronenko2010point,2017-feydy-miccai} を参照されたい．
+
+
+\begin{rem1}{計量学習と転移学習}
+	機械学習における応用に対しては，OT 関連の手法の成功が，データの幾何を捉える適応された費用 $c(x,y)$ の選択に大きく依存することを強調しておきたい．
+	%
+	多くの種類のデータを Euclid 空間に埋め込むことは可能であるが（たとえば単語埋め込みについては~\citep{mikolov2013efficient} を参照），多くの場合，計量のなんらかの適応や最適化が必要である．
+	%
+	教師ありタスクに対する計量学習は古典的な問題であり（たとえば~\citep{MAL-019,weinberger2009distance} を参照），ある OT 距離が学習パイプラインで用いられるときの地上計量 $c(x,y)$ の学習へと拡張されている~\citep{CuturiGroundMetric2014}（\citealt{ZenICPR14,WangECCV12OLD,huang2016supervised} も参照）．
+	%
+	最適結合 $\P$ の観測から費用行列を学習するという関連する逆問題についても言及しておきたい．これは低ランク事前分布を用いて正則化できる~\citep{dupuy2016estimating}．
+	%
+	関連する問題は転移学習~\citep{pan2010survey} とドメイン適応~\citep{glorot2011domain} であり，そこでは訓練済みの機械学習パイプラインを新しいデータセットに適応させるために移したい．この問題は OT 技法を用いてモデル化し解くことができる．\citep{courty2017optimal,courty2017joint} を参照されたい．
+\end{rem1}

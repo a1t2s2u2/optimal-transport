@@ -1,0 +1,43 @@
+\documentclass[uplatex, dvipdfmx, openany]{jsreport}
+
+\input{preamble}
+
+\title{計算最適輸送\\\large Computational Optimal Transport（日本語訳）}
+\author{Gabriel Peyr\'e \and Marco Cuturi\\[1ex]\normalsize 訳：セミナー}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\input{00_abstract}
+
+\tableofcontents
+
+% --- 本文 ---
+\input{01_introduction}
+\input{02_theoretical_foundations}
+\input{03_algorithmic_foundations}
+\input{04_entropic_regularization}
+\input{05_semidiscrete}
+\input{06_w1}
+\input{07_dynamic}
+\input{08_statistical}
+\input{09_variational}
+\input{10_extensions}
+
+% --- 謝辞 ---
+\chapter*{謝辞}
+本サーベイの準備にあたり，さまざまな段階で助けていただいた多くの同僚・共同研究者・学生の方々に感謝したい．
+彼らの貢献は本稿の形成に寄与しており，とくに Jean-David Benamou, Yann Brenier, Guillaume Carlier,
+Vincent Duval ならびに Inria の MOKAPLAN チーム全体，Francis Bach, Espen Bernton, Mathieu Blondel,
+Nicolas Courty, R\'emi Flamary, Alexandre Gramfort, Young-Heon Kim, Daniel Matthes, Philippe Rigollet,
+Filippo Santambrogio, Justin Solomon, Jonathan Weed の各氏に感謝する．また，これらの主題に関して
+フィードバックを寄せてくれた現・元学生，とくに Gwendoline de Bie, L\'ena\"ic Chizat, Aude Genevay,
+Hicham Janati, Th\'eo Lacombe, Boris Muzellec, Fran\ccedilla{c}ois-Pierre Paty, Vivien Seguy の各氏に感謝する．
+
+% --- 参考文献 ---
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

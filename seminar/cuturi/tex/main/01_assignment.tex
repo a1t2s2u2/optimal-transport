@@ -1,0 +1,107 @@
+\chapter{最適割当問題}
+\label{ch:sem-assignment-chapter}
+
+\begin{remark}{本章の設定}{sem-ch2-setup}
+  $(\X, d_\X)$, $(\Y, d_\Y)$ は\textbf{完備可分な距離空間}（Polish 空間，
+  定義~\ref{def:sem-polish}）とする．
+  定義~\ref{def:sem-borel} $\Bb(\X)$ により
+  $\X$ を可測空間（定義~\ref{def:sem-measurable-space}）$(\X, \Bb(\X))$ として扱う
+  （$\Y$ についても同様）．$\X$ 上の確率測度（定義~\ref{def:sem-probability-measure}）全体を $\Mm_+^1(\X)$ と記す．
+
+  Polish 空間とその構成要素（距離・開球・開集合・ボレル $\sigma$-代数・完備性・
+  可分性）は付録（前提知識）にまとめてある．離散版で扱う有限点集合 $S = \{x_1, \ldots, x_n\} \subset \X$ は，
+  どの距離を入れても自動的に Polish 空間となる（注意~\ref{rem:sem-finite-auto-polish}）．
+  したがって本章の Polish 仮定は連続側でのみ効き，離散版には追加制約を課さない．
+\end{remark}
+
+整数の集合 $\range{n} = \{1, \ldots, n\}$ 上の\textbf{置換}
+（全単射 $\sigma \colon \range{n} \to \range{n}$，定義~\ref{def:sem-permutation}）の
+全体を $\Perm(n)$ と書く．$\Perm(n)$ は $|\Perm(n)| = n!$ の有限集合である．
+
+\begin{definition}{最適割当問題}{sem-assignment}
+  $n \in \N$，置換 $\sigma \in \Perm(n)$，
+  および行列 $\mathbf{C} \in \Rnn^{n \times n}$ に対して，
+  \[
+    \min_{\sigma \in \Perm(n)} \frac{1}{n} \sum_{i=1}^{n} C_{i, \sigma(i)}
+  \]
+  を達成する $\sigma$ を求める問題を\textbf{最適割当問題}という．
+\end{definition}
+
+添字 $i$ から $j$ への\textbf{輸送コスト}を $C_{i,j}$ と解釈すれば，
+$\sigma(i) = j$ は $i$ を $j$ に割り当てることを意味し，
+目的関数 $\frac{1}{n}\sum_i C_{i, \sigma(i)}$ はその割当の平均輸送コストを表す．
+
+\begin{example}{最適割当}{sem-assignment-cost-example}
+  $n = 2$ とし，置換 $\sigma \in \Perm(2)$ と行列
+  \[
+    \mathbf{C} =
+    \begin{pmatrix}
+      1 & 4 \\
+      2 & 1
+    \end{pmatrix} \in \Rnn^{2 \times 2}
+  \]
+  を考える．$\Perm(2) = \{(1,2),\, (2,1)\}$ の $2! = 2$ 通りの割当を以下に図示する．
+
+  \begin{center}
+  \begin{tikzpicture}[
+    wk/.style={circle, draw=blue!60, fill=blue!10,
+               minimum size=18pt, inner sep=1pt, font=\small},
+    tk/.style={rectangle, rounded corners=1.5pt,
+               draw=red!60, fill=red!10,
+               minimum size=18pt, inner sep=1pt, font=\small},
+    optarr/.style={-{Stealth[length=5pt]}, thick, green!50!black},
+    arr/.style={-{Stealth[length=5pt]}, semithick, black!60, dashed},
+    costlbl/.style={fill=white, inner sep=1pt, font=\footnotesize},
+  ]
+    \node[wk] (w1) at (0, 1.2) {1};
+    \node[wk] (w2) at (3, 1.2) {2};
+    \node[tk] (t1) at (1, -1.2) {1};
+    \node[tk] (t2) at (4, -1.2) {2};
+
+    % σ=(1,2): 1→1, 2→2（最適）
+    \draw[optarr] (w1) -- node[costlbl, midway] {(a)\ $1$} (t1);
+    \draw[optarr] (w2) -- node[costlbl, midway] {(a)\ $1$} (t2);
+    % σ=(2,1): 1→2, 2→1
+    \draw[arr] (w1) -- node[costlbl, pos=0.25] {(b)\ $4$} (t2);
+    \draw[arr] (w2) -- node[costlbl, pos=0.25] {(b)\ $2$} (t1);
+  \end{tikzpicture}
+  \end{center}
+
+  各割当のコストをまとめると，
+  \begin{center}
+  \begin{tabular}{ccc}
+     & $\sigma$ & コスト $\frac{1}{n}\sum_i C_{i,\sigma(i)}$ \\\hline
+    (a) & $(1,2)$ & $\frac{1}{2}(1 + 1) = \mathbf{1}$ \\
+    (b) & $(2,1)$ & $\frac{1}{2}(4 + 2) = 3$ \\
+  \end{tabular}
+  \end{center}
+  よって $\sigma = (1, 2)$ が最小コスト $1$ を達成し，最適である．
+\end{example}
+
+\begin{claim}{最適解の存在}{sem-assignment-existence}
+  任意の $n \in \N$ と任意の $\mathbf{C} \in \Rnn^{n \times n}$ に対して，
+  最適割当問題（定義~\ref{def:sem-assignment}）の最小値は達成される．
+\end{claim}
+
+\begin{proof}
+  $\Perm(n)$ は $|\Perm(n)| = n!$ の有限集合なので，集合
+  \[
+    \left\{ \frac{1}{n}\sum_{i=1}^{n} C_{i, \sigma(i)} \;\middle|\; \sigma \in \Perm(n) \right\}
+  \]
+  は高々 $n!$ 個の実数からなる空でない有限集合である．
+  $\R$ の空でない有限部分集合は最小元を持つ（主張~\ref{clm:sem-finite-min}）
+  ので，それを達成する $\sigma^* \in \Perm(n)$ が存在する．
+\end{proof}
+
+\begin{claim}{最適解が一意でない場合の存在}{sem-uniqueness}
+  任意の $n \geq 2$ に対して，最適割当問題（定義~\ref{def:sem-assignment}）において
+  異なる $\sigma_1, \sigma_2 \in \Perm(n)$ がともに最小値を達成するような
+  $\mathbf{C} \in \Rnn^{n \times n}$ が存在する．
+\end{claim}
+
+\begin{proof}
+  $C_{i,j} \defeq 1$（$i, j = 1, \ldots, n$）と定めると，任意の $\sigma \in \Perm(n)$ に対して
+  $\frac{1}{n}\sum_{i=1}^{n} C_{i, \sigma(i)} = 1$．
+  異なる $\sigma_1, \sigma_2 \in \Perm(n)$ を取れば，
+  いずれも最小値 $1$ を達成する．
+\end{proof}

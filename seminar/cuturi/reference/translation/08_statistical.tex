@@ -1,0 +1,837 @@
+% 原文: chapters/statistical.tex
+\newcommand{\myFigRKHS}[1]{\includegraphics[width=.195\linewidth]{rkhs/#1}}
+\chapter{統計的ダイバージェンス}
+\label{c-statistical}
+
+本章では，Wasserstein 距離の統計的性質を調べる．より具体的には，データサイエンスで日常的に用いられる他の主要な距離やダイバージェンスと比較する．二つの確率分布から得られた標本のみにアクセスできるとき，それらの分布間の距離をどの程度近似できるかを定量化する．これらの主題を導入するため，~\S\ref{sec-phi-div} と~\S\ref{sec-dual-norms} ではそれぞれ，確率分布間のダイバージェンスと積分確率距離(integral probability metric)を概観する．ダイバージェンス $D$ は典型的には $D(\al,\be) \geq 0$ を満たし，$D(\al,\be)=0$ であることと $\al=\be$ であることが同値となるが，対称性や三角不等式を満たす必要はない．測度に対する積分確率距離とは，指定されたテスト関数の族を用いて定義される双対ノルムである．これらの量は Wasserstein 距離の妥当な代替であり，~\S\ref{c-variational} で扱うように，推論問題に取り組む際の損失関数として日常的に用いられる．まず~\S\ref{sec-non-embeddability} では，最適輸送距離が Hilbert 的でない，すなわち確率測度の適切な特徴表現上の Hilbert 計量によってそれを効率的に近似することはできないことを示す．~\S\ref{sec-empirical-wass} では，$\al$ と $\be$ から抽出された離散標本 $(x_i)_i$ と $(y_j)_j$ から $D(\al,\be)$ をどのように近似するかを示す．この問題についての良好な統計的理解は，機械学習で Wasserstein 距離を用いる際に決定的に重要である．なお，本節は主として\emph{連続}な集合上に台をもつ分布間の最適輸送の統計的近似に関心を向ける．台となる空間が有限である場合のまさに同じ問題は，~\citet{sommerfeld2018inference} の研究を端緒として文献で一定の注目を集めており，~\citet{bigot2017central} によりエントロピー正則化量へと拡張されている．
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{$\phi$-ダイバージェンス}
+\label{sec-phi-div}
+
+次節で，$\Wass_1$ と構成上の類似性をもつ「弱い」ノルムを詳述する前に，測度間のいわゆるダイバージェンスの一般的な構成を詳述しておこう．これは確率分布を推定する際の損失関数として用いることができる．このようなダイバージェンスは，質量輸送の概念を一切導入することなく，二つの入力測度をその質量を\emph{点ごとに}比較することによって比べる．ダイバージェンスとは，二つの測度の点ごとの比を見ることで，それらがどれほど近いかの感覚を与える汎関数である．これらは良好な解析的・計算的性質をもち，\emph{エントロピー関数}の上に構築される．
+
+\begin{defn}[エントロピー関数]
+\label{def_entropy}
+関数 $\phi : \RR \to \RR \cup \{\infty\}$ がエントロピー関数であるとは，下半連続かつ凸であり，$\dom \phi\subset [0,\infty[$ を満たし，さらに次の実行可能性条件を満たすことをいう：$\dom \phi \; \cap\;  ]0, \infty[\; \neq \emptyset$．無限遠における $\phi$ の増大の速さは次で記述される．%its recession (or horizon) function
+\eq{
+\phi'_\infty = \lim_{x\rightarrow +\infty} \varphi(x)/x \in \RR \cup \{\infty\} \, .
+}
+\end{defn}
+
+$\phi'_\infty = \infty$ ならば，$\phi$ は任意の線形関数より速く増大し，$\phi$ は\emph{優線形}であるという．任意のエントロピー関数 $\phi$ は，次のようにして $\phi$-ダイバージェンス（Cisz\'ar ダイバージェンス~\citep{ciszar1967information,ali1966general} または $f$-ダイバージェンスとしても知られる）を導く．
+
+
+
+\begin{defn}[$\phi$-ダイバージェンス]
+\label{def_divergence}
+$\phi$ をエントロピー関数とする．
+$\al,\be \in \Mm(\X)$ に対し，$\frac{\d \al}{\d \be} \be + \al^{\perp}$ を $\be$ に関する $\al$ の Lebesgue 分解\footnote{Lebesgue 分解定理は，$\be$ が与えられたとき，$\al$ が二つの測度の和 $\al^s + \al^\perp$ として一意に分解されることを主張する．ここで $\al^s$ は $\be$ に関して絶対連続であり，$\al^\perp$ と $\be$ は互いに特異である．}とする．ダイバージェンス $\Divergm_\phi$ を次で定義する．
+\eql{\label{eq-phi-div}
+	\Divergm_\phi (\al|\be) \eqdef \int_\X \phi\left(\frac{\d \al}{\d \be} \right) \d \be
++ \phi'_\infty \al^{\perp}(\X)
+}
+ただし $\al,\be$ が非負のときであり，そうでなければ $\infty$ とする．
+\end{defn}%
+
+~\eqref{eq-phi-div} における付加項 $\phi'_\infty \al^{\perp}(\X)$ は，$\phi$ が無限遠で線形増大をもつ場合であっても $\Divergm_\phi$ が（測度の弱位相に関して）連続な汎関数を定めることを保証するために重要である．これはたとえば，TV ノルムを定義する絶対値~\eqref{eq-tv-entropy} の場合に当てはまる．$\phi$ が優線形増大をもつ場合，たとえば通常のエントロピー~\eqref{eq-shannon-entropy} の場合，$\phi'_\infty=+\infty$ となり，$\al$ が $\be$ に関して密度をもたないならば $\Divergm_\phi (\al|\be) = +\infty$ となる．
+
+離散の設定では，
+\eql{\label{eq-div-disc-meas}
+	\al=\sum_i \a_i \de_{x_i}
+	\qandq \be=\sum_i \b_i \de_{x_i}
+}
+が同じ $n$ 個の点の集合 $(x_i)_{i=1}^n \subset \X$ 上に台をもつと仮定すると，~\eqref{eq-phi-div} は $\simplex_n$ 上のダイバージェンスを定める．
+\eql{\label{eq-discr-diverg}
+	\DivergmD_\phi(\a|\b) = \sum_{i \in \Supp(\b)} \phi\pa{ \frac{\a_i}{\b_i} } \b_i + \phi'_\infty \sum_{i \notin \Supp(\b)} \a_i,
+}
+ここで $\Supp(\b) \eqdef \enscond{i \in \range{n}}{ b_i \neq 0 }$ である．
+
+次の命題の証明は~\cite[Thm 2.7]{LieroMielkeSavareLong} にある．
+
+\begin{proposition}
+$\phi$ がエントロピー関数ならば，$\Divergm_\phi$ は $(\al,\be)$ について同時に $1$-斉次，凸かつ弱$*$下半連続である．
+\end{proposition}
+
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=.6\linewidth]{divergences/divergences}
+\caption{\label{fig-divergences}
+エントロピー汎関数の例．
+}
+\end{figure}
+
+
+\begin{rem}[双対表現]
+	$\phi$-ダイバージェンスは，$\phi$ の Legendre 変換
+	\eq{
+		\phi^*(s) \eqdef \usup{t \in \RR} st - \phi(t)
+	}
+	（~\eqref{eq-legendre} も参照）を用いて次のように表せる．
+	\eq{
+		\Divergm_\phi (\al|\be) = \usup{f: \X \rightarrow \RR} \int_\X f(x) \d\al(x) - \int_\X \phi^*(f(x)) \d\be(x);
+	}
+	詳細は~\citet{LieroMielkeSavareLong} を参照．
+\end{rem}
+
+
+ここで，この枠組みのいくつかの代表的な例を概観する．図~\ref{fig-divergences} は対応するエントロピー汎関数を示し，図~\ref{fig-divergences-relations} はそれらの間の関係を概観する．
+
+
+
+
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=.6\linewidth]{divergences/divergences-comparison}
+\caption{\label{fig-divergences-relations}
+ダイバージェンス間の関係を表す図（~\citet{gibbs2002choosing} に着想を得た）．
+台距離 $d$ をもつ距離空間 $\X$ に対し，$d_{\max} = \sup_{(x,x')} d(x,x')$ は $\X$ の直径である．$\X$ が離散のとき，$d_{\min} \eqdef \min_{x \neq x'} d(x,x')$ とする．\todoK{Tripple check these bounds since they might use different definition/normalization. }\todoK{Change the notation for the Hellinger distance one the symbol is decided $\Hellinger$. }
+}
+\end{figure}
+
+
+\begin{example}[Kullback--Leibler ダイバージェンス]
+\label{ex_KLdiv}
+Kullback--Leibler ダイバージェンス $\KL \eqdef \Divergm_{\phi_{\KL}}$ は，相対エントロピーとしても知られ，すでに~\eqref{eq-defn-rel-entropy} と~\eqref{eq-kl-defn} で導入された．これは Shannon--Boltzman エントロピー関数 $\phi_{\KL}$ に対応するダイバージェンスであり，$\phi_{\KL}$ は次で与えられる．
+\eql{\label{eq-shannon-entropy}
+	\phi_{\KL}(s)= \begin{cases}
+		s\log(s)-s+1 & \textnormal{for } s>0 , \\
+		1 & \textnormal{for } s=0 , \\
+		+\infty & \textnormal{otherwise.}
+		\end{cases}
+}
+\end{example}
+
+\begin{remark}[Bregman ダイバージェンス]\label{rem-bregman}
+離散 KL ダイバージェンス $\KLD \eqdef \DivergmD_{\phi_{\KL}}$ は，$\phi$-ダイバージェンスであると同時に Bregman ダイバージェンスでもあるという唯一の性質をもつ．
+%
+$\RR^n$ の離散ベクトルに対し，滑らかかつ狭義凸な関数 $\psi : \RR^n \rightarrow \RR$ に対応する Bregman ダイバージェンス~\citep{bregman1967relaxation} は次で定義される．
+\eql{\label{eq-bregman-discr}
+	\VectMode{B}_\psi(\a|\b) \eqdef \psi(\a) - \psi(\b) - \dotp{\nabla \psi(\b)}{\a-\b},
+}
+ここで $\dotp{\cdot}{\cdot}$ は $\RR^n$ 上の標準内積である．$\VectMode{B}_\psi(\a|\b)$ は $\a$ の凸関数であり，$\psi$ の線形関数であることに注意する．
+%
+$\phi$-ダイバージェンスと同様に，Bregman ダイバージェンスは $\VectMode{B}_\psi(\a|\b) \geq 0$ を満たし，$\VectMode{B}_\psi(\a|\b)=0$ であることと $\a=\b$ であることが同値となる．
+%
+KL ダイバージェンスは，~\eqref{eq-discr-entropy} で定義されたエントロピーの符号を反転したもの $\psi = -\HD$ に対する Bregman ダイバージェンスである，すなわち $\KLD = \VectMode{B}_{-\HD}$ である．
+%
+Bregman ダイバージェンスは局所的に二乗 Euclid 距離となる．なぜなら
+\eq{
+	\VectMode{B}_\psi(\a + \varepsilon|\a + \eta) = \dotp{ \partial^2 \psi(\a)(\varepsilon-\eta) }{\varepsilon-\eta}
+	+ o(\norm{\varepsilon-\eta}^2)
+}
+であり，分離点の集合 $\enscond{\a}{\VectMode{B}_\psi(\a|\b) = \VectMode{B}_\psi(\a|\b')}$ は $\b$ と $\b'$ の間の超平面となるからである．
+%
+これらの性質により，Bregman ダイバージェンスは一次最適化手法において Euclid 距離を置き換えるのに適している．最もよく知られた例はミラー勾配降下法~\citep{beck2003mirror} であり，これは~\eqref{eq-explicit-metricflow} の形の明示的降下ステップである．
+%
+Bregman ダイバージェンスは凸最適化においても重要であり，たとえば Sinkhorn 反復を導出し有限次元でその収束を調べるのに用いることができる．注意~\ref{rem-iterative-projection} を参照．
+%%%% Should be re-written in infinite dimension
+%While KL is both a $\phi$ and a Bregman divergence, these are radically different concepts. In particular, to generalize formula~\eqref{eq-bregman-discr} to nondiscrete measures on some space $\Xx$, one needs to fix a reference measure $\xi$ and consider only measures $\al,\be$ with square integrable densities $\frac{\d\al}{\d\xi},\frac{\d\be}{\d\xi} \in L^2(\d\xi)$. For some strictly convex $\psi : L^2(\d\xi) \rightarrow \RR$, one then defines the Bregman divergence as
+%\eq{
+%	\Bb_{\psi,\xi}(\al|\be) \eqdef \psi\pa{\frac{\d\al}{\d\xi}} -
+%		\psi\pa{\frac{\d\be}{\d\xi}} -
+%		\int_{\X} \eta(x) \pa{
+%			\frac{\d\al}{\d\xi}(x)-\frac{\d\be}{\d\xi}(x)
+%		} \d \xi(x),
+%}
+%where $\eta = \nabla \psi\pa{\frac{\d\be}{\d\xi}}  \in L^2(\d\xi)$ is the gradient~\citep{rao1985cross,jones1990general}.
+%%%
+%The simplest case is if $\psi(\rho) = \int_\X \tilde\psi(\rho(x)) \d\xi(x)$ in which case
+%\eq{
+%	\Bb_{\psi,\xi}(\al|\be) \eqdef
+%		\int_\X \pa{
+%		\tilde\psi\pa{\frac{\d\al}{\d\xi}} -
+%		\tilde\psi\pa{\frac{\d\be}{\d\xi}} -
+%		\tilde\psi'\pa{\frac{\d\be}{\d\xi}}
+%		\pa{
+%			\frac{\d\al}{\d\xi}-\frac{\d\be}{\d\xi}
+%		}
+%		} \d \xi.
+%}
+\end{remark}
+
+\begin{remark}[KL の双曲幾何]
+	Gauss 分布を比較する際に，Kullback--Leibler ダイバージェンスの幾何を，二次最適輸送が定める幾何と対比するのは興味深い．たとえば~\citet{costa2015fisher} が詳述するように，Kullback--Leibler ダイバージェンスは Gauss 密度に対して閉形式をもつ．一変量の場合，$\dim=1$ で，$\al = \Nn(m_\al,\si_\al^2)$ かつ $\be = \Nn(m_\be,\si_\be^2)$ とすると，
+	\eql{\label{eq-kl-gaussian}
+		\KL(\al|\be) = \frac{1}{2}\pa{
+			\frac{\si_\al^2}{\si_\be^2}  +
+			\log\pa{\frac{\si_\be^2}{\si_\al^2}}
+			+ \frac{|m_\al-m_\be|}{\si_\be^2}
+			 - 1
+		}.
+	}
+	この式は，$\si_\be$ が $0$ に減少して $\be$ が Dirac 質量となるにつれて，$\al$ と $\be$ の間のダイバージェンスが無限大に発散することを示している．その意味で，特異な Gauss 分布は KL 幾何において他のすべての Gauss 分布から無限に遠いといえる．したがってこの幾何は，特異な共分散を扱うことを避けたいときに有用である．解析を簡単にするため，KL の無限小幾何に目を向けることができ，これは 2 次の Taylor 展開を行うことで得られる．
+	\eq{
+		\KL( \Nn(m+\de_m,(\si+\de_\si)^2) | \Nn(m,\si^2) ) = \frac{1}{\si^2}\pa{
+			\frac{1}{2}\de_m^2 + \de_\si^2
+		} +
+		o( \de_m^2,\de_\si^2 ).
+	}
+	この局所 Riemann 計量，いわゆる Fisher 計量は，$(m/\sqrt{2},\si) \in \RR \times \RR_{+,*}$ 上で表すと，双曲 Poincar\'e 半平面の計量と正確に一致する．
+	%
+	この空間上の測地線は $\si=0$ の直線に沿って中心をもつ半円であり，指数的速さをもつ．すなわち，無限の時間を経た後にはじめて極限 $\si=0$ に到達する．
+	%
+	特に，$\si_\al=\si_\be$ だが $m_\al \neq m_\al$ ならば，この双曲半平面上の $(\al,\be)$ 間の測地線は標準偏差が一定でないことに注意する．
+
+	Gauss パラメータ $(m,\si)$ の空間上の KL 双曲幾何は，注意~\ref{rem-dist-gaussians} で述べた OT に対応する Euclid 幾何と対比されるべきである．なぜなら，一変量の場合
+	\eql{\label{eq-univariate-gauss}
+		\Wass_2^2( \al,\be ) = |m_\al - m_\be |^2 + |\si_\al-\si_\be|^2.
+	}
+	だからである．図~\ref{fig-kl-gaussians} はこれら二つの幾何とそれぞれの測地線の視覚的比較を示す．
+	%
+	この興味深い比較は Jean Feydy から示唆されたものである．
+\end{remark}
+
+
+
+\begin{figure}[h!]
+\centering
+\begin{tabular}{@{}c@{\hspace{3mm}}c@{}}
+\includegraphics[width=.45\linewidth]{kl-gaussian/interp-kl}&
+\includegraphics[width=.46\linewidth]{kl-gaussian/interp-ot}\\
+KL & OT
+\end{tabular}
+\caption{\label{fig-kl-gaussians}
+KL（双曲）幾何と OT（Euclid）幾何を用いた Gauss 分布間の補間の比較．
+}
+\end{figure}
+
+
+\begin{example}[全変動]\label{exmp-tv}
+全変動距離 $\TV \eqdef \Divergm_{\phi_{\TV}}$ は，次に対応するダイバージェンスである．
+\eql{\label{eq-tv-entropy}
+	\phi_{\TV}(s)= \begin{cases}
+		|s-1| & \textnormal{for } s\geq0 , \\
+		+\infty & \textnormal{otherwise.}
+		\end{cases}
+}
+これは実際，測度の全空間 $\Mm(\X)$ 上のノルムを定める．ここで
+\eql{\label{eq-defn-tv}
+	\TV(\al|\be) = \norm{\al-\be}_{\TV},
+	\qwhereq
+	\norm{\al}_{\TV} = |\al|(\X) = \int_\X \d|\al|(x).
+}
+である．$\al$ が $\X=\RR^\dim$ 上で密度 $\density{\al}$ をもつならば，TV ノルムは関数の $L^1$ ノルム $\norm{\al}_{\TV} = \int_\X |\density{\al}(x)| \d x = \norm{\density{\al}}_{L^1}$ である．
+%
+$\al$ が~\eqref{eq-div-disc-meas} のように離散ならば，TV ノルムは $\RR^n$ のベクトルの $\ell^1$ ノルム $\norm{\al}_{\TV}=\sum_i |\a_i| = \norm{\a}_{\ell^1}$ である．
+\end{example}
+
+\begin{rem}[強位相 対 弱位相]
+	全変動ノルム~\eqref{eq-defn-tv} は，測度の空間上のいわゆる「強」位相を定める．
+	%
+	半径 $R$ のコンパクト領域 $\X$ 上では，
+	\eq{
+		\Wass_1(\al,\be) \leq R \norm{\al-\be}_{\TV}
+	}
+	が成り立つので，この強い意味の収束は，Wasserstein 距離によって距離化される弱収束を含意する．
+	%
+	しかし逆は成り立たない．なぜなら，$x \rightarrow y$ のとき $\de_x$ は $\de_y$ に強収束しないからである（$x \neq y$ ならば $\norm{\de_x-\de_y}_{\TV}=2$ であることに注意する）．
+	%
+	主な利点は，（再びコンパクトな台空間 $\X$ 上で）$\Mm_+^1(\Xx)$ が弱位相についてコンパクトであることであり，したがって確率測度の任意の列 $(\al_k)_k$ から収束する部分列を常に取り出せる．これにより，第~\ref{c-variational} 章で考えるようないくつかの最適化問題に適した空間となる．
+\end{rem}
+
+
+\begin{example}[Hellinger]\label{exmp-hellinger}
+	Hellinger 距離 $\Hellinger \eqdef \Divergm_{\phi_{H}}^{1/2}$ は，次に対応するダイバージェンスの平方根である．
+	\eq{
+		\phi_{H}(s)= \begin{cases}
+			|\sqrt{s}-1|^2 & \textnormal{for } s\geq0 , \\
+			+\infty & \textnormal{otherwise.}
+			\end{cases}
+	}
+	その名が示すように，$\Hellinger$ は $\Mm_+(\X)$ 上の距離であり，$\norm{\cdot}_{\TV}$ と同様に強位相を距離化する．
+	%
+	$(\al,\be)$ が $\X=\RR^\dim$ 上で密度 $(\density{\al},\density{\be})$ をもつならば，$\Hellinger(\al,\be) = \norms{\sqrt{\density{\al}}-\sqrt{\density{\be}}}_{L^2}$ である．
+	%
+	$(\al,\be)$ が~\eqref{eq-div-disc-meas} のように離散ならば，$\Hellinger(\al,\be) = \norms{\sqrt{\a}-\sqrt{\b}}$ である．
+	%
+	$\phi_{L^p}(s)=|s^{1/p}-1|^p$ を考えると，Hellinger（$p=2$）と全変動（$p=1$）の距離が一般化され，$\Divergm_{\phi_{L^p}}^{1/p}$ は $0<p<+\infty$ に対して強収束を距離化する距離となる．
+\end{example}
+
+
+\begin{example}[Jensen--Shannon 距離]
+	KL ダイバージェンスは対称でなく，また（局所的に二次ノルムである）Bregman ダイバージェンスであるものの，距離の二乗ではない．一方，Jensen--Shannon 距離 $\text{JS}(\al,\be)$ は
+	\eq{
+		\text{JS}(\al,\be)^2 \eqdef \frac{1}{2}\pa{
+			\KL(\al|\xi) + \KL(\be|\xi)
+		}
+		\qwhereq
+		\xi = \frac{\al+\be}{2},
+	}
+	と定義され，距離である~\citep{endres2003new,osterreicher2003new}．
+	%
+	$\text{JS}^2$ は $\phi(s) = t\log(t)-(t+1)\log(t+1)$ に対する $\phi$-ダイバージェンスであることが示せる．
+	%
+	$\KL$ とは際立って対照的に，$\text{JS}(\al,\be)$ は常に有界である．より正確には，$0 \leq \text{JS}(\al,\be)^2 \leq \ln(2)$ を満たす．
+	%
+	TV ノルムや Hellinger 距離と同様に，これは強収束を距離化する．
+\end{example}
+
+
+
+\begin{example}[$\chi^2$]\label{exmp-chisquare}
+	$\chi^2$-ダイバージェンス $\chi^2 \eqdef \Divergm_{\phi_{\chi^2}}$ は，次に対応するダイバージェンスである．
+	\eq{
+		\phi_{\chi^2}(s)= \begin{cases}
+			|s-1|^2 & \textnormal{for } s\geq0 , \\
+			+\infty & \textnormal{otherwise.}
+			\end{cases}
+	}
+	$(\al,\be)$ が~\eqref{eq-div-disc-meas} のように離散で同じ台をもつならば，
+	\eq{
+		\chi^2(\al|\be) = \sum_i \frac{(\a_i-\b_i)^2}{\b_i}.
+	}
+\end{example}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{積分確率距離}
+\label{sec-dual-norms}
+
+
+定式化~\eqref{eq-w1-cont} は双対ノルムの特別な場合である．双対ノルムは，任意の測度を扱える「弱い」ノルムを設計する便利な方法である．可測関数からなる対称凸集合 $B$ に対し，
+\eql{\label{eq-dual-norm-cont}
+	\norm{\al}_B \eqdef
+	\umax{\f} \enscond{ \int_{\X} \f(x) \d\al(x) }{ \f \in B}.
+}
+と定義する．これらの双対ノルムはしばしば「積分確率距離(integral probability metric)」と呼ばれる．~\citep{sriperumbudur2012empirical} を参照．
+
+
+% Cf. ``Integral probability metrics and their generating classes of functions".
+
+\begin{example}[全変動]
+全変動ノルム（例~\ref{exmp-tv}）は，連続関数の全空間
+\eq{
+	B = \enscond{f \in \Cc(\X)}{\norm{f}_\infty \leq 1}.
+}
+に対応する双対ノルムである．全変動距離は，双対ノルムでもある唯一の非自明なダイバージェンスである．~\citep{sriperumbudur2009integral} を参照．
+\end{example}
+
+\begin{rem}[弱収束の距離化]\label{rem-ipm-weak}
+より小さな「球」$B$，すなわち典型的には連続（時には正則）な関数のみを含む球を用いることで，より弱い双対ノルムが定義される．
+%
+$\norm{\cdot}_B$ が弱収束（定義~\ref{dfn-weak-conv} を参照）を距離化するためには，$B$ が張る空間が上限ノルム $\norm{\cdot}_\infty$ について（すなわち一様収束の位相について）連続関数の集合の中で稠密であれば十分である．~\citep[para. 5.1]{ambrosio2006gradient} を参照．
+\end{rem}
+
+図~\ref{fig-dual-norms} は，これからその詳細を述べるいくつかのこのような双対ノルムの比較を示す．
+
+
+\begin{figure}[h!]
+\centering
+\begin{tabular}{@{}c@{\hspace{3mm}}c@{}}
+\includegraphics[width=.45\linewidth]{dual-norms/1dirac-1dirac} &
+\includegraphics[width=.45\linewidth]{dual-norms/1dirac-2dirac} \\
+$(\al,\be)=(\de_0,\de_t)$ &
+$(\al,\be)=(\de_0,\frac{1}{2}(\de_{-t/2}+\de_{t/2}))$
+\end{tabular}
+\caption{\label{fig-dual-norms}
+双対ノルムの比較．
+}
+\end{figure}
+
+
+
+%%%%
+\subsection{$\Wass_1$ とフラットノルム}
+
+集合 $B$ が有界ならば，$\norm{\cdot}_B$ は測度の全空間 $\Mm(\Xx)$ 上のノルムである．
+%
+これは $\Wass_1$ には当てはまらない．$\Wass_1$ は $\int_\X \d\al=0$ なる $\al$ に対してのみ定義される（そうでなければ $\norm{\al}_B=+\infty$ である）．
+%
+これは，ポテンシャル $\f$ の値に上界を課すことで緩和でき，たとえばフラットノルムを定義できる．
+
+\begin{example}[$\Wass_1$ ノルム]
+~\eqref{eq-w1-cont} で定義される $\Wass_1$ は，1-Lipschitz 関数の集合
+\eq{
+	B = \enscond{f}{\Lip(f) \leq 1}
+}
+を用いた双対ノルム~\eqref{eq-dual-norm-cont} の特別な場合である．
+\end{example}
+
+\begin{example}[フラットノルムと Dudley 計量]
+フラットノルムは次を用いて定義される．
+\eql{\label{eq-set-flatnorm}
+	B=\enscond{f}{\norm{\nabla \f}_\infty \leq 1 \qandq \norm{\f}_\infty \leq 1}.
+}
+これは全空間 $\Mm(\X)$ 上で弱収束を距離化する．
+%
+公式~\eqref{eq-w1-discr} は，制約 $\abs{\fD_k} \leq 1$ を追加することでフラットノルムを計算するように拡張される．
+%
+フラットノルムは「Kantorovich--Rubinstein」ノルム~\citep{hanin1992kantorovich} と呼ばれることもあり，画像処理における逆問題の忠実度項として用いられてきた~\citep{lellmann2014imaging}．
+%
+フラットノルムは Dudley 計量と似ており，後者は次を用いる．
+\eq{\label{eq-set-dudley}
+	B=\enscond{f}{\norm{\nabla \f}_\infty + \norm{\f}_\infty \leq 1}.
+}
+\end{example}
+
+
+%%%%
+\subsection{双対 RKHS ノルムと最大平均ずれ}
+\label{sec-mmd}
+
+
+カーネル法の道具立て，より具体的には再生核ヒルベルト空間(RKHS)（データサイエンスにおける応用の概観は~\citep{scholkopf2002learning} を参照）を用いて，測度上の「Euclid 的」ノルム（二次汎関数を用いて構築される）を定義することも可能である．まずいくつかの基本的な定義を思い出しておこう．
+
+\begin{defn}\label{def-negativedefinitekernel}
+集合 $\X \times \X$ 上で定義された対称関数 $k$（それぞれ $\varphi$）が正定値（それぞれ負定値）であるとは，任意の $n\geq0$，族 $x_1,\dots,x_n\in\Z$，およびベクトル $r\in\RR^n$ に対して次の不等式が成り立つことをいう．
+\eql{\label{eq-dual-kern}
+	\sum_{i,j=1}^n r_i r_j k(x_i,x_j)\geq 0,
+	\quad
+	\left(\text{resp.}\quad\sum_{i,j=1}^n r_i r_j \varphi(x_i,x_j)\leq 0\right).
+}
+カーネルが条件付き正定値であるとは，~\eqref{eq-dual-kern} における正定値性が平均ゼロのベクトル $r$（すなわち $\dotp{r}{\ones_n}=0$ なるもの）に対してのみ成り立つことをいう．
+\end{defn}
+
+
+\if 0 %%%% REMOVED
+Using a positive definite kernel $k$, one can now define a Hilbertian norm $\norm{\cdot}_\Krkhs$ on functions
+\eq{
+	\norm{f}_\Krkhs^2 \eqdef \int_{\X \times \X} \Krkhs(x,y) f(x) f(y) \d \rho(x) \d \rho(y)
+}
+where $\rho$ is some reference measure, typically Lebesgue's measure on $\X=\RR^\dim$. This norm can then be used to define a subset $B$ of functions with bounded RKHS norm,
+\eql{\label{eq-dual-rkhs}
+	B = \enscond{\f}{ \norm{\f}_\Krkhs \leq 1}
+}
+%
+that is plugged into notation~\eqref{eq-dual-norm-cont}. The dual RKHS norm for measures that results from this construction is often referred to as the ``maximum mean discrepancy'' (MMD) (see~\citet{gretton2007kernel}), and can be revisited through the prism of Kernel Mean Embeddings (see~\citet{muandet2017kernel} for a review).
+\fi
+
+
+$k$ が条件付き正定値ならば，次のノルムを定義する．
+\eql{\label{eq-kernel-dual}
+	\norm{\al}^2_{\Krkhs} \eqdef \int_{\X \times \X} \Krkhs(x,y) \d \al(x) \d \al(y).
+}
+これらのノルムはしばしば「最大平均ずれ(MMD)」と呼ばれ（~\citep{gretton2007kernel} を参照），形状解析では「カーネルノルム」とも呼ばれてきた~\citep{glaunes2004diffeomorphic}．
+%
+この表現~\eqref{eq-kernel-dual} は，法則 $\al$ に従って $\X$ 上に分布する二つの独立な確率ベクトル $(X,X')$ を導入することで，次のように言い換えられる．
+\eq{
+	\norm{\al}^2_{\Krkhs} = \EE_{X,X'}( \Krkhs(X,X') ).
+}
+$\norm{\cdot}^2_{\Krkhs}$ は，$k$ に対応する RKHS の単位球 $B$ に対応する~\eqref{eq-dual-norm-cont} の意味での双対ノルムであることが示せる．RKHS 関数空間の詳細については~\citep{berlinet03reproducing,Hofmann2008,scholkopf2002learning} を参照．
+
+\begin{rem}[普遍カーネル]
+注意~\ref{rem-ipm-weak} によれば，双対球 $B$ が張る空間が連続関数の空間 $\Cc(\Xx)$ の中で稠密ならば，MMD ノルム $\norm{\cdot}_k$ は弱収束を距離化する．これは，$\sum_{i=1}^n a_i k(x_i,\cdot)$ の形の有限和（$n$ および点 $(x_i)_i$ は任意に選べる）が一様ノルム $\norm{\cdot}_\infty$ について $\Cc(\Xx)$ の中で稠密であることを意味する．$\X=\RR^d$ 上の平行移動不変なカーネル $\Krkhs(x,y)=\Krkhs_0(x-y)$ に対しては，これは Fourier 変換が消えないこと $\hat \Krkhs_0(\om) >0$ と同値である．
+\end{rem}
+
+$\al$ が~\eqref{eq-pair-discr} の形の離散測度である特別な場合には，次の簡単な表現が得られる．
+\eq{
+	\norm{\al}_{\Krkhs}^2 = \sum_{i=1}^n \sum_{i'=1}^n \a_i\a_{i'} \KrkhsD_{i,i'}  = \dotp{\KrkhsD\a}{\a}
+	\qwhereq
+	\KrkhsD_{i,i'} \eqdef \Krkhs(x_i,x_{i'}).
+}
+特に，$\al=\sum_{i=1}^n \a_i \de_{x_i}$ と $\be=\sum_{i=1}^n \b_i \de_{x_i}$ が同じ点の集合上に台をもつとき，$\norm{\al-\be}_{\Krkhs}^2 = \dotp{\KrkhsD(\a-\b)}{\a-\b}$ となるので，$\norm{\cdot}_{\Krkhs}$ は単体 $\simplex_n$ 上の Euclid ノルムである（$\KrkhsD$ が正定値ならば真のノルム，$\KrkhsD$ が半定値ならば退化したノルム）．
+%
+~\eqref{eq-pair-discr} の形の二つの離散測度間のずれを計算するには，次を用いることができる．
+\eql{\label{eq-mmd-discr}
+	\norm{\al-\be}_{\Krkhs}^2 =
+		\sum_{i,i'} \a_i \a_{i'} \Krkhs(x_i,x_{i'})	+
+		\sum_{j,j'} \b_j \b_{j'} \Krkhs(y_j,y_{j'}) - 2
+		\sum_{i,j} \a_i \b_j \Krkhs(x_i,y_j).
+}
+
+\begin{example}[Gauss RKHS]\label{exmp-gaussian-kernel}
+最も人気のあるカーネルの一つは Gauss カーネル $\Krkhs(x,y) = e^{-\frac{\norm{x-y}^2}{2 \si^2}}$ であり，これは $\Xx=\RR^d$ 上の正な普遍カーネルである．
+%
+Gauss カーネルの魅力的な特徴は，1 次元カーネルの積として分離可能なことであり，これは正則格子上で作業するときの計算を容易にする（注意~\ref{rem-separable} も参照）．
+しかし，Gauss カーネルを用いる際に生じる重要な問題は，帯域幅パラメータ $\si$ を選択する必要があることである．この帯域幅は，比較すべき測度における観測値間の「典型的なスケール」に合致すべきである．測度がマルチスケールな特徴をもつ場合（ある領域は非常に密で，他の領域は非常に疎であるなど），Gauss カーネルはうまく適応しないので，次に詳述する「スケールフリー」なカーネルを考えるべきである．このようなスケールフリーカーネルの問題は，それらが大域的である（緩やかな多項式減衰をもつ）ことであり，コンパクト台近似が不可能なため，典型的には計算的により高価になる．
+%
+図~\ref{fig-rkhs} はいくつかのカーネルの比較を示す．
+\end{example}
+
+\begin{figure}[h!]
+\centering
+\begin{tabular}{@{}c@{\hspace{0mm}}c@{\hspace{0mm}}c@{\hspace{0mm}}c@{\hspace{0mm}}c@{}}
+ &
+\myFigRKHS{energy-dist-kernel}&
+\myFigRKHS{gaussian-small-kernel}&
+\myFigRKHS{gaussian-medium-kernel}&
+\myFigRKHS{gaussian-large-kernel}\\
+\myFigRKHS{input} &
+\myFigRKHS{energy-dist} &
+\myFigRKHS{gaussian-small}&
+\myFigRKHS{gaussian-medium}&
+\myFigRKHS{gaussian-large}\\
+$({\color{red} \al},{\color{blue} \be})$ & $\text{ED}(\RR^2,\norm{\cdot})$ & $(G,.005)$ &  $(G,.02)$ & $(G,.05)$
+\end{tabular}
+\caption{\label{fig-rkhs}
+上段：$\norm{\al-\be}_k = \norm{\psi \star (\al-\be)}_{L^2(\RR^2)}$ を満たす $\psi$ の表示．これは Fourier 上で $\hat\psi(\om) = \sqrt{ \hat k_0(\om) }$ と形式的に定義される．ここで $\Krkhs(x,x')=k_0(x-x')$ である．
+%
+下段：$\psi \star (\al-\be)$ の表示．
+%
+(G,$\si$) は分散 $\si^2$ の Gauss カーネルを表す．$\text{ED}(\RR^2,\norm{\cdot})$ に対するカーネルは $\psi(x)=1/\sqrt{\norm{x}}$ である．
+%
+\todoK{check that in 2D the ED sqrt kernel is $1/\sqrt{|x|}$, I think this is the case.} \todoK{Explain that ED and large sigma are too global to match the feature size, medium sigma only capture one scale of the details ; small sigma too small}
+}
+\end{figure}
+
+
+\begin{example}[$H^{-1}(\RR^\dim)$]\label{exp-sobolev-neg1}
+もう一つの重要な双対ノルムは $H^{-1}(\RR^\dim)$ であり，これは $L^2(\RR^\dim)$ に導関数をもつ関数からなる Sobolev 空間 $H^1(\RR^\dim)$ の（超関数上の）双対である．
+%
+これは原始 RKHS ノルム $\norm{\nabla \f}_{L^2(\RR^\dim)}^2$ を用いて定義される．Sobolev 空間 $H^1(\RR^\dim)$ の関数は一般に連続でないため，$\dim=1$ でない限り，特異測度（\emph{たとえば} Dirac）に対しては定義されない．
+%
+この $H^{-1}$ ノルム（密度をもつ平均ゼロの測度の空間上で定義される）は，発散形式で定式化することもできる．
+\eql{\label{eq-dual-sobolev-div}
+	\norm{\al-\be}_{H^{-1}(\RR^\dim)}^2 =
+	\umin{\flow} \enscond{ \int_{\RR^\dim} \norm{\flow(x)}_2^2 \d x }{  \diverg(\flow)=\al-\be },
+}
+これは~\eqref{eq-w1-cont-div} と対比されるべきである．後者では，ここで用いた $L^2$ ノルムの代わりにベクトル場 $\flow$ の $L^1$ ノルムが用いられていた．
+%
+この Sobolev 双対ノルムの「重み付き」版，
+\eq{
+	\norm{\rho}_{H^{-1}(\al)}^2 =
+	\umin{\diverg(\flow)=\rho} \int_{\RR^\dim} \norm{\flow(x)}_2^2 \d \al(x),
+}
+は Wasserstein $\Wass_2$ ノルムの自然な「線形化」と解釈できる．その意味は，Benamou--Brenier 動的定式化を無限小に解釈すると次のようになるということである．
+\eql{\label{eq-wass-asymp-sob}
+	\Wass_2(\al,\al+\varepsilon \rho) = \varepsilon \norm{\rho}_{H^{-1}(\al)} + o(\varepsilon).
+}
+汎関数 $\Wass_2(\al,\be)$ と $\norm{\al-\be}_{H^{-1}(\al)}$ は同値であることが示せる~\citep{peyre2011comparison}．
+%
+問題は，$\norm{\al-\be}_{H^{-1}(\al)}$ が（$\al$ による重み付けのため）ノルムでないことであり，$(\al,\be)$ が密度をもたない限り，一般にこれを $\norm{\al-\be}_{H^{-1}(\RR^\dim)}$ で置き換えることはできない．
+%
+この場合，$\al$ と $\be$ が同じ台の上に，下から $a>0$，上から $b<+\infty$ で抑えられた密度をもつならば，
+\eql{\label{eq-compar-w2-sob}
+	b^{-1/2} \norm{\al-\be}_{H^{-1}(\RR^\dim)} \leq W_2(\al,\be) \leq a^{-1/2} \norm{\al-\be}_{H^{-1}(\RR^\dim)};
+}
+が成り立つ．~\citep[Theo. 5.34]{SantambrogioBook} を参照し，鋭い定数については~\citep{peyre2011comparison} を参照．
+%
+% Note however $H^{-1}(\al)$ and $\Wass_2(\al,\be)$ are related when comparing close enough distribution, they have very different behaviors.
+\end{example}
+
+\begin{example}[負指数 Sobolev 空間]\label{exp-sobolev-neg}
+	この構成は，任意の負指数の Sobolev 空間 $H^{-r}(\RR^\dim)$ を考えることで一般化できる．これは，$L^2(\RR^\dim)$ に（超関数の意味で）$r$ 階の導関数をもつ関数からなる関数 Sobolev 空間 $H^{r}(\RR^\dim)$ の双対である．
+	%
+	弱収束を距離化するためには，$H^{r}(\RR^\dim)$ の関数が連続である必要があり，これは $r>\dim/2$ のときに成り立つ．次元 $\dim$ が増大するにつれ，より高い正則性を考える必要がある．
+	%
+	任意の $\al$（必ずしも整数でない）に対し，これらの空間は Fourier 変換を用いて定義され，Fourier 変換 $\hat \al(\om)$ をもつ測度 $\al$（ここでは Lebesgue 測度 $\d\om$ に関する密度として書かれる）に対し，
+	\eq{
+		\norm{\al}_{H^{-r}(\RR^\dim)}^2 \eqdef \int_{\RR^\dim} \norm{\om}^{-2r} |\hat \al(\om)|^{2}\d\om.
+	}
+	とする．これは畳み込みカーネル $k(x,y)=k_0(x-y)$（$\hat k_0(\om) = \pm \norm{\om}^{-2r}$）をもつ双対 RKHS ノルムに対応する．逆 Fourier 変換をとると，（定数倍を除いて）次が成り立つことがわかる．
+	 \eql{\label{eq-sob-kern}
+	 	\foralls x \in \RR^\dim, \quad
+		k_0(x) =
+		\choice{
+			\frac{1}{\norm{x}^{d-2r}} \qifq r < d/2,  \\
+			-\norm{x}^{2r-d} \qifq r>d/2.
+		}
+	}
+\end{example}
+
+
+
+
+\begin{example}[エネルギー距離]\label{exp-energy-dist}
+距離 $\dist$ に対応するエネルギー距離（$\dim=1$ のときは Cramer 距離）~\citep{szekely2004testing} は次で定義される．
+\eql{\label{eq-defn-ed}
+	\norm{\al-\be}_{\text{ED}(\X,\dist^p)} \eqdef \norm{\al-\be}_{\Krkhs_{\text{ED}}}
+	\qwhereq
+	\Krkhs_{\text{ED}}(x,y) = -\dist(x,y)^p
+}
+ただし $0 < p < 2$ とする．\todoK{is it correct?}
+%
+これは $\dist$ が負定値（定義~\ref{def-negativedefinitekernel} を参照）ならば，測度上の妥当な MMD ノルムである．典型的な例は Euclid 距離 $\dist(x,y)=\norm{x-y}$ である．
+%
+$\X=\RR^\dim$，$\dist(x,y)=\norm{\cdot}$ に対し，~\eqref{eq-sob-kern} を用いると，エネルギー距離が Sobolev ノルムであることがわかる．
+\eq{
+	\norm{\cdot}_{\text{ED}(\RR^\dim,\norm{\cdot}^p)} = \norm{\cdot}_{H^{-\frac{d+p}{2}}(\RR^\dim)}.
+}
+Gauss カーネル（例~\ref{exmp-gaussian-kernel}）のようなより一般的なカーネルに対するエネルギー距離の主な利点は，スケールフリーであり，帯域幅パラメータ $\si$ に依存しないことである．より正確には，$f_s(x)=sx$ を因子 $s>0$ による拡大とすると，$\X=\RR^\dim$ 上で次のスケーリングのふるまいをもつ．
+\eq{
+	\norm{f_{s\sharp}(\al-\be)}_{\text{ED}(\RR^\dim,\norm{\cdot}^p)} = s^{\frac{p}{2}} \norm{\al-\be}_{\text{ED}(\RR^\dim,\norm{\cdot}^p)},
+}
+一方，Wasserstein 距離は完全な線形スケーリングを示す．
+\eq{
+	\Wass_p( f_{s\sharp}\al,f_{s\sharp}\be) ) = s \Wass_p(\al,\be) ).
+}
+ただし，エネルギー距離に対してはパラメータ $p$ は $0 < p < 2$ を満たさねばならず，$p=2$ では平均間の距離
+\eq{
+	\norm{\al-\be}_{\text{ED}(\RR^\dim,\norm{\cdot}^2)}
+	=
+	\norm{\int_{\RR^\dim} x (\d\al(x)-\d\be(x))  },
+}
+に退化するので，もはやノルムではないことに注意する．これは，エネルギー距離では Wasserstein 距離と同じ $f_{s\sharp}$ の下での線形スケーリングを得ることが不可能であることを示している．
+%
+\todoK{compare the sqrt kernel associated to energy and sobolev and comment its slow decay}
+\end{example}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Wasserstein 空間は Hilbert 的でない}\label{sec-non-embeddability}
+
+~\S\ref{sec:specialcases} で先に概説した Wasserstein 幾何の特別な場合のいくつかは，最適輸送距離が閉形式で計算できることがあるという事実を強調した．それらはまた，そのような場合に最適輸送距離が確率測度間の\emph{Hilbert 的}計量であること，すなわち以下で定義されるように，入力測度の空間から Hilbert 空間への写像 $\tphi$ が存在することを例示している．
+
+\begin{defn}\label{def-Hilbertmetric}
+集合 $\Z\times \Z$ 上で定義された距離 $d$ が Hilbert 的であるとは，Hilbert 空間 $\RKHS$ と写像 $\tphi:\Z\rightarrow \RKHS$ が存在して，$\Z$ の任意の対 $z,z'$ に対し $d(z,z')=\|\tphi(z)-\tphi(z')\|_\RKHS$ が成り立つことをいう．
+\end{defn}
+
+たとえば，注意~\ref{rem-1d-ot-generic} は，測度にその一般化分位関数を対応させる写像を $\tphi$ と定義するだけで，Wasserstein 計量が一変量分布間の Hilbert ノルムであることを示している．注意~\ref{rem-dist-gaussians} は，一変量 Gauss 分布について，本章の~\eqref{eq-univariate-gauss} に書かれているように，二つの一変量 Gauss 分布間の Wasserstein 距離が単にそれらの平均と標準偏差の間の Euclid 距離であることを示している．
+
+Hilbert 的距離は，データ解析の文脈で用いられるとき，多くの好ましい性質をもつ~\citep{dattorro2010convex}．第一に，それらは動径基底関数カーネルとして容易に表せる．すなわち，任意の Hilbert 的距離 $\dist$ に対し，~\citep[Cor. 3.3.3, Prop. 3.2.7]{berg84harmonic} で示されているように，$e^{-\dist^p/t}$ は任意の $0\leq p\leq 2$ と任意の正のスカラー $t$ に対して正定値カーネルであることが実際に知られている．Gauss カーネル（$p=2$）と Laplace カーネル（$p=1$）は，通常の Euclid 距離を用いたこの結果の単純な応用である．カーネル法の分野全体~\citep{Hofmann2008} は，カーネル関数の正定値性の上に構築され，正定値カーネル行列上で動作する凸学習アルゴリズムを定義する．Hilbert 空間に存在する点はまた，多次元尺度構成法~\citep{borg2005modern} のような単純な手法を用いて，低い歪み係数で低次元に効率的に埋め込むこともできる~\citep{Johnson84}, \citep[\S V.6.2]{barvinok2002course}．
+
+Hilbert 的距離はこのような性質をもつため，Wasserstein 距離が上で概説したものより一般的な設定，特に $\X$ の次元が 2 以上のときにも Hilbert 的であり続けることを期待したくなるかもしれない．これは次の同値性を用いて反証できる．
+
+\begin{prop}\label{prop-negative-definite} 距離 $d$ が Hilbert 的であることと，$d^2$ が負定値であることは同値である．
+\end{prop}
+\begin{proof} 距離が Hilbert 的ならば，$d^2$ は自明に負定値である．実際，$\Z$ の $n$ 点が与えられると，和 $\sum r_i r_j d^2(z_i,z_j)$ は $\sum r_i r_j \|\tphi(z_i)-\tphi(z_j)\|_\RKHS^2$ と書き換えられ，$\sum r_i=0$ という事実を利用してこれを展開すると $-2\sum r_i r_j \dotp{\tphi(z_i)}{\tphi(z_j)}_\RKHS$ となり，これは Hilbert 内積の定義により負である．逆に，$d^2$ が負定値ならば，$d$ が Hilbert 的であることは，~(\cite[p. 82, Prop. 3.2]{berg84harmonic}) で概説された \citet{schoenberg38} による重要な結果から従う．
+\end{proof}
+
+したがって，二乗 Wasserstein 距離が負定値でないことを示せば，それが Hilbert 的でないことを示すのに十分である．次の命題でこれを述べる．
+
+\begin{prop}\label{prop-negative-definite-negative} $\X=\RR^\dim$ で $\dim\geq 2$ とし，台コストを $\dist(x,y)=\norm{x-y}_2$ とすると，$p$-Wasserstein 距離は $p=1,2$ に対して Hilbert 的でない．
+\end{prop}
+
+\begin{proof} $\dim=2$ に対して結果を証明すれば十分である．なぜなら，その次元における任意の反例は，より高い任意の次元における反例を得るのに十分だからである．$\RR^{2}$ の四つのベクトル $x^1, x^2,x^3,x^4\in\RR^{2}$ 上に台をもつ測度を用いてうまくいく非ランダムな反例を与える．ベクトルは次のように定義される：$x^{1}=[0,0], x^{2}=[1,0], x^{3}=[0,1], x^{4}=[1,1]$．ここで，増分 $1/4$ で四次元単体上の正則格子上のすべての点を考える．単体内にはそのような点が $35=\bigl(\!\bigl(\substack{4\\4}\bigl)\!\bigl)=\binom{4+4-1}{4}$ 個ある．この格子上の各確率ベクトル $\a^i$ は，$j\leq 4$ に対して $\a^i_j$ が集合 $\{0,\tfrac{1}{4},\tfrac{1}{2},\tfrac{3}{4},1\}$ に属し，かつ $\sum_{j=1}^4\a^i_j=1$ を満たす．与えられた $p$ に対し，これらのヒストグラム間の $35\times 35$ の対ごとの Wasserstein 距離行列 $\D_p$ を計算できる．$\D_p$ が負定値でないことと，その要素ごとの二乗 $\D_p^2$ が $\J \D_p^2 \J$ が正の固有値をもつようなものであることは同値である．ここで $\J$ は中心化行列 $\J=\Identity_n-\tfrac{1}{n}\ones_{n,n}$ である．図~\ref{fig-counterexample} に示されるようにこれが成り立つ．
+\end{proof}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=.6\linewidth]{counterexample_nsdness/maxeig_vs_p}
+\caption{\label{fig-counterexample}
+点の集合の対ごとの二乗距離行列 $\D_p^2$ に対応する中心化行列 $\J \D_p^2 \J$ のスペクトルを見ることで，距離が Hilbert 的で\emph{ない}ことを示せる．距離が Hilbert 的ならば，このような行列のスペクトルは必ず非正である．ここでは，命題~\ref{prop-negative-definite-negative} の証明で選ばれた点に対するこの行列の最大固有値の値をプロットする．$p$ の値を変えながらこれを行い，得られた最大固有値を表示する．これらの固有値はすべて正であり，これは，これらすべての $p$ の値に対して $p$-Wasserstein 距離が Hilbert 的でないことを示している．
+}
+\end{figure}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{埋め込みと歪み}
+
+重要な一連の研究が，Hilbert 的埋め込みを用いて Wasserstein 距離を近似することの困難さを定量化している．
+%
+$\X=\RR^\dim$ で $\dim\geq 2$ になるやいなや，測度を $\ell_2$ 空間に埋め込むと必然的に大きな\todoK{need to be more precise here}歪みを被ることが示されている~(\citet{naor-2005,andoni2015snowflake})．
+
+$0 < p \leq 1$ に対して $p$-Wasserstein 空間を $\ell_1$ に擬等長に埋め込むことは可能であるが（~\citep{indyk,andoni2008earth,do2011sublinear} を参照），距離間の同値定数は次元 $\dim$ とともに速く増大する．また，$p=1$ に対しては埋め込みは離散測度に対してのみ正しいことに注意する（すなわち埋め込み定数はスパイク間の最小距離に依存する）．\todoK{need to be more precise here}
+%
+これと密接に関連する埋め込み手法は，$\Wass_1$ を Lipschitz 関数 $f$ の双対として特徴づけること（~\S\ref{sec-w1-eucl} を参照）を用い，Lipschitz 制約 $\norm{\nabla f}_1 \leq 1$ をウェーブレット係数上の重み付き $\ell_1$ 球で近似するものである．~\citep{shirdhonkar2008approximate} を参照．
+%
+このウェーブレット係数の重み付き $\ell_1$ 球は，いわゆる負指数の Besov 空間を定める~\citep{leeb2016holder}．
+%
+これらの埋め込みの結果は，二進分割を用いて得られる Wasserstein 距離の上界とも似ている．~\citep[Prop. 1]{weed2017sharp} および~\citep{fournier2015rate} を参照．
+%
+これもまた $\ell_1$ への擬等長な埋め込みを与え（この埋め込みはリスケールされたウェーブレット係数で与えられる），入力測度が一様格子上で離散化されているとき，この埋め込みを線形時間で近似的に計算できるという利点をもつ．ウェーブレットの詳細については~\citep{mallat2008wavelet} を参照．Wasserstein 的距離を計算するためにマルチスケール埋め込みを用いるという発想は，コンピュータビジョンで広く用いられてきたことに注意する．たとえば~\citep{ling2006diffusion,grauman2005pyramid,CuturiNIPS2006,lazebnik2006beyond} を参照．
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{最適輸送の負定値／正定値な変種}
+
+~\S\ref{sec-sliced} で後ほど示すように，Wasserstein 距離への\emph{スライス}近似は，本質的に，直線上に射影された測度のランダムな押し出しに対して計算された 1 次元方向輸送距離の和であり，負定値関数の和として負定値である~\citep[\S 3.1.11]{berg84harmonic}．この結果は正定値カーネルを定義するのに用いることができる~\citep{kolouri2016sliced}．正定値カーネルを回復するもう一つの方法は，~\citet{kosowsky1994invisible} がエントロピー正則化を導入するために提案したように，最適輸送問題を（すべての可能な輸送表上の）最小値ではなくソフトミン問題として定式化することである．このソフトミンは，その負指数（生成関数としても知られる）が正定値となる項を定める~\citep{cuturi2012positivity}．
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{OT, MMD, $\phi$-ダイバージェンスの経験的推定量}
+\label{sec-empirical-wass}
+
+応用の設定では，二つの入力測度 $(\al,\be) \in \Mm_+^1(\X)^2$ が与えられたとき，重要な統計的問題は，$\al$ からの標本 $(x_i)_{i=1}^n$ と $\be$ からの標本 $(y_j)_{j=1}^m$ のみを用いて，（通常は未知の）ダイバージェンス $D(\al,\be)$ を近似することである．これらの標本は，それぞれの分布から独立同分布に従って得られると仮定する．
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{OT と MMD の経験的推定量}
+
+Wasserstein 距離 $\Wass_p$（~\ref{eq-defn-wass-dist} を参照）と MMD ノルム（~\S\ref{sec-dual-norms} を参照）の両方について，分布間の未知の距離の素朴な推定量は，それを経験測度間で直接計算することであり，理想的には後者の前者への収束率を制御できることを願うものである．
+\eq{
+	D(\al,\be) \approx D(\hat \al_n,\hat \be_m) \qwhereq
+	\choice{
+		\hat \al_n \eqdef \frac{1}{n}\sum_i \de_{x_i},\\
+		\hat \be_m \eqdef \frac{1}{m}\sum_j \de_{y_j}.
+	}
+}
+ここで $\hat \al_n$ と $\hat \be_m$ はともにランダムな測度なので，$D(\hat \al_n,\hat \be_m)$ はランダムな数であることに注意する．
+%
+簡単のため，$\X$ はコンパクトと仮定する（非有界領域を扱うには入力測度のモーメントに追加の制約が必要となる）．
+
+弱収束を距離化するこのような双対距離（定義~\ref{dfn-weak-conv} を参照）に対しては，弱収束 $\hat\al_n \rightarrow \al$ があるので，$n \rightarrow +\infty$ のとき $D(\hat \al_n,\hat \be_n) \rightarrow D(\al,\be)$ となる．
+%
+しかし重要な問いは，$D(\hat \al_n,\hat \be_n)$ が $D(\al,\be)$ へ収束する速さであり，この収束率はしばしば $D$ の「サンプル複雑度」と呼ばれる．
+
+$D(\al,\be) = \norm{\cdot}_{\TV}$ に対しては，TV ノルムが弱収束を距離化しないため，$\norms{\hat \al_n - \hat \be_n}_{\TV}$ は一致推定量でない，すなわち $\norm{\al-\be}_{\TV}$ へ収束しないことに注意する．実際，確率 1 で，二つの離散測度の台は重ならないので $\norms{\hat \al_n - \hat \be_n}_{\TV}=2$ となる．他の $\phi$-ダイバージェンスでも同様の問題が生じ，それらは経験分布間のダイバージェンスを用いて推定することができない．
+
+
+%%%%
+\paragraph{OT に対するレート}
+
+$\X=\RR^\dim$ で有界領域上に台をもつ測度に対し，~\citep{dudley1969speed} により，$\dim>2$ かつ $1 \leq p < +\infty$ に対して
+\eq{
+	\EE( |\Wass_p(\hat \al_n,\hat \be_n)-\Wass_p(\al,\be)| ) = O(n^{-\frac{1}{\dim}}),
+}
+が示されている．ここで期待値 $\EE$ はランダムな標本 $(x_i,y_i)_i$ について取る．このレートは，二つの測度のうち一方が Lebesgue 測度に関して密度をもつならば，$\RR^\dim$ において鋭い．この結果は一般の距離空間に対して被覆数の概念を用いて証明され~\citep{dudley1969speed}，後に特に $\X=\RR^d$ に対して精密化された~\citep{dereich2013constructive,fournier2015rate}．
+% Proof on $\Wass_1$ implies on $\Wass_p$ for $1 \leq p < +\infty$ by monotonicity in $p$.
+このレートは，測度が低次元の部分領域上に台をもつとき精密化できる．~\citet{weed2017sharp} は実際，レートが台の固有次元に依存することを示している．\citeauthor{weed2017sharp} はまた，離散的に近似された測度（\emph{たとえば} 小さな分散をもつ Gauss 混合）に対するなど，この収束の非漸近的なふるまいも調べている．
+%
+$\Wass_p(\hat \al_n,\hat \be_n)$ がその平均 $\Wass_p(\al,\be)$ の周りに集中することを証明することも可能である．~\citep{bolley2007quantitative,boissard2011simple,weed2017sharp} を参照．
+
+%%%
+\paragraph{MMD に対するレート}
+
+~\eqref{eq-kernel-dual} で定義された，RKHS ノルムの双対である弱ノルム $\norm{\cdot}^2_{\Krkhs}$（MMD とも呼ばれる）に対しては，Wasserstein 距離とは対照的に，サンプル複雑度は周囲次元に依存しない．
+\eq{
+	\EE( |\norms{\hat \al_n-\hat \be_n}_{\Krkhs} - \norm{\al-\be}_{\Krkhs} | ) = O(n^{-\frac{1}{2}});
+}
+~\citep{sriperumbudur2012empirical} を参照．
+%
+図~\ref{fig-sample-complexity} は，Wasserstein 距離と MMD 距離のサンプル複雑度レートの数値的比較を示す．
+%
+ただし，$\norms{\hat \al_n-\hat \be_n}_{\Krkhs}^2$ は $\norm{\al-\be}_{\Krkhs}^2$ のわずかに偏った推定量であることに注意する．不偏推定量を定義し，したがってたとえばこのような損失を最小化する際に SGD を用いられるようにするには，むしろ次の不偏推定量を用いるべきである．
+\begin{align*}
+	\text{MMD}_{\Krkhs}(\hat \al_n,\hat \be_n)^2 & \eqdef
+		\frac{1}{n(n-1)} \sum_{i,i'} \Krkhs(x_i,x_{i'})	+
+		\frac{1}{n(n-1)}\sum_{j,j'} \Krkhs(y_j,y_{j'}) \\
+		 & \qquad - 2
+		\frac{1}{n^2}\sum_{i,j} \Krkhs(x_i,y_j),
+\end{align*}
+これは~\eqref{eq-mmd-discr} と比較されるべきである．これは $\EE(\text{MMD}_{\Krkhs}(\hat \al_n,\hat \be_n)^2) = \norm{\al-\be}_{\Krkhs}^2$ を満たす．~\citep{gretton2012kernel} を参照．
+
+
+\begin{figure}[h!]
+\centering
+\begin{tabular}{@{}c@{\hspace{1mm}}c@{}}
+\includegraphics[width=.49\linewidth]{sample-complexity/energy-rates-cropped}&
+\includegraphics[width=.49\linewidth]{sample-complexity/wass2-rates-cropped}\\
+エネルギー距離 $\norm{\cdot}_{H^{-1}}$ & $\Wass_2$
+\end{tabular}
+\caption{\label{fig-sample-complexity}
+$D$ が，例~\ref{exp-energy-dist} で定義されたエネルギー距離 $D=\norm{\cdot}_{H^{-1}}$（すなわち $H^{-1}$ ノルム）（左）と Wasserstein 距離 $D=\Wass_2$（右）であるときの，$\log_{10}(n)$ の関数としての $\log_{10}(D(\hat\al_n,\hat\al_n'))$ の減衰．
+%
+ここで $(\hat\al_n,\hat\al_n')$ は，単位立方体 $[0,1]^\dim$ 上の一様分布 $\al$ の二つの独立な経験分布であり，いくつかの $\dim \in \{2,3,5\}$ の値について試している．
+%
+網掛けのバーは $\log(D(\hat\al_n,\al))$ の標準偏差の $\pm$ における信頼区間を表示する．
+}
+\end{figure}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{$\phi$-ダイバージェンスの経験的推定量}
+
+~\eqref{def_divergence} で定義された $\Divergm_\phi(\al|\be)$ を，離散標本から $\Divergm_\phi(\hat \al_n|\hat \be_n)$ を用いて近似することはできない．実際，この量は $+\infty$ となるか（たとえば $\KL$ ダイバージェンスに対して），$n \rightarrow +\infty$ のとき $\Divergm_\phi(\al|\be)$ へ収束しないか（たとえば $\TV$ ノルムに対して）のいずれかである．
+%
+代わりに，離散経験測度を何らかの形で平滑化して密度で置き換えるため，密度推定量を用いる必要がある．~\citep{silverman1986density} を参照．
+%
+Euclid 空間 $\Xx=\RR^\dim$ において，滑らかな窓関数と帯域幅 $\si>0$ をもつ $h_\si=h(\cdot/\si)$ を導入すると，$\al$ に対する密度推定量はこのカーネルとの畳み込みを用いて定義される．
+\eql{\label{eq-kernel-density-estimate}
+	\hat \mu_n \star h_\si = \frac{1}{n}\sum_i h_\si(\cdot-x_i).
+}
+%
+すると，$\phi$ ダイバージェンスを次のように近似できる．
+\eq{
+	\Divergm_\phi^\si(\hat \al_n |\hat \be_n)
+	\eqdef
+	\frac{1}{n} \sum_{j=1}^n
+	\phi\pa{
+		\frac{
+			\sum_i h_\si(y_j-x_i)
+		}{
+			\sum_{j'} h_\si(y_j-y_{j'}),
+		}
+	}
+}
+ここで $\si$ は標本数 $n$ と次元 $\dim$ に適応させるべきである．
+%
+固定された帯域幅 $\si$ の選択を回避し，代わりに最近傍の数 $k$ を選ぶノンパラメトリック推定量を考案することも可能である．これらの手法は典型的には最近傍間の距離を利用し~\citep{loftsgaarden1965nonparametric}，これは帯域幅 $\si$ を局所的なサンプリング密度に局所的に適応させることに似ている．$x \in \RR^\dim$ と，$(x_i)_{i=1}^n$ の中でその $k$ 番目の最近傍との距離を $\De_k(x)$ と表すと，密度推定量は次で定義される．
+\eql{\label{eq-knn-density-estimate}
+	\rho_{\hat \al_n}^k(x) \eqdef \frac{k/n}{ |B_\dim| \De_k(x)^r },
+}
+ここで $|B_\dim|$ は $\RR^\dim$ の単位球の体積である．
+%
+~\eqref{eq-kernel-density-estimate} で幅 $\si$ の領域に落ちる標本の数を何らかの形で「数える」代わりに，この公式~\eqref{eq-knn-density-estimate} は $k$ 個の標本を包含するのに必要な半径を推定する．図~\ref{fig-density-estimation} は推定量~\eqref{eq-kernel-density-estimate} と~\eqref{eq-knn-density-estimate} を比較する．
+%
+応用の典型的な例は，~\eqref{eq-discr-entropy} でエントロピー汎関数について詳述されている．これは Lebesgue 測度に関する KL ダイバージェンスである．詳細は~\citep{BerishaHero} を参照．
+
+
+\newcommand{\myFigDE}[1]{\includegraphics[width=.32\linewidth]{density-estimation/#1}}
+
+\begin{figure}[h!]
+\centering
+\begin{tabular}{@{}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{}}
+\myFigDE{kernel-1} & \myFigDE{kernel-3} & \myFigDE{kernel-5} \\
+$\si=2.5 \cdot 10^{-3}$ & $\si=15 \cdot 10^{-3}$ & $\si=25 \cdot 10^{-3}$ \\
+\myFigDE{nn-1} & \myFigDE{nn-3} & \myFigDE{nn-5} \\
+$k=1$ & $k=50$ & $k=100$
+\end{tabular}
+\caption{\label{fig-density-estimation}
+二つの Gauss 分布の混合からの $n=200$ 標本に対する，カーネル密度推定 $\hat \mu_n \star h_\si$（上段，Gauss カーネル $h$ を使用）と $k$-最近傍推定 $\rho_{\hat \al_n}^k$（下段）の比較．
+}
+\end{figure}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{エントロピー正則化：OT と MMD の間}
+\label{sec-entropy-ot-mmd}
+
+命題~\ref{prop-sinkhorn-div} に続いて，Sinkhorn ダイバージェンスが次で定義されることを思い出す．
+\eq{
+	\SINKHORNP_\C^\varepsilon(\a,\b) \eqdef
+	\dotp{\P^\star}{\C} =
+	\dotp{e^{\frac{\fD^\star}{\varepsilon}}}{(\K\odot \C)e^{\frac{\gD^\star}{\varepsilon}}},
+}
+ここで $\P^\star$ は~\eqref{eq-regularized-discr} の解であり，$(\fD^\star,\gD^\star)$ は~\eqref{eq-dual-formulation} の解である．
+%
+$\X$ 上のある距離 $\dist$ に対して $\C_{i,j}=\dist(x_i,x_j)^p$ と仮定すると，~\eqref{eq-pair-discr} の形の二つの離散確率分布に対し，これは正則化された Wasserstein コストを定める．
+\eq{
+	\Wass_{p,\varepsilon}(\al,\be)^p \eqdef \SINKHORNP_\C^\varepsilon(\a,\b).
+}
+この定義は，任意の入力分布（必ずしも離散でない）に対し次のように一般化される．
+\eq{
+	\Wass_{p,\varepsilon}(\al,\be)^p \eqdef \int_{\X \times \X} \dist(x,y)^p \d\pi^\star(x,y),
+}
+ここで $\pi^\star$ は~\eqref{eq-entropic-generic} の解である．
+
+正則化によって導入される偏り（特に $\Wass_{p,\varepsilon}(\al,\al) \neq 0$）を打ち消すため，補正された正則化ダイバージェンスを導入する．
+\eq{
+	\tilde\Wass_{p,\varepsilon}(\al,\be)^p \eqdef
+	2 \Wass_{p,\varepsilon}(\al,\be)^p
+	-
+	\Wass_{p,\varepsilon}(\al,\al)^p
+	-
+	\Wass_{p,\varepsilon}(\be,\be)^p.
+}
+~\citep{feydy2018interpolating} では，$e^{-c/\epsilon}$ が正のカーネルならば，（$\SINKHORNP_\C^\varepsilon$ の代わりに $\MKD_\C^\varepsilon$ を用いて得られる）関連する補正ダイバージェンスが正であることが証明されている．
+%
+正則化最適輸送を用いて，たとえば~\citet{amari2017information} が提案したような，他の再正規化スキームを定義することも可能であることに注意する．
+
+\begin{figure}[h!]
+\centering
+\begin{tabular}{@{}c@{\hspace{1mm}}c@{}}
+\includegraphics[width=.49\linewidth]{sample-complexity-regul/influ-epsilon-d2-cropped}&
+\includegraphics[width=.49\linewidth]{sample-complexity-regul/influ-epsilon-d5-cropped}\\
+$\dim=2$ & $\dim=5$
+\end{tabular}
+\caption{\label{fig-sample-complexity-regul}
+さまざまな $\varepsilon$ に対する $p=3/2$ での，$\log_{10}(n)$ の関数としての $\EE(\log_{10}(\tilde\Wass_{p,\varepsilon}(\hat\al_n,\hat\al_n')))$ の減衰．ここで $\al$ は図~\ref{fig-sample-complexity} と同じである．\todoK{redo the plot with higher precision}
+}
+\end{figure}
+
+
+次の命題は，その証明が~\citep{ramdas2017wasserstein} にあるが，この正則化ダイバージェンスが Wasserstein 距離と例~\ref{exp-energy-dist} で定義されたエネルギー距離の間を補間することを示している．
+
+\begin{prop}
+	次が成り立つ．
+	\eq{
+		\tilde\Wass_{p,\varepsilon}(\al,\be)  \overset{\varepsilon \rightarrow 0}{\longrightarrow} 2 \Wass_{p}(\al,\be)
+		\qandq
+		\tilde\Wass_{p,\varepsilon}(\al,\be)^p \overset{\varepsilon \rightarrow +\infty}{\longrightarrow} \norm{\al-\be}_{\text{ED}(\X,\dist)}^2,
+	}
+	ここで $\norm{\cdot}_{\text{ED}(\X,\dist)}$ は~\eqref{eq-defn-ed} で定義される．
+\end{prop}
+
+図~\ref{fig-sample-complexity-regul} は，サンプル複雑度レートに対する $\epsilon$ の影響を数値的に示す．~\cite{genevay2018sample} では，$\Xx=\RR^d$ 上の $c(x,y)=\norm{x-y}^2$ の場合に，これらのレートが OT と MMD のレートの間を補間することが証明されている．

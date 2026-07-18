@@ -1,0 +1,466 @@
+% 原文: chapters/semi-discrete.tex
+
+\chapter{半離散最適輸送}
+\label{c-algo-semidiscr}
+
+本章では，2 つの入力測度の一方が離散（Dirac 質量の和）で，他方が任意である場合，とくに Lebesgue 測度に関して密度をもつ場合を含めて，最適輸送問題に取り組むための方法を扱う．
+%
+周辺空間の次元が低いとき，この問題は強い幾何学的な性格をもつ．というのも，連続密度から離散測度への最適輸送が区分定数写像となり，離散測度の台の各点の逆像が互いに素なセルの和集合となることを示せるからである．
+%
+コストが二乗 Euclid 距離の場合，これらのセルは計算幾何学の重要な概念，すなわちいわゆる Laguerre セルに対応する．これは Voronoi セルを定数だけずらしたものである．この結びつきにより，計算幾何学の道具を借用して高速な計算スキームを得ることができる．
+%
+高次元においては，半離散定式化は確率計画問題としても解釈でき，これもまた少しの正則化の恩恵を受けることができる．したがって，第~\ref{c-entropic} 章で提示したエントロピー正則化スキームの適用範囲を拡張することになる．
+%
+これらの構成はすべて $c$ 変換の概念に大きく依存している．ただし今回は，\S\ref{sec-c-transforms} のように行列に対してではなく，一般のコスト関数に対するものである．$c$ 変換は凸解析の Legendre 変換の一般化であり，OT の理論とアルゴリズムにおいて中心的な役割を果たす．
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{$c$ 変換と $\bar c$ 変換}
+\label{s-c-transform}
+
+双対 OT 問題~\eqref{eq-dual-generic} は
+\eq{
+	\usup{(\f,\g)}
+			\Ee(\f,\g) \eqdef
+			\int_\X \f(x) \d\al(x) + \int_\Y \g(y) \d\be(y) + \iota_{\Potentials(\c)}(\f,\g),
+}
+と書けたことを思い出そう．ここでは有用な指示関数記法~\eqref{eq-iota-function} を用いた．双対ポテンシャル $\f$ または $\g$ のいずれかを固定し，それぞれ $\g$ または $\f$ について最適化すると，閉じた形の解が得られ，これが $\c$ 変換の定義を与える：
+\begin{align}\label{eq-c-transform}
+	\foralls y \in \Y, \quad
+	\f^\c(y) &\eqdef \uinf{x \in \X} \c(x,y) - \f(x), \\
+	\foralls x \in \X, \quad
+	\g^{\bar\c}(x) &\eqdef \uinf{y \in \Y} \c(x,y) - \g(y),
+\end{align}
+ここで $\bar\c(y,x) \eqdef c(x,y)$ とおいた．
+%
+実際，
+\eql{\label{eq-alternate-c-transf}
+	\f^\c \in \uargmax{\g} \Ee(\f,\g)
+	\qandq
+	\g^{\bar\c} \in \uargmax{\f} \Ee(\f,\g).
+}
+が成り立つことが確かめられる．これらの部分最小化はそれぞれ $\al$ と $\be$ の台の上で最大化元を定めるのに対し，定義~\eqref{eq-c-transform} は実際には空間 $\X$ と $\Y$ の全体の上で関数を定める．したがってこれは，\eqref{eq-dual-generic} の解を全空間の上に標準的な方法で拡張する一つの手段である．
+%
+$\X=\RR^d$ かつ $c(x,y)=\norm{x-y}_2^p=(\sum_{i=1}^d \abs{x_i-y_i})^{p/2}$ のとき，$\c$ 変換~\eqref{eq-c-transform} $\f^\c$ は $-\f$ と $\norm{\cdot}^p$ のいわゆる下限たたみ込み（inf-convolution）である．$\f^\c$ の定義はまた，しばしば「Hopf--Lax 公式」とも呼ばれる．
+
+写像 $(\f,\g) \in \Cc(\X) \times \Cc(\Y) \mapsto (\g^{\bar\c},\f^\c) \in \Cc(\X) \times \Cc(\Y)$ は，双対ポテンシャルを「より良い」もの（双対目的関数 $\Ee$ を改善するもの）に置き換える．$\f^\c$ や $\g^{\bar\c}$ の形に書ける関数は $c$ 凹関数および $\bar c$ 凹関数と呼ばれる．
+%
+$\X=\Y=\RR^\dim$ において $\c(x,y)=\dotp{x}{y}$ という特別な場合には，この定義は通常の凹関数の概念と一致する．
+%
+命題~\ref{prop-ccc-2} を連続な場合に自然に拡張すると，
+\eq{
+	\f^{c\bar c c} = \f^c
+	\qandq
+	\g^{\bar c c \bar c} = \g^{\bar c},
+}
+という性質が得られる．ここで $\f^{c\bar c} = (\f^{c})^{\bar c}$ とおいた．この不変性は，この方法で双対ポテンシャルを「改善」できるのは一度だけであることを示している．言い換えれば，これは交互最大化が収束しない（ただちに循環に入る）ことを意味し，これは最適化変数の非平滑（制約）な結合を含む汎関数に典型的なことである．これは，第~\ref{c-entropic} 章で示すように，OT のエントロピー正則化とは際立って対照的である．この場合，正則化のおかげで双対目的関数~\eqref{eq-dual-formulation} は平滑であり，交互最大化は Sinkhorn 反復~\eqref{eq-lse-sinkh-1} および~\eqref{eq-lse-sinkh-2} に対応する．これらの反復は双対変数について書かれており，$\min$ 演算を「ソフト min」で置き換えた，$c$ 変換のエントロピー平滑化版を定める．
+
+\eqref{eq-alternate-c-transf} を用いると，\eqref{eq-dual-generic} を単一のポテンシャルに関する制約なし凸計画として書き直すことができる：
+\begin{align}\label{eq-semi-dual-cont}
+	\MK_\c(\al,\be)
+		&= \usup{\f \in \Cc(\X)}
+			\int_\X \f(x) \d\al(x) + \int_\Y \f^{c}(y) \d\be(y) \\
+		&= \usup{\g \in \Cc(\Y)}
+			\int_\X \g^{\bar\c}(x) \d\al(x) + \int_\Y \g(y) \d\be(y).
+\end{align}
+写像 $(\f,\g) \mapsto (\g^{\bar\c},\f^\c)$ を反復できるので，$\f$ が $\bar c$ 凹で $\g$ が $\c$ 凹であるという制約を加えることが可能であり，これはこれらのポテンシャルに十分な正則性を保証し，たとえば~\eqref{eq-dual-generic} の解の存在を示すために重要である．
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{半離散定式化}
+\label{s-semidiscrete}
+
+とくに興味深いのは，$\be = \sum_j \b_j \de_{y_j}$ が離散の場合である（もちろん，$\al,\be$ の役割を入れ替えれば，$\al$ が離散の場合にも同じ構成が適用される）．
+%
+$\bar c$ 変換~\eqref{eq-c-transform} の定義を，最小化を $\be$ の台 $(y_j)_j$ に制限することで，この設定に適合させることができる：
+\eql{\label{eq-disc-c-transfo}
+	\foralls \gD \in \RR^m, \;
+	\foralls x \in \Xx, \quad
+	\gD^{\bar \c}(x) \eqdef \umin{j \in \range{m}} \c(x,y_j) - \gD_j.
+}
+この変換はベクトル $\gD$ を連続関数 $\gD^{\bar \c} \in \Cc(\Xx)$ に写す．
+%
+この定義は，空間 $\X$ が $\be$ の台に等しいと課したときの~\eqref{eq-c-transform} と一致することに注意せよ．
+%
+図~\ref{fig-c-transform-discrete} に，このような離散 $\bar c$ 変換の例を 1 次元および 2 次元で示す．
+
+
+\newcommand{\MyFigCTrans}[1]{\includegraphics[width=.24\linewidth,trim=63 40 48 30,clip]{c-transform-2d/c-transform-p#1}}
+\begin{figure}[h!]
+\centering
+%%% 1D %%%
+\includegraphics[width=.8\linewidth]{c-transform-1d/c-transform-p.pdf}\vspace{2mm}
+%%% 2D %%%
+\begin{tabular}{@{}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{}}
+\MyFigCTrans{5}&
+\MyFigCTrans{10}&
+\MyFigCTrans{15}&
+\MyFigCTrans{20}\\
+$p=1/2$ & $p=1$ & $p=3/2$ & $p=2$
+\end{tabular}
+\caption{\label{fig-c-transform-discrete}
+上：1 次元における半離散 $\bar c$ 変換 $\gD^{\bar \c}$ の例．基底コストは $c(x,y)=|x-y|^p$ で $p$ を変化させたもの（カラーバー参照）．
+%
+赤い点は位置 $(y_j,-\gD_j)_j$ にある．
+%
+下：2 次元における半離散 $\bar c$ 変換 $\gD^{\bar \c}$ の例．基底コストは $c(x,y)=\norm{x-y}_2^p=(\sum_{i=1}^d \abs{x_i-y_i})^{p/2}$ で $p$ を変化させたもの．
+%
+赤い点は位置 $y_j \in \RR^2$ にあり，その大きさは $\gD_j$ に比例する．
+%
+太い黒曲線で区切られた領域は，これらの点 $(y_j)_j$ に付随する Laguerre セル $(\Laguerre_{j}(\gD))_j$ である．
+}
+\end{figure}
+
+決定的に重要なことに，半離散問題~\eqref{eq-semi-dual-cont} において離散 $\bar c$ 変換を用いると，有限次元の最適化が得られる：
+\eql{\label{eq-semi-dual-discr}
+	\MK_\c(\al,\be) =
+		\umax{\gD \in \RR^m}
+			\Ee(\gD) \eqdef
+			\int_\X \gD^{\bar \c}(x) \d\al(x) + \sum \gD_y \b_j.
+}
+
+双対重み $\gD$ に付随する Laguerre セル
+\eq{
+	\Laguerre_{j}(\gD) \eqdef \enscond{x \in \X}{ \foralls j' \neq j, \c(x,y_j) - \gD_j \leq \c(x,y_{j'}) - \gD_{j'} }
+}
+は，$\X = \bigcup_j \Laguerre_{j}(\gD)$ の互いに素な分解を誘導する．$\gD$ が定数のとき，Laguerre セル分解は空間の Voronoi 図分割に対応する．
+%
+図~\ref{fig-c-transform-discrete} の下段に，2 次元における Laguerre セル分割の例を示す．
+
+これにより，最小化されるエネルギーを次のように都合よく書き直すことができる：
+\eql{\label{eq-semi-disc-energy}
+	\Ee(\gD) = \sum_{j=1}^m \int_{\Laguerre_{j}(\gD)} \pa{ c(x,y_j) - \gD_j } \d\al(x) + \dotp{\gD}{\b}.
+}
+この関数の勾配は次のように計算できる：
+\eq{
+	\foralls j \in \range{m}, \quad
+	\nabla\Ee(\gD)_j = - \int_{\Laguerre_{j}(\gD)} \d\al(x) + \b_j.
+}
+図~\ref{fig-semi-discr} に，$\Ee$ を最小化する勾配降下の反復を示す．
+%
+最適な $\gD$ が計算されると，$\al$ から $\be$ への最適輸送写像 $\T$ は，任意の $x \in \Laguerre_{j}(\gD)$ を $y_j$ へ写すので，区分定数である．
+
+$\c(x,y)=\norm{x-y}^2$ という特別な場合，Laguerre セルへの分解は「パワー図」としても知られる．
+%
+セルは多面体であり，計算幾何学のアルゴリズムを用いて効率的に計算できる．\citep{aurenhammer1987power} を参照せよ．
+%
+最も広く用いられているアルゴリズムは，$\RR^\dim$ における点のパワー図が，点集合 $( (y_j,\norm{y_j}^2 - \gD_j) )_{j=1}^m \subset \RR^{\dim+1}$ の凸包の $\RR^\dim$ への射影に等しいという事実に依拠する．凸包を計算するアルゴリズムは数多く存在する．たとえば，2 次元および 3 次元における~\citet{chan1996optimal} のものは複雑度 $O(m\log(Q))$ をもつ．ここで $Q$ は凸包の頂点数である．
+%
+\todoK{Maybe make a drawing of this projection.}
+
+%\newcommand{\MyFigSemiD}[1]{\includegraphics[width=.19\linewidth]{semi-discrete/#1}}
+%\begin{figure}[h!]
+%\centering
+%\begin{tabular}{@{}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{}}
+%\MyFigSemiD{iteration-1} &
+%\MyFigSemiD{iteration-3} &
+%%\MyFigSemiD{iteration-8} &
+%\MyFigSemiD{iteration-9} &
+%\MyFigSemiD{iteration-13} &
+%\MyFigSemiD{matching} \\
+%$\ell=1$ &
+%$\ell=3$ &
+%$\ell=50$ &
+%$\ell=100$ &
+%Matching
+%\end{tabular}
+%\caption{\label{fig-semi-discr}
+%Iterations of the semi-discrete OT algorithm minimizing~\eqref{eq-semi-disc-energy} (here a simple gradient descent is used).
+%%
+%The support $(y_j)_j$ of the discrete measure $\be$ is indicated by the red points, while the continuous measure $\al$ is the uniform measure on a square.
+%%
+%The blue cells display the Laguerre partition $( \Laguerre_{j}( \it{\gD} ) )_j$ where $\it{\gD}$ is the discrete dual potential computed at iteration $\ell$.
+%}
+%\end{figure}
+
+\newcommand{\MyFigSemiD}[1]{\includegraphics[width=.19\linewidth]{semidiscrete-gd/#1}}
+\begin{figure}[h!]
+\centering
+\begin{tabular}{@{}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{}}
+\MyFigSemiD{inputs} &
+\MyFigSemiD{001} &
+\MyFigSemiD{020} &
+\MyFigSemiD{040} &
+\MyFigSemiD{100}   \\
+$\al$ and $\be$ &
+$\ell=1$ &
+$\ell=20$ &
+$\ell=40$ &
+$\ell=100$
+\end{tabular}
+\caption{\label{fig-semi-discr}
+\eqref{eq-semi-disc-energy} を最小化する半離散 OT アルゴリズムの反復（ここでは単純な勾配降下を用いる）．
+%
+離散測度 $\be$ の台 $(y_j)_j$ は色付きの点で示され，連続測度 $\al$ は正方形上の一様測度である．
+%
+色付きのセルは Laguerre 分割 $( \Laguerre_{j}( \it{\gD} ) )_j$ を表示する．ここで $\it{\gD}$ は反復 $\ell$ で計算された離散双対ポテンシャルである．
+}
+\end{figure}
+
+
+Monge--Amp\`ere 方程式に対する半離散ソルバの最初のアイデアは~\citet{oliker1989numerical} によって提案され，双対変分問題との関係は~\citet{AurenhammerHA98} によって示された．
+%
+理論的な解析と光学における反射鏡問題への応用は~\citep{caffarelli1999problem} に詳しく述べられている．
+%
+半離散定式化は，Knothe 輸送に基づく継続的アプローチと組み合わせて~\citep{carlier2010knothe} で用いられた．
+%
+さまざまな分野におけるこの手法の近年の復活は~\citet{Merigot11} によるものであり，彼は準 Newton ソルバを提案し，計算幾何学の概念との結びつきを明確にした．近年の概観については~\citep{Levy2017review} を参照されたい．コンピュータグラフィックスにおけるサンプリングに適用される Newton ソルバの使用は~\citep{de2012blue} で提案されている．3 次元の体積および曲面処理への応用については~\citep{levy2015numerical} も参照せよ．
+%
+半離散法の重要な応用領域の一つは，Lagrange 法を用いた非圧縮流体力学（Euler 方程式）の解法である~\citep{deGoes2015,gallouet2017lagrangian}．半離散 OT ソルバは，（場合によっては重み付きの）点群が領域内部の一様分布を近似するよう課すことで，各反復において非圧縮性を強制する．
+%
+減衰 Newton 反復の（線形レートでの）収束は，Monge--Amp\`ere 方程式について~\citep{mirebeau2015discretization} で証明され，最適輸送について~\citep{kitagawa2016newton} で精緻化されている．半離散 OT は照明設計，とくに反射鏡に重要な応用をもつ．\citep{merigot2017light} を参照せよ．
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{エントロピー半離散定式化}
+\label{sec-semi-discr-entropy}
+
+任意の測度間のエントロピー正則化問題~\eqref{eq-entropic-generic} の双対は，平滑な制約なし最適化問題である：
+\begin{equation}\label{eq-dual-entropic-generic}
+	\MK_\c^\epsilon(\al,\be) =
+	\usup{(\f,\g) \in \Cc(\X) \times \Cc(\Y)}
+		 \int_\X \f\d\al + \int_\Y \g\d\be
+		- \epsilon \int_{\X \times \Y}  e^{ \frac{-c + \f \oplus \g }{\epsilon} } \d\al\d\be,
+\end{equation}
+ここで $(f\oplus g)(x,y) \eqdef f(x)+g(y)$ とおいた．
+
+正則化なしの問題~\eqref{eq-c-transform} と同様に，\eqref{eq-dual-entropic-generic} において $\f$ または $\g$ のいずれかについて明示的に最小化でき，平滑化された $\c$ 変換が得られる：
+\begin{align*}
+	\foralls y \in \Y, \quad
+	\f^{\c,\epsilon}(y) &\eqdef - \epsilon \log\pa{
+			\int_{\X} e^{\frac{-\c(x,y) + \f(x)}{\epsilon}} \d\al(x)
+	},\\
+	\foralls x \in \X, \quad
+	\g^{\bar\c,\epsilon}(x) &\eqdef - \epsilon \log\pa{
+			\int_{\Y} e^{\frac{-\c(x,y) + \g(y)}{\epsilon}} \d\be(y)
+	}.
+\end{align*}
+離散測度 $\be = \sum_{j=1}^m \b_j\de_{y_j}$ の場合，問題は~\eqref{eq-semi-dual-discr} と同様に，離散双対ポテンシャル $\gD \in \RR^m$ の関数として表される有限次元問題に簡約される：
+\eql{\label{eq-entropic-smoothed-c}
+	\foralls x \in \X, \quad
+	\gD^{\bar\c,\epsilon}(x) \eqdef - \epsilon \log\pa{
+		\sum_{j=1}^m e^{\frac{-\c(x,y_j) + \gD_j}{\epsilon}} \b_j
+	}.
+}
+離散測度 $\al$ の場合には $\fD^{\bar\c,\epsilon}$ も同様に定義される．
+%
+ソフト min 演算子 $\smine$ を用いた Sinkhorn の書き換え~\eqref{eq-lse-dual-1} および~\eqref{eq-lse-dual-2} は，エントロピー平滑化された $\c$ 変換の交互計算に対応することに注意せよ：
+\eql{\label{eq-sinkh-c-transf}
+	\itt{\fD}_i = \gD^{\bar\c,\epsilon}(x_i)
+	\qandq
+	\itt{\gD}_j = \fD^{\,\c,\epsilon}(y_j) .
+}
+
+\eqref{eq-dual-entropic-generic} を最大化する代わりに，次の有限次元最適化問題を解くことができる：
+\eql{\label{eq-semi-disc-energy-entropy}
+	\umax{\gD \in \RR^n}
+		\Ee^\epsilon(\gD) \eqdef \int_\X \gD^{\bar\c,\epsilon}(x)\d\al(x) + \dotp{\gD}{\b}.
+}
+この最適化問題は，正則化なしの場合 $\epsilon=0$ でも依然として有効であり，この場合 $\gD^{\bar\c,\epsilon=0}=\gD^{\bar\c}$ は~\eqref{eq-disc-c-transfo} で定義された $\bar \c$ 変換であるので，\eqref{eq-semi-disc-energy-entropy} は実際には~\eqref{eq-semi-disc-energy} である．
+%
+この汎関数の勾配は
+\eql{\label{eq-grad-semid-entrop}
+	\foralls j \in \range{m}, \quad
+	\nabla\Ee^\epsilon(\gD)_j = - \int_{\X} \chi_j^\epsilon(x) \d\al(x) + \b_j,
+}
+と書ける．ここで $\chi_j^\epsilon$ は，Laguerre セル $\Laguerre_{j}(\gD)$ の指示関数 $\chi_j^0$ の平滑化版である：
+\eq{
+	\chi_j^\epsilon(x) =
+	\frac{
+		e^{\frac{-\c(x,y_j) + \gD_j}{\epsilon}}
+	}{
+		\sum_\ell e^{\frac{-\c(x,y_\ell) + \gD_\ell}{\epsilon}}
+	}.
+}
+この公式~\eqref{eq-grad-semid-entrop} も $\epsilon=0$ について依然として有効であることに再び注意せよ．
+%
+また，関数族 $( \chi_j^\epsilon )_j$ は 1 の分割であること，すなわち $\sum_j \chi_j^\epsilon=1$ かつ $\chi_j^\epsilon \geq 0$ であることにも注意せよ．図~\ref{fig-c-transform-discrete-eps} の下段にこれを図示する．
+
+%%%%%%%%%%
+\begin{rem}[2 階法とロジスティック回帰との関連]\label{rem-second-order-smoothness}
+	平滑化された半離散定式化~\eqref{eq-semi-disc-energy-entropy} の決定的に重要な側面は，それが平滑な関数の最小化に対応することである．
+	%
+	実際，\citep{genevay2016stochastic} で示されているように，$\Ee^\epsilon$ の Hesse 行列は $1/\epsilon$ で上から押さえられるので，$\nabla \Ee^\epsilon$ は $\frac{1}{\epsilon}$-Lipschitz 連続である．
+	%
+	実のところ，この問題は多クラスロジスティック回帰問題と非常に密接に関連しており（得られるファジーな分類境界の表示については図~\ref{fig-c-transform-discrete-eps} を参照），同じ好都合な性質（\citep{hosmer2013applied} を参照）を享受する．これらは自己整合性（self-concordance）の一般化である．\citep{bach2010self} を参照せよ．
+	%
+	とくに，Newton 法は 2 次収束し，実際には~\citep{2016-Cuturi-siims} で推奨されているように L-BFGS のような準 Newton 法を用いることができる．\citep{2016-Cuturi-siims} は~\S\ref{sec-bary} で詳述するより一般的なバリセンタ問題を扱っているが，1 組の入力測度のみを考える場合にはこの半離散の設定と等価であることに注意せよ．
+	%
+	2 階スキーム（Newton または L-BFGS）の使用は，正則化なしの場合 $\epsilon=0$ についても~\citep{Merigot11,de2012blue,levy2015numerical} で推奨されている．\citep[Theo. 5.1]{kitagawa2016newton} では，Laguerre セルの体積が下から押さえられ，かつ $\al$ が連続密度をもつ限り，$\Ee^0(\gD)$ の Hesse 行列が一様に有界であることが示されている．\citeauthor{kitagawa2016newton} は，2 回の反復の間に Laguerre セルが決して消失しないことを保証するバックトラッキングを伴う減衰 Newton アルゴリズムの線形収束を示すことで議論を進めている．この結果は，正則化なしの場合においても 2 階法を用いることを正当化する．直観的には，エントロピー正則化問題の条件数は $1/\epsilon$ のようにスケールするが，$\epsilon=0$ のときには，この条件数はむしろ離散分布のサンプル数 $m$（これが Laguerre セルの大きさを支配する）によって左右される．
+	%
+	2 階スキームを活用する他の方法も，最近~\citep{knight2013fast,sugiyama2017tensor,cohen2017matrix,allen2017much} で研究されている．
+\end{rem}
+%%%%%%%%%
+
+
+
+
+% G/B/D/H \fbox
+\newcommand{\MyFigCTransEps}[1]{\includegraphics[width=.245\linewidth,trim=63 40 48 30,clip]{c-transform-2d/c-transform-eps#1}}
+\begin{figure}[h!]
+\centering
+%%% 1D %%%
+\includegraphics[width=.9\linewidth]{c-transform-1d/c-transform-eps.pdf}\vspace{2mm}
+%%% 2D %%%
+\begin{tabular}{@{}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{}}
+\MyFigCTransEps{0}&
+\MyFigCTransEps{1}&
+\MyFigCTransEps{10}&
+\MyFigCTransEps{30}\\
+$\epsilon=0$ & $\epsilon=0.01$ & $\epsilon=0.1$ & $\epsilon=0.3$
+\end{tabular}
+\caption{\label{fig-c-transform-discrete-eps}
+上：1 次元におけるエントロピー半離散 $\bar c$ 変換 $\gD^{\bar \c,\epsilon}$ の例．基底コストは $c(x,y)=|x-y|$ で $\epsilon$ を変化させたもの（カラーバー参照）．
+%
+赤い点は位置 $(y_j,-\gD_j)_j$ にある．
+%
+下：2 次元におけるエントロピー半離散 $\bar c$ 変換 $\gD^{\bar \c,\epsilon}$ の例．基底コストは $c(x,y)=\norm{x-y}_2$ で $\epsilon$ を変化させたもの．黒曲線は関数 $\gD^{\bar \c,\epsilon}$ の等高線であり，色は Laguerre セルの平滑化された指示関数 $\chi_j^\epsilon$ を示す．
+%
+赤い点は位置 $y_j \in \RR^2$ にあり，その大きさは $\gD_j$ に比例する．
+}
+\end{figure}
+
+
+
+%%%%%%%%%%
+\begin{rem}[OT コスト関数の Legendre 変換]
+	命題~\ref{prop-convexity-dual} で述べたように，$\MKD_\C^\epsilon(\a,\b)$ は $(\a,\b)$ の凸関数である（これは正則化なしの場合 $\epsilon=0$ でも成り立つ）．
+	%
+	したがって，\eqref{eq-legendre} で定義されるその Legendre--Fenchel 変換を計算することが可能である．
+	%
+	$F_\a(\b) = \MKD_\C^\epsilon(\a,\b)$ とおくと，固定された $\a$ に対し，\citet{2016-Cuturi-siims} に従って，
+	\eq{
+		F_\a^*(\gD) =  - \epsilon H(\a) + \sum_i \a_i \gD^{\bar\c,\epsilon}(x_i).
+	}
+	を得る．ここで $\gD^{\bar\c,\epsilon}$ は~\eqref{eq-entropic-smoothed-c} で導入されたエントロピー平滑化された $c$ 変換である．
+	%
+	正則化なしの場合 $\epsilon=0$ かつ一般の測度に対して，\citet{Carlier-NumericsBarycenters} は，$\Ff_\al(\be) \eqdef \MK_\c(\al,\be)$ とおいて，
+	\eq{
+		\foralls \g \in \Cc(\Y), \quad
+		\Ff_\al^*(\g) = \int_\X \g^{\bar\c}(x)  \d\al(x),
+	}
+	を示している．ここで $\g$ の $\bar c$ 変換 $\g^{\bar c} \in \Cc(\X)$ は~\S\ref{s-c-transform} で定義されている．
+%	denoting $\Ff_\be(\al) \eqdef \MK_\c(\al,\be)$,
+%	\eq{
+%		\foralls \f \in \Cc(\X), \quad
+%		\Ff_\be^*(\f) = \int_\Y \f^{\c}(y)  \d\be(y),
+%	}
+%	where the $c$-transform $\f^c \in \Cc(\Y)$ of $\f$ was defined in~\S\ref{s-c-transform}.
+	%
+	ここで $\Mm(\X)$ は $\Cc(\X)$ と双対をなすので，Legendre 変換は連続関数の関数であることに注意せよ．
+	%
+	次に $G(\a,\b) \eqdef \MKD_\C^\epsilon(\a,\b)$ とおくと，\citep{2016-Cuturi-siims,cuturi2018semidual} と同様にして，両引数に関する Legendre 変換を導くことができる：
+	\eq{
+		\foralls (\fD,\gD) \in \RR^n \times \RR^m, \quad
+		G^*(\fD,\gD) = - \epsilon \log \sum_{i,j} e^{ \frac{-\C_{i,j}+\fD_i+\gD_j}{\epsilon} },
+	}
+	これは $\Gg(\al,\be) \eqdef \MK_\c(\al,\be)$ の Legendre 変換の平滑化版とみなすことができる：
+	\eq{
+		\foralls (\f,\g) \in \Cc(\X) \times \Cc(\Y), \quad
+		\Gg^*(\f,\g) = \uinf{(x,y) \in \X \times \Y} \c(x,y)-\f(x)-\g(y).
+	}
+\end{rem}
+%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{確率的最適化法}
+\label{sec-sgd}
+
+半離散定式化~\eqref{eq-semi-disc-energy} とその平滑化版~\eqref{eq-semi-disc-energy-entropy} は，最小化すべきエネルギーが確率分布 $\al$ に関する期待値として書かれるため魅力的である：
+\eq{
+	\Ee^\epsilon(\gD) = \int_\X E^\epsilon(\gD,x) \d\al(x) = \EE_X(  E^\epsilon(\gD,X) )
+}
+\eq{
+	\qwhereq
+	 E^\epsilon(\gD,x) \eqdef
+	\gD^{\bar\c,\epsilon}(x) - \dotp{\gD}{\b},
+}
+ここで $X$ は $\al$ に従って $\X$ 上に分布する確率ベクトルを表す．
+%
+関係する各汎関数の勾配は
+\eq{
+	\nabla_{\gD} E^\epsilon(x,\gD) = (  \chi_j^\epsilon(x) - \b_j )_{j=1}^m \in \RR^m.
+}
+と書けることに注意せよ．
+%
+したがって，\citet{genevay2016stochastic} で提案されているように，確率的最適化法を用いて最大化を行うことができる．
+%
+これにより，$\al$ の任意の離散化（Dirac の和を用いて $\al$ を近似するか，積分に求積公式を用いるか）に頼ることなく，収束が証明されたアルゴリズムを得ることができる．
+%
+測度 $\al$ は，独立なサンプルを抽出できるブラックボックスとして用いられる．これは統計学および機械学習における多くの高次元応用にとって自然な計算設定である．
+%
+このクラスの方法は，\citep{staib2017parallel} において Wasserstein バリセンタの計算（\S\ref{sec-bary} で述べる）に一般化されている．
+
+%%%%
+\paragraph{確率的勾配降下法．}
+
+$\gD^{(0)} = \zeros_{P}$ で初期化し，確率的勾配降下アルゴリズム（SGD．ここでは最大化法として用いる）は，ステップ $\ell$ において分布 $\al$ に従って点 $x_\ell \in \X$ を（過去および将来のすべてのサンプル $(x_\ell)_\ell$ から独立に）抽出して，更新
+\eql{\label{eq-sgd}
+	\itt{\gD} \eqdef \it{\gD} + \tau_\ell  \nabla_{\gD} E^\epsilon(\it{\gD},x_\ell).
+}
+を形成する．ステップ幅 $\tau_\ell$ は，真の勾配 $\nabla \Ee^\epsilon(\gD)$ の代理として $\nabla_{\gD} E^\epsilon(x_\ell,\gD)$ を用いることで生じる「ノイズ」が極限において打ち消されることを保証するために，十分速く 0 へ減衰しなければならない．
+%
+典型的なスケジュールの選び方は
+\eql{\label{eq-step-size-sgd}
+	\tau_\ell \eqdef \frac{\tau_0}{1 + \ell/\ell_0},
+}
+である．ここで $\ell_0$ は，ウォームアップ段階として機能する反復回数をおおよそ示す．
+%
+収束結果
+\eq{
+	\Ee^\epsilon(\gD^\star) - \EE( \Ee^\epsilon(\it{\gD}) ) = O\pa{ \frac{1}{\sqrt{\ell}} },
+}
+を証明できる．ここで $\gD^\star$ は~\eqref{eq-semi-disc-energy-entropy} の解であり，$\EE$ は各反復で行われる $(x_\ell)_\ell$ の i.i.d. サンプリングに関する期待値を示す．
+%
+図~\ref{fig-semi-discrete-sgd} に，$\al$ が $[0,1]^2$ 上の一様分布である単純な 2 次元の例におけるアルゴリズムの推移を示す．
+
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=.95\linewidth]{semi-discrete-sgd/semi-discrete-sgd}
+\caption{\label{fig-semi-discrete-sgd}
+SGD 反復~\eqref{eq-sgd} における，$\epsilon=0$（正則化なし）のときのエネルギー $\Ee^\epsilon(\it{\gD})$ の推移．各色の曲線は異なる乱択実行を示す．
+%
+画像は，反復を通じた Laguerre セル $( \Laguerre_{j}(\it{\gD}) )_j$ の推移を表示する．
+}
+\end{figure}
+
+%%%%
+\paragraph{平均化付き確率的勾配降下法．}
+
+SGD は，ステップ幅 $\tau_\ell$ が 0 へ速く減衰するために遅い．
+%
+収束速度を改善するために，過去の反復を平均化することが可能であり，これは補助変数 $(\it{\tilde\gD})_\ell$ 上で「古典的な」SGD を実行することと等価である：
+\eq{
+	\itt{\tilde\gD} \eqdef  \it{\tilde\gD} + \tau_\ell \nabla_{\gD} E^\epsilon(\it{\tilde\gD},x_\ell),
+}
+ここで $x_\ell$ は $\al$ に従って抽出され（かつすべての $(x_\ell)_\ell$ は独立である），推定重みベクトルとして平均
+\eq{
+	\it{\gD} \eqdef \frac{1}{\ell} \sum_{k=1}^\ell  \tilde\gD^{(k)}.
+}
+を出力する．これは平均化付き確率的勾配降下（SGA）アルゴリズムを定める．
+%
+次のように移動平均を更新するだけで，すべての反復を明示的に保存することを避けられることに注意せよ：
+\eq{
+	\itt{\gD} = \frac{1}{\ell+1}  \itt{\tilde\gD} +  \frac{\ell}{\ell+1} \it{\gD}.
+}
+%
+この場合，典型的な減衰の選び方はむしろ次の形である：
+\eq{
+	\tau_\ell \eqdef \frac{\tau_0}{1 + \sqrt{\ell/\ell_0}}.
+}
+ステップ幅が，\eqref{eq-step-size-sgd} よりもはるかにゆっくりと，レート $\ell^{-1/2}$ で 0 へ向かうことに注意せよ．
+%
+\citet{bach2014adaptivity} は，SGA が SGD よりも速い収束（関係する定数がより小さい）をもたらすことを証明している．というのも，SGD とは対照的に，SGA は汎関数の局所的な強凸性（最大化問題の場合は強凹性）に適応的だからである．
+
+
+
+
+%%%%%%%%%%
+\begin{rem}[連続--連続問題]\label{rem-sgd-cont-cont}
+$\al$ も $\be$ も離散測度でないとき，問題~\eqref{eq-semi-dual-discr} で与えられるような有限次元の双対変数を含む半離散戦略に頼ることはできない．唯一の選択肢は，\citep{genevay2016stochastic} で提案されているように，双対問題~\eqref{eq-dual-entropic} に確率的最適化法を用いることである．その問題の適切な正則化が決定的に重要であり，たとえばエントロピー正則化の強さ $\epsilon>0$ を設定して，確率的降下スキームで解ける制約なし問題を得る．
+%
+問題~\eqref{eq-dual-entropic} を再考する一つの可能なアプローチは，連続関数の空間上のこの無限次元最適化問題を，多層ニューラルネットワーク~\citep{seguy2018large} で張られるような，はるかに小さな部分集合に制限することである．このアプローチは近似保証のない非凸有限次元最適化問題を導くが，高次元のシナリオにおいて Wasserstein 距離の代理を計算する有効な手段を提供しうる．
+%
+別の解決策は，非パラメトリックな族を用いることである．これは，\citet{genevay2016stochastic} が再生核 Hilbert 空間を用いて提案したような，ある種の漸進的な細密化を考えることと等価であり，その次元は SGD アルゴリズムの反復回数に比例する．
+\end{rem}
+%%%%%%%%%%

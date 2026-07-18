@@ -1,0 +1,191 @@
+% 原文: chapters/w1.tex
+
+\todoK{results about embeddings, Will Leeb's work, Naor's work?}
+\todoK{Indyk's embeddings for W1}
+
+\chapter{$\Wass_1$ 最適輸送}
+\label{c-w1}
+
+本章では，基底コストが距離に等しい最適輸送問題に焦点を当てる．歴史的には，これは~\citeauthor{Monge1781} が \citeyear{Monge1781} に提起した本来の問題に対応する．この設定はまた，コンピュータビジョンにおける最適輸送の初期の応用~\citep{RubTomGui00} において，``earth mover's distances'' という名称のもとで選ばれた設定でもある．
+
+基底コストが \emph{二乗} ヒルベルト距離である場合（特に第~\ref{c-dynamic} 章で扱う）とは異なり，コストが距離となる輸送問題は理論的に解析することがより困難である．
+%
+二乗距離を用いる場合に二つの絶対連続な測度の間の輸送写像またはカップリングの一意性を述べる注意~\ref{rem-exist-mongemap} とは対照的に，コストが基底距離そのものである場合には，最適 Kantorovich カップリングは一般に一意ではない．したがって，この領域では一意に定まる Monge 写像を復元することがしばしば不可能となり，このクラスの問題は測度の補間には不向きとなる．
+%
+最適な $\Wass_1$ 輸送計画の存在の証明とその幾何構造の詳細な解析については，~\citet{trudinger2001monge,caffarelli2002constructing,sudakov1979geometric,evans1999differential} の研究を参照されたい．
+
+理論的に解析することはより困難であるものの，線形な基底距離を用いる最適輸送は，二次コストよりも通常は外れ値やノイズに対してより頑健である．さらに，距離であるコストは，局所的なフロー，発散制約，あるいは双対ポテンシャルのリプシッツ性を伴う優美な双対再定式化をもたらし，グラフ理論におけるネットワーク上の \emph{最小費用流} の手法と整合する，より安価な数値アルゴリズムを示唆する．
+%
+この設定はまた，付随する OT 距離が，正でない場合であっても任意の分布を比較できるノルムを定義するため，人気がある．この性質は，いわゆる \emph{双対ノルム} と呼ばれるより大きなクラスに共有されている（詳細は \S\ref{sec-dual-norms} および注意~\ref{rem-unb-dualnorms} を参照）．
+
+%%%%%%%%%%%%%%%%%%
+\section{距離空間上の $\Wass_1$}
+\label{sec-w1-metric}
+
+ここでは，$d$ を $\Xx=\Yy$ 上の距離と仮定し，基底コスト $c(x,y)=d(x,y)$ をもつ OT 問題を解く．次の命題は，この設定における $c$-変換~\eqref{eq-c-transform} の重要な性質を浮き彫りにする．以下では，関数 $f \in \Cc(\Xx)$ のリプシッツ定数を次のように表す．
+\eq{
+	\Lip(f) \eqdef \sup \enscond{ \frac{|\f(x)-\f(y)|}{d(x,y)} }{ (x,y) \in \X^2, x \neq y }.
+}
+リプシッツ関数を，$\Lip(f) < +\infty$ を満たす関数 $f$ と定義する．これらは $\Cc(\X)$ の凸部分集合をなす．
+
+\begin{prop}$\X=\Y$ かつ $c(x,y)=d(x,y)$ と仮定する．
+このとき，$\f = g^c$ となる $g$ が存在するための必要十分条件は $\Lip(f) \leq 1$ である．
+さらに，$\Lip(f)\leq1$ ならば，$f^c=-f$ である．
+\end{prop}
+
+\begin{proof}
+まず，$f=g^c$ と仮定する．このとき，$x,y\in \X$ に対して，
+\begin{align*}
+|f(x)-f(y)|&=\left|\inf_{z\in\X} d(x,z)-g(z) \;\; - \;\;\inf_{z\in \X} d(y,z)-g(z) \right|\\
+&\leq \sup_{z\in\X} |d(x,z)-d(y,z)|\leq d(x,y).
+\end{align*}
+最初の等式は $g^c$ の定義から，次の不等式は恒等式 $|\inf f-\inf g|\leq\sup|f-g|$ から，最後の不等式は三角不等式から従う．これは $\Lip(f)\leq1$ を示している．
+
+次に，$\Lip(f)\leq1$ と仮定し，$g\eqdef -f$ と定義する．リプシッツ性により，すべての $x,y\in\X$ に対して，
+$f(y)-d(x,y)\leq f(x)\leq f(y)+d(x,y)$ が成り立つ．これらの不等式を適用すると，
+\begin{align*}
+g^c(y)&=\inf_{x\in\X}\left[ d(x,y) + f(x) \right]
+\geq\inf_{x\in \X} \left[  d(x,y)+f(y)-d(x,y)\right]=f(y),\\
+g^c(y)&=\inf_{x\in\X}\left[ d(x,y) + f(x) \right]
+\leq \inf_{x\in\X}\left[ d(x,y) + f(y)+d(x,y) \right]=f(y).
+\end{align*}
+したがって，$g=-f$ として $f=g^c$ である．同じ不等式を用いると，
+\begin{align*}
+f^c(y)&=\inf_{x\in\X}\left[ d(x,y) - f(x) \right]
+\geq\inf_{x\in \X} \left[  d(x,y)-f(y)-d(x,y)\right]=-f(y),\\
+f^c(y)&=\inf_{x\in\X}\left[ d(x,y) - f(x) \right]
+\leq \inf_{x\in\X}\left[ d(x,y) - f(y)+d(x,y) \right]=-f(y).
+\end{align*}
+これは $f^c=-f$ を示している．
+\end{proof}
+
+単一ポテンシャルの定式化~\eqref{eq-semi-dual-cont} から出発して，構成を反復し，対 $(\g,\g^c)$ を $(\g^c,(\g^c)^c)$ に置き換えることができる．直前の命題は，こうして $(\g^c,-\g^c)$ を用いることができ，これが今度は $\Lip(f) \leq 1$ を満たす任意の対 $(f,-f)$ と同値であることを示している．これにより，$\Wass_1$ 距離に対する次の別表現が得られる．
+%Plugging the relationship $f^c=-f$ into~\eqref{eq-semi-dual-cont} shows
+\eql{\label{eq-w1-metric}
+	\Wass_1(\al,\be) =
+	\umax{f} \enscond{ \int_{\Xx} f(x) (\d\al(x)-\d\be(x)) }{ \Lip(f) \leq 1 }.
+}
+この表現は，$\Wass_1$ が実際にはノルムであること，すなわち $\Wass_1(\al,\be) = \norm{\al-\be}_{\Wass_1}$ であること，そして $\int_{\Xx} \al=\int_{\Xx} \be$ である限り（正とは限らない）任意の測度に対しても依然として有効であることを示している．このノルムはしばしば \citeauthor{kantorovich1958space} ノルム~\citeyearpar{kantorovich1958space} と呼ばれる．
+
+~\eqref{eq-discr-meas} の形の離散測度に対しては，$z_k \in \Xx$ かつ $\sum_k \VectMode{m}_k=0$ として $\al-\be = \sum_{k} \VectMode{m}_k \de_{z_k}$ と書くと，最適化問題~\eqref{eq-w1-metric} は次のように書き直すことができる．
+\eql{\label{eq-w1-discr}
+	\Wass_1(\al,\be) =
+	\umax{ (\fD_k)_k } \enscond{ \sum_k \fD_k \VectMode{m}_k }{ \foralls (k,\ell),
+		\abs{\fD_k-\fD_\ell} \leq d(z_k,z_\ell), }
+}
+これは二次錐制約をもつ有限次元の凸計画問題である．これは内点法を用いて，あるいは次に類似の問題について詳述するように，近接法を用いて解くことができる．
+
+$\X=\RR$ として $d(x,y)=|x-y|$ を用いる場合，$z_k$ を $z_1 \leq z_2 \leq \ldots$ と順序付けることで制約の数を減らすことができる．この場合，次を解くだけでよい．
+\eq{
+	\Wass_1(\al,\be) =
+	\umax{ (\fD_k)_k } \enscond{ \sum_k \fD_k \VectMode{m}_k }{ \foralls k, \abs{\fD_{k+1}-\fD_k} \leq z_{k+1}-z_k },
+}
+これは線形計画問題である．
+%
+さらに，この 1 次元の場合，累積関数を用いた $\Wass_1$ の閉形式表現が~\eqref{eq-w1-1d} で与えられることに注意する．
+
+\begin{rem}[$0<p \leq 1$ の場合の $\Wass_p$]
+	$0<p \leq 1$ ならば，$\tilde d(x,y) \eqdef d(x,y)^p$ は三角不等式を満たし，したがって $\tilde d$ それ自体が距離となる．よって，上で詳述した $\Wass_1$ に対する結果とアルゴリズムを，単に $d$ の代わりに $\tilde d$ を用いることで，$\Wass_p$ の計算に適用することができる．これは，$\Wass_p$ が $p$-ヘルダー関数 $\ensconds{f}{\Lip_p(f) \leq 1}$ の双対であると述べることと同値である．ここで，
+	\eq{
+		\Lip_p(f) \eqdef \sup \enscond{ \frac{|\f(x)-\f(y)|}{d(x,y)^p} }{ (x,y) \in \X^2, x \neq y }.
+	}
+\end{rem}
+
+%%%%%%%%%%%%%%%%%%
+\section{ユークリッド空間上の $\Wass_1$}
+\label{sec-w1-eucl}
+
+
+ユークリッド空間 $\X=\Y=\RR^\dim$ の特別な場合に，$\c(x,y) = \norm{x-y}$ を用いると，~\eqref{eq-w1-metric} に現れる大域的なリプシッツ制約を，$f$ の勾配に対する一様な上界として局所的なものにすることができる．
+\eql{\label{eq-w1-cont}
+	\Wass_1(\al,\be) =
+	\umax{f} \enscond{ \int_{\RR^\dim} \f(x) (\d\al(x)-\d\be(x)) }{ \norm{\nabla \f}_\infty \leq 1 }.
+}
+ここで制約 $\norm{\nabla \f}_\infty \leq 1$ は，任意の点 $x$ における $\f$ の勾配のノルムが $1$ で上から押さえられること，すなわち任意の $x$ に対して $\norm{\nabla \f(x)}_2 \leq 1$ であることを意味する．
+
+~\eqref{eq-w1-cont} の双対問題を考えると，固定された発散制約のもとでの最適化問題が得られる．
+\eql{\label{eq-w1-cont-div}
+	\Wass_1(\al,\be) =
+	\umin{\flow} \enscond{ \int_{\RR^\dim} \norm{\flow(x)}_2 \d x }{  \diverg(\flow)=\al-\be },
+}
+これはしばしば Beckmann 定式化~\citep{Beckmann52} と呼ばれる．
+%
+ここでベクトル値関数 $\flow(x) \in \RR^2$ は，質量の移動を局所的に記述するフロー場として解釈できる．二つの入力測度の台の外側では $\diverg(\flow)=0$ であり，これは質量保存制約である．
+%
+有限要素を用いて適切に離散化すると，問題~\eqref{eq-w1-cont} と~\eqref{eq-w1-cont-div} は非平滑な凸最適化問題となる．
+%
+既製の内点二次錐最適化ソルバーを用いることも可能だが，\S\ref{sec-prox-solvers} で提唱するように，大規模問題ではより単純だがより適合した一次法の使用が必要となる．こうして，たとえば Douglas--Rachford (DR) 反復~\eqref{eq-dr-iters} や，関連する交互方向乗数法を用いることができる．一様格子上では，発散制約への射影が高速フーリエ変換を用いて簡便に処理されることに注意する．これらの手法の詳細な解説と三角形分割されたメッシュ上の OT への応用については，~\citet{SolomonEMDSurfaces2014} を参照されたい．
+%
+主双対分割スキームを用いた類似の手法については，~\citet{LiRyuOsherYinGangbo2017_parallel,Ryu2017a,Ryu2017b} も参照されたい．
+%
+双対ポテンシャル $\f$ 上のリプシッツ制約を緩和する近似スキームも提案されている．たとえば，明示的な公式をもたらすウェーブレット係数上の制約を用いるもの~\citep{shirdhonkar2008approximate} や，``正規化線形'' $\max(0,\cdot)$ 活性化関数とクリップされた重みをもつ多層ニューラルネットワークとしてパラメータ化された関数 $\f$ のみを考えるもの~\citep{WassersteinGAN} がある．
+
+%%%%%%%%%%%%%%%%%%
+% \section{$\Wass_1$ on Smooth Manifolds}
+% \label{sec-w1-manifolds}
+
+
+%%%%%%%%%%%%%%%%%%
+\section{グラフ上の $\Wass_1$}
+
+$\Wass_1$ の先の定式化~\eqref{eq-w1-cont} と~\eqref{eq-w1-cont-div} は，$\X$ が測地空間である設定，すなわち $\c(x,y)=\dist(x,y)$（ここで $\dist$ は測地距離）に一般化することができる．$\X$ がリーマン多様体である場合の理論的解析については，~\citet{FeldmanMacCann02} を参照されたい．
+%
+$\X=\range{1,n}$ が離散集合であり，重み（長さ）$\weight_{i,j}$ でラベル付けされた無向辺 $(i,j) \in \Edges \subset \X^2$ を備える場合，$\X$ が測地距離（または最短経路距離）を備えるグラフであるという重要な場合を回復する．
+\eq{
+	\distD_{i,j} \eqdef \umin{K \geq 0, (i_k)_k : i \rightarrow j }
+	 \enscond{ \sum_{k=1}^{K-1} \weight_{i_k,i_{k+1}} }{ \foralls k \in \range{1,K-1}, (i_k,i_{k+1}) \in \Ee  },
+}
+ここで $i \rightarrow j$ は $i_1=i$ かつ $i_K=j$ であること，すなわち経路が $i$ で始まり $j$ で終わることを表す．
+
+二つのベクトル $(\a,\b) \in (\RR^n)^2$ を考える．これらは $\sum_i \a_i = \sum_i \b_i$ を満たすようにグラフ $\X$ 上の（符号付き）離散測度を定める（これらの重みは正である必要はない）．
+%
+目標は今や，基底距離がグラフ測地距離であるときに，~\eqref{eq-wass-p-disc} で $p=1$ として導入された $\WassD_1(\a,\b)$ を計算することである．この計算は，サイズ $n \times n$ の ``完全な'' カップリング $\P$ を計算するに至ることなく行われるべきであり，代わりにグラフの基礎的な連結性のおかげで局所作用素に依拠するべきである．これらの作用素は，勾配と発散の微分作用素の離散的な定式化である．
+
+離散双対 Kantorovich ポテンシャル $\fD \in \RR^n$ は，グラフのすべての頂点で添字付けられたベクトルである．勾配作用素 $\nabla : \RR^n \rightarrow \RR^{\Edges}$ は次のように定義される．
+\eq{
+	\foralls (i,j) \in \Edges, \quad (\nabla \fD)_{i,j} \eqdef \fD_i-\fD_j.
+}
+フロー $\flowD = (\flowD_{i,j})_{i,j}$ は辺上で定義され，勾配 $\nabla$ の随伴である発散作用素 $\diverg : \RR^{\Edges} \rightarrow \RR^n$ は，フローを頂点上で定義されたベクトルへ写すもので，次のように定義される．
+\eq{
+	\foralls i \in \range{1,n}, \quad \diverg(\flowD)_i \eqdef \sum_{j: (i,j) \in \Edges} (\flowD_{i,j} - \flowD_{j,i}) \in \RR^n.
+}
+
+
+問題~\eqref{eq-w1-cont} は，グラフの設定では次のようになる．
+\eql{\label{eq-w1-graph-potential}
+	\WassD_1(\a,\b) =
+	\umax{\fD \in \RR^n} \enscond{ \sum_{i=1}^n \fD_i (\a_i-\b_i)   }{  \forall (i,j) \in \Edges, \, |(\nabla \fD)_{i,j}| \leq \weight_{i,j}  }.
+}
+公式~\eqref{eq-w1-cont-div} に類似する，付随する双対問題は，このとき次のようになる．
+\eql{\label{eq-w1-graph-div}
+	\WassD_1(\a,\b) =
+	\umin{\flowD \in \RR_+^\Edges} \enscond{ \sum_{(i,j) \in \Ee} \weight_{i,j} \flowD_{i,j}  }{  \diverg(\flowD)=\a-\b }.
+}
+これは線形計画問題であり，より正確には最小費用流問題の一例である．これを解くために高度に効率的な専用の単体法ソルバーが考案されている．たとえば~\citep{TreeEMD2007} を参照されたい．% \todoK{detail this}
+%
+図~\ref{fig-planar-graph} に主問題と双対問題の解の例を示す．
+%
+定式化~\eqref{eq-w1-graph-div} はいわゆる Beckmann 定式化~\citep{Beckmann52} であり，交通渋滞モデルを定義し研究するために用いられ拡張されてきた．たとえば~\citep{CarlierSantambrogioOTCongestion2008} を参照されたい．
+
+
+
+
+
+
+\begin{figure}[h!]
+\centering
+\begin{tabular}{@{}c@{\hspace{10mm}}c@{}}
+\includegraphics[width=.45\linewidth]{w1-graph/potential}&
+\includegraphics[width=.45\linewidth]{w1-graph/flow}\\
+$\fD$ & $({\color{red}\a},{\color{blue}\b})$ and $\flowD$
+\end{tabular}
+\caption{\label{fig-planar-graph}
+一様な重み $\weight_{i,j}=1$ をもつ平面グラフ上での $\WassD_1(\a,\b)$ の計算例．
+%
+左：~\eqref{eq-w1-graph-potential} の解であるポテンシャル $\fD$（赤から青へ値が増加する）．辺の緑色は $|(\nabla \fD)_{i,j}|$ に比例する．
+%
+右：~\eqref{eq-w1-graph-div} の解であるフロー $\flowD$．太い黒の辺は，$\weight_{i,j}=1$ に飽和する非ゼロの $\flowD_{i,j}$ を表示する．
+%
+右側のこれらの飽和するフロー辺は，左側の $|(\nabla \fD)_{i,j}|=1$ である薄緑色の辺と一致する．
+}
+\end{figure}

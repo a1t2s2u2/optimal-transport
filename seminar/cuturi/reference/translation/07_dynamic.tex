@@ -1,0 +1,484 @@
+% 原文: chapters/dynamic.tex
+
+\chapter{動的定式化}
+\label{c-dynamic}
+
+本章では，コストが測地距離の二乗である場合の最適輸送に対する測地線的（動的とも呼ばれる）観点を提示する．これは，2 つの測度の間の最適輸送を，測度の空間における全長を最小化する曲線として記述するものである．動的な観点は最適輸送に対する別の直観的な解釈を与えるものであり，流体力学との関連を描くことを可能にするだけでなく，2 つの密度の間を補間する際に低次元での OT を計算するための効率的な数値ツールにもつながる．このアプローチの欠点は，大規模な疎な測度に対してはスケールせず，（空間を格子化する必要があるため）二乗測地コストを用いた正則領域上の低次元でしか機能しないことである．
+
+本章では，時刻 $t=0$ である測度から出発して時刻 $t=1$ に別の測度へ到達するという考え方に従い，$(\al,\be)$ の代わりに $(\al_0,\al_1)$ という記法を用いる．
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{連続的定式化}
+
+$\X=\Y=\RR^d$ かつ $c(x,y)=\norm{x-y}^2$ の場合，\eqref{eq-mk-generic} で定義される最適輸送距離 $\Wass_2^2(\al,\be) = \MK_\c(\al,\be)$ は，これら 2 つの測度の間の最短経路 $(\al_t)_{t=0}^1$ を探すことによって計算できる．
+%
+この経路は，各時刻で定義されるベクトル場 $\speed_t$ を用いて測度を移流させることによって記述される．ベクトル場 $\speed_t$ と経路 $\alpha_t$ は質量保存の式を満たさなければならず，その結果
+\eql{\label{eq-cons-bb-ncvx}
+	\pd{\al_t}{t} + \diverg(\al_t \speed_t) = 0
+	\qandq
+	\al_{t=0}=\al_0,
+	\al_{t=1}=\al_1,
+}
+が得られる．ここで上の方程式は $\RR^d$ 上の超関数の意味で理解されるべきである．このようなベクトル場の微小な長さは，測度 $\al_t$ に付随する $L^2$ ノルムを用いて測られ，それは
+\eq{\norm{\speed_t}_{L^2(\al_t)} = \left( \int_{\RR^\dim} \norm{\speed_t(x)}^2 \d\al_t(x) \right)^{1/2}.}
+と定義される．この定義は，もともと~\citet{benamou2000computational} によって導入された $\Wass_2$ の次の最短経路による再定式化につながる．
+\eql{\label{eq-bb-non-cvx}
+	\Wass_2^2(\al_0,\al_1) = \umin{ (\al_t,\speed_t)_t \text{ sat. \eqref{eq-cons-bb-ncvx}} }
+		\int_0^1 \int_{\RR^d}   \norm{\speed_t(x)}^2 \d\al_t(x) \d t,
+}
+ここで $\al_t$ はスカラー値の測度，$\speed_t$ はベクトル値の測度である．図~\ref{fig-displacement} はこのような測度の経路の 2 つの例を示している．
+
+
+\newcommand{\MyFigDispl}[1]{\includegraphics[width=.19\linewidth]{displacement/#1}}
+\begin{figure}[h!]
+\centering
+\begin{tabular}{@{}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{\hspace{1mm}}c@{}}
+\MyFigDispl{interp-dens-1} &
+\MyFigDispl{interp-dens-2} &
+\MyFigDispl{interp-dens-3} &
+\MyFigDispl{interp-dens-4} &
+\MyFigDispl{interp-dens-5} \\
+\MyFigDispl{interp-points-1} &
+\MyFigDispl{interp-points-2} &
+\MyFigDispl{interp-points-3} &
+\MyFigDispl{interp-points-4} &
+\MyFigDispl{interp-points-5} \\
+$\al_0$ & $\al_{1/4}$ & $\al_{1/2}$ & $\al_{3/4}$ & $\al_{1}$
+\end{tabular}
+\caption{\label{fig-displacement}
+\eqref{eq-bb-non-cvx} を満たす変位補間 $\al_t$．
+上段：Lebesgue 測度に関する密度をもつ 2 つの測度 $(\al_0,\al_1)$ の場合．
+下段：同じ点数をもつ 2 つの離散経験測度の場合（下段）．
+}
+\end{figure}
+
+
+定式化~\eqref{eq-bb-non-cvx} は，積 $\al_t \speed_t$ を含む制約~\eqref{eq-cons-bb-ncvx} のために，変数 $(\al_t,\speed_t)_t$ に関しては非凸な定式化である．（しばしば「運動量」と呼ばれる）ベクトル値の測度
+\eq{
+	\Moment_t \eqdef \al_t \speed_t,
+}
+を導入することにより，\citeauthor{benamou2000computational} は彼らの画期的な論文~\citeyearpar{benamou2000computational} において，これが
+\eql{\label{eq-bb-convex}
+	\Wass_2^2(\al_0,\al_1) = \umin{ (\al_t,\Moment_t)_t  \in \BBConstr(\al_0,\al_1)  }
+		\int_0^1 \int_{\RR^d} \theta(\al_t(x),\Moment_t(x)) \d x \d t,
+}
+と書くとき変数 $(\al_t,\Moment_t)_t$ に関しては凸となることを示した．ここで制約の集合を
+\eql{\label{eq-mass-conservation}
+	\BBConstr(\al_0,\al_1) \eqdef
+	\enscond{ (\al_t,\Moment_t) }{
+		\pd{\al_t}{t} + \diverg(\Moment_t) = 0,
+		\al_{t=0}=\al_0,
+		\al_{t=1}=\al_1
+	},
+}
+と定義し，また $\theta :  \rightarrow \RR^+ \cup \{+\infty\}$ は次の下半連続な凸関数である．
+\eql{\label{eq-theta-dynamic}
+	\foralls (a,b) \in \RR_+ \times \RR^\dim, \quad
+	\th(a,b) = \choice{
+		\frac{\norm{b}^2}{a} \qifq a>0, \\
+		0 \qifq (a,b) = 0, \\
+		+\infty \quad \text{otherwise}.
+	}
+}
+この定義は複雑に見えるかもしれないが，$\al_t(x)=0$ のとき運動量 $\Moment_t(x)$ が消えるように課すために決定的に重要である．
+%
+また，\eqref{eq-bb-convex} は測度 $(\al_t,\Moment_t)$ があたかも密度関数であるかのように非形式的に書かれているが，これは $\th$ が 1 次同次関数である（したがって測度が Lebesgue 測度に関する密度をもたなくても定義される）ため許容され，密度から関数へと曖昧さなく拡張できるからである．
+
+%%%%%%%%%%%%%%%%%%%
+%\begin{rem11}{Links with McCann's interpolation}\label{rem-displacement}
+\begin{rem11}{McCann 補間との関連}{rem-displacement}
+（\eqref{eq-brenier-map} 式を見よ）$\T_\sharp \al_0=\al_1$ を満たす最適 Monge 写像 $\T : \RR^\dim \rightarrow \RR^\dim$ が存在する場合，$\al_t$ は McCann 補間
+\eql{\label{eq-mc-cann-interp}
+	\al_t = ((1-t) \Id + t \T)_{\sharp} \al_0.
+}
+に等しい．1 次元の場合，注意~\ref{rem-1d-ot-generic} を用いると，この補間は関係式
+\eql{\label{eq-displacement-1d-cumul}
+	\cumul{\al_t}^{-1} = (1-t)\cumul{\al_0}^{-1} + t \cumul{\al_1}^{-1};
+}
+によって計算できる．図~\ref{fig-1d-ot} を見よ．Wasserstein 空間の Riemann 幾何に関する詳細な総説については~\citet{gangbo1996geometry} を参照されたい．
+%
+必ずしも Monge 写像に台をもつとは限らない最適カップリング $\pi$ が「のみ」存在する場合，この補間子は
+\eql{\label{eq-displ-discr}
+	\al_t = P_{t\sharp} \pi
+	\qwhereq
+	P_t : (x,y) \in \RR^\dim \times \RR^\dim \mapsto (1-t) x + t y.
+}
+として計算できる．たとえば離散的な設定~\eqref{eq-pair-discr} において，\eqref{eq-mk-discr} の解を $\P$ と表すと，補間は
+\eql{\label{eq-mccann-discrete}
+	\al_t = \sum_{i,j} \P_{i,j} \de_{ (1-t) x_i + t y_j }.
+}
+として定義される．このような補間は典型的には $n+m-1$ 個の点に台をもつが，これは $\P$ の非ゼロ要素の最大数である．
+%
+図~\ref{fig-displacement-emp-weight} はこのような離散測度の変位補間の 2 つの例を示している．
+%
+この構成は，$P_t$ を測地線経路に沿った補間で置き換えることにより，測地空間 $\Xx$ へと一般化できる．
+%
+McCann 補間は多くの応用をもち，たとえばコンピュータグラフィックスにおける色，形状，照明の補間がある~\citep{Bonneel-displacement}．
+%\end{rem1}
+\end{rem11}
+%%%%%%%%%%%%%%%%%%%
+
+
+
+\newcommand{\MyFigDisplEmp}[1]{\includegraphics[width=.16\linewidth]{interpolation-discrete/empirical/interp-#1}}
+\newcommand{\MyFigDisplWei}[1]{\includegraphics[width=.16\linewidth]{interpolation-discrete/weighted/interp-#1}}
+\begin{figure}[h!]
+\centering
+\begin{tabular}{@{}c@{}c@{}c@{}c@{}c@{}c@{}}
+\MyFigDisplEmp{1}&
+\MyFigDisplEmp{2}&
+\MyFigDisplEmp{3}&
+\MyFigDisplEmp{4}&
+\MyFigDisplEmp{5}&
+\MyFigDisplEmp{6}\\
+\MyFigDisplWei{1}&
+\MyFigDisplWei{2}&
+\MyFigDisplWei{3}&
+\MyFigDisplWei{4}&
+\MyFigDisplWei{5}&
+\MyFigDisplWei{6}\\
+$\al_0$ & $\al_{1/5}$ & $\al_{2/5}$ & $\al_{3/5}$ & $\al_{4/5}$ & $\al_{1}$
+\end{tabular}
+\caption{\label{fig-displacement-emp-weight}
+離散測度の変位補間~\eqref{eq-displ-discr} の比較．
+上段：点群（同じ点数をもつ経験測度 $(\al_0,\al_1)$）．
+下段：同じだが重みが異なる場合．$0<t<1$ に対して，上段の例は $N$ 個の点をもつ経験測度補間 $\mu_t$ に対応し，一方，下段は $2N-1$ 個の点に台をもつ測度を定義する．
+}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{一様ずらし格子上の離散化}
+
+簡単のため，数値スキームを次元 $\dim=2$ で記述する．より高次元への拡張は直接的である．我々は~\citet{FPapPeyOud13} によって導入された離散化法に従うが，これは流体力学で一般的に用いられるずらし格子（staggered grid）技法に着想を得たものである．
+%
+時間を $t_k = k/T \in [0,1]$ と離散化し，空間は点 $x_i = (i_1/n_1,i_2/n_2) \in X = [0,1]^2$ において一様に離散化されると仮定する．
+%
+我々はずらし格子表現を用いるので，$\al_t$ は時間方向の半格子点に付随する $\a \in \RR^{(T+1) \times n_1 \times n_2}$ を用いて表現され，一方，$\Moment$ は $\MomentD=(\MomentD_1,\MomentD_2)$ を用いて表現される．ここで $\MomentD_1 \in \RR^{T \times (n_1+1) \times n_2}$ と $\MomentD_1 \in \RR^{T \times n_1 \times (n_2+1)}$ は各空間方向の半格子点に格納される．
+%
+この表現を用いると，$(k,i_1,i_2) \in \range{1,T} \times \range{1,n_1} \times \range{1,n_2}$ に対して，時間微分は
+\eq{
+	(\partial_t \a)_{k,i} \eqdef \a_{k+1,i}-\a_{k,i}
+}
+として計算され，空間ダイバージェンスは
+\eql{\label{eq-space-diverg-disc}
+	\diverg(\MomentD)_{k,i} \eqdef
+			\MomentD_{k,i_1+1,i_2}^1-\MomentD_{k,i_1,i_2}^1
+			+
+			\MomentD_{k,i_1,i_2+1}^2-\MomentD_{k,i_1,i_2}^2,
+}
+%(assuming $0$ whenever these quantities fall out of the grid)
+として計算される．これらはいずれも格子点で定義され，したがって $\RR^{T \times n_1 \times n_2}$ の配列をなす．
+
+最適化される汎関数を評価するためには，中間格子点から格子点への補間作用素が必要であり，すべての $(k,i_1,i_2) \in \range{1,T} \times \range{1,n_1} \times \range{1,n_2}$ に対して，
+\eq{
+	\InterpBB_a( \a )_{k,i} \eqdef \InterpBB(\a_{k+1,i},\a_{k,i}),
+}
+\eq{
+	\InterpBB_\Moment( \MomentD )_{k,i} \eqdef (
+		\InterpBB(\MomentD_{k,i_1+1,i_2}^1,\MomentD_{k,i_1,i_2}^1),
+		\InterpBB(\MomentD_{k,i_1,i_2+1}^2,\MomentD_{k,i_1,i_2}^2)
+	 ).
+}
+最も単純な選択は線形作用素 $\InterpBB(r,s)=\frac{r+s}{2}$ を用いることであり，これが次に考えるものである．\eqref{eq-bb-convex} の離散版は
+\eql{\label{eq-bb-discrete}
+	\umin{(\a,\MomentD) \in \BBConstrD(\a_0,\a_1)}
+		\Theta(\InterpBB_a(\a),\InterpBB_\Moment( \MomentD )),
+}
+\eq{
+		\qwhereq
+		\Theta(\tilde\a,\tilde\MomentD)
+		\eqdef \sum_{k=1}^{T} \sum_{i_1=1}^{n_1} \sum_{i_2=1}^{n_2}
+		\th( \tilde\a_{k,i}, \tilde\MomentD_{k,i} ),
+}
+となり，制約は今や
+\eq{
+	\BBConstrD(\a_0,\a_1) \eqdef
+	\enscond{ (\a, \MomentD)
+	}{
+		\partial_t \a + \diverg(\MomentD) = 0,
+		(\a_{0,\cdot},\a_{T,\cdot}) = (\a_0,\a_1)
+	},
+}
+と書かれる．ここで $\a \in \RR^{(T+1) \times n_1 \times n_2}$，$\MomentD=(\MomentD_1,\MomentD_2)$ であり $\MomentD_1 \in \RR^{T \times (n_1+1) \times n_2}$，$\MomentD_2 \in \RR^{T \times n_1 \times (n_2+1)}$ である．
+%
+図~\ref{fig-dynamic-maze} は，この離散化スキームを用いて近似された発展 $(\al_t)_t$ の例を示している．
+
+%%%%
+\begin{rem}[グラフ上の動的定式化]
+$\X$ がグラフであり $c(x,y)=d_\X(x,y)^2$ が測地距離の二乗である場合，一様格子の離散化~\eqref{eq-space-diverg-disc} の代わりにグラフ構造に付随する離散ダイバージェンスを用いる忠実な離散化法を導くことが可能である．対応する動的 Wasserstein 距離に対して熱方程式が勾配流構造をもつことを保証するために（勾配流の詳細については~\S\ref{sec-grad-flows} を見よ），\citet{Maas2011} とその後の~\citet{MielkeCVPDE} は対数平均 $\InterpBB(r,s)$ を用いることを提案した（\citep{solomon2016continuous,ChowHuangLiZhou2012,chow2017entropy,chow2017discrete} も見よ）．
+\end{rem}
+%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{近接ソルバー}
+\label{sec-prox-solvers}
+
+離散化された動的 OT 問題~\eqref{eq-bb-discrete} は，アフィン制約の下で非滑らかな最適化問題を最小化することを要するため，解くのが困難である．実際，関数 $\th$ は凸であるが，質量 $\a_{k,i}$ が消える測度に対しては非滑らかである．2 つのコンパクト台をもつ入力測度 $(\a_0,\a_1)$ の間を補間するとき，典型的には補間された測度 $(\a_{k})_{k=1}^T$ の質量もまた消えると期待され，最適化過程の難しい部分はまさにこの台の発展を追跡することにある．特に，標準的な滑らかな最適化技法を用いることはできない．
+
+\eqref{eq-bb-discrete} を二次錐計画へと再構成するにはいくつかの方法がある．それは双対問題を考えるか，あるいは単に汎関数 $\th( \a_{k,i}, \MomentD_{k,i} )$ を制約の下での線形関数
+\eq{
+	\Theta(\tilde\a,\tilde\MomentD) = \umin{\tilde \zD} \enscond{
+		\sum_{k,i} \tilde \zD_{k,i}
+	}{
+		\foralls (k,i), (\zD_{k,i},\tilde\a_{k,i},\tilde\MomentD_{i,j}) \in \Ll
+	},
+}
+で置き換えることによるものであり，したがって追加の変数 $\tilde \zD$ の導入を要する．
+%
+ここで $\Ll \eqdef \ensconds{ (z,a,J) \in \RR \times \RR^+ \times \RR^\dim }{ \norm{J}^2 \leq z a }$ は回転 Lorentz 二次錐である．
+%
+この追加の変数を用いると，二次錐計画に対する標準的な内点ソルバーを用いて離散化された問題を解くことが可能となる~\citep{nesterov1994interior}．これらのソルバーは高速な収束率をもち，したがって高い精度で解を計算することができる．残念ながら，各反復は計算コストが高く，離散化点数に応じてスケールする次元の線形系の解を求めることを要する．したがってそれらは，画像処理応用で遭遇する大規模な多次元問題には適用できない．
+
+これらの高精度ソルバーに代わるものは低精度の一次法であり，これは~\eqref{eq-bb-discrete} のような非滑らかだが高度に構造化された問題によく適している．この種のソルバーは新しいものではないが，数値精度が主たる目標でない画像処理や機械学習の分野においてこれらの応用に完璧に適合するため，近年それらの分野で再活性化されている．
+%
+これらのソルバーと大規模応用におけるそれらの利用についての詳細な解説については，たとえば単行本~\citep{BauschkeCombettes11} を参照されたい．
+%
+我々はここで特定のソルバーに焦点を当てるが，もちろんもっと多くのものが利用でき，動的 OT に対するそのようないくつかのアプローチの研究については~\citep{FPapPeyOud13} を参照されたい．動的 OT に一次スキームを用いるという考えは，もともと~\citet{benamou2000computational} によって提案されたことに注意されたい．
+
+DR アルゴリズム~\citep{Lions-Mercier-DR} は，次の形式の非滑らかで構造化された問題
+\eql{\label{eq-splitting-opt}
+	\umin{x \in \Hh} F(x) + G(x),
+}
+を解くために特別に作られている．ここで $\Hh$ はある Euclid 空間であり，$F, G : \Hh \rightarrow \RR \cup \{+\infty\}$ は 2 つの閉凸関数であって，それらに対していわゆる近接作用素
+\eql{\label{eq-prox-eucl}
+	\foralls x \in \Hh, \quad
+	\Prox_{\tau F}(x) \eqdef \uargmin{x' \in \Hh} \frac{1}{2}\norm{x-x'}^2 + \tau F(x)
+}
+をパラメータ $\tau>0$ に対して「容易に」（すなわち閉じた形で，あるいは急速に収束するスキームを用いて）計算できるものである．これは Euclid 計量に対する近接写像に対応し，この定義は $\norm{x-x'}^2$ の代わりにより一般の Bregman ダイバージェンスに拡張できることに注意されたい．$\KLD$ ダイバージェンスを用いる例については~\eqref{eq-prox-kl} を見よ．
+%
+DR アルゴリズムの反復は，初期化 $(x^{(0)}, w^{(0)})\in \Hh^2$ と
+\begin{equation}\label{eq-dr-iters}
+\begin{aligned}
+	\itt{w} &\eqdef  \it{w} + \al (\Prox_{\ga F} (2\it{x}-\it{w})-\it{x}),\\
+	\itt{x} &\eqdef  \Prox_{\ga G}(\itt{w}).
+\end{aligned}
+\end{equation}
+を用いて系列 $(\it{x}, \it{w}) \in \Hh^2$ を定義する．$0 < \al < 2$ かつ $\ga > 0$ ならば，$\it{x} \rightarrow z^\star$ であることを示すことができる．ここで $z^\star$ は~\eqref{eq-splitting-opt} の解である．詳細については~\citep{Combettes2007} を見よ．
+%
+このアルゴリズムは，もう 1 つの人気のある手法である交互方向乗数法~\citep{GabayMercier,GlowinskiMarroco}（総説については~\citep{BoydADMM} も見よ）と密接に関連しており，それは DR を双対問題に適用することによって回復できる．両者の同値性についての詳細は~\citep{FPapPeyOud13} を見よ．これは最初に~\citep{Eckstein1992} によって示された．
+
+問題~\eqref{eq-bb-discrete} を~\eqref{eq-splitting-opt} の形式に再構成する方法は多数あり，これらのアプローチの詳細な解説については~\citep{FPapPeyOud13} を参照されたい．これを達成する単純な方法は，$x=(\a,\MomentD,\tilde\a,\tilde\MomentD)$ と置き，
+\eq{
+	F(x) \eqdef \Theta(\tilde\a,\tilde\MomentD) + \iota_{\BBConstrD(\a_0,\a_1)}(\a,\MomentD)
+	\qandq
+	G(x) = \iota_{\Dd}(\a,\MomentD,\tilde\a,\tilde\MomentD),
+}
+\eq{
+	\qwhereq \Dd \eqdef \enscond{(\a,\MomentD,\tilde\a,\tilde\MomentD)}{
+		\tilde\a=\InterpBB_a(\a), \tilde\MomentD=\InterpBB_\Moment( \MomentD )
+	}.
+}
+とすることである．
+%
+これら 2 つの関数の近接作用素は効率的に計算できる．
+%
+実際，
+\eq{
+	\Prox_{\tau F}(x) = ( \Prox_{\tau\Theta}(\tilde\a,\tilde\MomentD), \Proj_{\BBConstrD(\a_0,\a_1)}(\a,\MomentD) ).
+}
+が成り立つ．近接作用素 $\Prox_{\tau\Theta}$ は，各格子位置で 3 次多項式方程式を解くことによって計算される．アフィン制約 $\BBConstrD(\a_0,\a_1)$ への直交射影は Poisson 方程式の解を求めることを含み，これは高速 Fourier 変換を用いて $O(N\log(N))$ 回の演算で達成できる．ここで $N=Tn_1 n_2$ は格子点数である．
+%
+最後に，近接作用素 $\Prox_{\tau G}$ は線形射影であり，小さな線形系の反転を要する．
+%
+これらの計算の詳細については~\citet{FPapPeyOud13} を参照されたい．
+%
+図~\ref{fig-dynamic-maze} は，この手法を用いて複雑な平面領域の内部で動的補間を計算する例を示している．
+%
+この種の動的 OT に対する近接法は，平均場ゲーム~\citep{benamou2015augmented} のような関連問題を解くためにも用いられてきた．
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\linewidth]{dynamic/dynamic-maze}
+\caption{\label{fig-dynamic-maze}
+近接分割スキームで計算された動的 OT の解 $\al_t$．
+}
+\end{figure}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{動的不均衡 OT}
+\label{dynamic-unbalanced}
+
+異なる質量 $\al_0(\Xx) \neq \al_1(\Xx)$ をもつ入力測度を照合できるようにするため（いわゆる「不均衡（unbalanced）」設定であり，この用語は~\citet{benamou2003numerical} によって導入された），また局所的な質量変動に対処するため，
+%
+いくつかの正規化あるいは緩和が提案されており，特に固定周辺制約を緩和することによるものがある．\S\ref{sec-unbalanced} を見よ．
+一般的な方法論は，連続の方程式~\eqref{eq-mass-conservation} にソース項 $s_t(x)$ を導入することからなる．そこで我々は
+\eq{
+	\bar\BBConstr(\al_0,\al_1) \eqdef
+	\enscond{ (\al_t,\Moment_t,s_t) }{
+		\pd{\al_t}{t} + \diverg(\Moment_t) = s_t,
+		\al_{t=0}=\al_0,
+		\al_{t=1}=\al_1
+	}.
+}
+を考える．決定的な問いは，このソース項に付随するコストをどのように測り，それをもとの動的定式化~\eqref{eq-bb-convex} に導入するかである．文献にはいくつかの提案が現れており，たとえば $L^2$ コストを用いるもの~\citet{piccoli2014generalized} がある．
+%
+質量を「テレポート」する（無限の速度で移動し，以前は質量がなかった領域で突然増大する質量）ことを避けるため，付随するコストは無限であるべきである．これは単純な凸的方法で達成できることがわかる．すなわち，$s_t$ を任意の測度とすることも許し（たとえば 1 次同次コストを用いて），$s_t$ を運動量 $\Moment_t$ と同じように罰することによって，
+\eql{\label{eq-wfr-dynamic}
+	\WFR^2(\al_0,\al_1) = \umin{ (\al_t,\Moment_t,s_t)_t  \in \bar\BBConstr(\al_0,\al_1)  }
+		\Theta(\al,\Moment,s),
+}
+\eq{
+	\qwhereq \Theta(\al,\Moment,s) \eqdef
+		\int_0^1 \int_{\RR^d} \pa{
+			\theta(\al_t(x),\Moment_t(x)) + \tau \theta(\al_t(x),s_t(x))
+		}\d x \d t,
+}
+となる．ここで $\th$ は~\eqref{eq-theta-dynamic} で導入された凸 1 次同次関数であり，$\tau$ は質量輸送と質量生成・消滅の間のトレードオフを制御する重みである．この定式化は，複数の著者によって独立に提案された~\citep{LieroMielkeSavareShort,2017-chizat-focm,kondratyev2015}．この「動的」定式化は「静的」な対応物をもつ．注意~\ref{rem-wfr-static} を見よ．
+%
+凸最適化問題~\eqref{eq-wfr-dynamic} は，\S\ref{sec-prox-solvers} で詳述したものと同様の手法を用いて解くことができる．
+%
+図~\ref{fig-unbalanced-dynamic} はいくつかの不均衡 OT 動的補間の比較を表示している．
+%
+この動的定式化は，形状位置合わせのための「メタモルフォーシス（metamorphosis）」モデル~\citep{Metamorphosis2005} に類似しており，より精密な関連は~\citep{maas2015generalized,maas2016generalized} で詳述されている．
+
+$\tau \rightarrow 0$ のとき，もし $\al_0(\Xx) = \al_1(\Xx)$ ならば，古典的 OT 問題が回復され，$\WFR(\al_0,\al_1) \rightarrow \Wass(\al_0,\al_1)$ となる．対照的に，$\tau \rightarrow +\infty$ のとき，この距離は密度上の Hellinger 計量
+\begin{align*}
+	\frac{1}{\tau}\WFR(\al_0,\al_1)^2\; \overset{\tau \rightarrow +\infty} \longrightarrow
+	&\int_{\Xx} | \sqrt{\density{\al_0}(x)} - \sqrt{\density{\al_1}(x)} |^2 \d x \\
+	=& \int_{\Xx} | 1 - \sqrt{ \frac{\d\al_1}{\d\al_0}(x) } |^2 \d \al_0(x).
+\end{align*}
+に近づく．
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\linewidth]{unbalanced/unbalanced-dynamic}
+\caption{\label{fig-unbalanced-dynamic}
+Hellinger（第 1 行），Wasserstein（第 2 行），部分最適輸送（第 3 行），Wasserstein--Fisher--Rao（第 4 行）の動的補間の比較．
+}
+\end{figure}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{より一般的な可動度汎関数}
+\label{eq-generic-modibility}
+
+\eqref{eq-theta-dynamic} で定義されたものの代わりに他の「可動度関数（mobility function）」$\th$ を考えることによって，動的定式化~\eqref{eq-bb-convex} を一般化することが可能である．この可動度汎関数の 1 つの可能な選択は~\citet{dolbeault2009new} で提案されており，
+\eql{\label{eq?generic-mobility}
+	\foralls (a,b) \in \RR_+ \times \RR^\dim, \quad
+	\th(a,b) = a^{s-p} \norm{b}^{p},
+}
+である．ここでパラメータは $\th$ が凸となるために $p \geq 1$ かつ $s \in [1,p]$ を満たすべきである．
+%
+この定義は $1<s\leq p$ の場合には注意して扱うべきであることに注意されたい．なぜなら $\th$ は無限大において線形増大をもたず，そのため~\eqref{eq-bb-convex} の解は Lebesgue 測度に関する密度をもつよう制約されなければならないからである．
+
+$s=1$ の場合は古典的 OT 問題に対応し，\eqref{eq-bb-convex} の最適値は $\Wass_p(\al,\be)$ を定義する．この場合，$\th$ は 1 次同次であるので，\eqref{eq-bb-convex} の解は任意の測度であり得る．$(s=1,p=2)$ の場合は，$\Wass_2$ を定義するために~\eqref{eq-bb-convex} で考えられた最初の設定である．
+
+極限の場合 $s=p$ もまた興味深い．なぜならそれは双対 Sobolev ノルム $W^{-1,p}$ に対応し，\eqref{eq-bb-convex} の値は
+\eq{
+	\norm{\al-\be}_{W^{-1,p}(\RR^\dim)}^p =
+	\umin{\f} \enscond{ \int_{\RR^\dim} \f  \d(\al-\be)}{  \int_{\RR^\dim} \norm{ \nabla f(x) }^q \d x \leq 1 }
+}
+に等しくなるからである（$1/q+1/p=1$ に対して）．
+%
+極限 $(p=s,q) \rightarrow (1,\infty)$ において，$\Wass_1$ ノルムが回復される．
+%
+$s=p=2$ の場合は，\eqref{eq-dual-sobolev-div} で定義された Sobolev $H^{-1}(\RR^\dim)$ Hilbert ノルムに対応する．
+
+
+\todoK{Speak of the connexion with geodesic in shape space~\citet{beg2005computing}. }
+
+\todoK{``Here many computation techniques related to optimal control and Hamilton-Jacobi equations have not mentioned. The connections between optimal transport and Mean field games may be the other interesting direction. Many techniques developed in numerical optimal transport can be applied to general control problems in the set of probability space. For example, a new Hopf-Lax formula is introduced for dynamical optimal transport problem. See related discussions in~\citet{gangbo2008hamilton}.''}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{経路空間上の動的定式化}
+\label{sec-entropic-dynamic}
+
+古典的および（\S\ref{c-entropic} を見よ）エントロピー正則化された OT の定式化のいずれにも，自然な動的定式化が存在する．これは，空間 $\Xx$ 上のすべての可能な経路 $\ga : [0,1] \rightarrow \Xx$（すなわち曲線）の空間 $\bar\Xx$ 上の抽象的な最適化問題を研究することに基づいている．
+%
+簡単のため $\Xx=\RR^\dim$ と仮定するが，これは測地空間やグラフのようなより一般の空間へと拡張される．
+%
+非形式的には，時刻 $t=0,1$ における 2 つの入力測度 $\al_0,\al_1$ の間の「粒子」のダイナミクスは，確率分布 $\bar\pi \in \Mm_+^1(\bar\Xx)$ によって記述される．このような分布は，始点と終点の分布が $(\al_0,\al_1)$ に一致しなければならないことを満たすべきであり，これは押し出しを用いて形式的に
+\eq{
+	\bar\Couplings(\al_0,\al_1) \eqdef \enscond{ \bar\pi \in \Mm_+^1(\bar\Xx) }{ \bar P_{0\sharp} \bar\pi = \al_0, \bar P_{1\sharp} \bar\pi = \al_1  },
+}
+と書かれる．ここで任意の経路 $\ga \in \bar\Xx$ に対して $P_0(\ga) = \ga(0), P_1(\ga) = \ga(1)$ である．
+
+%%%%
+\paragraph{経路空間上の OT．}
+
+経路空間上で定式化された古典的 OT~\eqref{eq-mk-generic} の動的版は，次のように書かれる．
+\eql{\label{eq-ot-pathsspace}
+	\Wass_2(\al_0,\al_1)^2 =
+	\umin{ \bar\pi \in \bar\Couplings(\al_0,\al_1) } \int_{\bar\Xx} \Ll(\ga)^2 \d\bar\pi(\ga),
+}
+ここで $\Ll(\ga) = \int_0^1 |\ga'(s)|^2 \d s$ は経路 $s \in [0,1] \mapsto \ga(s) \in \Xx$ の運動エネルギーである．それぞれ~\eqref{eq-ot-pathsspace} と~\eqref{eq-mk-generic} を解く最適カップリング $\pi^\star$ と $\bar\pi^\star$ の間の関連は，$\bar\pi^\star$ が $\pi^\star$ によって規定される割合で点の対を結ぶ測地線にのみ質量を与えるということである．離散測度の特別な場合，これは
+\eq{
+	\pi^\star = \sum_{i,j} \P_{i,j} \de_{(x_i,y_j)}
+	\qandq
+	\bar\pi^\star = \sum_{i,j} \P_{i,j} \de_{\ga_{x_i,y_j}},
+}
+を意味する．ここで $\ga_{x_i,y_j}$ は $x_i$ と $y_j$ の間の測地線である．さらに，$\bar\pi^\star$ に従って $\ga$ を引いたときの，時刻 $t$ における曲線の点 $\ga(t)$ の分布によって定義される測度，すなわち
+\eql{\label{eq-interpolation-spacepaths}
+	 t \in [0,1] \mapsto \al_t \eqdef P_{t\sharp} \bar\pi^\star
+	 \qwhereq
+	 P_t(\ga) = \ga(t) \in \Xx,
+}
+は動的定式化~\eqref{eq-bb-convex} の解であり，すなわちそれは変位補間である．
+%
+離散の場合，\eqref{eq-mccann-discrete} が回復される．
+
+%%%%
+\paragraph{経路空間上のエントロピー OT．}
+
+ここで我々は，第~\ref{c-entropic} 章で定義されたエントロピー OT の，経路空間を用いた再解釈に移る．
+%
+\eqref{eq-entropic-generic-proj} と同様に，これは Kullback--Leibler 射影を用いて定義されるが，今回は経路空間上の参照測度 $\bar\Kk$ の射影であり，それは可逆 Brown 運動（Wiener 過程）の分布であって，初期時刻と最終時刻で一様分布をもつ．
+\eql{\label{eq-shrodinger-paths}
+	\umin{ \bar\pi \in \bar\Couplings(\al_0,\al_1) } \KL(\bar\pi|\bar\Kk).
+}
+この問題の概観と~\citet{Schroedinger31} の業績の歴史的解説については，\citet{LeonardSchroedinger} による総説論文を参照されたい．
+%
+\eqref{eq-shrodinger-paths} の（一意な）解 $\bar\pi_\varepsilon^\star$ が，$\varepsilon \rightarrow 0$ のとき~\eqref{eq-ot-pathsspace} の解に収束することを示すことができる．さらに，この解は Brown 橋 $\bar\ga_{x,y}^\varepsilon \in \bar\Xx$（これはぼやけた測地線に似ており，$\varepsilon \rightarrow 0$ のとき $\de_{\ga_{x,y}}$ に収束する）を用いて静的エントロピー OT 問題~\eqref{eq-entropic-generic} の解と結び付けられる．離散的な設定では，これは
+\eql{\label{eq-brownian-bridge-interp}
+	\pi_\varepsilon^\star = \sum_{i,j} \P_{\varepsilon,i,j}^\star \de_{(x_i,y_j)}
+	\qandq
+	\bar\pi_\varepsilon^\star = \sum_{i,j} \P_{\varepsilon,i,j}^\star \bar\ga_{x_i,y_j}^\varepsilon,
+}
+を意味する．ここで $\P_{\varepsilon,i,j}^\star$ は Sinkhorn アルゴリズムを用いて計算できる．
+%
+\eqref{eq-interpolation-spacepaths} と同様に，このときエントロピー補間を
+\eq{
+	\al_{\varepsilon,t} \eqdef \P_{t\sharp} \bar\pi_\varepsilon^\star.
+}
+として定義できる．Brown 橋に沿った時刻 $t$ での位置の法則 $\P_{t\sharp} \bar\ga_{x,y}^\varepsilon$ は，$\ga_{x,y}(t)$ を中心とする分散 $t(1-t)\varepsilon^2$ の Gauss 分布 $\Gg_{t(1-t)\varepsilon^2}(\cdot-\ga_{x,y}(t))$ であるので，$\al_{\varepsilon,t}$ が移動する Dirac の集合の Gauss ぼかしであることを導くことができる．
+\eq{
+	\al_{\varepsilon,t} =
+	\sum_{i,j} \P_{\varepsilon,i,j}^\star \Gg_{t(1-t)\varepsilon^2}( \cdot - \ga_{x_i,y_j}(t) ).
+}
+結果として得られる Brown 橋の混合は図~\ref{fig-schrodinger-dynamic} に表示されている．
+
+
+% G B D H
+\newcommand{\MyFigSchrDyn}[1]{\includegraphics[width=.245\linewidth,trim=50 45 38 35,clip]{schrodinger-dynamic/schrodinger-dynamic-eps#1}}
+%%% FIG %%%
+\begin{figure}[h!]\centering
+\centering
+\begin{tabular}{@{}c@{}c@{}c@{}c@{}}
+\MyFigSchrDyn{5}&
+\MyFigSchrDyn{50}&
+\MyFigSchrDyn{200}&
+\MyFigSchrDyn{1000}\\
+$\varepsilon=0$ & $\varepsilon=.05$ & $\varepsilon=0.2$ & $\varepsilon=1$
+\end{tabular}
+%%%
+\caption{%%%
+経路空間上の Schr\"odinger エントロピー補間~\eqref{eq-brownian-bridge-interp} に付随する Brown 橋経路からのサンプル．青は $t=0$ に，赤は $t=1$ に対応する．
+} \label{fig-schrodinger-dynamic}
+\end{figure}
+%%% FIG %%%
+
+このエントロピー補間 $(\al_t)_t$ を記述する別の方法は，Benamou--Brenier 動的定式化~\eqref{eq-bb-non-cvx} の正則化を用いることであり，すなわち \todoK{check how $\varepsilon$ enters the picture}
+\eql{\label{eq-bb-non-cvx-entropy}
+	\umin{ (\al_t,\speed_t)_t \text{ sat. \eqref{eq-cons-bb-ncvx}} }
+		\int_0^1 \int_{\RR^d}  \pa{
+			 \norm{\speed_t(x)}^2  + \frac{\varepsilon}{4} \norm{ \nabla \log(\al_t)(x) }^2
+			 }
+			 \d\al_t(x) \d t;
+}
+である．\citep{gentil2015analogy,chen2016relation} を見よ．

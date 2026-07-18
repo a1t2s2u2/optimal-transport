@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>proofgraph — 依存グラフ俯瞰</title>
+<link rel="stylesheet" href="styles.css" />
+<script>
+  // preamble.tex のカスタムマクロを反映（詳細パネルの文面を数式付きで描画する）。
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['\\[', '\\]'], ['$$', '$$']],
+      processEnvironments: true,
+      macros: {
+        R: '\\mathbb{R}', N: '\\mathbb{N}', E: '\\mathbb{E}', Z: '\\mathbb{Z}', Q: '\\mathbb{Q}',
+        X: '\\mathcal{X}', Y: '\\mathcal{Y}', Mm: '\\mathcal{M}', Bb: '\\mathcal{B}', Cc: '\\mathcal{C}',
+        Pp: '\\mathcal{P}', Lcal: '\\mathcal{L}', Zz: '\\mathcal{Z}',
+        argmin: '\\operatorname*{arg\\,min}', argmax: '\\operatorname*{arg\\,max}',
+        diag: '\\operatorname{diag}', tr: '\\operatorname{tr}', KL: '\\operatorname{KL}',
+        Id: '\\operatorname{Id}', Perm: '\\operatorname{Perm}', rank: '\\operatorname{rank}',
+        smin: '\\operatorname{smin}', Ric: '\\operatorname{Ric}', supp: '\\operatorname{supp}',
+        abs: ['\\lvert #1 \\rvert', 1], norm: ['\\lVert #1 \\rVert', 1],
+        inner: ['\\langle #1,\\, #2 \\rangle', 2], defeq: '\\overset{\\mathrm{def}}{=}',
+        simplex: '\\Sigma', ones: '\\mathbf{1}', Identity: '\\mathbf{I}', d: '\\mathrm{d}',
+        Couplings: '\\mathcal{U}', CouplingsD: '\\Pi', Wass: '\\mathcal{W}', WassD: '\\mathrm{W}',
+        MK: '\\mathcal{L}', MKD: '\\mathrm{L}', pushforward: '_{\\sharp}',
+        PotentialsD: '\\mathbf{R}', Potentials: '\\mathcal{R}', Hb: '\\mathrm{H}',
+        KLD: '\\mathrm{KL}', dHil: 'd_{\\mathcal{H}}', Hm: '\\mathrm{H}', dist: 'd',
+        distD: '\\mathbf{D}', CD: '\\mathrm{CD}', Tan: '\\mathrm{Tan}', diverg: '\\nabla\\!\\cdot\\!',
+        range: ['[\\![#1]\\!]', 1], blockmeta: ['', 1], demohint: ['', 1]
+      }
+    },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js"></script>
+</head>
+<body>
+<header>
+  <h1>proofgraph</h1>
+  <span class="subtitle">数学ブロック依存グラフ — 空間レイヤ & 証明ルート俯瞰</span>
+  <span id="stats" class="stats"></span>
+</header>
+
+<div id="app">
+  <aside id="controls">
+    <section>
+      <h2>フォーカス</h2>
+      <p class="hint">ノードを選ぶと、その<strong>依存先（上流）と被依存（下流）</strong>だけに絞り込んで再配置します。</p>
+      <select id="focus-scope">
+        <option value="off">オフ（全体表示）</option>
+        <option value="direct">選択時：直接の前後（1 ホップ）</option>
+        <option value="transitive">選択時：推移閉包（全前後）</option>
+      </select>
+      <button id="fit-btn">全体表示に戻す</button>
+    </section>
+
+    <section>
+      <h2>空間で層別</h2>
+      <p class="hint">選んだ空間で<strong>成り立つ</strong>結果だけを強調（より強い空間を要する結果は淡色化）。</p>
+      <select id="space-filter"><option value="">（フィルタなし）</option></select>
+    </section>
+
+    <section>
+      <h2>表示</h2>
+      <label><input type="checkbox" id="show-uses" checked> uses（前提・実線）</label>
+      <label><input type="checkbox" id="show-proof" checked> proof（証明・破線）</label>
+      <p class="hint">既定は<strong>少数の概念カード</strong>です。概念をクリック（またはズームイン）すると、その概念の定理・定義が展開します。</p>
+    </section>
+
+    <section>
+      <h2>凡例</h2>
+      <div class="legend">
+        <div>━━ uses（前提）／ ┅┅ proof（証明）</div>
+        <div><span class="dot" style="background:#2563eb"></span> 青辺 = 依存先（上流・使うもの）</div>
+        <div><span class="dot" style="background:#7c3aed"></span> 紫辺 = 被依存（下流・使われ先）</div>
+        <div><span class="dot" style="background:#16a34a"></span> 緑強調 = 支持集合</div>
+        <div>概念カード = ブロックのまとまり（クリックで展開）</div>
+        <div>概要図の太矢印 = 概念間の依存</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>データ</h2>
+      <div class="dataset">
+        <a href="./">セミナー（実データ）</a>
+        <a href="./?data=sample.graph.json">解析学サンプル（40）</a>
+        <a href="./?data=riemann.graph.json">リーマン予想マップ（28）</a>
+      </div>
+    </section>
+  </aside>
+
+  <main id="cy"></main>
+
+  <aside id="detail">
+    <div id="detail-empty" class="hint">ノードをクリックすると詳細が表示されます。</div>
+    <div id="detail-body" hidden>
+      <span id="d-env" class="badge"></span>
+      <h2 id="d-title"></h2>
+      <div id="d-loc" class="muted"></div>
+      <div id="d-statement" class="statement"></div>
+      <div id="d-spaces"></div>
+      <div id="d-focus" class="focus-btns"></div>
+
+      <div id="d-routes-wrap">
+        <h3>証明ルート（AND/OR）</h3>
+        <div id="d-routes"></div>
+      </div>
+
+      <h3>依存（このブロックが使う）</h3>
+      <ul id="d-deps"></ul>
+      <h3>被依存（このブロックを使う）</h3>
+      <ul id="d-rdeps"></ul>
+    </div>
+  </aside>
+</div>
+
+<div id="error" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

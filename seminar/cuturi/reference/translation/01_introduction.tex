@@ -1,0 +1,58 @@
+% 原文: chapters/Intro.tex（Peyré–Cuturi, Computational Optimal Transport）
+
+\chapter{はじめに}
+\label{c-intro}
+
+最短経路の原理は，人生においても科学においても，ほとんどの意思決定を導いている．すなわち，ある商品・人・1 ビットの情報がある地点にあり，それを目標地点へ送る必要があるとき，可能な限り少ない労力を費やす方を選ぶべきである．これは典型的には，平面上であれば直線に沿って，より込み入った距離空間であれば測地線に沿って品物を動かすことで達成される．最適輸送の理論は，この直感を，一度に1つの品物だけを動かすのではなく，\emph{複数の}品物（あるいはその連続的な分布）を1つの配置から別の配置へ同時に動かす問題を扱う場合へと一般化する．学校の教師なら証言してくれるだろうが，集団を構成する個々人を輸送する計画を，到着時に所定の目標配置に達するという制約のもとで立てることは，1人の個人についてそれを実行することよりもはるかに込み入っている．実際，集団あるいは分布の観点で考えることは，より高度な数学的形式論を要求する．その萌芽は \citet{Monge1781} の先駆的研究において初めて示された．しかし，その形式論が一見どれほど複雑に見えようとも，この問題は我々の日常生活と深く具体的な結びつきをもつ．人・商品・情報のいずれの輸送であれ，ただ1つの品物だけを動かすということは極めてまれである．ロジスティクス・生産計画・ネットワーク経路選択といった主要な経済問題はすべて分布の移動を伴っており，その筋立ては最適輸送のあらゆる古典的文献に現れている．実際，\citet{tolstoi1930methods}，\citet{Hitchcock41}，\citet{Kantorovich42} はいずれも実際的な関心に導かれていた．数学者たちがこの理論が研究の肥沃な土壌を提供すること---凸性・偏微分方程式・統計学との深い結びつき---を，\citet{Brenier91} らの研究のおかげで発見したのは，ほんの数年後，おもに 1980 年代以降のことである．千年紀の変わり目には，計算機科学・画像科学，より一般にデータ科学の研究者たちが，最適輸送の理論が，分布を異なるより抽象的な文脈---すなわち bag-of-features や記述子の形で手元にある分布を比較するという文脈---で研究するための非常に強力な道具を提供することを理解した．
+%
+
+最適輸送についてはいくつもの参考書が書かれており，最近のものとしては \citeauthor{Villani03} の2冊のモノグラフ（\citeyear{Villani03,Villani09}），\citeauthor{rachev1998mass} のもの（\citeyear{rachev1998mass,rachev1998mass2}），さらに最近の \citet{SantambrogioBook} のものがある．これらの書物に例示されるように，この理論におけるより形式的で抽象的な概念は，それ自体で数百ページを要する．いまや最適輸送が応用的な道具として（たとえば経済学において，\citet{galichon2016optimal} が最近提唱したように）次第に確立されてきたことを受けて，本稿ではこの豊かな文献に対し，データ科学---とりわけ画像科学と機械学習---への応用を中心とした計算的観点で釣り合いを取ろうと試みた．その意味で本稿は \citet{kolouri2017optimal} の最近のレビューの動機を踏襲しつつ，より広い範囲を扱おうとするものである．
+%
+究極的には，本稿の目標は，OT の実用的有効性を支える主要な理論的洞察を概観し，それらの洞察を高速な計算手法へと変換する方法の説明により多くの紙幅を割くことにある．
+%
+第 \ref{c-continuous} 章，\ref{c-algo-basics} 章，\ref{c-entropic} 章，\ref{c-variational} 章，\ref{c-extensions} 章の主要部は，もっぱら確率ベクトルあるいは離散ヒストグラムの空間上で最適輸送が誘導する幾何の研究に充てられる．
+%
+より上級の読者を対象として，同じ章のなかに，薄い灰色のボックスで，離散測度に向けた最適輸送のより一般的な数学的解説も与える．離散測度はその確率重みによって定義されるが，それと同時に，それらの重みが定義される位置によっても定義される．これらの位置は通常，連続な距離空間内にとられ，ランダムな現象をモデル化するうえで第2の重要な自由度を与える．
+%
+最後に，第3の，最も技巧的な解説の層は濃い灰色のボックスで示され，離散とは限らない任意の測度---とくに基準測度に対する密度をもちうる測度---を扱う．これは伝統的に OT 理論のほとんどの古典的教科書における既定の設定であるが，実用上は一般にあまり重要でない役割しか果たさない．
+%
+第 \ref{c-algo-semidiscr} 章から \ref{c-statistical} 章は，連続測度と離散測度の相互作用を扱っており，それゆえより数学志向の読者を対象とする．
+
+計算最適輸送の分野は，本稿執筆時点でなお極めて活発である．したがって，本サーベイで触れなかった主題は多岐にわたる．順不同で挙げれば，分布的にロバストな最適化 \citep{NIPS2015_5745,esfahani2018data,NIPS2018_7534,NIPS2018_8015}（入力データから一定の Wasserstein 距離内にある任意のデータ測度の，起こりうる最悪の経験リスクを最小化することでパラメータ推定を行う），Wasserstein 幾何における Langevin モンテカルロサンプリングアルゴリズムの収束 \citep{dalalyan2017user,pmlr-v65-dalalyan17a,pmlr-v75-bernton18a}，Monge--Amp\`ere 方程式を用いて低次元設定で2乗ユークリッドコストの OT を解くその他の数値手法 \citep{froese2011convergent,benamou2014numerical,sulman2011efficient}（注意 \ref{rem:MA} で簡単に言及するにとどめる）などがある．
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{記法}
+
+\begin{itemize}
+	\item $\range{n}$：整数の集合 $\{1,\dots,n\}$．
+	\item $\ones_{n,m}$：すべての成分が $1$ に等しい $\RR^{n\times m}$ の行列．$\ones_{n}$：すべての成分が $1$ のベクトル．
+	\item $\Identity_n$：サイズ $n\times n$ の単位行列．
+	\item $u\in\RR^n$ に対し，$\diag(u)$ は対角成分が $u$，それ以外が $0$ の $n\times n$ 行列．
+	\item $\simplex_n$：$n$ 個のビンをもつ確率単体，すなわち $\RR^n_+$ における確率ベクトルの集合．
+	\item $(\a,\b)$：単体 $\simplex_n \times \simplex_m$ におけるヒストグラム．
+	\item $(\al,\be)$：空間 $(\X,\Y)$ 上で定義される測度．
+	\item $\frac{\d\al}{\d\be}$：測度 $\al$ の $\be$ に関する相対密度．
+	\item $\density{\al} = \frac{\d\al}{\d x}$：測度 $\al$ のルベーグ測度に関する密度．
+	\item $(\al=\sum_i \a_i \delta_{x_i},\be=\sum_j \b_j \delta_{y_j})$：$x_1,\dots,x_n\in\X$ および $y_1,\dots,y_m\in\Y$ を台とする離散測度．
+	\item $\c(x,y)$：基底コスト．$\al,\be$ の台上で評価された対応するペアワイズコスト行列 $\C_{i,j}=(\c(x_i,y_j))_{i,j}$ を伴う．
+	\item $\pi$：$\al$ と $\be$ のカップリング測度，すなわち任意の $A\subset\X$ に対して $\pi(A\times \Y)= \al(A)$ を，任意の部分集合 $B\subset \Y$ に対して $\pi(\X\times B)= \be(B)$ を満たすもの．離散測度に対しては $\pi = \sum_{i,j} \P_{i,j}\delta_{(x_i,y_j)}$．
+	\item $\Couplings(\al,\be)$：カップリング測度の集合，離散測度に対しては $\CouplingsD(\a,\b)$．
+	\item $\Potentials(\c)$：許容される双対ポテンシャルの集合，離散測度に対しては $\PotentialsD(\C)$．
+	\item $\T : \X \rightarrow \Y$：Monge 写像，典型的には $\T_\sharp \al = \be$ を満たすもの．
+	\item $(\al_t)_{t=0}^1$：動的測度，$\al_{t=0}=\al_0$ かつ $\al_{t=1}=\al_1$．
+	\item $\speed$：Benamou--Brenier 定式化における速度，$\Moment=\al \speed$：運動量．
+	\item $(\f,\g)$：双対ポテンシャル，離散測度に対しては $(\fD,\gD)$ が双対変数．
+	\item $(\uD,\vD) \eqdef (e^{\fD/\varepsilon},e^{\gD/\varepsilon})$：Sinkhorn スケーリング．
+	\item $\K \eqdef e^{-\C/\varepsilon}$：Sinkhorn 用の Gibbs カーネル．
+	\item $\flow$：$\Wass_1$ 型問題（ダイバージェンス制約下の最適化）におけるフロー．
+	\item $\MKD_\C(\a,\b)$ および $\MK_\c(\al,\be)$：コスト $\C$（ヒストグラム）および $\c$（任意の測度）に付随する OT 最適化問題の値．
+	\item $\WassD_p(\a,\b)$ および $\Wass_p(\al,\be)$：基底距離行列 $\distD$（ヒストグラム）および距離 $\dist$（任意の測度）に付随する $p$-Wasserstein 距離．
+	\item $\lambda\in\simplex_S$：$S$ 個の測度の重心を計算するために用いる重みベクトル．
+	\item $\dotp{\cdot}{\cdot}$：ベクトルどうしの通常のユークリッド内積．同じサイズの2つの行列 $A,B$ に対しては $\dotp{A}{B} \eqdef \trace(A^\top B)$ がフロベニウス内積．
+	\item $\f\oplus \g(x,y) \eqdef f(x)+g(y)$：2つの関数 $\f : \X \rightarrow \RR, \g : \Y \rightarrow \RR$ に対して $\f \oplus \g : \X\times \Y \rightarrow \RR$ を定める．
+	\item $\fD \oplus \gD \eqdef \fD \ones_m^\top + \ones_n \gD^\top \in \RR^{n\times m}$：2つのベクトル $\fD\in\RR^n$，$\gD\in\RR^m$ に対して．
+	\item $\al \otimes \be$：$\X \times \Y$ 上の積測度，すなわち $\int_{\X \times \Y} g(x,y) \d(\al\otimes\be)(x,y) \eqdef \int_{\X \times \Y} g(x,y) \d\al(x) \d\be(y)$．
+	\item $\a \otimes \b \eqdef \a \b^\top \in \RR^{n \times m}$．
+	\item $\uD \odot \vD = (\uD_i \vD_i) \in \RR^n$：$(\uD, \vD) \in (\RR^n)^2$ に対して．
+\end{itemize}

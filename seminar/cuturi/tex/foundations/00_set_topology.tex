@@ -1,0 +1,123 @@
+\chapter{集合と位相}
+\label{ch:found-set-topology}
+
+\begin{definition}{冪集合}{sem-power-set}
+  集合 $\Omega$ に対し，$\Omega$ の部分集合全体を
+  \[
+    2^{\Omega} \defeq \{A \mid A \subset \Omega\}
+  \]
+  と書き，$\Omega$ の\textbf{冪集合}という．
+\end{definition}
+
+%% ============================================================
+%% 上限・下限
+%% ============================================================
+\section{上限と下限}
+\label{sec:sem-sup-inf}
+
+\begin{definition}{上限と下限}{sem-sup-inf}
+  空でない集合 $A \subset \R$ に対し，次を定める．
+  \begin{itemize}
+    \item $A$ が上に有界であるとき，$A$ の\textbf{上限}を
+      \[
+        \sup A \defeq \min\{M \in \R \mid a \leq M \;\; (\forall a \in A)\}
+      \]
+      と定義する．すなわち $\sup A$ は $A$ の上界のうち最小のものである．
+      $A$ が上に有界でないとき $\sup A \defeq +\infty$ とする．
+    \item $A$ が下に有界であるとき，$A$ の\textbf{下限}を
+      \[
+        \inf A \defeq \max\{m \in \R \mid m \leq a \;\; (\forall a \in A)\}
+      \]
+      と定義する．すなわち $\inf A$ は $A$ の下界のうち最大のものである．
+      $A$ が下に有界でないとき $\inf A \defeq -\infty$ とする．
+  \end{itemize}
+  関数 $f \colon \Omega \to \R$ に対しては，値域の上限・下限として
+  \[
+    \sup_{x \in \Omega} f(x) \defeq \sup\{f(x) \mid x \in \Omega\},
+    \qquad
+    \inf_{x \in \Omega} f(x) \defeq \inf\{f(x) \mid x \in \Omega\}
+  \]
+  と書く．
+\end{definition}
+
+%% ============================================================
+%% 位相空間
+%% ============================================================
+\section{位相空間}
+\label{sec:sem-topology}
+
+\begin{definition}{位相空間}{sem-topological-space}
+  集合 $\Omega$ と部分集合族 $\mathcal{O} \subset 2^{\Omega}$ の組
+  $(\Omega, \mathcal{O})$ が\textbf{位相空間}であるとは，
+  次の3条件を満たすことをいう：
+  \begin{enumerate}
+    \item[(i)] $\emptyset, \Omega \in \mathcal{O}$，
+    \item[(ii)] $U_1, \ldots, U_n \in \mathcal{O} \Longrightarrow
+      \bigcap_{k=1}^{n} U_k \in \mathcal{O}$（有限交叉で閉じる），
+    \item[(iii)] $\{U_\lambda\}_{\lambda \in \Lambda} \subset \mathcal{O}
+      \Longrightarrow \bigcup_{\lambda \in \Lambda} U_\lambda \in \mathcal{O}$
+      （任意濃度の和集合で閉じる）．
+  \end{enumerate}
+  $\mathcal{O}$ の元を\textbf{開集合}，$\mathcal{O}$ を $\Omega$ 上の\textbf{位相}という．
+  ある開集合 $U \in \mathcal{O}$ を用いて $F = \Omega \setminus U$ と書ける
+  $F \subset \Omega$ を\textbf{閉集合}という．
+\end{definition}
+
+\begin{definition}{稠密集合}{sem-dense}
+  位相空間 $(\Omega, \mathcal{O})$ の部分集合 $D \subset \Omega$ が\textbf{稠密}とは，
+  任意の空でない開集合 $U \in \mathcal{O}$ に対して $D \cap U \neq \emptyset$
+  となることをいう．
+\end{definition}
+
+\begin{definition}{可分性}{sem-separable}
+\blockmeta{space=separable}
+  位相空間 $(\Omega, \mathcal{O})$ が可算な稠密部分集合
+  （定義~\ref{def:sem-dense}）をもつとき，
+  $(\Omega, \mathcal{O})$ は\textbf{可分}であるという．
+\end{definition}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=1.0]
+  %% 数直線 Ω = R
+  \draw[thick, ->] (-0.5, 0) -- (8.0, 0);
+  \node[right, font=\small] at (8.0, 0) {$\Omega = \R$};
+
+  %% 可算稠密集合 D = {q_1, q_2, ...}：番号付けで可算性を強調
+  %% 一部に番号を付ける
+  \foreach \k/\xpos in {1/0.5, 2/2.0, 3/4.5, 4/6.5, 5/1.2, 6/3.3, 7/5.7, 8/7.4} {
+    \fill[blue] (\xpos, 0) circle (1.5pt);
+    \node[blue, font=\scriptsize, below] at (\xpos, -0.1) {$q_{\k}$};
+  }
+  %% 番号なしの追加点（無限に並ぶことを示唆）
+  \foreach \xpos in {0.85, 1.7, 2.5, 2.85, 3.7, 4.1, 4.85, 5.3, 6.1, 6.85, 7.7} {
+    \fill[blue!60] (\xpos, 0) circle (1pt);
+  }
+
+  %% 任意の点 x（無理数）と任意精度の近傍
+  \fill[red] (4.7, 0) circle (2pt);
+  \node[red, font=\small, above] at (4.7, 0.1) {$x$};
+  %% ε-近傍を示す赤線
+  \draw[red, thick]
+    (4.45, 0.6) -- (4.45, 0.8) -- (4.95, 0.8) -- (4.95, 0.6)
+    node[above, font=\footnotesize, midway] at (4.7, 0.85) {$\varepsilon$ 近傍};
+
+  %% 近傍内の D の点（近似列の存在）
+  \draw[->, thick, blue!50!green]
+    (4.6, 0.1) -- (4.6, 0.6);
+  \node[blue!50!green, font=\footnotesize, anchor=west] at (5.05, 0.7)
+    {$\exists q_k \in D,\; d(x, q_k) < \varepsilon$};
+
+  %% 凡例
+  \node[blue, font=\footnotesize, anchor=west] at (-0.3, -0.7)
+    {$D = \{q_1, q_2, \ldots\}$ は可算（番号付けできる）};
+  \node[font=\footnotesize, anchor=west] at (-0.3, -1.05)
+    {かつ稠密（任意の $x$ を任意精度で近似）};
+\end{tikzpicture}
+\caption{可分性のイメージ（$\Q \subset \R$ を例に）．
+青点 $D = \{q_1, q_2, \ldots\}$ は可算（番号付け可能）．
+さらに任意の点 $x \in \R$ と任意の精度 $\varepsilon > 0$ に対し
+$d(x, q_k) < \varepsilon$ をみたす $q_k$ がとれる（稠密）．
+可算性と稠密性の両立が可分性の本質．}
+\label{fig:sem-dense-separable}
+\end{figure}

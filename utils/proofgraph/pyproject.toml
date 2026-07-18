@@ -1,0 +1,12 @@
+[project]
+name = "proofgraph"
+version = "0.1.0"
+description = "数学ブロック依存グラフの抽出・検証・可視化"
+requires-python = ">=3.10"
+dependencies = [
+    "pyyaml>=6.0",
+]
+
+[tool.uv]
+# スクリプト群であってインストール対象パッケージではないため、ビルドしない
+package = false

@@ -1,0 +1,756 @@
+{
+  "_comment": "proofgraph viewer 用『リーマン予想の全体把握』マップ。viewer/?data=riemann.graph.json で開く。RH をハブに、ζ関数・零点・素数分布・同値命題・部分結果・一般化を関連づける。",
+  "nodes": [
+    {
+      "id": "def:zeta",
+      "env": "definition",
+      "title": "リーマンゼータ関数 $\\zeta(s)$",
+      "chapter": "ゼータ関数",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "$\\zeta(s)=\\sum_{n=1}^{\\infty} n^{-s}$（$\\mathrm{Re}\\,s>1$ で収束）。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "ζ関数と零点"
+    },
+    {
+      "id": "def:gamma",
+      "env": "definition",
+      "title": "ガンマ関数 $\\Gamma(s)$",
+      "chapter": "ゼータ関数",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "$\\Gamma(s)=\\int_0^{\\infty} t^{s-1}e^{-t}\\,\\d t$。関数等式に現れる。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "ζ関数と零点"
+    },
+    {
+      "id": "thm:euler-product",
+      "env": "theorem",
+      "title": "オイラー積",
+      "chapter": "ゼータ関数",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "$\\zeta(s)=\\prod_{p\\,\\text{素数}}(1-p^{-s})^{-1}$。$\\zeta$ と素数を結ぶ等式。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "ζ関数と零点"
+    },
+    {
+      "id": "thm:analytic-continuation",
+      "env": "theorem",
+      "title": "解析接続",
+      "chapter": "ゼータ関数",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "$\\zeta$ は $s=1$ の単純極を除き $\\mathbb{C}$ 全体へ一意に解析接続される。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "ζ関数と零点"
+    },
+    {
+      "id": "thm:functional-equation",
+      "env": "theorem",
+      "title": "関数等式",
+      "chapter": "ゼータ関数",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "$\\zeta(s)$ と $\\zeta(1-s)$ を $\\Gamma$ と $\\pi$ で結ぶ対称関係 $\\xi(s)=\\xi(1-s)$。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "ζ関数と零点"
+    },
+    {
+      "id": "def:critical-strip",
+      "env": "definition",
+      "title": "臨界帯",
+      "chapter": "零点",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "$0<\\mathrm{Re}\\,s<1$ の帯状領域。非自明零点はここに住む。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "ζ関数と零点"
+    },
+    {
+      "id": "def:critical-line",
+      "env": "definition",
+      "title": "臨界線",
+      "chapter": "零点",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "$\\mathrm{Re}\\,s=\\tfrac12$ の直線。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "ζ関数と零点"
+    },
+    {
+      "id": "thm:trivial-zeros",
+      "env": "theorem",
+      "title": "自明な零点",
+      "chapter": "零点",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "$s=-2,-4,-6,\\dots$ は $\\zeta$ の零点（関数等式から従う）。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "ζ関数と零点"
+    },
+    {
+      "id": "def:nontrivial-zeros",
+      "env": "definition",
+      "title": "非自明零点",
+      "chapter": "零点",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "臨界帯 $0<\\mathrm{Re}\\,s<1$ の中にある $\\zeta$ の零点。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "ζ関数と零点"
+    },
+    {
+      "id": "clm:RH",
+      "env": "claim",
+      "title": "リーマン予想 (RH)",
+      "chapter": "リーマン予想",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "$\\zeta$ の\\textbf{非自明零点はすべて臨界線} $\\mathrm{Re}\\,s=\\tfrac12$ 上にある。",
+      "has_proof": false,
+      "is_axiomatic": false,
+      "group": "リーマン予想"
+    },
+    {
+      "id": "def:prime-counting",
+      "env": "definition",
+      "title": "素数計数関数 $\\pi(x)$",
+      "chapter": "素数分布と同値命題",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "$\\pi(x)=\\#\\{p\\le x: p\\ \\text{は素数}\\}$。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "素数と同値命題"
+    },
+    {
+      "id": "def:li",
+      "env": "definition",
+      "title": "対数積分 $\\mathrm{Li}(x)$",
+      "chapter": "素数分布と同値命題",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "$\\mathrm{Li}(x)=\\int_2^x \\dfrac{\\d t}{\\ln t}$。$\\pi(x)$ のよい近似。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "素数と同値命題"
+    },
+    {
+      "id": "def:mobius",
+      "env": "definition",
+      "title": "メビウス関数 $\\mu(n)$",
+      "chapter": "素数分布と同値命題",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "平方因子を持つと $0$、相異なる $k$ 個の素因数で $(-1)^k$。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "素数と同値命題"
+    },
+    {
+      "id": "def:mertens",
+      "env": "definition",
+      "title": "メルテンス関数 $M(x)$",
+      "chapter": "素数分布と同値命題",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "$M(x)=\\sum_{n\\le x}\\mu(n)$。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "素数と同値命題"
+    },
+    {
+      "id": "thm:zero-free-1",
+      "env": "theorem",
+      "title": "零点自由領域 $\\mathrm{Re}\\,s=1$",
+      "chapter": "素数分布と同値命題",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "$\\zeta$ は直線 $\\mathrm{Re}\\,s=1$ 上に零点を持たない（素数定理の鍵）。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "素数と同値命題"
+    },
+    {
+      "id": "thm:pnt",
+      "env": "theorem",
+      "title": "素数定理",
+      "chapter": "素数分布と同値命題",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "$\\pi(x)\\sim \\dfrac{x}{\\ln x}$。$\\mathrm{Re}\\,s=1$ 上の無零点性から従う。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "素数と同値命題"
+    },
+    {
+      "id": "thm:explicit-formula",
+      "env": "theorem",
+      "title": "明示公式",
+      "chapter": "素数分布と同値命題",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "$\\pi(x)$ を $\\zeta$ の非自明零点にわたる和で表す（Riemann--von Mangoldt）。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "素数と同値命題"
+    },
+    {
+      "id": "clm:RH-error",
+      "env": "claim",
+      "title": "誤差項評価（RH と同値）",
+      "chapter": "素数分布と同値命題",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "RH $\\iff$ $\\pi(x)=\\mathrm{Li}(x)+O(\\sqrt{x}\\,\\ln x)$。",
+      "has_proof": false,
+      "is_axiomatic": false,
+      "group": "素数と同値命題"
+    },
+    {
+      "id": "clm:RH-mertens",
+      "env": "claim",
+      "title": "メルテンス評価（RH と同値）",
+      "chapter": "素数分布と同値命題",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "RH $\\iff$ $M(x)=O(x^{1/2+\\varepsilon})$（任意の $\\varepsilon>0$）。",
+      "has_proof": false,
+      "is_axiomatic": false,
+      "group": "素数と同値命題"
+    },
+    {
+      "id": "thm:robin",
+      "env": "theorem",
+      "title": "ロビンの定理（RH と同値）",
+      "chapter": "素数分布と同値命題",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "RH $\\iff$ 全ての $n>5040$ で $\\sigma(n)<e^{\\gamma} n\\ln\\ln n$。",
+      "has_proof": false,
+      "is_axiomatic": false,
+      "group": "素数と同値命題"
+    },
+    {
+      "id": "thm:hardy",
+      "env": "theorem",
+      "title": "ハーディの定理",
+      "chapter": "部分的結果・アプローチ",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "臨界線上に非自明零点が無限個存在する（1914）。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "アプローチと一般化"
+    },
+    {
+      "id": "thm:conrey",
+      "env": "theorem",
+      "title": "コンリーの定理",
+      "chapter": "部分的結果・アプローチ",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "非自明零点の $40\\%$ 以上が臨界線上にある（1989）。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "アプローチと一般化"
+    },
+    {
+      "id": "thm:zero-density",
+      "env": "theorem",
+      "title": "零点密度評価",
+      "chapter": "部分的結果・アプローチ",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "臨界線から離れた零点は稀であるという密度評価。",
+      "has_proof": false,
+      "is_axiomatic": false,
+      "group": "アプローチと一般化"
+    },
+    {
+      "id": "def:hilbert-polya",
+      "env": "definition",
+      "title": "ヒルベルト–ポリア予想",
+      "chapter": "部分的結果・アプローチ",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "非自明零点の虚部は、ある自己共役作用素のスペクトルだとする見方。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "アプローチと一般化"
+    },
+    {
+      "id": "thm:numerical",
+      "env": "theorem",
+      "title": "数値的検証",
+      "chapter": "部分的結果・アプローチ",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "最初の $10^{13}$ 個を超える非自明零点が臨界線上にあると確認済み。",
+      "has_proof": false,
+      "is_axiomatic": false,
+      "group": "アプローチと一般化"
+    },
+    {
+      "id": "def:dirichlet-L",
+      "env": "definition",
+      "title": "ディリクレ $L$ 関数",
+      "chapter": "一般化",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "$L(s,\\chi)=\\sum_{n\\ge1}\\chi(n)n^{-s}$（$\\chi$ は指標）。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "アプローチと一般化"
+    },
+    {
+      "id": "clm:GRH",
+      "env": "claim",
+      "title": "一般化リーマン予想 (GRH)",
+      "chapter": "一般化",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "全ての Dirichlet $L(s,\\chi)$ の非自明零点も臨界線上にある。",
+      "has_proof": false,
+      "is_axiomatic": false,
+      "group": "アプローチと一般化"
+    },
+    {
+      "id": "thm:weil",
+      "env": "theorem",
+      "title": "ヴェイユ予想（証明済の類似）",
+      "chapter": "一般化",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [],
+      "statement": "有限体上のゼータ関数に対する RH の類似は Deligne により証明された。",
+      "has_proof": false,
+      "is_axiomatic": false,
+      "group": "アプローチと一般化"
+    }
+  ],
+  "edges": [
+    {
+      "from": "thm:euler-product",
+      "to": "def:zeta",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:euler-product",
+      "to": "def:zeta",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:analytic-continuation",
+      "to": "def:zeta",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:analytic-continuation",
+      "to": "def:zeta",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:functional-equation",
+      "to": "thm:analytic-continuation",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:functional-equation",
+      "to": "def:gamma",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:functional-equation",
+      "to": "thm:analytic-continuation",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:functional-equation",
+      "to": "def:gamma",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "def:critical-strip",
+      "to": "thm:analytic-continuation",
+      "kind": "uses"
+    },
+    {
+      "from": "def:critical-line",
+      "to": "def:critical-strip",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:trivial-zeros",
+      "to": "thm:functional-equation",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:trivial-zeros",
+      "to": "thm:functional-equation",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "def:nontrivial-zeros",
+      "to": "def:critical-strip",
+      "kind": "uses"
+    },
+    {
+      "from": "def:nontrivial-zeros",
+      "to": "thm:trivial-zeros",
+      "kind": "uses"
+    },
+    {
+      "from": "clm:RH",
+      "to": "def:nontrivial-zeros",
+      "kind": "uses"
+    },
+    {
+      "from": "clm:RH",
+      "to": "def:critical-line",
+      "kind": "uses"
+    },
+    {
+      "from": "def:mertens",
+      "to": "def:mobius",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:zero-free-1",
+      "to": "def:nontrivial-zeros",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:zero-free-1",
+      "to": "thm:euler-product",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:zero-free-1",
+      "to": "thm:euler-product",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:zero-free-1",
+      "to": "thm:functional-equation",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:pnt",
+      "to": "def:prime-counting",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:pnt",
+      "to": "thm:zero-free-1",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:pnt",
+      "to": "thm:zero-free-1",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:pnt",
+      "to": "def:prime-counting",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:explicit-formula",
+      "to": "def:nontrivial-zeros",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:explicit-formula",
+      "to": "def:prime-counting",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:explicit-formula",
+      "to": "def:nontrivial-zeros",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:explicit-formula",
+      "to": "def:prime-counting",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "clm:RH-error",
+      "to": "clm:RH",
+      "kind": "uses"
+    },
+    {
+      "from": "clm:RH-error",
+      "to": "def:prime-counting",
+      "kind": "uses"
+    },
+    {
+      "from": "clm:RH-error",
+      "to": "def:li",
+      "kind": "uses"
+    },
+    {
+      "from": "clm:RH-error",
+      "to": "thm:explicit-formula",
+      "kind": "uses"
+    },
+    {
+      "from": "clm:RH-mertens",
+      "to": "clm:RH",
+      "kind": "uses"
+    },
+    {
+      "from": "clm:RH-mertens",
+      "to": "def:mertens",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:robin",
+      "to": "clm:RH",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:hardy",
+      "to": "def:critical-line",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:hardy",
+      "to": "def:nontrivial-zeros",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:hardy",
+      "to": "def:critical-line",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:hardy",
+      "to": "def:nontrivial-zeros",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:conrey",
+      "to": "def:critical-line",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:conrey",
+      "to": "def:nontrivial-zeros",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:conrey",
+      "to": "def:critical-line",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:conrey",
+      "to": "def:nontrivial-zeros",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:zero-density",
+      "to": "def:nontrivial-zeros",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:zero-density",
+      "to": "def:critical-strip",
+      "kind": "uses"
+    },
+    {
+      "from": "def:hilbert-polya",
+      "to": "def:nontrivial-zeros",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:numerical",
+      "to": "clm:RH",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:numerical",
+      "to": "def:nontrivial-zeros",
+      "kind": "uses"
+    },
+    {
+      "from": "def:dirichlet-L",
+      "to": "def:zeta",
+      "kind": "uses"
+    },
+    {
+      "from": "clm:GRH",
+      "to": "clm:RH",
+      "kind": "uses"
+    },
+    {
+      "from": "clm:GRH",
+      "to": "def:dirichlet-L",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:weil",
+      "to": "clm:RH",
+      "kind": "uses"
+    }
+  ],
+  "routes": [
+    {
+      "node": "thm:euler-product",
+      "route": "_auto",
+      "deps": [
+        "def:zeta"
+      ]
+    },
+    {
+      "node": "thm:analytic-continuation",
+      "route": "_auto",
+      "deps": [
+        "def:zeta"
+      ]
+    },
+    {
+      "node": "thm:functional-equation",
+      "route": "_auto",
+      "deps": [
+        "thm:analytic-continuation",
+        "def:gamma"
+      ]
+    },
+    {
+      "node": "thm:trivial-zeros",
+      "route": "_auto",
+      "deps": [
+        "thm:functional-equation"
+      ]
+    },
+    {
+      "node": "thm:zero-free-1",
+      "route": "_auto",
+      "deps": [
+        "thm:euler-product",
+        "thm:functional-equation"
+      ]
+    },
+    {
+      "node": "thm:pnt",
+      "route": "_auto",
+      "deps": [
+        "thm:zero-free-1",
+        "def:prime-counting"
+      ]
+    },
+    {
+      "node": "thm:explicit-formula",
+      "route": "_auto",
+      "deps": [
+        "def:nontrivial-zeros",
+        "def:prime-counting"
+      ]
+    },
+    {
+      "node": "thm:hardy",
+      "route": "_auto",
+      "deps": [
+        "def:critical-line",
+        "def:nontrivial-zeros"
+      ]
+    },
+    {
+      "node": "thm:conrey",
+      "route": "_auto",
+      "deps": [
+        "def:critical-line",
+        "def:nontrivial-zeros"
+      ]
+    }
+  ],
+  "spaces": {},
+  "stats": {
+    "n_nodes": 28,
+    "n_edges": 53,
+    "n_annotated_space": 0
+  }
+}

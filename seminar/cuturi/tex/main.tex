@@ -1,0 +1,93 @@
+\documentclass[uplatex, dvipdfmx]{jsreport}
+
+\input{preamble}
+
+\title{セミナー発表原稿\\{\Large 計算最適輸送}}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+%% ============================================================
+%%  記号表
+%% ============================================================
+\chapter*{記号表}
+\addcontentsline{toc}{chapter}{記号表}
+
+\subsection*{一般記号}
+\begin{tabular}{ll}
+  $(\X, d_\X),\; (\Y, d_\Y)$ & Polish 空間（完備可分距離空間） \\
+  $\N$ & 正の整数全体 $\{1, 2, 3, \ldots\}$ \\
+  $\R_{\geq 0}$ & $[0,\infty)$ \\
+  $\R_{>0}$ & $(0,\infty)$ \\
+  $\Bb(\X)$ & $\X$ 上のボレル $\sigma$-代数（$\Bb(\Y)$ も同様） \\
+\end{tabular}
+
+\subsection*{測度}
+\begin{tabular}{ll}
+  $\Mm_+^1(\X)$ & $\X$ 上の確率測度の全体 \\
+  $\delta_x$ & 点 $x$ に質量1を集中させた Dirac 測度 \\
+  $T\pushforward \alpha$ & ボレル可測写像 $T$ による $\alpha$ の押し出し \\
+  $P_\X,\; P_\Y$ & 積空間 $\X \times \Y$ からの射影 \\
+\end{tabular}
+
+\subsection*{離散版}
+\begin{tabular}{ll}
+  $\range{n}$ & 整数の集合 $\{1, \ldots, n\}$ \\
+  $\mathbf{a} \in \R_{\geq 0}^n$, $\mathbf{b} \in \R_{\geq 0}^m$
+    & 輸送元・輸送先のヒストグラム（$\sum_i a_i = \sum_j b_j = 1$） \\
+  $\mathbf{C} \in \R_{\geq 0}^{n \times m}$ & 行列（$C_{i,j}$：ビン $i$ から $j$ への輸送コストと解釈） \\
+  $\ones_n$ & 成分がすべて $1$ の $n$ 次元ベクトル \\
+  $\inner{\cdot}{\cdot}$ & フロベニウス内積 $\inner{\mathbf{A}}{\mathbf{B}} = \tr(\mathbf{A}^\top \mathbf{B})$ \\
+  $\odot,\; \oslash$ & 成分ごとの積（アダマール積）・成分ごとの除算 \\
+\end{tabular}
+
+\subsection*{最適輸送}
+\begin{tabular}{ll}
+  $\Couplings(\alpha, \beta)$ & $\alpha$ と $\beta$ のカップリングの集合 \\
+  $\CouplingsD(\mathbf{a}, \mathbf{b})$ & 離散カップリング集合 \\
+  $\MK_c(\alpha, \beta)$ & Kantorovich 問題の最適値（連続版） \\
+  $\MKD_{\mathbf{C}}(\mathbf{a}, \mathbf{b})$ & Kantorovich 問題の最適値（離散版） \\
+  $\PotentialsD(\mathbf{C})$ & Kantorovich 双対ポテンシャルの実行可能集合 \\
+\end{tabular}
+
+\subsection*{エントロピー正則化}
+\begin{tabular}{ll}
+  $\Hb(\mathbf{P})$ & 離散エントロピー $-\sum_{i,j} P_{i,j}(\log P_{i,j} - 1)$ \\
+  $\mathbf{K}$ & Gibbs カーネル $K_{i,j} = \exp(-C_{i,j}/\varepsilon)$ \\
+  $\KLD(\mathbf{P} \| \mathbf{K})$ & KL ダイバージェンス \\
+  $\MKD_{\mathbf{C}}^\varepsilon$ & エントロピー正則化された最適輸送の最適値 \\
+\end{tabular}
+
+\subsection*{正則化解のスケーリング形}
+\begin{tabular}{ll}
+  $\mathbf{u} \in \R_{>0}^n,\; \mathbf{v} \in \R_{>0}^m$
+    & 正のスケーリングベクトル（$\mathbf{P}_\varepsilon = \diag(\mathbf{u})\mathbf{K}\diag(\mathbf{v})$） \\
+  $\diag(\mathbf{u})$ & $\mathbf{u}$ を対角に並べた対角行列 \\
+  $\mathbf{f} \in \R^n,\; \mathbf{g} \in \R^m$
+    & 双対ポテンシャル（$u_i = e^{f_i/\varepsilon}$, $v_j = e^{g_j/\varepsilon}$） \\
+\end{tabular}
+
+\vspace{1em}
+\hrule
+
+%% ============================================================
+%%  本編（OT）— 発表2の流れ
+%% ============================================================
+\input{main/01_assignment}
+\input{main/02_monge}
+\input{main/03_kantorovich}
+\input{main/04_entropic}
+
+%% ============================================================
+%%  付録：前提知識（OT非依存・網羅版）
+%% ============================================================
+\appendix
+\input{foundations/00_set_topology}
+\input{foundations/01_metric_compact}
+\input{foundations/02_measure}
+\input{foundations/03_convex_linalg}
+
+\end{document}

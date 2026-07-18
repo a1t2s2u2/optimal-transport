@@ -1,0 +1,67 @@
+\chapter{導入}
+\label{ch:introduction}
+
+本資料は，Wasserstein 距離の定義から出発し，
+\textbf{目標（距離性；Villani (2009) Chapter 6）}：
+Polish 空間 $\mathcal{X}$ 上で
+\[
+  1\leq p<\infty
+  \quad\Longrightarrow\quad
+  \Wass_p\text{ は }\Pp{p}(\mathcal{X})\text{ 上の距離である}
+\]
+を，最適 coupling の存在定理（Villani (2009) Theorem 4.1）を経て証明する．
+さらに応用として，Talagrand の不等式から
+標準 Gaussian 測度の次元によらない集中不等式を導き
+（同 Chapter 22），
+最後に，深層生成モデルの潜在空間に Wasserstein 距離で幾何を入れる
+Roy--Hauberg（2022）の枠組みを本資料の道具で定式化する．
+主たる文献は Villani
+\emph{Optimal Transport: Old and New}
+（Grundlehren der mathematischen Wissenschaften 338, Springer, 2009）であり，
+定義・記法・証明はこれに従う．
+日本語の解説としては
+桑江ほか『最適輸送理論とリッチ曲率』
+（Encounter with Mathematics 第63回，中央大学，2015）の §1.4 を参照し，
+測度分解定理・接着補題などの用語はこれに合わせた．
+
+\section*{本資料の構成}
+
+\begin{itemize}
+  \item 第\ref{ch:wasserstein-metrics}章：
+    $\Pp{p}(\mathcal{X})$，coupling，$\Wass_p$ を定義し，
+    最適 coupling の存在定理を経て目標を証明する．
+  \item 第\ref{ch:concentration}章：
+    相対エントロピーと $T_p$ 不等式を導入し，
+    $T_p$ 不等式が測度の集中を導くことを証明する．
+    Talagrand の不等式（標準 Gaussian 測度は $T_2(1)$ をみたす）を
+    認めて，次元によらない Gaussian 集中不等式を導く．
+  \item 第\ref{ch:latent}章：
+    応用．VAE のデコーダ・エンコーダを Markov 核として定式化し，
+    ELBO の正則化項による潜在空間の $W_2$ の制御，
+    1次元の閉形式（認める），直積分解，
+    引き戻し擬距離と曲線の長さを扱う．
+  \item 付録A：
+    距離空間と測度論の準備．
+    本編で用いる定義と補題をすべて揃え，
+    証明なしで認める標準定理（単調収束定理・一致定理・分解定理など）は
+    ステートメントを明示して文献を挙げる．
+\end{itemize}
+
+\section*{主な記号}
+
+\begin{itemize}
+  \item $\Prob(\mathcal{X})$：$\mathcal{X}$ 上の Borel 確率測度全体．
+  \item $\Pp{p}(\mathcal{X})$：有限 $p$ 次モーメントをもつ確率測度全体
+    （定義~\ref{def:wp-p-space}）．
+  \item $\Couplings(\mu,\nu)$：$\mu,\nu$ の coupling 全体
+    （定義~\ref{def:wp-coupling}）．
+  \item $\Wass_p(\mu,\nu)$：Wasserstein 距離（定義~\ref{def:wp-wasserstein}）．
+  \item $\mathbf{1}_A$：指示関数（定義~\ref{def:meas-indicator}）．
+  \item $\norm{f}_{L^p(\mu)}$：$L^p$ ノルム（定義~\ref{def:meas-lp-norm}）．
+  \item $\mu\circ T^{-1}$：写像 $T$ による $\mu$ の像測度（定義~\ref{def:meas-pushforward}）．
+  \item $\mathrm{pr}_1,\ \mathrm{pr}_{12}$ など：座標への射影（projection）．
+    添字は残す成分の番号（例：$\mathrm{pr}_{12}(x,y,z)=(x,y)$）．
+  \item $\mu\otimes\nu$：直積測度（定理~\ref{thm:meas-product}）．
+  \item $H_\nu(\mu)$：相対エントロピー（定義~\ref{def:tc-entropy}）．
+  \item $\gamma^{(N)}$：標準 Gaussian 測度（定義~\ref{def:tc-gaussian}）．
+\end{itemize}

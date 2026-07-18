@@ -1,0 +1,420 @@
+\chapter{Talagrand の不等式と Gaussian 測度の集中}
+\label{ch:concentration}
+
+本章では，Wasserstein 距離と相対エントロピーを結ぶ
+\textbf{Talagrand 型不等式}（Villani (2009) Definition 22.1）を導入し，
+それが測度の集中を導くこと（Marton の方法）を示す．
+最後に標準 Gaussian 測度に適用して，
+次元によらない Gaussian 集中不等式を得る．
+本章でも $(\mathcal{X},d)$ を Polish 空間とする．
+
+\section{相対エントロピー}
+\label{sec:tc-entropy}
+
+\begin{definition}{相対エントロピー}{tc-entropy}
+  $\mu,\nu\in\Prob(\mathcal{X})$ に対し
+  \[
+    H_\nu(\mu):=
+    \begin{cases}
+      \displaystyle\int_{\mathcal{X}}\rho\log\rho\,\d\nu
+      &(\mu=\rho\nu\text{ と密度をもつとき：定義~\ref{def:meas-density}}),\\[2ex]
+      +\infty&(\text{そうでないとき})
+    \end{cases}
+  \]
+  と定め，$\mu$ の $\nu$ に対する\textbf{相対エントロピー}という
+  （$u\log u$ の $u=0$ での値は $0$ と約束する）．
+\end{definition}
+
+\begin{remark}{well-definedness と非負性}{tc-entropy-welldef}
+  $u\log u\geq u-1$（注意~\ref{rem:meas-real-facts}）より
+  $\rho\log\rho\geq\rho-1$ であり，
+  負部分は $(\rho-1)^-\leq1$ で抑えられ $\nu$-可積分だから，
+  $\int\rho\log\rho\,\d\nu$ は $\R\cup\{+\infty\}$ の元として定まり，
+  \[
+    H_\nu(\mu)
+    \geq\int_{\mathcal{X}}(\rho-1)\,\d\nu
+    =1-1=0
+  \]
+  である．また密度は $\nu$-a.e. で一意（主張~\ref{clm:meas-density-unique}）
+  だから，$H_\nu(\mu)$ は密度の取り方によらない．
+\end{remark}
+
+\begin{lemma}{条件付き測度のエントロピー}{tc-conditional}
+  $\nu\in\Prob(\mathcal{X})$ と $A\in\Borel(\mathcal{X})$，$\nu(A)>0$ に対し
+  \[
+    \nu_A:=\frac{\mathbf{1}_A}{\nu(A)}\,\nu
+  \]
+  （$A$ への\textbf{条件付き測度}）とおくと，
+  $\nu_A\in\Prob(\mathcal{X})$，$\nu_A(A)=1$ で
+  \[
+    H_\nu(\nu_A)=\log\frac{1}{\nu(A)}
+  \]
+  であり，$\nu\in\Pp{p}(\mathcal{X})$ ならば
+  $\nu_A\in\Pp{p}(\mathcal{X})$ である．
+\end{lemma}
+
+\begin{proof}
+  $\rho:=\mathbf{1}_A/\nu(A)$ は非負可測で
+  $\int_{\mathcal{X}}\rho\,\d\nu=1$ だから，
+  定義~\ref{def:meas-density}より $\nu_A\in\Prob(\mathcal{X})$ であり，
+  $\nu_A(A)=\int_A\rho\,\d\nu=1$ である．
+  $\rho\log\rho$ は $A$ 上で値
+  $\frac{1}{\nu(A)}\log\frac{1}{\nu(A)}$ を取り，$A$ の外で
+  $0$（$0\log0=0$）だから
+  \[
+    H_\nu(\nu_A)
+    =\int_{\mathcal{X}}\rho\log\rho\,\d\nu
+    =\nu(A)\cdot\frac{1}{\nu(A)}\log\frac{1}{\nu(A)}
+    =\log\frac{1}{\nu(A)}.
+  \]
+  モーメントは，密度をもつ測度の積分公式
+  （定義~\ref{def:meas-density}）より
+  \[
+    \int_{\mathcal{X}}d(x,x_0)^p\,\d\nu_A(x)
+    =\frac{1}{\nu(A)}\int_Ad(x,x_0)^p\,\d\nu(x)
+    \leq\frac{1}{\nu(A)}\int_{\mathcal{X}}d(x,x_0)^p\,\d\nu(x)
+    <\infty.  \qedhere
+  \]
+\end{proof}
+
+\section{Talagrand 型不等式}
+\label{sec:tc-tp}
+
+\begin{lemma}{$W_p$ の順序単調性（Villani Rem 6.6）}{tc-wp-order}
+  $1\leq p\leq q<\infty$ とすると，
+  $\Pp{q}(\mathcal{X})\subset\Pp{p}(\mathcal{X})$ であり，
+  $\mu,\nu\in\Pp{q}(\mathcal{X})$ に対し
+  \[
+    \Wass_p(\mu,\nu)\leq\Wass_q(\mu,\nu).
+  \]
+\end{lemma}
+
+\begin{proof}
+  $\mu\in\Pp{q}(\mathcal{X})$ に対し，確率測度上の $L^p$ ノルムの単調性
+  （主張~\ref{clm:meas-lp-order}）を $d(\cdot,x_0)$ に適用すると
+  \[
+    \left(\int d(x,x_0)^p\,\d\mu(x)\right)^{1/p}
+    \leq
+    \left(\int d(x,x_0)^q\,\d\mu(x)\right)^{1/q}<\infty
+  \]
+  だから $\mu\in\Pp{p}(\mathcal{X})$ である．また任意の
+  $\pi\in\Couplings(\mu,\nu)$ に同じ単調性を適用すると
+  $\norm{d}_{L^p(\pi)}\leq\norm{d}_{L^q(\pi)}$ である．
+  $\pi$ について下限を取れば結論を得る．
+\end{proof}
+
+\begin{definition}{$T_p$ 不等式（Villani Def 22.1）}{tc-tp}
+  $1\leq p<\infty$，$\nu\in\Pp{p}(\mathcal{X})$，$\lambda>0$ とする．
+  $\nu$ が\textbf{定数 $\lambda$ の $T_p$ 不等式}
+  （$T_p(\lambda)$ と書く）をみたすとは，
+  \[
+    \forall\mu\in\Pp{p}(\mathcal{X}),\qquad
+    \Wass_p(\mu,\nu)\leq\sqrt{\frac{2\,H_\nu(\mu)}{\lambda}}
+  \]
+  が成り立つことをいう．
+\end{definition}
+
+\begin{remark}{$p$ についての強さ（Villani Rem 22.2）}{tc-tp-order}
+  $1\leq p\leq q<\infty$ のとき $\Wass_p\leq\Wass_q$
+  （補題~\ref{lem:tc-wp-order}）だから，
+  $\nu\in\Pp{q}(\mathcal{X})$ が $T_q(\lambda)$ をみたせば，
+  任意の $\mu\in\Pp{q}(\mathcal{X})$ で
+  $\Wass_p(\mu,\nu)\leq\sqrt{2H_\nu(\mu)/\lambda}$ も成り立つ．
+  すなわち $T_p$ 不等式は $p$ が大きいほど強い．
+\end{remark}
+
+\section{Marton の方法による集中不等式}
+\label{sec:tc-concentration}
+
+\begin{definition}{拡大集合と median}{tc-enlargement}
+  空でない $A\subset\mathcal{X}$ と $r>0$ に対し
+  \[
+    A^r:=\{x\in\mathcal{X}\mid d(x,A)\leq r\},
+    \qquad
+    d(x,A):=\inf_{y\in A}d(x,y)
+  \]
+  とおく．三角不等式より
+  $\abs{d(x,A)-d(x',A)}\leq d(x,x')$ だから $d(\cdot,A)$ は連続で，
+  $A^r$ は閉集合，特に Borel 集合である．
+  また，可測関数 $f\colon\mathcal{X}\to\R$ と
+  $\nu\in\Prob(\mathcal{X})$ に対し，実数 $m$ が
+  $f$ の（$\nu$ に関する）\textbf{median} であるとは
+  \[
+    \nu(\{f\leq m\})\geq\frac12
+    \quad\text{かつ}\quad
+    \nu(\{f\geq m\})\geq\frac12
+  \]
+  をみたすことをいう．
+\end{definition}
+
+\begin{lemma}{median の存在}{tc-median}
+  $\nu\in\Prob(\mathcal{X})$ と可測な $f\colon\mathcal{X}\to\R$ に対し，
+  $f$ の median が存在する．
+\end{lemma}
+
+\begin{proof}
+  $F(t):=\nu(\{f\leq t\})$ は非減少である．
+  $\{f\leq n\}\uparrow\mathcal{X}$，$\{f\leq-n\}\downarrow\emptyset$
+  （$f$ は実数値）と測度の単調連続性
+  （主張~\ref{clm:meas-monotone-continuity}）より
+  $F(n)\to1$，$F(-n)\to0$ だから，
+  $m:=\inf\{t\in\R\mid F(t)\geq1/2\}$ は実数である．
+  下限の定義より，各 $n$ である $t<m+1/n$ で $F(t)\geq1/2$ となり，
+  $F$ の非減少性から $F(m+1/n)\geq1/2$ である．
+  $\{f\leq m+1/n\}\downarrow\{f\leq m\}$ と単調連続性より
+  $\nu(\{f\leq m\})=\lim_nF(m+1/n)\geq1/2$ である．
+  また $t<m$ では $F(t)<1/2$，すなわち $\nu(\{f>t\})>1/2$ であり，
+  $\{f>m-1/n\}\downarrow\{f\geq m\}$ と単調連続性より
+  $\nu(\{f\geq m\})\geq1/2$ である．
+\end{proof}
+
+\begin{lemma}{離れた集合の条件付き測度は $W_1$ でも離れる}{tc-separation}
+  $\nu\in\Pp{1}(\mathcal{X})$，$A,B\in\Borel(\mathcal{X})$ は
+  $\nu(A)>0$，$\nu(B)>0$ をみたし，ある $r>0$ で
+  「$x\in A$，$y\in B$ ならば $d(x,y)\geq r$」が成り立つとする．
+  このとき
+  \[
+    \Wass_1(\nu_A,\nu_B)\geq r.
+  \]
+\end{lemma}
+
+\begin{proof}
+  $\pi\in\Couplings(\nu_A,\nu_B)$ を任意に取る．
+  $\pi\bigl((\mathcal{X}\setminus A)\times\mathcal{X}\bigr)
+  =\nu_A(\mathcal{X}\setminus A)=0$，
+  $\pi\bigl(\mathcal{X}\times(\mathcal{X}\setminus B)\bigr)
+  =\nu_B(\mathcal{X}\setminus B)=0$ と
+  $(A\times B)^c\subset
+  \bigl((\mathcal{X}\setminus A)\times\mathcal{X}\bigr)
+  \cup\bigl(\mathcal{X}\times(\mathcal{X}\setminus B)\bigr)$ より
+  $\pi(A\times B)=1$ である．
+  $A\times B$ 上で $d(x,y)\geq r$ だから
+  \[
+    \int_{\mathcal{X}\times\mathcal{X}}d(x,y)\,\d\pi(x,y)\geq r
+  \]
+  であり，$\pi$ について下限を取ればよい．
+\end{proof}
+
+\begin{theorem}{$T_p$ 不等式は集中を導く（Villani Thm 22.10）}{tc-concentration}
+  $1\leq p<\infty$ とし，$\nu\in\Pp{p}(\mathcal{X})$ が
+  $T_p(\lambda)$ をみたすとする．
+  このとき，$\nu(A)\geq1/2$ なる任意の
+  $A\in\Borel(\mathcal{X})$ と任意の $r>0$ に対し
+  \[
+    \nu(A^r)\geq1-e^{-\lambda r^2/8}.
+  \]
+\end{theorem}
+
+\begin{proof}
+  $B:=\mathcal{X}\setminus A^r$ とおく．
+  $\nu(B)=0$ なら示すことはないので $\nu(B)>0$ とする
+  （$\nu(A)\geq1/2>0$ にも注意）．
+  条件付き測度 $\nu_A,\nu_B$ は $\Pp{p}(\mathcal{X})$ の元だから
+  （補題~\ref{lem:tc-conditional}），$T_p(\lambda)$ と
+  $H_\nu(\nu_A)=\log(1/\nu(A))$，
+  $\Wass_1\leq\Wass_p$（補題~\ref{lem:tc-wp-order}）より
+  \[
+    \Wass_1(\nu_A,\nu)\leq\sqrt{\frac{2}{\lambda}\log\frac{1}{\nu(A)}}
+    \leq\sqrt{\frac{2\log2}{\lambda}},
+    \qquad
+    \Wass_1(\nu_B,\nu)\leq\sqrt{\frac{2}{\lambda}\log\frac{1}{\nu(B)}}
+  \]
+  を得る．一方，$x\in A$，$y\in B$ ならば
+  $d(x,y)\geq d(y,A)>r$ だから，補題~\ref{lem:tc-separation}と
+  $\Wass_1$ の三角不等式（命題~\ref{prop:wp-metric}．
+  $\nu_A,\nu_B,\nu\in\Pp{1}(\mathcal{X})$ に注意）より
+  \[
+    r\leq\Wass_1(\nu_A,\nu_B)
+    \leq\Wass_1(\nu_A,\nu)+\Wass_1(\nu,\nu_B)
+    \leq\sqrt{\frac{2\log2}{\lambda}}
+    +\sqrt{\frac{2}{\lambda}\log\frac{1}{\nu(B)}}.
+  \]
+
+  $r\geq2\sqrt{2\log2/\lambda}$ のとき：上の不等式から
+  \[
+    \sqrt{\frac{2}{\lambda}\log\frac{1}{\nu(B)}}
+    \geq r-\sqrt{\frac{2\log2}{\lambda}}
+    \geq\frac{r}{2},
+  \]
+  両辺を2乗して整理すれば
+  $\nu(B)\leq e^{-\lambda r^2/8}$ である．
+  $r<2\sqrt{2\log2/\lambda}$ のとき：$\lambda r^2/8<\log2$ より
+  $e^{-\lambda r^2/8}>1/2$ であり，一方
+  $B\subset\mathcal{X}\setminus A$ より
+  $\nu(B)\leq1-\nu(A)\leq1/2$ だから，やはり
+  $\nu(B)\leq e^{-\lambda r^2/8}$ である．
+  いずれの場合も
+  $\nu(A^r)=1-\nu(B)\geq1-e^{-\lambda r^2/8}$ である．
+\end{proof}
+
+\begin{corollary}{Lipschitz 関数の集中（Villani Thm 22.10）}{tc-lipschitz-concentration}
+  定理~\ref{thm:tc-concentration}の仮定のもとで，
+  Lipschitz 連続な $f\colon\mathcal{X}\to\R$
+  （定義~\ref{def:meas-lipschitz}，$0<\norm{f}_{\Lip}$）と
+  その median $m_f$，任意の $\varepsilon>0$ に対し
+  \[
+    \nu\bigl(\{f\geq m_f+\varepsilon\}\bigr)
+    \leq\exp\Bigl(-\frac{\lambda\,\varepsilon^2}
+    {8\norm{f}_{\Lip}^2}\Bigr).
+  \]
+\end{corollary}
+
+\begin{proof}
+  $A:=\{f\leq m_f\}$ とおくと，median の定義より
+  $\nu(A)\geq1/2$，特に $A\neq\emptyset$ である．
+  $0<r<\varepsilon/\norm{f}_{\Lip}$ を任意に取る．
+  $f(x)\geq m_f+\varepsilon$ かつ $y\in A$ ならば
+  $f(x)-f(y)\geq\varepsilon$ だから
+  $d(x,y)\geq\varepsilon/\norm{f}_{\Lip}>r$ であり，
+  したがって $d(x,A)>r$，すなわち
+  $\{f\geq m_f+\varepsilon\}\subset\mathcal{X}\setminus A^r$ である．
+  定理~\ref{thm:tc-concentration}より
+  \[
+    \nu\bigl(\{f\geq m_f+\varepsilon\}\bigr)
+    \leq1-\nu(A^r)\leq e^{-\lambda r^2/8}
+  \]
+  であり，$r\uparrow\varepsilon/\norm{f}_{\Lip}$ とすればよい．
+\end{proof}
+
+\section{Gaussian 測度の集中}
+\label{sec:tc-gaussian}
+
+以下 $\mathcal{X}=\R^N$ とし，Euclid ノルム
+$\norm{x}:=\bigl(\sum_{i=1}^Nx_i^2\bigr)^{1/2}$ の定める距離
+$d(x,y):=\norm{x-y}$ を入れる
+（三角不等式は Cauchy--Schwarz の不等式から従う標準的事実として認める）．
+
+\begin{remark}{$\R^N$ は Polish 空間}{tc-rn-polish}
+  $\R^N$ の Cauchy 列は各座標が $\R$ の Cauchy 列であり，
+  実数の完備性（注意~\ref{rem:meas-real-facts}）から
+  各座標が収束するので全体も収束する．
+  また $\mathbb{Q}^N$ は可算な稠密集合である．
+  よって $\R^N$ は Polish 空間である．
+  なお，付録の直積距離（$\max$ 距離）と Euclid 距離は
+  \[
+    \max_i\abs{x_i-y_i}\leq\norm{x-y}\leq\sqrt{N}\max_i\abs{x_i-y_i}
+  \]
+  により同じ開集合を定めるから，$\Borel(\R^N)$ は
+  直積 Borel $\sigma$-代数（注意~\ref{rem:meas-borel-product}）と
+  一致する．特に直積測度は $\R^N$ 上の Borel 確率測度である．
+\end{remark}
+
+\begin{definition}{標準 Gaussian 測度}{tc-gaussian}
+  $c:=\int_\R e^{-t^2/2}\,\d\lambda_1(t)$ とおくと
+  $0<c<\infty$ である．実際，$(\abs{t}-1)^2\geq0$ を展開すると
+  $t^2/2\geq\abs{t}-1/2$ だから
+  $e^{-t^2/2}\leq e^{1/2}e^{-\abs{t}}$ であり，
+  単調収束定理と微積分学の基本定理より
+  \[
+    \int_\R e^{-\abs{t}}\,\d\lambda_1
+    =\lim_{n\to\infty}\Bigl(
+    \int_{[-n,0)}e^{t}\,\d\lambda_1+\int_{[0,n]}e^{-t}\,\d\lambda_1
+    \Bigr)
+    =1+1=2,
+  \]
+  よって $c\leq2e^{1/2}<\infty$．
+  また $[-1,1]$ 上 $e^{-t^2/2}\geq e^{-1/2}$ だから
+  $c\geq2e^{-1/2}>0$ である．そこで
+  \[
+    \gamma^{(1)}:=\frac{e^{-t^2/2}}{c}\,\lambda_1,
+    \qquad
+    \gamma^{(N)}:=
+    \underbrace{\gamma^{(1)}\otimes\cdots\otimes\gamma^{(1)}}_{N}
+  \]
+  と定める（密度をもつ測度：定義~\ref{def:meas-density}．
+  直積測度：定理~\ref{thm:meas-product}）．
+  $\gamma^{(N)}\in\Prob(\R^N)$ を\textbf{標準 Gaussian 測度}という．
+\end{definition}
+
+\begin{lemma}{Gaussian 測度のモーメント}{tc-gaussian-moment}
+  任意の $1\leq p<\infty$ に対し $\gamma^{(N)}\in\Pp{p}(\R^N)$ である．
+\end{lemma}
+
+\begin{proof}
+  基点を $x_0=0$ に取る．
+  $\norm{x}^2\leq N\max_ix_i^2$ より
+  $\norm{x}^p\leq N^{p/2}\sum_{i=1}^N\abs{x_i}^p$ だから，
+  Fubini--Tonelli の定理（定理~\ref{thm:meas-product}）で
+  第 $i$ 座標以外を先に積分すると
+  （各因子は確率測度なので値 $1$），
+  \[
+    \int_{\R^N}\norm{x}^p\,\d\gamma^{(N)}(x)
+    \leq N^{p/2}\sum_{i=1}^N\int_\R\abs{t}^p\,\d\gamma^{(1)}(t)
+    =N^{1+p/2}\cdot\frac1c\int_\R\abs{t}^pe^{-t^2/2}\,\d\lambda_1(t)
+  \]
+  を得る（最後は密度をもつ測度の積分公式：定義~\ref{def:meas-density}）．
+  $C_p:=\sup_t\abs{t}^pe^{-t^2/4}<\infty$
+  （注意~\ref{rem:meas-real-facts}）と，
+  $(\abs{t}-2)^2\geq0$ から従う
+  $e^{-t^2/4}\leq e\,e^{-\abs{t}}$ より
+  \[
+    \int_\R\abs{t}^pe^{-t^2/2}\,\d\lambda_1
+    =\int_\R\bigl(\abs{t}^pe^{-t^2/4}\bigr)e^{-t^2/4}\,\d\lambda_1
+    \leq C_p\,e\int_\R e^{-\abs{t}}\,\d\lambda_1
+    =2e\,C_p<\infty.  \qedhere
+  \]
+\end{proof}
+
+\begin{theorem}{Talagrand の不等式（Villani Ex 22.15）}{tc-talagrand}
+  標準 Gaussian 測度 $\gamma^{(N)}$ は，
+  次元 $N$ によらない定数 $\lambda=1$ で $T_2(1)$ をみたす：
+  \[
+    \forall\mu\in\Pp{2}(\R^N),\qquad
+    \Wass_2\bigl(\mu,\gamma^{(N)}\bigr)
+    \leq\sqrt{2\,H_{\gamma^{(N)}}(\mu)}.
+  \]
+  （証明は省略する．Talagrand
+  （\emph{Transportation cost for Gaussian and other product measures},
+  Geom.\ Funct.\ Anal.\ \textbf{6} (1996), 587--600）が
+  1次元の場合と tensorization による証明を与えた．
+  Villani (2009) では Example 22.15 で述べられている．）
+\end{theorem}
+
+\begin{corollary}{Gaussian 集中不等式}{tc-gaussian-concentration}
+  $A\in\Borel(\R^N)$ が $\gamma^{(N)}(A)\geq1/2$ をみたすならば，
+  任意の $r>0$ で
+  \[
+    \gamma^{(N)}(A^r)\geq1-e^{-r^2/8}.
+  \]
+  また，Lipschitz 連続な $f\colon\R^N\to\R$
+  （$0<\norm{f}_{\Lip}$）とその median $m_f$，
+  任意の $\varepsilon>0$ に対し
+  \[
+    \gamma^{(N)}\bigl(\{f\geq m_f+\varepsilon\}\bigr)
+    \leq\exp\Bigl(-\frac{\varepsilon^2}{8\norm{f}_{\Lip}^2}\Bigr).
+  \]
+  いずれの評価も次元 $N$ によらない．
+\end{corollary}
+
+\begin{proof}
+  $\gamma^{(N)}\in\Pp{2}(\R^N)$（補題~\ref{lem:tc-gaussian-moment}）は
+  $T_2(1)$ をみたす（定理~\ref{thm:tc-talagrand}）から，
+  定理~\ref{thm:tc-concentration}と
+  系~\ref{cor:tc-lipschitz-concentration}を
+  $p=2$，$\lambda=1$ で適用すればよい．
+\end{proof}
+
+\begin{remark}{文献との対応}{tc-references}
+  本章は Villani (2009) Chapter 22 の前半に対応する．
+  相対エントロピーと Marton の方法の枠組みは同 pp.~568--569，
+  $T_p$ 不等式（定義~\ref{def:tc-tp}）は Definition 22.1，
+  注意~\ref{rem:tc-tp-order}は Remark 22.2 である．
+  定理~\ref{thm:tc-concentration}と
+  系~\ref{cor:tc-lipschitz-concentration}は，
+  Theorem 22.10（Gaussian 集中の特徴づけ）の証明のうち
+  (i)$\Rightarrow$(iii)$\Rightarrow$(vi)（pp.~578--579）の議論を
+  取り出して定量化したものである．
+  同定理の他の同値条件は $T_p$ の双対定式化
+  （Proposition 22.3．Villani Chapter 5 の双対性定理
+  Theorem 5.26 に依存）を要するため扱わない．
+  なお系~\ref{cor:tc-gaussian-concentration}の定数 $1/8$ は
+  最良ではない（最良の Gaussian 集中は $e^{-r^2/2}$：
+  Villani (2009) (22.1)--(22.2)）．
+  Marton の方法は，定数を犠牲にして一般の $T_p$ 不等式から
+  集中を導く点に特徴がある．
+  なお，$T_2$ 不等式が直積で定数を保つこと
+  （Proposition 22.5，Corollary 22.6）が
+  Gaussian 集中の次元非依存性の背景にあるが，
+  その証明は最適 coupling の可測選択（Corollary 5.22）を要するため
+  本資料では扱わない．
+\end{remark}

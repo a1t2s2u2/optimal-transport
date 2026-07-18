@@ -1,36 +1,44 @@
-.venv/
-*.pdf
-.python-version
+# build output directories
+out/
+seminar/cuturi/reference/translation/out/
+seminar/cuturi/reference/original/out/
+seminar/cuturi/tex/out/
+ambrosio/tex/out/
 
-# LaTeX ビルド成果物
+# LaTeX intermediate files
 *.aux
-*.dvi
 *.log
+*.dvi
+*.out
 *.toc
-*.bbl
-*.blg
-*.fls
-*.fdb_latexmk
 *.synctex.gz
+*.fdb_latexmk
+*.fls
 
-# Python
+# generated PDFs at repo root (cuturi/original の画像は明示的に追跡)
+/main.pdf
+/seminar/cuturi/reference/translation/main.pdf
+/seminar/cuturi/tex/main.pdf
+/translated_for_seminar.pdf
+
+# local copyrighted/reference scans (do not publish)
+seminar/wasserstein/reference/old_and_new/
+seminar/wasserstein/reference/Billingsley-2eme-edition.pdf
+
+# generated site artifacts
+seminar/cuturi/site/tex-out/
+
+# uv
+.venv/
+uv.lock
+# proofgraph はツールなので再現性のため lock を追跡する
+!utils/proofgraph/uv.lock
+
+# editor / linter caches
+.ruff_cache/
+.DS_Store
 __pycache__/
-data/*
-!data/.gitkeep
-!data/mnist/
-!data/fashion/
-data/mnist/*
-!data/mnist/.gitkeep
-data/fashion/*
-!data/fashion/.gitkeep
-artifacts/*
-!artifacts/.gitkeep
-!artifacts/figures/
-!artifacts/latex/
-artifacts/figures/*
-!artifacts/figures/.gitkeep
-artifacts/latex/*
-!artifacts/latex/.gitkeep
+*.pyc
 
-# Archive 内のビルド成果物
-archive/note/out/
+# proofgraph viewer smoke artifacts
+utils/proofgraph/viewer/_smoke.png

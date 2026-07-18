@@ -1,0 +1,1383 @@
+{
+  "_comment": "proofgraph viewer のデモ用サンプル（学部の解析学・約40ブロック）。viewer/?data=sample.graph.json で開く。",
+  "nodes": [
+    {
+      "id": "def:set",
+      "env": "definition",
+      "title": "集合",
+      "chapter": "集合と写像",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "set"
+      ],
+      "statement": "ものの集まりを\\textbf{集合}といい、要素 $x$ が集合 $A$ に属することを $x\\in A$ と書く。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "基礎（集合・実数）"
+    },
+    {
+      "id": "def:subset",
+      "env": "definition",
+      "title": "部分集合",
+      "chapter": "集合と写像",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "set"
+      ],
+      "statement": "$A$ の要素がすべて $B$ に属するとき $A\\subset B$ と書き、$A$ を $B$ の\\textbf{部分集合}という。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "基礎（集合・実数）"
+    },
+    {
+      "id": "def:function",
+      "env": "definition",
+      "title": "写像",
+      "chapter": "集合と写像",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "set"
+      ],
+      "statement": "各 $x\\in X$ にただ一つの $f(x)\\in Y$ を対応させる規則 $f:X\\to Y$ を\\textbf{写像}という。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "基礎（集合・実数）"
+    },
+    {
+      "id": "def:injection",
+      "env": "definition",
+      "title": "単射",
+      "chapter": "集合と写像",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "set"
+      ],
+      "statement": "$f(x_1)=f(x_2)$ ならば $x_1=x_2$ となる写像を\\textbf{単射}という。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "基礎（集合・実数）"
+    },
+    {
+      "id": "def:surjection",
+      "env": "definition",
+      "title": "全射",
+      "chapter": "集合と写像",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "set"
+      ],
+      "statement": "任意の $y\\in Y$ にある $x$ があって $f(x)=y$ となる写像を\\textbf{全射}という。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "基礎（集合・実数）"
+    },
+    {
+      "id": "def:bijection",
+      "env": "definition",
+      "title": "全単射",
+      "chapter": "集合と写像",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "set"
+      ],
+      "statement": "単射かつ全射である写像を\\textbf{全単射}という。逆写像 $f^{-1}$ を持つ。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "基礎（集合・実数）"
+    },
+    {
+      "id": "def:field",
+      "env": "definition",
+      "title": "体",
+      "chapter": "実数の連続性",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "set"
+      ],
+      "statement": "四則演算が定義され分配法則をみたす集合を\\textbf{体}という。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "基礎（集合・実数）"
+    },
+    {
+      "id": "def:ordered-field",
+      "env": "definition",
+      "title": "順序体",
+      "chapter": "実数の連続性",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "ordered"
+      ],
+      "statement": "順序 $\\le$ と整合する体を\\textbf{順序体}という。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "基礎（集合・実数）"
+    },
+    {
+      "id": "def:real",
+      "env": "definition",
+      "title": "実数体 $\\R$",
+      "chapter": "実数の連続性",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "上限性質をみたす順序体を\\textbf{実数体} $\\R$ という。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "基礎（集合・実数）"
+    },
+    {
+      "id": "thm:sup-property",
+      "env": "theorem",
+      "title": "上限性質",
+      "chapter": "実数の連続性",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "上に有界な $\\R$ の空でない部分集合は\\textbf{上限}（最小上界）$\\sup A$ を持つ。",
+      "has_proof": false,
+      "is_axiomatic": false,
+      "group": "基礎（集合・実数）"
+    },
+    {
+      "id": "thm:archimedes",
+      "env": "theorem",
+      "title": "アルキメデスの性質",
+      "chapter": "実数の連続性",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "任意の $x\\in\\R$ に対し $n>x$ なる自然数 $n$ が存在する。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "基礎（集合・実数）"
+    },
+    {
+      "id": "def:sequence",
+      "env": "definition",
+      "title": "数列",
+      "chapter": "数列の極限",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "自然数から $\\R$ への写像 $n\\mapsto a_n$ を\\textbf{数列}という。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "極限と連続"
+    },
+    {
+      "id": "def:limit",
+      "env": "definition",
+      "title": "数列の極限",
+      "chapter": "数列の極限",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "任意の $\\varepsilon>0$ にある $N$ があり $n\\ge N$ で $|a_n-a|<\\varepsilon$ のとき $a_n\\to a$ と書く。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "極限と連続"
+    },
+    {
+      "id": "def:bounded-seq",
+      "env": "definition",
+      "title": "有界数列",
+      "chapter": "数列の極限",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "ある $M$ があって全ての $n$ で $|a_n|\\le M$ となる数列を\\textbf{有界}という。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "極限と連続"
+    },
+    {
+      "id": "def:monotone-seq",
+      "env": "definition",
+      "title": "単調数列",
+      "chapter": "数列の極限",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "$a_{n+1}\\ge a_n$（または $\\le$）が常に成り立つ数列を\\textbf{単調}という。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "極限と連続"
+    },
+    {
+      "id": "thm:monotone-convergence",
+      "env": "theorem",
+      "title": "単調収束定理",
+      "chapter": "数列の極限",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "上に有界な単調増加数列は収束し、その極限は上限に一致する。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "極限と連続"
+    },
+    {
+      "id": "thm:bolzano-weierstrass",
+      "env": "theorem",
+      "title": "Bolzano--Weierstrass の定理",
+      "chapter": "数列の極限",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "有界な数列は収束する部分列を持つ。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "極限と連続"
+    },
+    {
+      "id": "def:cauchy",
+      "env": "definition",
+      "title": "コーシー列",
+      "chapter": "数列の極限",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "任意の $\\varepsilon>0$ にある $N$ があり $m,n\\ge N$ で $|a_m-a_n|<\\varepsilon$ となる数列。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "極限と連続"
+    },
+    {
+      "id": "thm:cauchy-complete",
+      "env": "theorem",
+      "title": "実数の完備性",
+      "chapter": "数列の極限",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "$\\R$ ではコーシー列は必ず収束する。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "極限と連続"
+    },
+    {
+      "id": "def:continuity",
+      "env": "definition",
+      "title": "関数の連続性",
+      "chapter": "連続関数",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "metric"
+      ],
+      "statement": "$x\\to a$ のとき $f(x)\\to f(a)$ となるとき、$f$ は $a$ で\\textbf{連続}という。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "極限と連続"
+    },
+    {
+      "id": "thm:ivt",
+      "env": "theorem",
+      "title": "中間値の定理",
+      "chapter": "連続関数",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "$[a,b]$ で連続な $f$ が $f(a)<y<f(b)$ をみたせば、ある $c$ で $f(c)=y$。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "極限と連続"
+    },
+    {
+      "id": "thm:evt",
+      "env": "theorem",
+      "title": "最大値・最小値の定理",
+      "chapter": "連続関数",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "有界閉区間 $[a,b]$ 上の連続関数は最大値と最小値を達成する。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "極限と連続"
+    },
+    {
+      "id": "def:uniform-continuity",
+      "env": "definition",
+      "title": "一様連続",
+      "chapter": "連続関数",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "metric"
+      ],
+      "statement": "$\\varepsilon$ に対する $\\delta$ が点に依らずに取れる連続性を\\textbf{一様連続}という。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "極限と連続"
+    },
+    {
+      "id": "thm:heine-cantor",
+      "env": "theorem",
+      "title": "Heine--Cantor の定理",
+      "chapter": "連続関数",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "有界閉区間上で連続な関数は一様連続である。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "極限と連続"
+    },
+    {
+      "id": "def:derivative",
+      "env": "definition",
+      "title": "微分係数",
+      "chapter": "微分",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "$f'(a)=\\lim_{h\\to0}\\dfrac{f(a+h)-f(a)}{h}$ が存在するとき $f$ は $a$ で微分可能。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "微分"
+    },
+    {
+      "id": "thm:diff-continuous",
+      "env": "theorem",
+      "title": "微分可能ならば連続",
+      "chapter": "微分",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "$a$ で微分可能な関数は $a$ で連続である。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "微分"
+    },
+    {
+      "id": "thm:fermat",
+      "env": "theorem",
+      "title": "Fermat の停留点定理",
+      "chapter": "微分",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "$f$ が内点 $c$ で極値をとり微分可能なら $f'(c)=0$。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "微分"
+    },
+    {
+      "id": "thm:rolle",
+      "env": "theorem",
+      "title": "Rolle の定理",
+      "chapter": "微分",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "$[a,b]$ で連続・$(a,b)$ で微分可能・$f(a)=f(b)$ なら、ある $c$ で $f'(c)=0$。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "微分"
+    },
+    {
+      "id": "thm:mvt",
+      "env": "theorem",
+      "title": "平均値の定理",
+      "chapter": "微分",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "$[a,b]$ で連続・$(a,b)$ で微分可能なら、ある $c$ で $f'(c)=\\dfrac{f(b)-f(a)}{b-a}$。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "微分"
+    },
+    {
+      "id": "thm:monotone-deriv",
+      "env": "theorem",
+      "title": "導関数の符号と単調性",
+      "chapter": "微分",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "区間上で $f'>0$ ならば $f$ は狭義単調増加である。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "微分"
+    },
+    {
+      "id": "thm:taylor",
+      "env": "theorem",
+      "title": "Taylor の定理",
+      "chapter": "微分",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "$f$ を多項式で近似し、剰余項を高階導関数で表す公式。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "微分"
+    },
+    {
+      "id": "def:riemann-integral",
+      "env": "definition",
+      "title": "リーマン積分",
+      "chapter": "積分",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "分割の上限・下限和が一致するとき $\\int_a^b f\\,\\d x$ を定める。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "積分"
+    },
+    {
+      "id": "thm:integrable-continuous",
+      "env": "theorem",
+      "title": "連続関数の可積分性",
+      "chapter": "積分",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "有界閉区間上の連続関数はリーマン積分可能である。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "積分"
+    },
+    {
+      "id": "thm:ftc1",
+      "env": "theorem",
+      "title": "微積分の基本定理（第1）",
+      "chapter": "積分",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "連続な $f$ に対し $F(x)=\\int_a^x f$ は微分可能で $F'=f$。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "積分"
+    },
+    {
+      "id": "thm:ftc2",
+      "env": "theorem",
+      "title": "微積分の基本定理（第2）",
+      "chapter": "積分",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "$F'=f$ なら $\\int_a^b f=F(b)-F(a)$。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "積分"
+    },
+    {
+      "id": "thm:integration-by-parts",
+      "env": "theorem",
+      "title": "部分積分",
+      "chapter": "積分",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "$\\int_a^b f g' = [fg]_a^b-\\int_a^b f' g$。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "積分"
+    },
+    {
+      "id": "def:series",
+      "env": "definition",
+      "title": "級数",
+      "chapter": "級数",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "部分和 $s_n=\\sum_{k=1}^n a_k$ の極限を\\textbf{級数} $\\sum a_k$ という。",
+      "has_proof": false,
+      "is_axiomatic": true,
+      "group": "級数"
+    },
+    {
+      "id": "thm:geometric-series",
+      "env": "theorem",
+      "title": "等比級数",
+      "chapter": "級数",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "$|r|<1$ のとき $\\sum_{k=0}^\\infty r^k=\\dfrac{1}{1-r}$。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "級数"
+    },
+    {
+      "id": "thm:comparison-test",
+      "env": "theorem",
+      "title": "比較判定法",
+      "chapter": "級数",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "$0\\le a_k\\le b_k$ で $\\sum b_k$ が収束すれば $\\sum a_k$ も収束する。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "級数"
+    },
+    {
+      "id": "thm:abs-convergence",
+      "env": "theorem",
+      "title": "絶対収束は収束を導く",
+      "chapter": "級数",
+      "section": "",
+      "subsection": "",
+      "source_file": "demo",
+      "spaces": [
+        "real"
+      ],
+      "statement": "$\\sum|a_k|$ が収束すれば $\\sum a_k$ も収束する。",
+      "has_proof": true,
+      "is_axiomatic": false,
+      "group": "級数"
+    }
+  ],
+  "edges": [
+    {
+      "from": "def:subset",
+      "to": "def:set",
+      "kind": "uses"
+    },
+    {
+      "from": "def:function",
+      "to": "def:set",
+      "kind": "uses"
+    },
+    {
+      "from": "def:injection",
+      "to": "def:function",
+      "kind": "uses"
+    },
+    {
+      "from": "def:surjection",
+      "to": "def:function",
+      "kind": "uses"
+    },
+    {
+      "from": "def:bijection",
+      "to": "def:injection",
+      "kind": "uses"
+    },
+    {
+      "from": "def:bijection",
+      "to": "def:surjection",
+      "kind": "uses"
+    },
+    {
+      "from": "def:field",
+      "to": "def:set",
+      "kind": "uses"
+    },
+    {
+      "from": "def:ordered-field",
+      "to": "def:field",
+      "kind": "uses"
+    },
+    {
+      "from": "def:real",
+      "to": "def:ordered-field",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:sup-property",
+      "to": "def:real",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:archimedes",
+      "to": "def:real",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:archimedes",
+      "to": "thm:sup-property",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "def:sequence",
+      "to": "def:function",
+      "kind": "uses"
+    },
+    {
+      "from": "def:sequence",
+      "to": "def:real",
+      "kind": "uses"
+    },
+    {
+      "from": "def:limit",
+      "to": "def:sequence",
+      "kind": "uses"
+    },
+    {
+      "from": "def:bounded-seq",
+      "to": "def:sequence",
+      "kind": "uses"
+    },
+    {
+      "from": "def:monotone-seq",
+      "to": "def:sequence",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:monotone-convergence",
+      "to": "def:monotone-seq",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:monotone-convergence",
+      "to": "def:bounded-seq",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:monotone-convergence",
+      "to": "def:limit",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:monotone-convergence",
+      "to": "thm:sup-property",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:monotone-convergence",
+      "to": "def:limit",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:bolzano-weierstrass",
+      "to": "def:bounded-seq",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:bolzano-weierstrass",
+      "to": "def:limit",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:bolzano-weierstrass",
+      "to": "thm:monotone-convergence",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "def:cauchy",
+      "to": "def:sequence",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:cauchy-complete",
+      "to": "def:cauchy",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:cauchy-complete",
+      "to": "def:limit",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:cauchy-complete",
+      "to": "thm:bolzano-weierstrass",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:cauchy-complete",
+      "to": "def:cauchy",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "def:continuity",
+      "to": "def:function",
+      "kind": "uses"
+    },
+    {
+      "from": "def:continuity",
+      "to": "def:limit",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:ivt",
+      "to": "def:continuity",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:ivt",
+      "to": "thm:sup-property",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:ivt",
+      "to": "def:continuity",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:evt",
+      "to": "def:continuity",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:evt",
+      "to": "thm:bolzano-weierstrass",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:evt",
+      "to": "def:continuity",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "def:uniform-continuity",
+      "to": "def:continuity",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:heine-cantor",
+      "to": "def:uniform-continuity",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:heine-cantor",
+      "to": "def:continuity",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:heine-cantor",
+      "to": "thm:bolzano-weierstrass",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:heine-cantor",
+      "to": "def:uniform-continuity",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "def:derivative",
+      "to": "def:limit",
+      "kind": "uses"
+    },
+    {
+      "from": "def:derivative",
+      "to": "def:continuity",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:diff-continuous",
+      "to": "def:derivative",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:diff-continuous",
+      "to": "def:continuity",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:diff-continuous",
+      "to": "def:derivative",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:diff-continuous",
+      "to": "def:continuity",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:fermat",
+      "to": "def:derivative",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:fermat",
+      "to": "def:derivative",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:rolle",
+      "to": "thm:fermat",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:rolle",
+      "to": "thm:evt",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:rolle",
+      "to": "thm:evt",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:rolle",
+      "to": "thm:fermat",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:mvt",
+      "to": "def:derivative",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:mvt",
+      "to": "thm:rolle",
+      "kind": "proof",
+      "route": "A"
+    },
+    {
+      "from": "thm:mvt",
+      "to": "thm:evt",
+      "kind": "proof",
+      "route": "B"
+    },
+    {
+      "from": "thm:mvt",
+      "to": "thm:fermat",
+      "kind": "proof",
+      "route": "B"
+    },
+    {
+      "from": "thm:monotone-deriv",
+      "to": "thm:mvt",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:monotone-deriv",
+      "to": "thm:mvt",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:taylor",
+      "to": "def:derivative",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:taylor",
+      "to": "thm:mvt",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:taylor",
+      "to": "thm:rolle",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:taylor",
+      "to": "def:derivative",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "def:riemann-integral",
+      "to": "thm:sup-property",
+      "kind": "uses"
+    },
+    {
+      "from": "def:riemann-integral",
+      "to": "def:bounded-seq",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:integrable-continuous",
+      "to": "def:riemann-integral",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:integrable-continuous",
+      "to": "thm:heine-cantor",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:integrable-continuous",
+      "to": "thm:heine-cantor",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:integrable-continuous",
+      "to": "def:riemann-integral",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:ftc1",
+      "to": "def:riemann-integral",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:ftc1",
+      "to": "def:derivative",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:ftc1",
+      "to": "def:continuity",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:ftc1",
+      "to": "thm:ivt",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:ftc1",
+      "to": "thm:integrable-continuous",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:ftc1",
+      "to": "def:derivative",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:ftc2",
+      "to": "thm:ftc1",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:ftc2",
+      "to": "thm:ftc1",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:ftc2",
+      "to": "thm:mvt",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:integration-by-parts",
+      "to": "thm:ftc2",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:integration-by-parts",
+      "to": "def:derivative",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:integration-by-parts",
+      "to": "thm:ftc2",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:integration-by-parts",
+      "to": "def:derivative",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "def:series",
+      "to": "def:sequence",
+      "kind": "uses"
+    },
+    {
+      "from": "def:series",
+      "to": "def:limit",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:geometric-series",
+      "to": "def:series",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:geometric-series",
+      "to": "def:series",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:geometric-series",
+      "to": "def:limit",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:comparison-test",
+      "to": "def:series",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:comparison-test",
+      "to": "thm:monotone-convergence",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:comparison-test",
+      "to": "thm:monotone-convergence",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:comparison-test",
+      "to": "def:series",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:abs-convergence",
+      "to": "def:series",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:abs-convergence",
+      "to": "thm:cauchy-complete",
+      "kind": "uses"
+    },
+    {
+      "from": "thm:abs-convergence",
+      "to": "thm:cauchy-complete",
+      "kind": "proof",
+      "route": "_auto"
+    },
+    {
+      "from": "thm:abs-convergence",
+      "to": "def:series",
+      "kind": "proof",
+      "route": "_auto"
+    }
+  ],
+  "routes": [
+    {
+      "node": "thm:archimedes",
+      "route": "_auto",
+      "deps": [
+        "thm:sup-property"
+      ]
+    },
+    {
+      "node": "thm:monotone-convergence",
+      "route": "_auto",
+      "deps": [
+        "thm:sup-property",
+        "def:limit"
+      ]
+    },
+    {
+      "node": "thm:bolzano-weierstrass",
+      "route": "_auto",
+      "deps": [
+        "thm:monotone-convergence"
+      ]
+    },
+    {
+      "node": "thm:cauchy-complete",
+      "route": "_auto",
+      "deps": [
+        "thm:bolzano-weierstrass",
+        "def:cauchy"
+      ]
+    },
+    {
+      "node": "thm:ivt",
+      "route": "_auto",
+      "deps": [
+        "thm:sup-property",
+        "def:continuity"
+      ]
+    },
+    {
+      "node": "thm:evt",
+      "route": "_auto",
+      "deps": [
+        "thm:bolzano-weierstrass",
+        "def:continuity"
+      ]
+    },
+    {
+      "node": "thm:heine-cantor",
+      "route": "_auto",
+      "deps": [
+        "thm:bolzano-weierstrass",
+        "def:uniform-continuity"
+      ]
+    },
+    {
+      "node": "thm:diff-continuous",
+      "route": "_auto",
+      "deps": [
+        "def:derivative",
+        "def:continuity"
+      ]
+    },
+    {
+      "node": "thm:fermat",
+      "route": "_auto",
+      "deps": [
+        "def:derivative"
+      ]
+    },
+    {
+      "node": "thm:rolle",
+      "route": "_auto",
+      "deps": [
+        "thm:evt",
+        "thm:fermat"
+      ]
+    },
+    {
+      "node": "thm:mvt",
+      "route": "A",
+      "deps": [
+        "thm:rolle"
+      ]
+    },
+    {
+      "node": "thm:mvt",
+      "route": "B",
+      "deps": [
+        "thm:evt",
+        "thm:fermat"
+      ]
+    },
+    {
+      "node": "thm:monotone-deriv",
+      "route": "_auto",
+      "deps": [
+        "thm:mvt"
+      ]
+    },
+    {
+      "node": "thm:taylor",
+      "route": "_auto",
+      "deps": [
+        "thm:rolle",
+        "def:derivative"
+      ]
+    },
+    {
+      "node": "thm:integrable-continuous",
+      "route": "_auto",
+      "deps": [
+        "thm:heine-cantor",
+        "def:riemann-integral"
+      ]
+    },
+    {
+      "node": "thm:ftc1",
+      "route": "_auto",
+      "deps": [
+        "thm:ivt",
+        "thm:integrable-continuous",
+        "def:derivative"
+      ]
+    },
+    {
+      "node": "thm:ftc2",
+      "route": "_auto",
+      "deps": [
+        "thm:ftc1",
+        "thm:mvt"
+      ]
+    },
+    {
+      "node": "thm:integration-by-parts",
+      "route": "_auto",
+      "deps": [
+        "thm:ftc2",
+        "def:derivative"
+      ]
+    },
+    {
+      "node": "thm:geometric-series",
+      "route": "_auto",
+      "deps": [
+        "def:series",
+        "def:limit"
+      ]
+    },
+    {
+      "node": "thm:comparison-test",
+      "route": "_auto",
+      "deps": [
+        "thm:monotone-convergence",
+        "def:series"
+      ]
+    },
+    {
+      "node": "thm:abs-convergence",
+      "route": "_auto",
+      "deps": [
+        "thm:cauchy-complete",
+        "def:series"
+      ]
+    }
+  ],
+  "spaces": {
+    "set": {
+      "label": "集合",
+      "refines": [],
+      "closure": [
+        "set"
+      ]
+    },
+    "ordered": {
+      "label": "順序体",
+      "refines": [
+        "set"
+      ],
+      "closure": [
+        "ordered",
+        "set"
+      ]
+    },
+    "metric": {
+      "label": "距離空間",
+      "refines": [
+        "set"
+      ],
+      "closure": [
+        "metric",
+        "set"
+      ]
+    },
+    "real": {
+      "label": "実数体（完備）",
+      "refines": [
+        "ordered",
+        "metric"
+      ],
+      "closure": [
+        "real",
+        "ordered",
+        "metric",
+        "set"
+      ]
+    }
+  },
+  "stats": {
+    "n_nodes": 40,
+    "n_edges": 97,
+    "n_annotated_space": 40
+  }
+}

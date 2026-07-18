@@ -1,0 +1,52 @@
+# 空間語彙と包摂半順序（強さの partial order）。
+#
+# `refines: [Y, ...]` は「この空間は Y より強い（Y の構造の上に追加構造を持つ）」
+# ことを表す有向辺。例: ノルム空間はベクトル空間でもあり、誘導距離により距離空間でもある。
+#
+# proofgraph は各ブロックの \blockmeta{space=...} をこの語彙のキーで解釈し、
+# refines の推移閉包を使って「弱い空間の結果が強い空間の結果に依存していないか」を検証する。
+#
+# 注意: refines の有向辺自体が DAG であること（循環した空間定義を作らないこと）。
+
+spaces:
+  set:
+    label: 集合
+  separable:
+    label: 可分
+    refines: [set]
+  topological:
+    label: 位相空間
+    refines: [set]
+  metric:
+    label: 距離空間
+    refines: [topological]
+  complete_metric:
+    label: 完備距離空間
+    refines: [metric]
+  polish:
+    label: Polish 空間
+    refines: [complete_metric, separable]
+
+  vector:
+    label: ベクトル空間
+    refines: [set]
+  normed:
+    label: ノルム空間
+    refines: [vector, metric]   # 誘導距離 d(x,y)=||x-y||
+  banach:
+    label: Banach 空間
+    refines: [normed, complete_metric]
+  hilbert:
+    label: Hilbert 空間
+    refines: [banach]
+
+  measurable:
+    label: 可測空間
+    refines: [set]
+  probability:
+    label: 確率測度空間
+    refines: [measurable]
+  # OT で頻出する「Polish 空間上の確率測度」の作業空間
+  wasserstein:
+    label: Wasserstein 空間
+    refines: [polish, probability, metric]
