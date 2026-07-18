@@ -262,11 +262,11 @@ $\int d^p\,\d\pi$ と略記する．
     \leq\frac{\varepsilon}{2}.
   \]
 
-  $C_\varepsilon:=K_{\varepsilon/2}\times L_{\varepsilon/2}$ とおく．
   $K_{\varepsilon/2},L_{\varepsilon/2}$ は compact だから
-  $C_\varepsilon$ も compact であり，
+  $K_{\varepsilon/2}\times L_{\varepsilon/2}$ も compact であり，
   \[
-    (\mathcal{X}\times\mathcal{Y})\setminus C_\varepsilon
+    (\mathcal{X}\times\mathcal{Y})
+    \setminus(K_{\varepsilon/2}\times L_{\varepsilon/2})
     =\bigl((\mathcal{X}\setminus K_{\varepsilon/2})\times\mathcal{Y}\bigr)
     \cup
     \bigl(\mathcal{X}\times(\mathcal{Y}\setminus L_{\varepsilon/2})\bigr).
@@ -274,7 +274,8 @@ $\int d^p\,\d\pi$ と略記する．
   したがって
   \[
     \begin{aligned}
-      \pi\bigl((\mathcal{X}\times\mathcal{Y})\setminus C_\varepsilon\bigr)
+      \pi\bigl((\mathcal{X}\times\mathcal{Y})
+        \setminus(K_{\varepsilon/2}\times L_{\varepsilon/2})\bigr)
       &\leq
       \pi\bigl((\mathcal{X}\setminus K_{\varepsilon/2})\times\mathcal{Y}\bigr)
       +\pi\bigl(\mathcal{X}\times
@@ -286,13 +287,14 @@ $\int d^p\,\d\pi$ と略記する．
   \]
   $\pi$ は任意だったから，
   \[
-    \pi\bigl((\mathcal{X}\times\mathcal{Y})\setminus C_\varepsilon\bigr)
+    \pi\bigl((\mathcal{X}\times\mathcal{Y})
+      \setminus(K_{\varepsilon/2}\times L_{\varepsilon/2})\bigr)
     \leq\varepsilon
     \qquad(\forall\pi\in\Couplings(A,B)).
   \]
-  任意の $\varepsilon>0$ に対してこのような compact 集合 $C_\varepsilon$ が
-  取れたので，定義~\ref{def:meas-tight}より
-  $\Couplings(A,B)$ は tight である．
+  任意の $\varepsilon>0$ に対してこのような compact 集合
+  $K_{\varepsilon/2}\times L_{\varepsilon/2}$ が取れたので，
+  定義~\ref{def:meas-tight}より $\Couplings(A,B)$ は tight である．
 \end{proof}
 
 \begin{theorem}{$\Wass_p$ の最適 coupling の存在（Villani Thm 4.1）}{wp-optimal-coupling-existence}
