@@ -254,28 +254,24 @@ $\int d^p\,\d\pi$ と略記する．
   それぞれ $\mu,\nu$ とおく．すなわち
   \[
     \begin{aligned}
-      \pi(E'\times\mathcal{Y})&=\mu(E')
-      &&(\forall E'\in\Borel(\mathcal{X})),\\
-      \pi(\mathcal{X}\times F')&=\nu(F')
-      &&(\forall F'\in\Borel(\mathcal{Y}))
+      \pi(S\times\mathcal{Y})&=\mu(S)
+      &&(\forall S\in\Borel(\mathcal{X})),\\
+      \pi(\mathcal{X}\times T)&=\nu(T)
+      &&(\forall T\in\Borel(\mathcal{Y}))
     \end{aligned}
   \]
   である．$\pi\in\Couplings(A,B)$ の定義より
   \[
     \mu\in A,\qquad \nu\in B.
   \]
-  ここで
-  \[
-    E:=\mathcal{X}\setminus K_{\varepsilon/2}\in\Borel(\mathcal{X}),
-    \qquad
-    F:=\mathcal{Y}\setminus L_{\varepsilon/2}\in\Borel(\mathcal{Y})
-  \]
-  とおく．$\mu\in A,\nu\in B$ だから，$K_{\varepsilon/2},L_{\varepsilon/2}$
+  $\mu\in A,\nu\in B$ だから，$K_{\varepsilon/2},L_{\varepsilon/2}$
   の選び方より
   \[
-    \mu(E)\leq\frac{\varepsilon}{2},
+    \mu(\mathcal{X}\setminus K_{\varepsilon/2})
+    \leq\frac{\varepsilon}{2},
     \qquad
-    \nu(F)\leq\frac{\varepsilon}{2}.
+    \nu(\mathcal{Y}\setminus L_{\varepsilon/2})
+    \leq\frac{\varepsilon}{2}.
   \]
 
   $C_\varepsilon:=K_{\varepsilon/2}\times L_{\varepsilon/2}$ とおく．
@@ -283,16 +279,21 @@ $\int d^p\,\d\pi$ と略記する．
   $C_\varepsilon$ も compact であり，
   \[
     (\mathcal{X}\times\mathcal{Y})\setminus C_\varepsilon
-    =(E\times\mathcal{Y})\cup(\mathcal{X}\times F).
+    =\bigl((\mathcal{X}\setminus K_{\varepsilon/2})\times\mathcal{Y}\bigr)
+    \cup
+    \bigl(\mathcal{X}\times(\mathcal{Y}\setminus L_{\varepsilon/2})\bigr).
   \]
   したがって
   \[
     \begin{aligned}
       \pi\bigl((\mathcal{X}\times\mathcal{Y})\setminus C_\varepsilon\bigr)
-      &=\pi\bigl((E\times\mathcal{Y})\cup(\mathcal{X}\times F)\bigr)\\
-      &\leq\pi(E\times\mathcal{Y})+\pi(\mathcal{X}\times F)
+      &\leq
+      \pi\bigl((\mathcal{X}\setminus K_{\varepsilon/2})\times\mathcal{Y}\bigr)
+      +\pi\bigl(\mathcal{X}\times
+        (\mathcal{Y}\setminus L_{\varepsilon/2})\bigr)
       &&\text{（$\pi$ の劣加法性）}\\
-      &=\mu(E)+\nu(F)
+      &=\mu(\mathcal{X}\setminus K_{\varepsilon/2})
+      +\nu(\mathcal{Y}\setminus L_{\varepsilon/2})
       &&\text{（$\mu,\nu$ は $\pi$ の周辺分布）}\\
       &\leq\frac{\varepsilon}{2}+\frac{\varepsilon}{2}
       =\varepsilon.
