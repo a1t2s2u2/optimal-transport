@@ -237,14 +237,18 @@ $\int d^p\,\d\pi$ と略記する．
   $\varepsilon>0$ とする．$A,B$ の tightness より，
   \[
     \begin{gathered}
-      K\subset\mathcal{X},\quad L\subset\mathcal{Y},
-      \qquad K,L\text{ は compact},\\
-      \mu(K^c)\leq\frac{\varepsilon}{2}\quad(\forall\mu\in A),
+      K_{\varepsilon/2}\subset\mathcal{X},\quad
+      L_{\varepsilon/2}\subset\mathcal{Y},
+      \qquad K_{\varepsilon/2},L_{\varepsilon/2}\text{ は compact},\\
+      \mu(\mathcal{X}\setminus K_{\varepsilon/2})
+      \leq\frac{\varepsilon}{2}\quad(\forall\mu\in A),
       \qquad
-      \nu(L^c)\leq\frac{\varepsilon}{2}\quad(\forall\nu\in B)
+      \nu(\mathcal{Y}\setminus L_{\varepsilon/2})
+      \leq\frac{\varepsilon}{2}\quad(\forall\nu\in B)
     \end{gathered}
   \]
-  となる $K,L$ が存在する．任意の $\pi\in\Couplings(A,B)$ に対し，
+  となる $K_{\varepsilon/2},L_{\varepsilon/2}$ が存在する．
+  任意の $\pi\in\Couplings(A,B)$ に対し，
   \[
     \exists(\mu,\nu)\in A\times B
     \colon \pi\in\Couplings(\mu,\nu).
@@ -252,20 +256,24 @@ $\int d^p\,\d\pi$ と略記する．
   したがって
   \[
     \begin{aligned}
-      \pi\bigl((K\times L)^c\bigr)
-      &=\pi\bigl((K^c\times\mathcal{Y})
-        \cup(\mathcal{X}\times L^c)\bigr)\\
-      &\leq\pi(K^c\times\mathcal{Y})+\pi(\mathcal{X}\times L^c)\\
-      &=\mu(K^c)+\nu(L^c)\\
+      \pi\bigl((\mathcal{X}\times\mathcal{Y})
+        \setminus(K_{\varepsilon/2}\times L_{\varepsilon/2})\bigr)\\
+      &=\pi\Bigl(
+        \bigl((\mathcal{X}\setminus K_{\varepsilon/2})\times\mathcal{Y}\bigr)
+        \cup
+        \bigl(\mathcal{X}\times(\mathcal{Y}\setminus L_{\varepsilon/2})\bigr)
+        \Bigr)\\
+      &\leq
+        \pi\bigl((\mathcal{X}\setminus K_{\varepsilon/2})\times\mathcal{Y}\bigr)
+        +\pi\bigl(\mathcal{X}\times(\mathcal{Y}\setminus L_{\varepsilon/2})\bigr)\\
+      &=\mu(\mathcal{X}\setminus K_{\varepsilon/2})
+        +\nu(\mathcal{Y}\setminus L_{\varepsilon/2})\\
       &\leq\varepsilon.
     \end{aligned}
   \]
-  $K\times L$ は compact であり，$\pi$ は任意だから，
-  \[
-    \pi(K\times L)\geq1-\varepsilon
-    \qquad(\forall\pi\in\Couplings(A,B)).
-  \]
-  よって $\Couplings(A,B)$ は tight である．
+  $K_{\varepsilon/2}\times L_{\varepsilon/2}$ は compact であり，
+  この評価は任意の $\pi\in\Couplings(A,B)$ に対して成り立つ．
+  よって定義~\ref{def:meas-tight}より $\Couplings(A,B)$ は tight である．
 \end{proof}
 
 \begin{theorem}{$\Wass_p$ の最適 coupling の存在（Villani Thm 4.1）}{wp-optimal-coupling-existence}
