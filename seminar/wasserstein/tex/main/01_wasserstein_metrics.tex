@@ -180,16 +180,33 @@ $\int d^p\,\d\pi$ と略記する．
 \end{lemma}
 
 \begin{proof}
-  各 $m\in\N$ に対し $c_m(x,y):=\min\{d(x,y)^p,m\}$ とおく．$d$ は連続
-  （注意~\ref{rem:wp-welldef}）だから $c_m$ は有界連続である．
-  したがって弱収束の定義と $0\leq c_m\leq d^p$ より
+  $d^p$ は連続だが有界とは限らないので，弱収束の定義をそのまま使うことは
+  できない．そこで各 $m\in\N$ に対し
   \[
-    \int c_m\,\d\pi
-    =\lim_{k\to\infty}\int c_m\,\d\pi_k
-    \leq\liminf_{k\to\infty}\int d^p\,\d\pi_k.
+    c_m(x,y):=\min\{d(x,y)^p,m\}
   \]
-  $c_m\uparrow d^p$ だから，左辺に単調収束定理
-  （定理~\ref{thm:meas-mct}）を適用して $m\to\infty$ とすれば
+  と切り捨てた関数を考え，$m\to\infty$ とする．
+  $d$ は連続（注意~\ref{rem:wp-welldef}）だから $c_m$ も連続であり，
+  $0\leq c_m\leq m$ より有界である．
+
+  以下 $m$ を固定する．$c_m$ は有界連続だから，弱収束の定義
+  （定義~\ref{def:meas-weak-convergence}）より
+  \[
+    \lim_{k\to\infty}\int c_m\,\d\pi_k=\int c_m\,\d\pi.
+  \]
+  一方 $c_m\leq d^p$ だから，各 $k$ で
+  $\int c_m\,\d\pi_k\leq\int d^p\,\d\pi_k$ である．
+  よって $\liminf$ の単調性（定義~\ref{def:meas-limsup}）を
+  $a_k=\int c_m\,\d\pi_k$，$b_k=\int d^p\,\d\pi_k$ に適用すると，
+  $(a_k)$ は収束するので $\lim_ka_k=\liminf_ka_k\leq\liminf_kb_k$，すなわち
+  \[
+    \int c_m\,\d\pi\leq\liminf_{k\to\infty}\int d^p\,\d\pi_k.
+  \]
+
+  この右辺は $m$ によらない．また $c_m$ は $m$ について非負非減少で
+  $c_m\uparrow d^p$（各点）だから，単調収束定理
+  （定理~\ref{thm:meas-mct}）より左辺は $m\to\infty$ で
+  $\int d^p\,\d\pi$ に収束する．したがって $m\to\infty$ として
   \[
     \int d^p\,\d\pi
     \leq\liminf_{k\to\infty}\int d^p\,\d\pi_k
