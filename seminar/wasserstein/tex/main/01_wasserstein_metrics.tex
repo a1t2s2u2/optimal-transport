@@ -248,12 +248,19 @@ $\int d^p\,\d\pi$ と略記する．
     \end{gathered}
   \]
   となる $K_{\varepsilon/2},L_{\varepsilon/2}$ が存在する．
-  任意の $\pi\in\Couplings(A,B)$ に対し，
+  $\pi\in\Couplings(A,B)$ を任意に取る．定義より
   \[
-    \exists(\mu,\nu)\in A\times B
-    \colon \pi\in\Couplings(\mu,\nu).
+    \pi\in\Couplings(A,B)
+    \iff
+    \pi\in\bigcup_{\mu'\in A,\,\nu'\in B}\Couplings(\mu',\nu')
   \]
-  したがって
+  だから，
+  \[
+    \mu\in A,\qquad
+    \nu\in B,\qquad
+    \pi\in\Couplings(\mu,\nu)
+  \]
+  となる $\mu,\nu$ が取れる．したがって
   \[
     \begin{aligned}
       \pi\bigl((\mathcal{X}\times\mathcal{Y})
