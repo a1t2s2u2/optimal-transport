@@ -241,36 +241,24 @@ $\int d^p\,\d\pi$ と略記する．
       K_{\varepsilon/2}\subset\mathcal{X},\quad
       L_{\varepsilon/2}\subset\mathcal{Y},
       \qquad K_{\varepsilon/2},L_{\varepsilon/2}\text{ は compact},\\
-      \mu(\mathcal{X}\setminus K_{\varepsilon/2})
-      \leq\frac{\varepsilon}{2}\quad(\forall\mu\in A),
+      \eta(\mathcal{X}\setminus K_{\varepsilon/2})
+      \leq\frac{\varepsilon}{2}\quad(\forall\eta\in A),
       \qquad
-      \nu(\mathcal{Y}\setminus L_{\varepsilon/2})
-      \leq\frac{\varepsilon}{2}\quad(\forall\nu\in B)
+      \rho(\mathcal{Y}\setminus L_{\varepsilon/2})
+      \leq\frac{\varepsilon}{2}\quad(\forall\rho\in B)
     \end{gathered}
   \]
   となる $K_{\varepsilon/2},L_{\varepsilon/2}$ が存在する．
 
-  $\pi\in\Couplings(A,B)$ を任意に取り，その第1，第2周辺分布を
-  それぞれ $\mu,\nu$ とおく．すなわち
+  $\pi\in\Couplings(A,B)$ を任意に取る．その第1周辺分布は $A$ に，
+  第2周辺分布は $B$ に属するから，
   \[
-    \begin{aligned}
-      \pi(S\times\mathcal{Y})&=\mu(S)
-      &&(\forall S\in\Borel(\mathcal{X})),\\
-      \pi(\mathcal{X}\times T)&=\nu(T)
-      &&(\forall T\in\Borel(\mathcal{Y}))
-    \end{aligned}
-  \]
-  である．$\pi\in\Couplings(A,B)$ の定義より
-  \[
-    \mu\in A,\qquad \nu\in B.
-  \]
-  $\mu\in A,\nu\in B$ だから，$K_{\varepsilon/2},L_{\varepsilon/2}$
-  の選び方より
-  \[
-    \mu(\mathcal{X}\setminus K_{\varepsilon/2})
+    \pi\bigl((\mathcal{X}\setminus K_{\varepsilon/2})
+      \times\mathcal{Y}\bigr)
     \leq\frac{\varepsilon}{2},
     \qquad
-    \nu(\mathcal{Y}\setminus L_{\varepsilon/2})
+    \pi\bigl(\mathcal{X}\times
+      (\mathcal{Y}\setminus L_{\varepsilon/2})\bigr)
     \leq\frac{\varepsilon}{2}.
   \]
 
@@ -292,9 +280,6 @@ $\int d^p\,\d\pi$ と略記する．
       +\pi\bigl(\mathcal{X}\times
         (\mathcal{Y}\setminus L_{\varepsilon/2})\bigr)
       &&\text{（$\pi$ の劣加法性）}\\
-      &=\mu(\mathcal{X}\setminus K_{\varepsilon/2})
-      +\nu(\mathcal{Y}\setminus L_{\varepsilon/2})
-      &&\text{（$\mu,\nu$ は $\pi$ の周辺分布）}\\
       &\leq\frac{\varepsilon}{2}+\frac{\varepsilon}{2}
       =\varepsilon.
     \end{aligned}
