@@ -4,7 +4,7 @@
 本編で用いる実数・距離空間・測度論の道具をまとめる．
 本資料では，使う用語はすべて定義し，
 証明なしに用いる標準定理はステートメントを明示したうえで文献を挙げる
-（単調収束定理・一致定理・Fubini--Tonelli の定理・分解定理・
+（単調収束定理・一致定理・Tonelli の定理・分解定理・
 Prokhorov の定理など）．
 それ以外の主張にはすべて証明を付ける．
 証明を省略した定理については，
@@ -997,18 +997,15 @@ $\Borel(\R)$ 上の測度）は既知とする．
 
 \section{直積測度と測度の分解}
 
-\begin{theorem}{直積測度と Fubini--Tonelli の定理}{meas-product}
-  $\mu,\nu$ をそれぞれ可分距離空間 $\mathcal{X},\mathcal{Y}$ 上の
-  $\sigma$-有限な Borel 測度
-  （空間が測度有限な可算個の Borel 集合で覆える測度．
-  確率測度はこれに当たる）とする．
-  $\Borel(\mathcal{X}\times \mathcal{Y})$ 上の測度 $\mu\otimes\nu$ で
+\begin{theorem}{直積確率測度と Tonelli の定理}{meas-product}
+  $\mathcal{X},\mathcal{Y}$ を可分距離空間，
+  $\mu\in\Prob(\mathcal{X})$，$\nu\in\Prob(\mathcal{Y})$ とする．
+  $\Borel(\mathcal{X}\times \mathcal{Y})$ 上の確率測度 $\mu\otimes\nu$ で
   \[
     (\mu\otimes\nu)(A\times B)=\mu(A)\,\nu(B)
     \qquad(A\in\Borel(\mathcal{X}),\;B\in\Borel(\mathcal{Y}))
   \]
   をみたすものがただ一つ存在する（\textbf{直積測度}）．
-  $\mu,\nu$ が確率測度なら $\mu\otimes\nu$ も確率測度である．
   さらに非負可測関数 $f\colon \mathcal{X}\times \mathcal{Y}\to[0,\infty)$ に対し
   \[
     \int_{\mathcal{X}\times \mathcal{Y}}f\,\d(\mu\otimes\nu)
@@ -1016,12 +1013,9 @@ $\Borel(\R)$ 上の測度）は既知とする．
     =\int_{\mathcal{Y}}\!\!\int_{\mathcal{X}} f(x,y)\,\d\mu(x)\,\d\nu(y)
   \]
   が成り立つ（内側の積分は可測関数を定める）．
-  また $f$ が $\mu\otimes\nu$-可積分
-  （$\int\abs{f}\,\d(\mu\otimes\nu)<\infty$）のときも，
-  同じ逐次積分の等式が成り立つ（Fubini の定理）．
-  有限個の $\sigma$-有限測度の直積
+  有限個の確率測度の直積
   $\mu_1\otimes\cdots\otimes\mu_n$ についても同様である．
-  （いずれも標準的な結果．証明は省略する．Dudley (2002) §4.4 参照．）
+  （標準的な結果．証明は省略する．Dudley (2002) §4.4 参照．）
 \end{theorem}
 
 \begin{claim}{直積測度の周辺分布}{meas-product-marginals}

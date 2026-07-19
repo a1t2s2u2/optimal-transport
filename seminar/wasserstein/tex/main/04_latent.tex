@@ -63,7 +63,7 @@ $\int_{\mathcal{X}}H_{\gamma^{(d)}}\bigl(Q(x,\cdot)\bigr)\,\d P(x)$
 \end{lemma}
 
 \begin{proof}
-  Fubini--Tonelli の定理（定理~\ref{thm:meas-product}）より
+  Tonelli の定理（定理~\ref{thm:meas-product}）より
   $\bar\rho$ は可測で，
   $\int\bar\rho\,\d\nu=\int_\Theta\int_{\mathcal{X}}\rho\,\d\nu\,\d P=1$
   である．特に $\nu(\{\bar\rho=+\infty\})=0$ だから，
@@ -110,7 +110,7 @@ $\int_{\mathcal{X}}H_{\gamma^{(d)}}\bigl(Q(x,\cdot)\bigr)\,\d P(x)$
   冒頭の各点評価は
   $\int_\Theta g(\theta,x)\,\d P
   \geq\bar\rho(x)\log\bar\rho(x)-\bar\rho(x)+1$
-  と言い換えられる．非負可測な $g$ に Fubini--Tonelli の定理を
+  と言い換えられる．非負可測な $g$ に Tonelli の定理を
   適用して積分順序を交換すれば
   \[
     \int_\Theta H_\nu\bigl(\rho(\theta,\cdot)\,\nu\bigr)\,\d P
@@ -125,7 +125,7 @@ $\int_{\mathcal{X}}H_{\gamma^{(d)}}\bigl(Q(x,\cdot)\bigr)\,\d P(x)$
   $\rho\colon\mathcal{X}\times Z\to[0,\infty)$ で，各 $x$ において
   $Q(x,\cdot)=\rho(x,\cdot)\,\gamma^{(d)}$ が確率測度になるとする
   （$x\mapsto Q(x,B)=\int_B\rho(x,z)\,\d\gamma^{(d)}(z)$ の可測性は
-  Fubini--Tonelli の定理から従うので，$Q$ は Markov 核である）．
+  Tonelli の定理から従うので，$Q$ は Markov 核である）．
   このとき $q_Z=\bar\rho\,\gamma^{(d)}$
   （$\bar\rho(z)=\int\rho(x,z)\,\d P(x)$）であり，
   $q_Z\in\Pp{2}(\R^d)$ ならば
@@ -138,7 +138,7 @@ $\int_{\mathcal{X}}H_{\gamma^{(d)}}\bigl(Q(x,\cdot)\bigr)\,\d P(x)$
 
 \begin{proof}
   $q_Z=\bar\rho\,\gamma^{(d)}$ は，任意の $B\in\Borel(\R^d)$ に対し
-  混合測度の定義と Fubini--Tonelli の定理より
+  混合測度の定義と Tonelli の定理より
   \[
     q_Z(B)=\int_{\mathcal{X}}\int_B\rho(x,z)\,\d\gamma^{(d)}(z)\,\d P(x)
     =\int_B\bar\rho(z)\,\d\gamma^{(d)}(z)
