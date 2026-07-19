@@ -432,18 +432,27 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
   と書く．
 \end{definition}
 
-\begin{definition}{確率測度の弱収束}{meas-weak-convergence}
-  距離空間 $\mathcal{X}$ 上の Borel 確率測度列 $(\eta_n)$ と
-  $\eta\in\Prob(\mathcal{X})$ に対し，
+\begin{definition}{確率測度の弱位相と弱収束（Villani p.~43）}{meas-weak-convergence}
+  距離空間 $\mathcal{X}$ に対し，$\Prob(\mathcal{X})$ 上の
+  \textbf{弱位相}とは，すべての $f\in C_b(\mathcal{X})$ について写像
   \[
-    \eta_n \Rightarrow \eta
+    \Prob(\mathcal{X})\ni\eta
+    \longmapsto
+    \int_{\mathcal{X}}f\,\d\eta\in\R
   \]
-  と書くのは，すべての $f\in C_b(\mathcal{X})$ について
+  を連続にする最も粗い位相（開集合が最も少ない位相）をいう．
+  この位相に関して確率測度列
+  $(\eta_n)$ が $\eta\in\Prob(\mathcal{X})$ に収束することは，
   \[
-    \int_{\mathcal{X}} f\,\d\eta_n\to \int_{\mathcal{X}} f\,\d\eta
+    \eta_n\Rightarrow\eta
+    \quad\Longleftrightarrow\quad
+    \int_{\mathcal{X}}f\,\d\eta_n
+    \longrightarrow
+    \int_{\mathcal{X}}f\,\d\eta
+    \qquad(\forall f\in C_b(\mathcal{X}))
   \]
-  が成り立つことをいう．これを $\eta_n$ が $\eta$ に
-  \textbf{弱収束}するという．
+  と同値である．これを $\eta_n$ が $\eta$ に\textbf{弱収束}するといい，
+  $\eta_n\Rightarrow\eta$ と書く．
 \end{definition}
 
 \begin{theorem}{有界連続関数による確率測度の判定}{meas-cb-determines}

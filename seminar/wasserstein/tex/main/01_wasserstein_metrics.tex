@@ -308,7 +308,18 @@ $\int d^p\,\d\pi$ と略記する．
     =
     \int_{\mathcal{X}\times \mathcal{X}}d(x,y)^p\,\d\pi^*(x,y)
   \]
-  が成り立つ．この $\pi^*$ を $\Wass_p$ の\textbf{最適 coupling}という．
+  が成り立つ．同値に，
+  \[
+    \Wass_p(\mu,\nu)
+    =
+    \min_{\pi\in\Couplings(\mu,\nu)}
+    \left(
+      \int_{\mathcal{X}\times\mathcal{X}}
+      d(x,y)^p\,\d\pi(x,y)
+    \right)^{1/p}.
+  \]
+  この最小値を達成する $\pi^*$ を
+  $\Wass_p$ の\textbf{最適 coupling}という．
 \end{theorem}
 
 \begin{proof}
@@ -332,15 +343,29 @@ $\int d^p\,\d\pi$ と略記する．
   \]
   となる $\pi_k$ を取る．
 
-  一点族 $\{\mu\},\{\nu\}$ は弱位相で compact だから，
-  Prokhorov の定理（定理~\ref{thm:meas-prokhorov}）より tight である．
-  したがって補題~\ref{lem:wp-plans-tight}を
-  $A=\{\mu\},B=\{\nu\}$ に適用すると，
-  $\Couplings(\mu,\nu)$，特に $(\pi_k)$ は tight である．
+  一点集合は任意の位相で compact だから，$\{\mu\},\{\nu\}$ は
+  弱位相（定義~\ref{def:meas-weak-convergence}）で compact である．
+  したがって Prokhorov の定理（定理~\ref{thm:meas-prokhorov}）と
+  補題~\ref{lem:wp-plans-tight}より
+  \[
+    \{\mu\},\{\nu\}\text{ は tight}
+    \quad\Longrightarrow\quad
+    \Couplings(\mu,\nu)
+    =\Couplings(\{\mu\},\{\nu\})\text{ は tight}.
+  \]
   $\mathcal{X}\times\mathcal{X}$ は Polish 空間なので，
-  Prokhorov の定理により，部分列を取り直せば
-  $\pi_k\Rightarrow\pi^*$ となる $\pi^*\in\Prob(\mathcal{X}\times\mathcal{X})$
-  が存在する．
+  再び Prokhorov の定理を適用すると，ある部分列 $(\pi_{k_j})$ と
+  $\pi^*\in\Prob(\mathcal{X}\times\mathcal{X})$ が存在して
+  \[
+    \pi_{k_j}\Rightarrow\pi^*,
+  \]
+  すなわち
+  \[
+    \int F\,\d\pi_{k_j}\longrightarrow\int F\,\d\pi^*
+    \qquad
+    (\forall F\in C_b(\mathcal{X}\times\mathcal{X}))
+  \]
+  が成り立つ．
 
   $\pi^*$ の第1，第2周辺分布をそれぞれ $\mu^*,\nu^*$ とする．
   任意の $\varphi\in C_b(\mathcal{X})$ に対し，
@@ -349,7 +374,7 @@ $\int d^p\,\d\pi$ と略記する．
   \[
     \int\varphi\,\d\mu^*
     =\int\varphi(x)\,\d\pi^*(x,y)
-    =\lim_{k\to\infty}\int\varphi(x)\,\d\pi_k
+    =\lim_{j\to\infty}\int\varphi(x)\,\d\pi_{k_j}
     =\int\varphi\,\d\mu.
   \]
   有界連続関数による測度の判定
@@ -361,11 +386,15 @@ $\int d^p\,\d\pi$ と略記する．
   \[
     I
     \leq J(\pi^*)
-    \leq\liminf_{k\to\infty}J(\pi_k)
+    \leq\liminf_{j\to\infty}J(\pi_{k_j})
     =I.
   \]
   したがって $J(\pi^*)=I=\Wass_p(\mu,\nu)^p$ であり，
-  $\pi^*$ は下限を達成する．
+  $p$ 乗根を取ると
+  \[
+    \Wass_p(\mu,\nu)=J(\pi^*)^{1/p}
+  \]
+  となる．よって $\pi^*$ は上の最小値を達成する．
 \end{proof}
 
 \section{Wasserstein 距離の距離性}
