@@ -740,9 +740,11 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
 \begin{theorem}{Minkowski の不等式}{meas-minkowski}
   可測関数 $f,g$ と $1\leq p<\infty$ に対し
   \[
-    \norm{f+g}_{L^p(\mu)}
+    \left(\int_\Omega\abs{f+g}^p\,\d\mu\right)^{1/p}
     \leq
-    \norm{f}_{L^p(\mu)}+\norm{g}_{L^p(\mu)}.
+    \left(\int_\Omega\abs{f}^p\,\d\mu\right)^{1/p}
+    +
+    \left(\int_\Omega\abs{g}^p\,\d\mu\right)^{1/p}.
   \]
   （Hölder の不等式から従う標準的な結果．証明は省略する．
   例えば Dudley (2002) §5.1 参照．）
