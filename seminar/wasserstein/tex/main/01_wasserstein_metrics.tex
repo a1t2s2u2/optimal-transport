@@ -348,7 +348,7 @@ $\int d^p\,\d\pi$ と略記する．
 \section{Wasserstein 距離の距離性}
 \label{sec:metric-property}
 
-\begin{lemma}{接着補題（gluing lemma）}{wp-gluing}
+\begin{lemma}{接着補題（gluing lemma；Villani pp.~23--24）}{wp-gluing}
   $\mu,\nu,\xi\in\Prob(\mathcal{X})$，$\pi\in\Couplings(\mu,\nu)$，
   $\sigma\in\Couplings(\nu,\xi)$ とする
   （$\mathcal{X}^3$ には付録Aの直積距離を入れる）．
@@ -365,32 +365,30 @@ $\int d^p\,\d\pi$ と略記する．
 \end{lemma}
 
 \begin{proof}
-  $\pi$ の第2周辺分布は $\nu$ だから，測度分解定理
-  （定理~\ref{thm:meas-disintegration}）により Markov 核 $K_1$ が存在して
+  測度分解定理（定理~\ref{thm:meas-disintegration}）を
+  共通の周辺分布 $\nu$ に沿って $\pi,\sigma$ に適用すると
+  （$\sigma$ には第1，第2座標を入れ替えて適用），
+  Markov 核 $K_\pi,K_\sigma$ が存在して
   \[
-    \pi(\d x,\d y)=K_1(y,\d x)\nu(\d y)
+    \pi(\d x,\d y)=K_\pi(y,\d x)\,\nu(\d y),
+    \qquad
+    \sigma(\d y,\d z)=\nu(\d y)\,K_\sigma(y,\d z)
   \]
-  と書ける．また $s(y,z):=(z,y)$ とおくと，
-  $(\sigma\circ s^{-1})(C\times B)=\sigma(B\times C)$ だから，
-  $\sigma\circ s^{-1}$ の第2周辺分布は $\nu$ である．
-  これに同じ定理を適用すると，ある Markov 核 $K_2$ により
-  \[
-    (\sigma\circ s^{-1})(\d z,\d y)=K_2(y,\d z)\nu(\d y),
-    \qquad\text{すなわち}\qquad
-    \sigma(\d y,\d z)=\nu(\d y)K_2(y,\d z)
-  \]
-  と書ける．そこで
+  と書ける．そこで，Markov 核による測度の貼り合わせ
+  （定理~\ref{thm:meas-kernel-composition}）により
   \[
     \gamma(\d x,\d y,\d z)
-    :=K_1(y,\d x)\nu(\d y)K_2(y,\d z)
+    :=K_\pi(y,\d x)\,\nu(\d y)\,K_\sigma(y,\d z)
   \]
-  と定める（定理~\ref{thm:meas-kernel-composition}）．すると
+  で定まる $\gamma\in\Prob(\mathcal{X}^3)$ を取る．
+  Markov 核は確率測度に値を取るから，
   \[
-    \gamma(A\times B\times\mathcal{X})
-    =\int_B K_1(y,A)\,\d\nu(y)=\pi(A\times B),
-    \qquad
-    \gamma(\mathcal{X}\times B\times C)
-    =\int_B K_2(y,C)\,\d\nu(y)=\sigma(B\times C).
+    \begin{aligned}
+      \gamma(A\times B\times\mathcal{X})
+      &=\int_B K_\pi(y,A)\,\d\nu(y)=\pi(A\times B),\\
+      \gamma(\mathcal{X}\times B\times C)
+      &=\int_B K_\sigma(y,C)\,\d\nu(y)=\sigma(B\times C).
+    \end{aligned}
   \]
 \end{proof}
 
