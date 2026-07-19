@@ -128,14 +128,14 @@ Borel $\sigma$-代数 $\Borel(\mathcal{X})$ 上の確率測度全体を
   $\pi_0\in\Couplings(\mu,\nu)$ である．
 
   $x_0\in\mathcal{X}$ を定義~\ref{def:wp-p-space}の基点とする．
-  各点で成り立つ三角不等式 $d(x,y)\leq d(x,x_0)+d(y,x_0)$ に
+  各点で成り立つ三角不等式 $d(x,y)\leq d(x,x_0)+d(x_0,y)$ に
   $L^p$ ノルムの単調性（主張~\ref{clm:meas-lp-monotone}）と
   Minkowski の不等式（定理~\ref{thm:meas-minkowski}）を適用すると
   \[
     \Bigl(\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi_0\Bigr)^{1/p}
     \leq
     \Bigl(\int_{\mathcal{X}\times\mathcal{X}}d(x,x_0)^p\,\d\pi_0\Bigr)^{1/p}
-    +\Bigl(\int_{\mathcal{X}\times\mathcal{X}}d(y,x_0)^p\,\d\pi_0\Bigr)^{1/p}
+    +\Bigl(\int_{\mathcal{X}\times\mathcal{X}}d(x_0,y)^p\,\d\pi_0\Bigr)^{1/p}
   \]
   を得る．右辺の被積分関数はそれぞれ $x$ のみ，$y$ のみの
   非負可測関数だから，周辺積分公式（補題~\ref{lem:meas-marginal-integral}）より
@@ -143,10 +143,12 @@ Borel $\sigma$-代数 $\Borel(\mathcal{X})$ 上の確率測度全体を
     \int_{\mathcal{X}\times\mathcal{X}}d(x,x_0)^p\,\d\pi_0
     =\int_{\mathcal{X}}d(x,x_0)^p\,\d\mu(x)<\infty,
     \qquad
-    \int_{\mathcal{X}\times\mathcal{X}}d(y,x_0)^p\,\d\pi_0
+    \int_{\mathcal{X}\times\mathcal{X}}d(x_0,y)^p\,\d\pi_0
+    =\int_{\mathcal{X}}d(x_0,y)^p\,\d\nu(y)
     =\int_{\mathcal{X}}d(y,x_0)^p\,\d\nu(y)<\infty
   \]
-  である（有限性は $\mu,\nu\in\Pp{p}(\mathcal{X})$ の定義）．
+  である（最後の等号は距離の対称性，有限性は
+  $\mu,\nu\in\Pp{p}(\mathcal{X})$ の定義による）．
   したがって $\Wass_p$ の定義より
   \[
     \Wass_p(\mu,\nu)
