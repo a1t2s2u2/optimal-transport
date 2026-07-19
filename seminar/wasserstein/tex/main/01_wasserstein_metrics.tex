@@ -234,58 +234,65 @@ $\int d^p\,\d\pi$ と略記する．
 \end{lemma}
 
 \begin{proof}
-  $\varepsilon>0$ とする．定義~\ref{def:meas-tight}を
-  $A,B$ にそれぞれ $\varepsilon/2$ で適用すると，
-  \[
-    \begin{gathered}
-      K_{\varepsilon/2}\subset\mathcal{X},\quad
-      L_{\varepsilon/2}\subset\mathcal{Y},
-      \qquad K_{\varepsilon/2},L_{\varepsilon/2}\text{ は compact},\\
-      \eta(\mathcal{X}\setminus K_{\varepsilon/2})
-      \leq\frac{\varepsilon}{2}\quad(\forall\eta\in A),
-      \qquad
-      \rho(\mathcal{Y}\setminus L_{\varepsilon/2})
-      \leq\frac{\varepsilon}{2}\quad(\forall\rho\in B)
-    \end{gathered}
-  \]
-  となる $K_{\varepsilon/2},L_{\varepsilon/2}$ が存在する．
+  $\varepsilon>0$ とし，
+  $\pi\in\Couplings(A,B)$ を任意に取る．
+  $\Couplings(A,B)$ の定義より，
 
-  $\pi\in\Couplings(A,B)$ を任意に取る．その第1周辺分布は $A$ に，
-  第2周辺分布は $B$ に属するから，
   \[
-    \pi\bigl((\mathcal{X}\setminus K_{\varepsilon/2})
-      \times\mathcal{Y}\bigr)
-    \leq\frac{\varepsilon}{2},
+    \eta_\pi\in A,\qquad \rho_\pi\in B,\qquad
+    \pi\in\Couplings(\eta_\pi,\rho_\pi)
+  \]
+  をみたす $\eta_\pi,\rho_\pi$ が存在する．
+  一方，$A,B$ の tightness より，compact 集合
+  $K\subset\mathcal{X}$，$L\subset\mathcal{Y}$ で
+  \[
+    \eta(\mathcal{X}\setminus K)\leq\frac{\varepsilon}{2}
+    \quad(\forall\eta\in A),
     \qquad
-    \pi\bigl(\mathcal{X}\times
-      (\mathcal{Y}\setminus L_{\varepsilon/2})\bigr)
-    \leq\frac{\varepsilon}{2}.
+    \rho(\mathcal{Y}\setminus L)\leq\frac{\varepsilon}{2}
+    \quad(\forall\rho\in B)
+  \]
+  をみたすものが存在する．したがって
+  \[
+    \eta_\pi(\mathcal{X}\setminus K)\leq\frac{\varepsilon}{2},
+    \qquad
+    \rho_\pi(\mathcal{Y}\setminus L)\leq\frac{\varepsilon}{2}.
   \]
 
-  $K_{\varepsilon/2},L_{\varepsilon/2}$ は compact だから
-  $K_{\varepsilon/2}\times L_{\varepsilon/2}$ も compact である．また，
+  $\pi\in\Couplings(\eta_\pi,\rho_\pi)$ だから，
+  \[
+    \begin{aligned}
+      \pi\bigl((\mathcal{X}\setminus K)\times\mathcal{Y}\bigr)
+      &=\eta_\pi(\mathcal{X}\setminus K)
+      \leq\frac{\varepsilon}{2},\\
+      \pi\bigl(\mathcal{X}\times(\mathcal{Y}\setminus L)\bigr)
+      &=\rho_\pi(\mathcal{Y}\setminus L)
+      \leq\frac{\varepsilon}{2}.
+    \end{aligned}
+  \]
+
+  また，
   \[
     \begin{aligned}
       \pi\bigl((\mathcal{X}\times\mathcal{Y})
-        \setminus(K_{\varepsilon/2}\times L_{\varepsilon/2})\bigr)
-      &=\pi\Bigl(
-        \bigl((\mathcal{X}\setminus K_{\varepsilon/2})\times\mathcal{Y}\bigr)
-        \cup
-        \bigl(\mathcal{X}\times
-          (\mathcal{Y}\setminus L_{\varepsilon/2})\bigr)
-        \Bigr)\\
+        \setminus(K\times L)\bigr)
       &\leq
-      \pi\bigl((\mathcal{X}\setminus K_{\varepsilon/2})\times\mathcal{Y}\bigr)
-      +\pi\bigl(\mathcal{X}\times
-        (\mathcal{Y}\setminus L_{\varepsilon/2})\bigr)
+      \pi\bigl((\mathcal{X}\setminus K)\times\mathcal{Y}\bigr)
+      +\pi\bigl(\mathcal{X}\times(\mathcal{Y}\setminus L)\bigr)
       &&\text{（$\pi$ の劣加法性）}\\
-      &\leq\frac{\varepsilon}{2}+\frac{\varepsilon}{2}
-      =\varepsilon.
+      &\leq
+      \frac{\varepsilon}{2}+\frac{\varepsilon}{2}\\
+      &=\varepsilon.
     \end{aligned}
   \]
-  この評価は任意の $\pi\in\Couplings(A,B)$ に対して成り立つ．
-  任意の $\varepsilon>0$ に対してこのような compact 集合
-  $K_{\varepsilon/2}\times L_{\varepsilon/2}$ が取れたので，
+  $K,L$ は compact だから $K\times L$ も compact であり，
+  上の評価は任意の $\pi\in\Couplings(A,B)$ に対して成り立つ．
+  よって
+  \[
+    \pi\bigl((\mathcal{X}\times\mathcal{Y})\setminus(K\times L)\bigr)
+    \leq\varepsilon
+    \qquad(\forall\pi\in\Couplings(A,B)).
+  \]
   定義~\ref{def:meas-tight}より $\Couplings(A,B)$ は tight である．
 \end{proof}
 
