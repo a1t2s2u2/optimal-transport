@@ -335,18 +335,19 @@ $\int d^p\,\d\pi$ と略記する．
   $\pi_k\Rightarrow\pi^*$ となる $\pi^*\in\Prob(\mathcal{X}\times\mathcal{X})$
   が存在する．
 
+  $\pi^*$ の第1，第2周辺分布をそれぞれ $\mu^*,\nu^*$ とする．
   任意の $\varphi\in C_b(\mathcal{X})$ に対し，
   $(x,y)\mapsto\varphi(x)$ は有界連続だから，
   弱収束と周辺積分公式（補題~\ref{lem:meas-marginal-integral}）より
   \[
-    \int\varphi\,\d(\pi^*\circ\mathrm{pr}_1^{-1})
-    =\int\varphi(x)\,\d\pi^*
+    \int\varphi\,\d\mu^*
+    =\int\varphi(x)\,\d\pi^*(x,y)
     =\lim_{k\to\infty}\int\varphi(x)\,\d\pi_k
     =\int\varphi\,\d\mu.
   \]
   有界連続関数による測度の判定
-  （定理~\ref{thm:meas-cb-determines}）より第1周辺分布は $\mu$ であり，
-  同様に第2周辺分布は $\nu$ である．よって
+  （定理~\ref{thm:meas-cb-determines}）より $\mu^*=\mu$ であり，
+  同様に $\nu^*=\nu$ である．よって
   $\pi^*\in\Couplings(\mu,\nu)$ である．
 
   最後に，下限の定義と補題~\ref{lem:wp-cost-lsc}より
@@ -465,9 +466,14 @@ $\int d^p\,\d\pi$ と略記する．
   $\pi\in\Couplings(\mu,\nu)$，$\sigma\in\Couplings(\nu,\xi)$ を
   定理~\ref{thm:wp-optimal-coupling-existence}により取る．
   接着補題により，$\gamma\in\Prob(\mathcal{X}^3)$ で
-  $\gamma\circ\mathrm{pr}_{12}^{-1}=\pi$，
-  $\gamma\circ\mathrm{pr}_{23}^{-1}=\sigma$ となるものがある．
-  $\tau:=\gamma\circ\mathrm{pr}_{13}^{-1}$ とおくと，
+  \[
+    \gamma(A\times B\times\mathcal{X})=\pi(A\times B),
+    \qquad
+    \gamma(\mathcal{X}\times B\times C)=\sigma(B\times C)
+  \]
+  （$A,B,C\in\Borel(\mathcal{X})$）となるものがある．
+  $\gamma$ の第1，第3成分の周辺分布を
+  $\tau\in\Prob(\mathcal{X}\times\mathcal{X})$ とすると，
   任意の $A,C\in\Borel(\mathcal{X})$ に対して
   \[
     \tau(A\times\mathcal{X})

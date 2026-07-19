@@ -894,15 +894,12 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
 
 \begin{lemma}{周辺分布と周辺積分公式}{meas-marginal-integral}
   $\mathcal{X},\mathcal{Y}$ を距離空間，$\pi\in\Prob(\mathcal{X}\times \mathcal{Y})$ とし，
-  第1座標への\textbf{射影}を $\mathrm{pr}_1\colon(x,y)\mapsto x$ とする
-  （$\mathrm{pr}$ は射影 projection の略で，添字は残す成分の番号を表す．
-  $\mathrm{pr}_1$ は連続ゆえ可測）．
-  $\mu\in\Prob(\mathcal{X})$ について，次は同値である：
-  \begin{enumerate}
-    \item $\pi(A\times \mathcal{Y})=\mu(A)$（$\forall A\in\Borel(\mathcal{X})$），
-    \item $\pi\circ\mathrm{pr}_1^{-1}=\mu$．
-  \end{enumerate}
-  このとき（$\mu$ を $\pi$ の\textbf{第1周辺分布}という），
+  $\mu\in\Prob(\mathcal{X})$ が
+  \[
+    \pi(A\times\mathcal{Y})=\mu(A)
+    \qquad(\forall A\in\Borel(\mathcal{X}))
+  \]
+  をみたすとする（$\mu$ を $\pi$ の\textbf{第1周辺分布}という）．
   非負可測な $f\colon \mathcal{X}\to[0,+\infty]$ または
   $\mu$-可積分な $f\colon \mathcal{X}\to\R$ に対して
   \[
@@ -916,13 +913,25 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
 \end{lemma}
 
 \begin{proof}
-  同値性：$\mathrm{pr}_1^{-1}(A)=A\times \mathcal{Y}$ だから
-  $(\pi\circ\mathrm{pr}_1^{-1})(A)=\pi(A\times \mathcal{Y})$ であり，
-  両条件はともに「すべての $A\in\Borel(\mathcal{X})$ でこの値が $\mu(A)$」を意味する．
-  積分公式：$(x,y)\mapsto f(x)$ は $f\circ\mathrm{pr}_1$ だから，
-  変数変換公式（補題~\ref{lem:meas-change-of-variables}）と
-  系~\ref{cor:meas-pf-lp}を
-  $T=\mathrm{pr}_1$，$\pi\circ T^{-1}=\mu$ に適用すればよい．
+  座標写像 $(x,y)\mapsto x$ は連続だから，以下の被積分関数は可測である．
+  $f=\mathbf{1}_A$（$A\in\Borel(\mathcal{X})$）ならば，
+  \[
+    \int_{\mathcal{X}\times\mathcal{Y}}\mathbf{1}_A(x)\,\d\pi(x,y)
+    =\pi(A\times\mathcal{Y})
+    =\mu(A)
+    =\int_{\mathcal{X}}\mathbf{1}_A\,\d\mu.
+  \]
+  積分の線形性により非負単関数でも成り立ち，
+  非負単関数列による近似と単調収束定理
+  （定理~\ref{thm:meas-mct}）により非負可測関数へ拡張される．
+  $f$ が $\mu$-可積分ならば，まず非負の場合の結果を $\abs{f}$ に適用して
+  \[
+    \int_{\mathcal{X}\times\mathcal{Y}}\abs{f(x)}\,\d\pi(x,y)
+    =\int_{\mathcal{X}}\abs{f}\,\d\mu<\infty
+  \]
+  を得てから $f=f^+-f^-$ と分解すれば積分公式が従う．
+  最後に非負可測関数 $\abs{f}^p$ に積分公式を適用して $p$ 乗根を取れば，
+  $L^p$ ノルムの等式を得る．
 \end{proof}
 
 \section{密度をもつ測度と Lebesgue 測度}
