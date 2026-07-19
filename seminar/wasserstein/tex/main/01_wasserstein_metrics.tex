@@ -164,13 +164,21 @@ Prokhorov の定理を用いて，定義の下限を達成する coupling の存
 以下の二つの補題は，この議論で必要な部分だけを述べたものである．
 以下，積分域が明らかなときは
 $\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)$ を
-$\int d^p\,\d\pi$ と略記する．
+$\int d^p\,\d\pi$ と略記する．また，弱収束の定義
+（定義~\ref{def:meas-weak-convergence}）をここで再掲すると，
+\[
+  \pi_k\Rightarrow\pi
+  \quad\overset{\mathrm{def}}{\Longleftrightarrow}\quad
+  \int F\,\d\pi_k\longrightarrow\int F\,\d\pi
+  \qquad
+  (\forall F\in C_b(\mathcal{X}\times\mathcal{X})).
+\]
 
 \begin{lemma}{$p$ 次輸送コストの下半連続性（Villani Lem 4.3）}{wp-cost-lsc}
   $1\leq p<\infty$ とする．
   $\Prob(\mathcal{X}\times\mathcal{X})$ の列 $(\pi_k)$ が
-  $\pi\in\Prob(\mathcal{X}\times\mathcal{X})$ に弱収束
-  （定義~\ref{def:meas-weak-convergence}）するならば，
+  $\pi\in\Prob(\mathcal{X}\times\mathcal{X})$ に弱収束，すなわち
+  $\pi_k\Rightarrow\pi$ とする．このとき
   \[
     \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)
     \leq
