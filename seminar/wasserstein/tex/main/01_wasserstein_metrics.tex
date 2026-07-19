@@ -125,8 +125,18 @@ Borel $\sigma$-代数 $\Borel(\mathcal{X})$ 上の確率測度全体を
 \begin{proof}
   \textbf{1. coupling を一つ取る．}
 
-  $\pi_0:=\mu\otimes\nu$ とおくと，$\pi_0$ は $\mu$，$\nu$ を周辺分布にもつ
-  （定理~\ref{thm:meas-product}，主張~\ref{clm:meas-product-marginals}）から
+  直積確率測度（定理~\ref{thm:meas-product}）
+  $\pi_0:=\mu\otimes\nu$ を取る．任意の
+  $A,B\in\Borel(\mathcal{X})$ に対し，
+  \[
+    \begin{aligned}
+      \pi_0(A\times\mathcal{X})
+      &=\mu(A)\nu(\mathcal{X})=\mu(A),\\
+      \pi_0(\mathcal{X}\times B)
+      &=\mu(\mathcal{X})\nu(B)=\nu(B).
+    \end{aligned}
+  \]
+  したがって，coupling の定義（定義~\ref{def:wp-coupling}）より
   $\pi_0\in\Couplings(\mu,\nu)$ である．
 
   \textbf{2. 二つの関数が $L^p(\pi_0)$ に属することを確かめる．}
@@ -142,17 +152,16 @@ Borel $\sigma$-代数 $\Borel(\mathcal{X})$ 上の確率測度全体を
       &<\infty.
     \end{aligned}
   \]
-  最後の不等式は $\mu\in\Pp{p}(\mathcal{X})$ による．同様に，
-  距離の対称性 $d(x_0,y)=d(y,x_0)$ と
-  $\nu\in\Pp{p}(\mathcal{X})$ より
+  同様に，
   \[
     \begin{aligned}
       \int_{\mathcal{X}\times\mathcal{X}}d(x_0,y)^p\,\d\pi_0
       &=\int_{\mathcal{X}}d(x_0,y)^p\,\d\nu(y)\\
-      &=\int_{\mathcal{X}}d(y,x_0)^p\,\d\nu(y)\\
       &<\infty.
     \end{aligned}
   \]
+  各表示の最後の不等式は
+  $\mu,\nu\in\Pp{p}(\mathcal{X})$ による．
   したがって，$(x,y)\mapsto d(x,x_0)$ と
   $(x,y)\mapsto d(x_0,y)$ はともに $L^p(\pi_0)$ に属する．
 
