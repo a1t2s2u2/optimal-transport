@@ -506,13 +506,18 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
 \end{definition}
 
 \begin{theorem}{Prokhorov の定理}{meas-prokhorov}
-  $\mathcal{X}$ を Polish 空間とする．$\mathcal{P}\subset\Prob(\mathcal{X})$ に対し，
-  次は同値である．
+  $\mathcal{X}$ を Polish 空間とし，$\mathcal{F}\subset\Prob(\mathcal{X})$ を
+  Borel 確率測度の族とする．このとき，次は同値である．
   \begin{enumerate}
-    \item $\mathcal{P}$ の任意の列は，$\Prob(\mathcal{X})$ のある元に
-      弱収束する部分列をもつ
-      （すなわち，$\mathcal{P}$ は弱位相で precompact である）．
-    \item $\mathcal{P}$ は tight である．
+    \item 任意の列 $(\eta_k)_{k\in\N}\subset\mathcal{F}$ に対し，
+      ある部分列 $(\eta_{k_j})_{j\in\N}$ と
+      $\eta\in\Prob(\mathcal{X})$ が存在して
+      \[
+        \eta_{k_j}\Rightarrow\eta
+      \]
+      が成り立つ
+      （すなわち，$\mathcal{F}$ は弱位相で precompact である）．
+    \item $\mathcal{F}$ は tight である．
   \end{enumerate}
   （証明は省略する．Villani (2009) Chapter 4 で
   同じ形で引用されている古典的な定理であり，証明は
