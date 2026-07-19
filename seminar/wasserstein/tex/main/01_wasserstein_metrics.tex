@@ -309,23 +309,20 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   $\Wass_p$ の定義に現れる下限は最小値として達成される．すなわち，
   ある $\pi^*\in\Couplings(\mu,\nu)$ が存在して
   \[
-    \Wass_p(\mu,\nu)^p
-    =
-    \min_{\pi\in\Couplings(\mu,\nu)}
-    \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)
-    =
-    \int_{\mathcal{X}\times \mathcal{X}}d(x,y)^p\,\d\pi^*(x,y)
-  \]
-  が成り立つ．同値に，
-  \[
     \Wass_p(\mu,\nu)
     =
     \min_{\pi\in\Couplings(\mu,\nu)}
     \left(
       \int_{\mathcal{X}\times\mathcal{X}}
       d(x,y)^p\,\d\pi(x,y)
-    \right)^{1/p}.
+    \right)^{1/p}
+    =
+    \left(
+      \int_{\mathcal{X}\times\mathcal{X}}
+      d(x,y)^p\,\d\pi^*(x,y)
+    \right)^{1/p}
   \]
+  が成り立つ．
   この最小値を達成する $\pi^*$ を
   $\Wass_p$ の\textbf{最適 coupling}という．
 \end{theorem}
