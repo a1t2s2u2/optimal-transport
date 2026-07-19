@@ -139,82 +139,87 @@ Borel $\sigma$-代数 $\Borel(\mathcal{X})$ 上の確率測度全体を
   したがって，coupling の定義（定義~\ref{def:wp-coupling}）より
   $\pi_0\in\Couplings(\mu,\nu)$ である．
 
-  \textbf{2. 二つの関数が $L^p(\pi_0)$ に属することを確かめる．}
+  \textbf{2. $\pi_0$ に関する積分を $\mu,\nu$ に関する積分に直す．}
 
   $x_0\in\mathcal{X}$ を定義~\ref{def:wp-p-space}の基点とする．
   $d(x,x_0)^p$ は $x$ のみ，$d(x_0,y)^p$ は $y$ のみの
-  非負可測関数だから，周辺積分公式
-  （補題~\ref{lem:meas-marginal-integral}）より
+  非負可測関数である．$\pi_0=\mu\otimes\nu$ と Tonelli の定理
+  （定理~\ref{thm:meas-product}）より
   \[
     \begin{aligned}
-      \int_{\mathcal{X}\times\mathcal{X}}d(x,x_0)^p\,\d\pi_0
-      &=\int_{\mathcal{X}}d(x,x_0)^p\,\d\mu(x)\\
-      &<\infty.
+      &\int_{\mathcal{X}\times\mathcal{X}}
+        d(x,x_0)^p\,\d\pi_0(x,y)\\
+      &\quad=
+      \int_{\mathcal{X}}
+      \left(\int_{\mathcal{X}}d(x,x_0)^p\,\d\nu(y)\right)\d\mu(x)\\
+      &\quad=
+      \int_{\mathcal{X}}d(x,x_0)^p\,\nu(\mathcal{X})\,\d\mu(x)\\
+      &\quad=
+      \int_{\mathcal{X}}d(x,x_0)^p\,\d\mu(x)\\
+      &\quad<\infty.
     \end{aligned}
   \]
   同様に，
   \[
     \begin{aligned}
-      \int_{\mathcal{X}\times\mathcal{X}}d(x_0,y)^p\,\d\pi_0
-      &=\int_{\mathcal{X}}d(x_0,y)^p\,\d\nu(y)\\
-      &<\infty.
+      &\int_{\mathcal{X}\times\mathcal{X}}
+        d(x_0,y)^p\,\d\pi_0(x,y)\\
+      &\quad=
+      \int_{\mathcal{X}}
+      \left(\int_{\mathcal{X}}d(x_0,y)^p\,\d\mu(x)\right)\d\nu(y)\\
+      &\quad=
+      \int_{\mathcal{X}}\mu(\mathcal{X})\,d(x_0,y)^p\,\d\nu(y)\\
+      &\quad=
+      \int_{\mathcal{X}}d(x_0,y)^p\,\d\nu(y)\\
+      &\quad<\infty.
     \end{aligned}
   \]
-  各表示の最後の不等式は
+  ここで $\mu(\mathcal{X})=\nu(\mathcal{X})=1$ を用いた．
+  また，各表示の最後の不等式は
   $\mu,\nu\in\Pp{p}(\mathcal{X})$ による．
-  したがって，$(x,y)\mapsto d(x,x_0)$ と
-  $(x,y)\mapsto d(x_0,y)$ はともに $L^p(\pi_0)$ に属する．
 
-  \textbf{3. 三角不等式と $L^p$ ノルムの単調性を使う．}
+  \textbf{3. 輸送コストを評価する．}
 
   任意の $(x,y)\in\mathcal{X}\times\mathcal{X}$ に対し，
   三角不等式より
   \[
     0\leq d(x,y)\leq d(x,x_0)+d(x_0,y).
   \]
-  したがって $L^p$ ノルムの単調性
-  （主張~\ref{clm:meas-lp-monotone}）より
-  \[
-    \Bigl(\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi_0\Bigr)^{1/p}
-    \leq
-    \Bigl(\int_{\mathcal{X}\times\mathcal{X}}
-      \bigl(d(x,x_0)+d(x_0,y)\bigr)^p\,\d\pi_0\Bigr)^{1/p}.
-  \]
-
-  \textbf{4. Minkowski の不等式を使う．}
-
-  距離は非負だから
-  \[
-    \abs{d(x,x_0)}=d(x,x_0),
-    \qquad
-    \abs{d(x_0,y)}=d(x_0,y).
-  \]
-  よって Minkowski の不等式（定理~\ref{thm:meas-minkowski}）より
+  この不等式の両辺を $p$ 乗して $\pi_0$ で積分し，
+  $1/p$ 乗を取る．さらに Minkowski の不等式
+  （定理~\ref{thm:meas-minkowski}）を用いると，
   \[
     \begin{aligned}
       &\Bigl(\int_{\mathcal{X}\times\mathcal{X}}
-        \bigl(d(x,x_0)+d(x_0,y)\bigr)^p\,\d\pi_0\Bigr)^{1/p}\\
-      &\qquad\leq
-      \Bigl(\int_{\mathcal{X}\times\mathcal{X}}d(x,x_0)^p\,\d\pi_0\Bigr)^{1/p}
-      +
-      \Bigl(\int_{\mathcal{X}\times\mathcal{X}}d(x_0,y)^p\,\d\pi_0\Bigr)^{1/p}.
-    \end{aligned}
-  \]
-
-  \textbf{5. $\Wass_p$ の定義に戻る．}
-
-  $\pi_0\in\Couplings(\mu,\nu)$ と以上の評価より，
-  \[
-    \begin{aligned}
-      0\leq\Wass_p(\mu,\nu)
-      &\leq
-      \Bigl(\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi_0\Bigr)^{1/p}\\
-      &\leq
+        d(x,y)^p\,\d\pi_0(x,y)\Bigr)^{1/p}\\
+      &\quad\leq
+      \Bigl(\int_{\mathcal{X}\times\mathcal{X}}
+        \bigl(d(x,x_0)+d(x_0,y)\bigr)^p\,\d\pi_0(x,y)\Bigr)^{1/p}\\
+      &\quad\leq
       \Bigl(\int_{\mathcal{X}\times\mathcal{X}}d(x,x_0)^p\,\d\pi_0\Bigr)^{1/p}
       +
       \Bigl(\int_{\mathcal{X}\times\mathcal{X}}d(x_0,y)^p\,\d\pi_0\Bigr)^{1/p}\\
-      &<\infty.
+      &\quad=
+      \Bigl(\int_{\mathcal{X}}d(x,x_0)^p\,\d\mu(x)\Bigr)^{1/p}
+      +
+      \Bigl(\int_{\mathcal{X}}d(x_0,y)^p\,\d\nu(y)\Bigr)^{1/p}\\
+      &\quad<\infty.
     \end{aligned}
+  \]
+  2番目の不等式が Minkowski の不等式である．距離は非負だから，
+  同定理に現れる絶対値は省略できる．また，等号と最後の不等式は
+  2で確かめた計算による．
+
+  \textbf{4. $\Wass_p$ の定義に戻る．}
+
+  $\pi_0\in\Couplings(\mu,\nu)$ だから，$\Wass_p$ の定義と
+  3の評価より
+  \[
+    0\leq\Wass_p(\mu,\nu)
+    \leq
+    \Bigl(\int_{\mathcal{X}\times\mathcal{X}}
+      d(x,y)^p\,\d\pi_0(x,y)\Bigr)^{1/p}
+    <\infty.
   \]
 \end{proof}
 
