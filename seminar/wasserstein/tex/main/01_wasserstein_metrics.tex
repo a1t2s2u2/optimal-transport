@@ -332,13 +332,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
     :=
     \inf_{\pi\in\Couplings(\mu,\nu)}J(\pi)
   \]
-  とおく．まず，
-  \[
-    \mu\otimes\nu\in\Couplings(\mu,\nu)
-  \]
-  （主張~\ref{clm:meas-product-marginals}）だから
-  $\Couplings(\mu,\nu)\neq\emptyset$ である．
-  また，補題~\ref{lem:wp-finite}より $\Wass_p(\mu,\nu)<\infty$ だから，
+  とおく．補題~\ref{lem:wp-finite}より $\Wass_p(\mu,\nu)<\infty$ だから，
   $\Wass_p$ の定義より
   \[
     0\leq I=\Wass_p(\mu,\nu)^p<\infty.
@@ -349,17 +343,18 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   \[
     \pi_k\in\Couplings(\mu,\nu),
     \qquad
-    I\leq J(\pi_k)\leq I+\frac1k
+    I\leq J(\pi_k)<I+\frac1k
   \]
-  となる $\pi_k$ を取ることができる．したがって
+  となる $\pi_k$ を取ることができる．$I<\infty$ だから
   \[
+    0\leq J(\pi_k)-I<\frac1k,
+    \qquad
     J(\pi_k)\longrightarrow I.
   \]
 
   \textbf{2. 最小化列から弱収束部分列を取る．}
-  一点集合は弱位相（定義~\ref{def:meas-weak-convergence}）で
-  compact だから，Prokhorov の定理
-  （定理~\ref{thm:meas-prokhorov}）より
+  $\mathcal{X}$ は Polish 空間だから，Prokhorov の定理
+  （定理~\ref{thm:meas-prokhorov}）より一点族
   $\{\mu\},\{\nu\}$ は tight である．
   したがって補題~\ref{lem:wp-plans-tight}より
   \[
@@ -378,19 +373,33 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 
   \textbf{3. $\pi^*$ も $\mu,\nu$ の coupling である．}
   任意の $\varphi\in C_b(\mathcal{X})$ に対し，
-  $(x,y)\mapsto\varphi(x)$ は有界連続だから，
-  弱収束と周辺積分公式（補題~\ref{lem:meas-marginal-integral}）より
   \[
-    \begin{aligned}
-      \int_{\mathcal{X}\times\mathcal{X}}
-      \varphi(x)\,\d\pi^*(x,y)
-      &=
-      \lim_{j\to\infty}
-      \int_{\mathcal{X}\times\mathcal{X}}
-      \varphi(x)\,\d\pi_{k_j}(x,y)\\
-      &=
-      \int_{\mathcal{X}}\varphi(x)\,\d\mu(x).
-    \end{aligned}
+    F_\varphi(x,y):=\varphi(x)
+  \]
+  とおくと，$F_\varphi\in C_b(\mathcal{X}\times\mathcal{X})$ である．
+  したがって $\pi_{k_j}\Rightarrow\pi^*$ と弱収束の定義より
+  \[
+    \int_{\mathcal{X}\times\mathcal{X}}
+    \varphi(x)\,\d\pi_{k_j}(x,y)
+    \longrightarrow
+    \int_{\mathcal{X}\times\mathcal{X}}
+    \varphi(x)\,\d\pi^*(x,y).
+  \]
+  一方，各 $\pi_{k_j}\in\Couplings(\mu,\nu)$ の第1周辺分布は
+  $\mu$ だから，周辺積分公式（補題~\ref{lem:meas-marginal-integral}）より
+  \[
+    \int_{\mathcal{X}\times\mathcal{X}}
+    \varphi(x)\,\d\pi_{k_j}(x,y)
+    =
+    \int_{\mathcal{X}}\varphi(x)\,\d\mu(x)
+    \qquad(\forall j\in\N).
+  \]
+  よって
+  \[
+    \int_{\mathcal{X}\times\mathcal{X}}
+    \varphi(x)\,\d\pi^*(x,y)
+    =
+    \int_{\mathcal{X}}\varphi(x)\,\d\mu(x).
   \]
   有界連続関数による測度の判定
   （定理~\ref{thm:meas-cb-determines}）より，
