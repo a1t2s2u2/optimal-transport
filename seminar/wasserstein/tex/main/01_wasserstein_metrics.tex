@@ -339,8 +339,14 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   （主張~\ref{clm:meas-product-marginals}）だから
   $\Couplings(\mu,\nu)\neq\emptyset$ である．
 
-  任意に $x_0\in\mathcal{X}$ を固定する．三角不等式と
-  $t\mapsto t^p$ の凸性（注意~\ref{rem:meas-real-facts}）より
+  任意に $x_0\in\mathcal{X}$ を固定する．三角不等式と距離の対称性より
+  \[
+    d(x,y)
+    \leq d(x,x_0)+d(x_0,y)
+    =d(x,x_0)+d(y,x_0).
+  \]
+  したがって，$t\mapsto t^p$ の凸性
+  （注意~\ref{rem:meas-real-facts}）より
   \[
     d(x,y)^p
     \leq
