@@ -304,18 +304,12 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   定義~\ref{def:meas-tight}より $\Couplings(A,B)$ は tight である．
 \end{proof}
 
-\begin{theorem}{$\Wass_p$ の最適 coupling の存在（Villani Thm 4.1）}{wp-optimal-coupling-existence}
-  $1\leq p<\infty$，$\mu,\nu\in\Pp{p}(\mathcal{X})$ とすると，
-  $\Wass_p$ の定義に現れる下限は最小値として達成される．すなわち，
-  ある $\pi^*\in\Couplings(\mu,\nu)$ が存在して
+\begin{theorem}{$\Wass_p$ の最適 coupling の存在（Villani Thm 4.1；pp.~43--45）}{wp-optimal-coupling-existence}
+  $\mathcal{X}$ を Polish 空間，$1\leq p<\infty$ とする．
+  任意の $\mu,\nu\in\Pp{p}(\mathcal{X})$ に対して，
+  ある $\pi^*\in\Couplings(\mu,\nu)$ が存在し，
   \[
     \Wass_p(\mu,\nu)
-    =
-    \min_{\pi\in\Couplings(\mu,\nu)}
-    \left(
-      \int_{\mathcal{X}\times\mathcal{X}}
-      d(x,y)^p\,\d\pi(x,y)
-    \right)^{1/p}
     =
     \left(
       \int_{\mathcal{X}\times\mathcal{X}}
@@ -323,83 +317,154 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
     \right)^{1/p}
   \]
   が成り立つ．
-  この最小値を達成する $\pi^*$ を
-  $\Wass_p$ の\textbf{最適 coupling}という．
+  すなわち，$\Wass_p$ の定義に現れる下限は最小値として達成される．
+  この $\pi^*$ を $\Wass_p$ の\textbf{最適 coupling}という．
 \end{theorem}
 
 \begin{proof}
-  $\mu\otimes\nu\in\Couplings(\mu,\nu)$
+  各 $\pi\in\Couplings(\mu,\nu)$ に対して
+  \[
+    J(\pi)
+    :=
+    \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y),
+    \qquad
+    I
+    :=
+    \inf_{\pi\in\Couplings(\mu,\nu)}J(\pi)
+  \]
+  とおく．まず，
+  \[
+    \mu\otimes\nu\in\Couplings(\mu,\nu)
+  \]
   （主張~\ref{clm:meas-product-marginals}）だから
   $\Couplings(\mu,\nu)\neq\emptyset$ である．
+
+  任意に $x_0\in\mathcal{X}$ を固定する．三角不等式と
+  $t\mapsto t^p$ の凸性（注意~\ref{rem:meas-real-facts}）より
   \[
-    J(\pi):=\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)
+    d(x,y)^p
+    \leq
+    2^{p-1}\bigl(d(x,x_0)^p+d(y,x_0)^p\bigr).
   \]
-  とおく．$t\mapsto t^p$ は $[0,\infty)$ 上で連続かつ単調増加だから，
-  $\Wass_p$ の定義と補題~\ref{lem:wp-finite}より
+  したがって，周辺積分公式（補題~\ref{lem:meas-marginal-integral}）より
   \[
-    I:=\inf_{\pi\in\Couplings(\mu,\nu)}J(\pi)
-    =\Wass_p(\mu,\nu)^p<\infty.
+    \begin{aligned}
+      J(\mu\otimes\nu)
+      &\leq
+      2^{p-1}
+      \int_{\mathcal{X}\times\mathcal{X}}
+      \bigl(d(x,x_0)^p+d(y,x_0)^p\bigr)
+      \,\d(\mu\otimes\nu)(x,y)\\
+      &=
+      2^{p-1}\left(
+        \int_{\mathcal{X}}d(x,x_0)^p\,\d\mu(x)
+        +
+        \int_{\mathcal{X}}d(y,x_0)^p\,\d\nu(y)
+      \right)\\
+      &<\infty.
+    \end{aligned}
   \]
-  各 $k\in\N$ に対し，下限の定義より
+  最後の不等式は $\mu,\nu\in\Pp{p}(\mathcal{X})$ による．よって
+  \[
+    0\leq I\leq J(\mu\otimes\nu)<\infty,
+    \qquad
+    I=\Wass_p(\mu,\nu)^p.
+  \]
+
+  \textbf{1. 最小化列を取る．}
+  下限の定義より，各 $k\in\N$ に対して
   \[
     \pi_k\in\Couplings(\mu,\nu),
     \qquad
     I\leq J(\pi_k)\leq I+\frac1k
   \]
-  となる $\pi_k$ を取る．
-
-  一点集合は任意の位相で compact だから，$\{\mu\},\{\nu\}$ は
-  弱位相（定義~\ref{def:meas-weak-convergence}）で compact である．
-  したがって Prokhorov の定理（定理~\ref{thm:meas-prokhorov}）と
-  補題~\ref{lem:wp-plans-tight}より
+  となる $\pi_k$ を取ることができる．したがって
   \[
-    \{\mu\},\{\nu\}\text{ は tight}
-    \quad\Longrightarrow\quad
-    \Couplings(\mu,\nu)
-    =\Couplings(\{\mu\},\{\nu\})\text{ は tight}.
+    J(\pi_k)\longrightarrow I.
   \]
+
+  \textbf{2. 最小化列から弱収束部分列を取る．}
+  一点集合は弱位相（定義~\ref{def:meas-weak-convergence}）で
+  compact だから，Prokhorov の定理
+  （定理~\ref{thm:meas-prokhorov}）より
+  $\{\mu\},\{\nu\}$ は tight である．
+  したがって補題~\ref{lem:wp-plans-tight}より
+  \[
+    \Couplings(\mu,\nu)
+    =\Couplings(\{\mu\},\{\nu\})
+    \quad\text{は tight}.
+  \]
+  特に $(\pi_k)_{k\in\N}$ は tight である．
   $\mathcal{X}\times\mathcal{X}$ は Polish 空間なので，
-  再び Prokhorov の定理を適用すると，ある部分列 $(\pi_{k_j})$ と
+  Prokhorov の定理より，ある部分列 $(\pi_{k_j})$ と
   $\pi^*\in\Prob(\mathcal{X}\times\mathcal{X})$ が存在して
   \[
-    \pi_{k_j}\Rightarrow\pi^*,
-  \]
-  すなわち
-  \[
-    \int F\,\d\pi_{k_j}\longrightarrow\int F\,\d\pi^*
-    \qquad
-    (\forall F\in C_b(\mathcal{X}\times\mathcal{X}))
+    \pi_{k_j}\Rightarrow\pi^*
   \]
   が成り立つ．
 
-  $\pi^*$ の第1，第2周辺分布をそれぞれ $\mu^*,\nu^*$ とする．
+  \textbf{3. $\pi^*$ も $\mu,\nu$ の coupling である．}
   任意の $\varphi\in C_b(\mathcal{X})$ に対し，
   $(x,y)\mapsto\varphi(x)$ は有界連続だから，
   弱収束と周辺積分公式（補題~\ref{lem:meas-marginal-integral}）より
   \[
-    \int\varphi\,\d\mu^*
-    =\int\varphi(x)\,\d\pi^*(x,y)
-    =\lim_{j\to\infty}\int\varphi(x)\,\d\pi_{k_j}
-    =\int\varphi\,\d\mu.
+    \begin{aligned}
+      \int_{\mathcal{X}\times\mathcal{X}}
+      \varphi(x)\,\d\pi^*(x,y)
+      &=
+      \lim_{j\to\infty}
+      \int_{\mathcal{X}\times\mathcal{X}}
+      \varphi(x)\,\d\pi_{k_j}(x,y)\\
+      &=
+      \int_{\mathcal{X}}\varphi(x)\,\d\mu(x).
+    \end{aligned}
   \]
   有界連続関数による測度の判定
-  （定理~\ref{thm:meas-cb-determines}）より $\mu^*=\mu$ であり，
-  同様に $\nu^*=\nu$ である．よって
-  $\pi^*\in\Couplings(\mu,\nu)$ である．
+  （定理~\ref{thm:meas-cb-determines}）より，
+  $\pi^*$ の第1周辺分布は $\mu$ である．同様に，
+  任意の $\psi\in C_b(\mathcal{X})$ に対して
+  \[
+    \int_{\mathcal{X}\times\mathcal{X}}
+    \psi(y)\,\d\pi^*(x,y)
+    =
+    \int_{\mathcal{X}}\psi(y)\,\d\nu(y)
+  \]
+  が成り立つから，第2周辺分布は $\nu$ である．したがって
+  \[
+    \pi^*\in\Couplings(\mu,\nu).
+  \]
 
-  最後に，下限の定義と補題~\ref{lem:wp-cost-lsc}より
+  \textbf{4. $\pi^*$ が最小値を達成する．}
+  $(x,y)\mapsto d(x,y)^p$ は非負連続関数であり，特に下半連続である．
+  補題~\ref{lem:wp-cost-lsc}より
+  \[
+    J(\pi^*)
+    \leq
+    \liminf_{j\to\infty}J(\pi_{k_j}).
+  \]
+  一方，$\pi^*\in\Couplings(\mu,\nu)$ だから
+  $I\leq J(\pi^*)$ である．また，
+  $J(\pi_k)\to I$ より $J(\pi_{k_j})\to I$ である．したがって
   \[
     I
     \leq J(\pi^*)
     \leq\liminf_{j\to\infty}J(\pi_{k_j})
     =I.
   \]
-  したがって $J(\pi^*)=I=\Wass_p(\mu,\nu)^p$ であり，
-  $p$ 乗根を取ると
+  ゆえに $J(\pi^*)=I$ である．以上より
   \[
-    \Wass_p(\mu,\nu)=J(\pi^*)^{1/p}
+    \begin{aligned}
+      \Wass_p(\mu,\nu)
+      &=I^{1/p}\\
+      &=J(\pi^*)^{1/p}\\
+      &=
+      \left(
+        \int_{\mathcal{X}\times\mathcal{X}}
+        d(x,y)^p\,\d\pi^*(x,y)
+      \right)^{1/p}.
+    \end{aligned}
   \]
-  となる．よって $\pi^*$ は上の最小値を達成する．
+  よって $\pi^*$ は $\Wass_p(\mu,\nu)$ の最適 coupling である．
 \end{proof}
 
 \section{Wasserstein 距離の距離性}
