@@ -291,38 +291,52 @@ $\int d^p\,\d\pi$ と略記する．
 
 \begin{theorem}{$\Wass_p$ の最適 coupling の存在（Villani Thm 4.1）}{wp-optimal-coupling-existence}
   $1\leq p<\infty$，$\mu,\nu\in\Pp{p}(\mathcal{X})$ とすると，
+  $\Wass_p$ の定義に現れる下限は最小値として達成される．すなわち，
   ある $\pi^*\in\Couplings(\mu,\nu)$ が存在して
   \[
     \Wass_p(\mu,\nu)^p
     =
+    \min_{\pi\in\Couplings(\mu,\nu)}
+    \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)
+    =
     \int_{\mathcal{X}\times \mathcal{X}}d(x,y)^p\,\d\pi^*(x,y)
   \]
-  をみたす．このような $\pi^*$ を $\Wass_p$ の
-  \textbf{最適 coupling}という．
+  が成り立つ．この $\pi^*$ を $\Wass_p$ の\textbf{最適 coupling}という．
 \end{theorem}
 
 \begin{proof}
   $\mu\otimes\nu\in\Couplings(\mu,\nu)$
-  （主張~\ref{clm:meas-product-marginals}）だから coupling は存在する．
-  また $t\mapsto t^{1/p}$ は $[0,\infty)$ 上で連続かつ単調増加なので，
-  下限と $p$ 乗を交換できる．補題~\ref{lem:wp-finite}と合わせて
+  （主張~\ref{clm:meas-product-marginals}）だから
+  $\Couplings(\mu,\nu)\neq\emptyset$ である．
   \[
-    I:=\Wass_p(\mu,\nu)^p
-    =\inf_{\pi\in\Couplings(\mu,\nu)}\int d^p\,\d\pi<\infty.
+    J(\pi):=\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)
   \]
-  下限の定義により，$\int d^p\,\d\pi_k\to I$ となる
-  $\pi_k\in\Couplings(\mu,\nu)$ を取る．
-  一点族 $\{\mu\}$，$\{\nu\}$ の元からなる列は定数列なので precompact である．
-  よって Prokhorov の定理
-  （定理~\ref{thm:meas-prokhorov}）より tight だから，
-  補題~\ref{lem:wp-plans-tight}より $(\pi_k)$ も tight である．
+  とおく．$t\mapsto t^p$ は $[0,\infty)$ 上で連続かつ単調増加だから，
+  $\Wass_p$ の定義と補題~\ref{lem:wp-finite}より
+  \[
+    I:=\inf_{\pi\in\Couplings(\mu,\nu)}J(\pi)
+    =\Wass_p(\mu,\nu)^p<\infty.
+  \]
+  各 $k\in\N$ に対し，下限の定義より
+  \[
+    \pi_k\in\Couplings(\mu,\nu),
+    \qquad
+    I\leq J(\pi_k)\leq I+\frac1k
+  \]
+  となる $\pi_k$ を取る．
+
+  一点族 $\{\mu\},\{\nu\}$ は弱位相で compact だから，
+  Prokhorov の定理（定理~\ref{thm:meas-prokhorov}）より tight である．
+  したがって補題~\ref{lem:wp-plans-tight}を
+  $A=\{\mu\},B=\{\nu\}$ に適用すると，
+  $\Couplings(\mu,\nu)$，特に $(\pi_k)$ は tight である．
   $\mathcal{X}\times\mathcal{X}$ は Polish 空間なので，
   Prokhorov の定理により，部分列を取り直せば
   $\pi_k\Rightarrow\pi^*$ となる $\pi^*\in\Prob(\mathcal{X}\times\mathcal{X})$
   が存在する．
 
-  $\pi^*$ の周辺分布を確かめる．任意の $\varphi\in C_b(\mathcal{X})$ について
-  $(x,y)\mapsto\varphi(x)$ は $\mathcal{X}\times\mathcal{X}$ 上の有界連続関数だから，
+  任意の $\varphi\in C_b(\mathcal{X})$ に対し，
+  $(x,y)\mapsto\varphi(x)$ は有界連続だから，
   弱収束と周辺積分公式（補題~\ref{lem:meas-marginal-integral}）より
   \[
     \int\varphi\,\d(\pi^*\circ\mathrm{pr}_1^{-1})
@@ -331,18 +345,19 @@ $\int d^p\,\d\pi$ と略記する．
     =\int\varphi\,\d\mu.
   \]
   有界連続関数による測度の判定
-  （定理~\ref{thm:meas-cb-determines}）より $\pi^*$ の第1周辺分布は $\mu$ であり，
-  同様に第2周辺分布は $\nu$ である．したがって
+  （定理~\ref{thm:meas-cb-determines}）より第1周辺分布は $\mu$ であり，
+  同様に第2周辺分布は $\nu$ である．よって
   $\pi^*\in\Couplings(\mu,\nu)$ である．
 
-  最後に，$\pi^*\in\Couplings(\mu,\nu)$ だから下限の定義より
-  $I\leq\int d^p\,\d\pi^*$ である．一方，
-  補題~\ref{lem:wp-cost-lsc}より
+  最後に，下限の定義と補題~\ref{lem:wp-cost-lsc}より
   \[
-    \int d^p\,\d\pi^*
-    \leq\liminf_{k\to\infty}\int d^p\,\d\pi_k=I.
+    I
+    \leq J(\pi^*)
+    \leq\liminf_{k\to\infty}J(\pi_k)
+    =I.
   \]
-  二つの不等式から $\int d^p\,\d\pi^*=I$，すなわち $\pi^*$ は下限を達成する．
+  したがって $J(\pi^*)=I=\Wass_p(\mu,\nu)^p$ であり，
+  $\pi^*$ は下限を達成する．
 \end{proof}
 
 \section{Wasserstein 距離の距離性}
