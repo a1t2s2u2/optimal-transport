@@ -432,27 +432,30 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
   と書く．
 \end{definition}
 
-\begin{definition}{確率測度の弱位相と弱収束（Villani p.~43）}{meas-weak-convergence}
-  距離空間 $\mathcal{X}$ に対し，$\Prob(\mathcal{X})$ 上の
-  \textbf{弱位相}とは，すべての $f\in C_b(\mathcal{X})$ について写像
+\begin{definition}{確率測度の弱収束と弱位相（Villani p.~43）}{meas-weak-convergence}
+  距離空間 $\mathcal{X}$ 上の Borel 確率測度列 $(\eta_n)$ と
+  $\eta\in\Prob(\mathcal{X})$ に対し，
   \[
-    \Prob(\mathcal{X})\ni\eta
+    \boxed{
+      \eta_n\Rightarrow\eta
+      \quad\overset{\mathrm{def}}{\Longleftrightarrow}\quad
+      \int_{\mathcal{X}}f\,\d\eta_n
+      \longrightarrow
+      \int_{\mathcal{X}}f\,\d\eta
+      \quad(\forall f\in C_b(\mathcal{X}))
+    }
+  \]
+  と定める．このとき $(\eta_n)$ は $\eta$ に\textbf{弱収束}するという．
+  ここで $f$ は確率測度を調べる有界連続な\textbf{試験関数}である．
+
+  さらに，すべての $f\in C_b(\mathcal{X})$ に対して
+  \[
+    \Prob(\mathcal{X})\ni\rho
     \longmapsto
-    \int_{\mathcal{X}}f\,\d\eta\in\R
+    \int_{\mathcal{X}}f\,\d\rho\in\R
   \]
-  を連続にする最も粗い位相（開集合が最も少ない位相）をいう．
-  この位相に関して確率測度列
-  $(\eta_n)$ が $\eta\in\Prob(\mathcal{X})$ に収束することは，
-  \[
-    \eta_n\Rightarrow\eta
-    \quad\Longleftrightarrow\quad
-    \int_{\mathcal{X}}f\,\d\eta_n
-    \longrightarrow
-    \int_{\mathcal{X}}f\,\d\eta
-    \qquad(\forall f\in C_b(\mathcal{X}))
-  \]
-  と同値である．これを $\eta_n$ が $\eta$ に\textbf{弱収束}するといい，
-  $\eta_n\Rightarrow\eta$ と書く．
+  が連続となる最も粗い位相を，$\Prob(\mathcal{X})$ 上の
+  \textbf{弱位相}という．この位相における列の収束が，上で定めた弱収束である．
 \end{definition}
 
 \begin{theorem}{有界連続関数による確率測度の判定}{meas-cb-determines}
