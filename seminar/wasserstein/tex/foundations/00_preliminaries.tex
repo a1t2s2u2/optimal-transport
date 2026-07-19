@@ -905,27 +905,22 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
 \end{proof}
 
 \begin{lemma}{周辺積分公式}{meas-marginal-integral}
-  $\mathcal{X},\mathcal{Y}$ を距離空間，$\pi\in\Prob(\mathcal{X}\times \mathcal{Y})$ とし，
-  $\mu\in\Prob(\mathcal{X})$ を $\pi$ の第1周辺分布，すなわち
+  $\mathcal{X},\mathcal{Y}$ を距離空間とし，
+  $\pi\in\Prob(\mathcal{X}\times\mathcal{Y})$ の第1周辺分布を
+  $\mu\in\Prob(\mathcal{X})$ とする．すなわち，
   \[
     \pi(A\times\mathcal{Y})=\mu(A)
     \qquad(\forall A\in\Borel(\mathcal{X}))
   \]
-  をみたす確率測度とする．
-  非負可測な $f\colon \mathcal{X}\to[0,+\infty]$ または
-  $\mu$-可積分な $f\colon \mathcal{X}\to\R$ に対して
+  とする．このとき，任意の非負可測関数
+  $f\colon\mathcal{X}\to[0,+\infty]$，または任意の $\mu$-可積分関数
+  $f\colon\mathcal{X}\to\R$ に対して，
   \[
     \int_{\mathcal{X}\times \mathcal{Y}}f(x)\,\d\pi(x,y)
     =
-    \int_{\mathcal{X}} f\,\d\mu
+    \int_{\mathcal{X}}f(x)\,\d\mu(x)
   \]
-  が成り立つ（左辺の $f(x)$ は $(x,y)\mapsto f(x)$ の略記）．
-  特に，$1\leq p<\infty$ に対して
-  \[
-    \norm{f(x)}_{L^p(\pi)}=\norm{f}_{L^p(\mu)}
-  \]
-  である．
-  第2座標についても同様である．
+  が成り立つ．第2周辺分布についても同様である．
 \end{lemma}
 
 \begin{proof}
@@ -948,8 +943,6 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
   \]
   の順に積分公式が従う．$f$ が $\mu$-可積分ならば，
   $f=f^+-f^-$ と分解して非負可測関数の場合を適用すればよい．
-  最後に $\abs{f}^p$ に積分公式を適用して $p$ 乗根を取れば，
-  $L^p$ ノルムの等式を得る．
 \end{proof}
 
 \section{密度をもつ測度と Lebesgue 測度}
