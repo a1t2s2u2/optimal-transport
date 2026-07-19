@@ -222,9 +222,9 @@ $(\mathcal{X},d_p)$ は Polish 空間で，$\Borel(\mathcal{X})$ は
 
 \begin{proof}
   基点 $x^0=(x^0_i)_i$ を固定する．直積測度の座標周辺分布は
-  $\mu\circ\mathrm{pr}_i^{-1}=\mu_i$（矩形集合上で直接確かめられ，
-  一致定理~\ref{thm:meas-uniqueness}による）だから，
-  変数変換公式（補題~\ref{lem:meas-change-of-variables}）より
+  $\mu_i$ である（矩形集合上で直接確かめられ，
+  一致定理~\ref{thm:meas-uniqueness}による）．
+  よって周辺積分公式（補題~\ref{lem:meas-marginal-integral}）より
   \[
     \int_{\mathcal{X}}d_p(x,x^0)^p\,\d\mu
     =\sum_{i=1}^D\int_{\mathcal{X}}d_i(x_i,x^0_i)^p\,\d\mu
@@ -234,15 +234,26 @@ $(\mathcal{X},d_p)$ は Polish 空間で，$\Borel(\mathcal{X})$ は
 
   \textbf{（$\geq$）}
   $\pi\in\Couplings(\mu,\nu)$ を任意に取り，
-  $\mathrm{pr}_{(i)}(x,y):=(x_i,y_i)$ による像測度
-  $\pi_i:=\pi\circ\mathrm{pr}_{(i)}^{-1}$ を考える．
-  $\mathrm{pr}_1\circ\mathrm{pr}_{(i)}=\mathrm{pr}_i\circ\mathrm{pr}_1$
-  と合成則（主張~\ref{clm:meas-pf-compose}）より
-  $\pi_i$ の第1周辺分布は
-  $(\pi\circ\mathrm{pr}_1^{-1})\circ\mathrm{pr}_i^{-1}
-  =\mu\circ\mathrm{pr}_i^{-1}=\mu_i$，
-  同様に第2周辺分布は $\nu_i$ だから
-  $\pi_i\in\Couplings(\mu_i,\nu_i)$ である．よって
+  $(x_i,y_i)$ 成分の周辺分布
+  $\pi_i\in\Prob(\mathcal{X}_i\times\mathcal{X}_i)$ を
+  \[
+    \pi_i(E)
+    :=\pi\bigl(\{(x,y)\in\mathcal{X}\times\mathcal{X}
+      \mid (x_i,y_i)\in E\}\bigr)
+    \qquad(E\in\Borel(\mathcal{X}_i\times\mathcal{X}_i))
+  \]
+  とする．任意の $A_i,B_i\in\Borel(\mathcal{X}_i)$ に対し
+  \[
+    \begin{aligned}
+      \pi_i(A_i\times\mathcal{X}_i)
+      &=\mu\bigl(\{x\in\mathcal{X}\mid x_i\in A_i\}\bigr)
+      =\mu_i(A_i),\\
+      \pi_i(\mathcal{X}_i\times B_i)
+      &=\nu\bigl(\{y\in\mathcal{X}\mid y_i\in B_i\}\bigr)
+      =\nu_i(B_i).
+    \end{aligned}
+  \]
+  したがって $\pi_i\in\Couplings(\mu_i,\nu_i)$ である．よって
   \[
     \int_{\mathcal{X}\times\mathcal{X}}d_p(x,y)^p\,\d\pi
     =\sum_{i=1}^D\int d_i(x_i,y_i)^p\,\d\pi
