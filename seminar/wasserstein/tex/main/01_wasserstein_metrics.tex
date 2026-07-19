@@ -338,43 +338,10 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   \]
   （主張~\ref{clm:meas-product-marginals}）だから
   $\Couplings(\mu,\nu)\neq\emptyset$ である．
-
-  任意に $x_0\in\mathcal{X}$ を固定する．三角不等式と距離の対称性より
+  また，補題~\ref{lem:wp-finite}より $\Wass_p(\mu,\nu)<\infty$ だから，
+  $\Wass_p$ の定義より
   \[
-    d(x,y)
-    \leq d(x,x_0)+d(x_0,y)
-    =d(x,x_0)+d(y,x_0).
-  \]
-  したがって，$t\mapsto t^p$ の凸性
-  （注意~\ref{rem:meas-real-facts}）より
-  \[
-    d(x,y)^p
-    \leq
-    2^{p-1}\bigl(d(x,x_0)^p+d(y,x_0)^p\bigr).
-  \]
-  したがって，周辺積分公式（補題~\ref{lem:meas-marginal-integral}）より
-  \[
-    \begin{aligned}
-      J(\mu\otimes\nu)
-      &\leq
-      2^{p-1}
-      \int_{\mathcal{X}\times\mathcal{X}}
-      \bigl(d(x,x_0)^p+d(y,x_0)^p\bigr)
-      \,\d(\mu\otimes\nu)(x,y)\\
-      &=
-      2^{p-1}\left(
-        \int_{\mathcal{X}}d(x,x_0)^p\,\d\mu(x)
-        +
-        \int_{\mathcal{X}}d(y,x_0)^p\,\d\nu(y)
-      \right)\\
-      &<\infty.
-    \end{aligned}
-  \]
-  最後の不等式は $\mu,\nu\in\Pp{p}(\mathcal{X})$ による．よって
-  \[
-    0\leq I\leq J(\mu\otimes\nu)<\infty,
-    \qquad
-    I=\Wass_p(\mu,\nu)^p.
+    0\leq I=\Wass_p(\mu,\nu)^p<\infty.
   \]
 
   \textbf{1. 最小化列を取る．}
