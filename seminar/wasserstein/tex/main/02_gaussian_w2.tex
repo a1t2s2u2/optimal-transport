@@ -11,6 +11,14 @@ $W_p$ が距離であることを示した．曲率へ進むには，二点間�
 この場合は $W_2$ が閉形式をもち，一般の Wasserstein 空間の
 微分構造を準備せずに，潜在空間上の計量テンソルまで直接進めるからである．
 
+\begin{remark}{Euclid 空間は Polish 空間である}{gw-euclidean-polish}
+  以下 $\R^n$ には Euclid 距離 $d(x,y):=\norm{x-y}$ を入れる．
+  $\mathbb{Q}^n$ は可算かつ $\R^n$ に稠密であり，Euclid 距離に関する
+  Cauchy 列は各座標で収束するから $\R^n$ は完備である．
+  よって定義~\ref{def:meas-polish}の意味で $\R^n$ は Polish 空間であり，
+  第\ref{ch:wasserstein-metrics}章の $W_2$ の理論を適用できる．
+\end{remark}
+
 \section{対角 Gaussian 分布}
 \label{sec:gw-gaussian}
 
@@ -20,7 +28,7 @@ $W_p$ が距離であることを示した．曲率へ進むには，二点間�
     \varphi_n(x):=(2\pi)^{-n/2}\exp\left(-\frac{\norm{x}^2}{2}\right)
     \qquad(x\in\R^n)
   \]
-  を Lebesgue 測度に関してもつ確率測度を
+  を Lebesgue 測度（定義~\ref{def:meas-lebesgue}）に関してもつ確率測度を
   \textbf{$n$ 次元標準 Gaussian 測度}といい，$\gamma^{(n)}$ と書く．
   すなわち，$A\in\Borel(\R^n)$ に対して
   \[
