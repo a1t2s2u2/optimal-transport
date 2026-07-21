@@ -48,15 +48,15 @@ const CHAPTERS = [
     nav: "Wₚ の距離性", eyebrow: "1. The Metric Wₚ",
     title: "Wasserstein 距離 Wₚ",
   }],
-  ["main/03_concentration.tex", "02-concentration.md", {
-    id: "concentration", group: "main",
-    nav: "Gaussian と集中", eyebrow: "2. Concentration",
-    title: "Talagrand の不等式と Gaussian 測度の集中",
+  ["main/02_gaussian_w2.tex", "02-gaussian-w2.md", {
+    id: "gaussian-w2", group: "main",
+    nav: "Gaussian と W₂", eyebrow: "2. Gaussian W₂",
+    title: "対角 Gaussian decoder と W₂",
   }],
-  ["main/04_latent.tex", "03-latent.md", {
-    id: "latent", group: "main",
-    nav: "潜在空間への応用", eyebrow: "3. Latent OT",
-    title: "応用：潜在空間の最適輸送幾何",
+  ["main/03_latent_curvature.tex", "03-latent-curvature.md", {
+    id: "latent-curvature", group: "main",
+    nav: "潜在空間の曲率", eyebrow: "3. Latent Curvature",
+    title: "Gaussian decoder が作る潜在空間の曲率",
   }],
   ["foundations/00_preliminaries.tex", "A0-preliminaries.md", {
     id: "found-preliminaries", group: "appendix",

@@ -1,0 +1,325 @@
+\chapter{対角 Gaussian decoder と \texorpdfstring{$W_2$}{W2}}
+\label{ch:gaussian-w2}
+
+第\ref{ch:wasserstein-metrics}章では，一般の Polish 空間上で
+$W_p$ が距離であることを示した．曲率へ進むには，二点間の距離だけでなく，
+微小変位に対する二次形式が必要になる．そこで本章以降は
+\[
+  p=2,\qquad \mathcal{X}=\R^n
+\]
+に限定する．さらに，まず decoder 分布を対角 Gaussian に限定する．
+この場合は $W_2$ が閉形式をもち，一般の Wasserstein 空間の
+微分構造を準備せずに，潜在空間上の計量テンソルまで直接進めるからである．
+
+\section{対角 Gaussian 分布}
+\label{sec:gw-gaussian}
+
+\begin{definition}{標準 Gaussian 測度}{gw-standard-gaussian}
+  $n\in\N$ とする．$\R^n$ 上の密度
+  \[
+    \varphi_n(x):=(2\pi)^{-n/2}\exp\left(-\frac{\norm{x}^2}{2}\right)
+    \qquad(x\in\R^n)
+  \]
+  を Lebesgue 測度に関してもつ確率測度を
+  \textbf{$n$ 次元標準 Gaussian 測度}といい，$\gamma^{(n)}$ と書く．
+  すなわち，$A\in\Borel(\R^n)$ に対して
+  \[
+    \gamma^{(n)}(A)=\int_A\varphi_n(x)\,\d x
+  \]
+  である．
+\end{definition}
+
+\begin{remark}{標準 Gaussian の一次・二次モーメント}{gw-standard-moments}
+  座標を $x=(x_1,\dots,x_n)$ とすると，
+  \[
+    \int_{\R^n}x_i\,\d\gamma^{(n)}(x)=0,
+    \qquad
+    \int_{\R^n}x_ix_j\,\d\gamma^{(n)}(x)
+    =\begin{cases}1&(i=j),\\0&(i\neq j)\end{cases}
+  \]
+  が成り立つ．第一式と $i\neq j$ の場合は密度の各座標に関する対称性から，
+  $i=j$ の場合は1次元 Gaussian 積分から従う．
+\end{remark}
+
+\begin{definition}{対角 Gaussian 分布}{gw-diagonal-gaussian}
+  $m=(m_1,\dots,m_n)\in\R^n$，
+  $\sigma=(\sigma_1,\dots,\sigma_n)\in(0,\infty)^n$ とする．
+  アフィン写像
+  \[
+    A_{m,\sigma}(x)
+    :=m+\operatorname{diag}(\sigma_1,\dots,\sigma_n)x
+  \]
+  による $\gamma^{(n)}$ の像測度
+  \[
+    \mathcal{N}\bigl(m,\operatorname{diag}(\sigma^2)\bigr)
+    :=\gamma^{(n)}\circ A_{m,\sigma}^{-1}
+  \]
+  を，平均 $m$，対角共分散
+  $\operatorname{diag}(\sigma_1^2,\dots,\sigma_n^2)$ の
+  \textbf{対角 Gaussian 分布}という．
+\end{definition}
+
+\begin{lemma}{対角 Gaussian は有限二次モーメントをもつ}{gw-gaussian-p2}
+  \[
+    \mathcal{N}\bigl(m,\operatorname{diag}(\sigma^2)\bigr)
+    \in\Pp{2}(\R^n)
+  \]
+  であり，
+  \[
+    \int_{\R^n}\norm{x}^2\,
+    \d\mathcal{N}\bigl(m,\operatorname{diag}(\sigma^2)\bigr)(x)
+    =\norm{m}^2+\norm{\sigma}^2
+  \]
+  が成り立つ．
+\end{lemma}
+
+\begin{proof}
+  像測度の変数変換公式（補題~\ref{lem:meas-change-of-variables}）と
+  注意~\ref{rem:gw-standard-moments}より，
+  \[
+    \begin{aligned}
+      \int_{\R^n}\norm{x}^2\,
+      \d\mathcal{N}\bigl(m,\operatorname{diag}(\sigma^2)\bigr)(x)
+      &=\int_{\R^n}\sum_{i=1}^n(m_i+\sigma_i z_i)^2
+        \,\d\gamma^{(n)}(z)\\
+      &=\sum_{i=1}^n(m_i^2+\sigma_i^2)
+       =\norm{m}^2+\norm{\sigma}^2<\infty.
+    \end{aligned}
+  \]
+  基点を $0\in\R^n$ とする定義~\ref{def:wp-p-space}により結論を得る．
+\end{proof}
+
+\section{1次元 Gaussian 間の \texorpdfstring{$W_2$}{W2}}
+\label{sec:gw-one-dimensional}
+
+最初に1次元で計算する．上界を与える coupling を一つ作るだけでは
+最適性は分からないため，任意の coupling に対する下界も同時に示す．
+
+\begin{theorem}{1次元 Gaussian 間の $W_2$}{gw-w2-one-dimensional}
+  $a,b\in\R$，$s,t>0$ とし，
+  \[
+    \mu=\mathcal{N}(a,s^2),
+    \qquad
+    \nu=\mathcal{N}(b,t^2)
+  \]
+  とおく．このとき
+  \[
+    \boxed{
+      \Wass_2(\mu,\nu)^2=(a-b)^2+(s-t)^2
+    }
+  \]
+  である．さらに，写像
+  \[
+    z\longmapsto(a+sz,\ b+tz)
+  \]
+  による $\gamma^{(1)}$ の像測度は最適 coupling である．
+\end{theorem}
+
+\begin{proof}
+  \textbf{1. 任意の coupling に対する下界．}
+
+  $\pi\in\Couplings(\mu,\nu)$ を任意に取る．周辺積分公式
+  （補題~\ref{lem:meas-marginal-integral}）より
+  \[
+    \begin{gathered}
+      \int(x-a)\,\d\pi(x,y)=0,
+      \qquad
+      \int(y-b)\,\d\pi(x,y)=0,\\
+      \int(x-a)^2\,\d\pi(x,y)=s^2,
+      \qquad
+      \int(y-b)^2\,\d\pi(x,y)=t^2.
+    \end{gathered}
+  \]
+  したがって
+  \[
+    \begin{aligned}
+      \int(x-y)^2\,\d\pi(x,y)
+      &=(a-b)^2+s^2+t^2
+        -2\int(x-a)(y-b)\,\d\pi(x,y).
+    \end{aligned}
+  \]
+  Hölder の不等式（定理~\ref{thm:meas-holder}，指数 $2,2$）より
+  \[
+    \int(x-a)(y-b)\,\d\pi(x,y)
+    \leq
+    \left(\int(x-a)^2\,\d\pi\right)^{1/2}
+    \left(\int(y-b)^2\,\d\pi\right)^{1/2}
+    =st.
+  \]
+  よってすべての $\pi\in\Couplings(\mu,\nu)$ に対して
+  \[
+    \int(x-y)^2\,\d\pi(x,y)
+    \geq(a-b)^2+s^2+t^2-2st
+    =(a-b)^2+(s-t)^2.            \tag{1}
+  \]
+
+  \textbf{2. 下界を達成する coupling．}
+
+  $B(z):=(a+sz,b+tz)$ とおき，
+  $\pi^*:=\gamma^{(1)}\circ B^{-1}$ とする．
+  第1成分の周辺分布は $\mu$，第2成分の周辺分布は $\nu$ だから
+  $\pi^*\in\Couplings(\mu,\nu)$ である．また，像測度の積分公式より
+  \[
+    \begin{aligned}
+      \int(x-y)^2\,\d\pi^*(x,y)
+      &=\int_{\R}\bigl((a-b)+(s-t)z\bigr)^2
+        \,\d\gamma^{(1)}(z)\\
+      &=(a-b)^2+(s-t)^2.
+    \end{aligned}
+  \]
+  これは (1) の下界に一致するため，$\pi^*$ は最適であり，
+  主張した $W_2^2$ の公式が得られる．
+\end{proof}
+
+\begin{remark}{最適 coupling の意味}{gw-common-noise}
+  上の coupling は，同じ標準 Gaussian 変数 $z$ を用いて
+  $x=a+sz$ と $y=b+tz$ を同時に作る．つまり二つの分布の
+  同じ分位点どうしを対応させる coupling である．
+  一般の最適 coupling は一意とは限らないが，$s,t>0$ の1次元
+  Gaussian の場合は，Hölder の等号条件からこの coupling が一意になる．
+  本章で必要なのは存在と閉形式であり，一意性は以下では用いない．
+\end{remark}
+
+\section{対角 Gaussian 間の閉形式}
+\label{sec:gw-diagonal-formula}
+
+\begin{theorem}{対角 Gaussian 間の $W_2$}{gw-w2-diagonal}
+  $m,m'\in\R^n$，$\sigma,\sigma'\in(0,\infty)^n$ とし，
+  \[
+    \mu=\mathcal{N}\bigl(m,\operatorname{diag}(\sigma^2)\bigr),
+    \qquad
+    \nu=\mathcal{N}\bigl(m',\operatorname{diag}((\sigma')^2)\bigr)
+  \]
+  とおく．このとき
+  \[
+    \boxed{
+      \Wass_2(\mu,\nu)^2
+      =\norm{m-m'}^2+\norm{\sigma-\sigma'}^2
+    }
+  \]
+  である．さらに，写像
+  \[
+    z\longmapsto
+    \left(m+\operatorname{diag}(\sigma)z,\,
+          m'+\operatorname{diag}(\sigma')z\right)
+  \]
+  による $\gamma^{(n)}$ の像測度は最適 coupling である．
+\end{theorem}
+
+\begin{proof}
+  \textbf{1. 任意の coupling に対する下界．}
+
+  $\pi\in\Couplings(\mu,\nu)$ を任意に取る．各 $i=1,\dots,n$ について，
+  写像 $(x,y)\mapsto(x_i,y_i)$ による $\pi$ の像測度を $\pi_i$ とする．
+  その周辺分布はそれぞれ
+  $\mathcal{N}(m_i,\sigma_i^2)$ と
+  $\mathcal{N}(m_i',(\sigma_i')^2)$ だから，
+  $\pi_i$ はこの二つの1次元 Gaussian の coupling である．
+  定理~\ref{thm:gw-w2-one-dimensional}の下界より
+  \[
+    \begin{aligned}
+      \int_{\R^n\times\R^n}\norm{x-y}^2\,\d\pi(x,y)
+      &=\sum_{i=1}^n\int_{\R\times\R}(x_i-y_i)^2\,\d\pi_i(x_i,y_i)\\
+      &\geq\sum_{i=1}^n
+        \bigl((m_i-m_i')^2+(\sigma_i-\sigma_i')^2\bigr)\\
+      &=\norm{m-m'}^2+\norm{\sigma-\sigma'}^2.
+    \end{aligned}                                      \tag{2}
+  \]
+
+  \textbf{2. 下界を達成する coupling．}
+
+  主張中の写像を $C$ とし，
+  $\pi^*:=\gamma^{(n)}\circ C^{-1}$ とおく．定義から
+  $\pi^*\in\Couplings(\mu,\nu)$ であり，
+  \[
+    \begin{aligned}
+      \int\norm{x-y}^2\,\d\pi^*(x,y)
+      &=\int_{\R^n}
+        \norm{(m-m')+\operatorname{diag}(\sigma-\sigma')z}^2
+        \,\d\gamma^{(n)}(z)\\
+      &=\norm{m-m'}^2+\norm{\sigma-\sigma'}^2.
+    \end{aligned}
+  \]
+  これは (2) の下界を達成する．$W_2^2$ の定義から結論を得る．
+\end{proof}
+
+\begin{remark}{一般の Gaussian との違い}{gw-full-covariance}
+  共分散行列が対角でない一般の Gaussian に対しても $W_2$ は閉形式をもつが，
+  行列平方根を含む Bures--Wasserstein 距離が現れる．
+  これは Givens--Shortt (1984) および Takatsu (2011) で扱われる．
+  本資料では曲率計算までの最短経路を保つため，
+  標準偏差を Euclid ベクトルとして扱える対角の場合に限定する．
+\end{remark}
+
+\section{Gaussian decoder が定める引き戻し距離}
+\label{sec:gw-decoder-distance}
+
+\begin{definition}{対角 Gaussian decoder}{gw-gaussian-decoder}
+  潜在空間を $\mathcal{Z}\subset\R^d$ とする．二つの写像
+  \[
+    m\colon\mathcal{Z}\to\R^n,
+    \qquad
+    \sigma\colon\mathcal{Z}\to(0,\infty)^n
+  \]
+  に対して
+  \[
+    K_z:=\mathcal{N}\bigl(m(z),\operatorname{diag}(\sigma(z)^2)\bigr)
+    \in\Pp{2}(\R^n)
+  \]
+  を潜在点 $z$ における\textbf{decoder 分布}という．また
+  \[
+    F\colon\mathcal{Z}\to\R^{2n},
+    \qquad
+    F(z):=(m(z),\sigma(z))
+  \]
+  を decoder の\textbf{パラメータ写像}という．
+\end{definition}
+
+\begin{proposition}{引き戻し距離の閉形式}{gw-pullback-distance}
+  $z,z'\in\mathcal{Z}$ に対して
+  \[
+    d_K(z,z'):=\Wass_2(K_z,K_{z'})
+  \]
+  とおくと，
+  \[
+    \boxed{
+      d_K(z,z')=\norm{F(z)-F(z')}
+    }
+  \]
+  が成り立つ．したがって $d_K$ は $\mathcal{Z}$ 上の擬距離であり，
+  $F$ が単射なら距離である．
+\end{proposition}
+
+\begin{proof}
+  定理~\ref{thm:gw-w2-diagonal}を $K_z,K_{z'}$ に適用すると
+  \[
+    d_K(z,z')^2
+    =\norm{m(z)-m(z')}^2+\norm{\sigma(z)-\sigma(z')}^2
+    =\norm{F(z)-F(z')}^2.
+  \]
+  非負な平方根を取れば閉形式を得る．Euclid 距離の対称性と
+  三角不等式から $d_K$ は擬距離である．さらに $F$ が単射なら
+  \[
+    d_K(z,z')=0
+    \iff F(z)=F(z')
+    \iff z=z'
+  \]
+  なので距離になる．これは一般の距離性
+  （命題~\ref{prop:wp-metric}）をこの Gaussian 族上で具体化したものである．
+\end{proof}
+
+\begin{remark}{曲率へ進むために残る問題}{gw-transition-curvature}
+  $d_K(z,z')$ は，$F(z),F(z')\in\R^{2n}$ を結ぶ直線の長さ，すなわち
+  decoder 像の周囲の Euclid 空間で測った\textbf{弦長}である．
+  曲率はこの二点間公式だけから計算するのではなく，
+  $F$ の微分が各潜在方向の長さをどのように変えるかを表す
+  局所的な計量テンソルから計算する．次章でこの微分を取り出す．
+\end{remark}
+
+\begin{remark}{文献との対応}{gw-references}
+  $W_2$ の定義と距離性は Villani (2009) Definitions 6.1, 6.4 に従う．
+  Gaussian 間の一般の閉形式は Givens--Shortt (1984) に遡り，
+  Gaussian 測度の有限次元 Riemann 幾何は Takatsu (2011) で詳しく扱われる．
+  本章の対角版は，後続の引き戻し計算に必要な範囲を
+  定理~\ref{thm:gw-w2-one-dimensional}から自己完結に証明したものである．
+\end{remark}
