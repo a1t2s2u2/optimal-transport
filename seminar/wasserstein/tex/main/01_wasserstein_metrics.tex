@@ -231,7 +231,7 @@ Borel $\sigma$-代数 $\Borel(\mathcal{X})$ 上の確率測度全体を
 \begin{enumerate}
   \item 輸送コストの下限に近づく最小化列 $(\pi_k)$ を取る．
   \item coupling の tightness と Prokhorov の定理を用いて，
-    弱収束部分列 $\pi_{k_j}\Rightarrow\pi^*$ を取る．
+    弱収束部分列 $\pi_{k_j}\weakto\pi^*$ を取る．
   \item 弱極限 $\pi^*$ の二つの周辺分布が $\mu,\nu$ のままであることを示す．
   \item 輸送コストの下半連続性を用いて，$\pi^*$ が下限を達成することを示す．
 \end{enumerate}
@@ -241,7 +241,7 @@ $\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)$ を
 $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 （定義~\ref{def:meas-weak-convergence}）をここで再掲すると，
 \[
-  \pi_k\Rightarrow\pi
+  \pi_k\weakto\pi
   \quad\overset{\mathrm{def}}{\Longleftrightarrow}\quad
   \int F\,\d\pi_k\longrightarrow\int F\,\d\pi
   \qquad
@@ -252,7 +252,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   $1\leq p<\infty$ とする．
   $\Prob(\mathcal{X}\times\mathcal{X})$ の列 $(\pi_k)$ が
   $\pi\in\Prob(\mathcal{X}\times\mathcal{X})$ に弱収束，すなわち
-  $\pi_k\Rightarrow\pi$ とする．このとき
+  $\pi_k\weakto\pi$ とする．このとき
   \[
     \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)
     \leq
@@ -413,7 +413,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   集合の恒等式
   \[
     (\mathcal{X}\times\mathcal{Y})\setminus(K\times L)
-    =igl((\mathcal{X}\setminus K)\times\mathcal{Y}\bigr)
+    =\bigl((\mathcal{X}\setminus K)\times\mathcal{Y}\bigr)
       \cup
       \bigl(\mathcal{X}\times(\mathcal{Y}\setminus L)\bigr)
   \]
@@ -519,7 +519,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   Prokhorov の定理より，ある部分列 $(\pi_{k_j})$ と
   $\pi^*\in\Prob(\mathcal{X}\times\mathcal{X})$ が存在して
   \[
-    \pi_{k_j}\Rightarrow\pi^*
+    \pi_{k_j}\weakto\pi^*
   \]
   が成り立つ．
 
@@ -529,7 +529,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
     F_\varphi(x,y):=\varphi(x)
   \]
   とおくと，$F_\varphi\in C_b(\mathcal{X}\times\mathcal{X})$ である．
-  したがって $\pi_{k_j}\Rightarrow\pi^*$ と弱収束の定義より
+  したがって $\pi_{k_j}\weakto\pi^*$ と弱収束の定義より
   \[
     \int_{\mathcal{X}\times\mathcal{X}}
     \varphi(x)\,\d\pi_{k_j}(x,y)
@@ -569,7 +569,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   \]
 
   \textbf{4. $\pi^*$ が最小値を達成する．}
-  $(x,y)\mapsto d(x,y)^p$ は非負連続関数であり，特に下半連続である．
+  $(x,y)\mapsto d(x,y)^p$ は非負連続関数なので，
   補題~\ref{lem:wp-cost-lsc}より
   \[
     J(\pi^*)
@@ -613,8 +613,7 @@ $\Wass_p(\mu,\nu)=0\Rightarrow\mu=\nu$ では最適 coupling を用いる．
 
 \begin{lemma}{接着補題（gluing lemma；Villani pp.~23--24）}{wp-gluing}
   $\mu,\nu,\xi\in\Prob(\mathcal{X})$，$\pi\in\Couplings(\mu,\nu)$，
-  $\sigma\in\Couplings(\nu,\xi)$ とする
-  （$\mathcal{X}^3$ には付録Aの直積距離を入れる）．
+  $\sigma\in\Couplings(\nu,\xi)$ とする．
   このとき $\mathcal{X}^3$ 上の確率測度 $\gamma$ で，
   任意の $A,B,C\in\Borel(\mathcal{X})$ に対し
   \[
@@ -628,72 +627,36 @@ $\Wass_p(\mu,\nu)=0\Rightarrow\mu=\nu$ では最適 coupling を用いる．
 \end{lemma}
 
 \begin{proof}
-  \textbf{1. 二つの coupling を共通の周辺分布 $\nu$ に沿って分解する．}
-
+  発想は，共通の中間点 $y\sim\nu$ を先に取り，そのもとで
+  $x$ と $z$ を条件付き独立に取ることである．
   測度分解定理（定理~\ref{thm:meas-disintegration}）を
-  $\pi\in\Couplings(\mu,\nu)$ に適用すると，$\nu$ から $\mathcal{X}$ への
-  Markov 核 $K_\pi$ が存在し，すべての
-  $A,B\in\Borel(\mathcal{X})$ に対して
+  $\pi,\sigma$ に適用すると
+  （後者には第1，第2座標を入れ替えて適用），Markov 核
+  $K_\pi,K_\sigma$ が存在して
   \[
-    \pi(A\times B)=\int_B K_\pi(y,A)\,\d\nu(y)
-  \]
-  が成り立つ．これを
-  \[
-    \pi(\d x,\d y)=K_\pi(y,\d x)\,\nu(\d y)
-  \]
-  と書く．
-
-  $\sigma\in\Couplings(\nu,\xi)$ については第1，第2座標を入れ替えて
-  同じ定理を適用する．すると $\nu$ から $\mathcal{X}$ への Markov 核
-  $K_\sigma$ が存在して
-  \[
+    \pi(\d x,\d y)=K_\pi(y,\d x)\,\nu(\d y),
+    \qquad
     \sigma(\d y,\d z)=\nu(\d y)\,K_\sigma(y,\d z)
   \]
   と書ける．
-
-  \textbf{2. 条件付き分布を使って三変数の測度を作る．}
-
   Markov 核による測度の貼り合わせ
-  （定理~\ref{thm:meas-kernel-composition}）を
-  $\nu,K_\pi,K_\sigma$ に適用すると，
+  （定理~\ref{thm:meas-kernel-composition}）により
   \[
     \gamma(\d x,\d y,\d z)
     :=K_\pi(y,\d x)\,\nu(\d y)\,K_\sigma(y,\d z)
   \]
-  で表される $\gamma\in\Prob(\mathcal{X}^3)$ が存在する．具体的には，
-  任意の $A,B,C\in\Borel(\mathcal{X})$ に対して
-  \[
-    \gamma(A\times B\times C)
-    =\int_B K_\pi(y,A)K_\sigma(y,C)\,\d\nu(y)
-  \]
-  である．
-
-  \textbf{3. 必要な二つの周辺分布を確かめる．}
-
-  各 $y$ に対して $K_\pi(y,\mathcal{X})=K_\sigma(y,\mathcal{X})=1$
-  だから，前式で $C=\mathcal{X}$，または $A=\mathcal{X}$ とおくと
+  で定まる $\gamma\in\Prob(\mathcal{X}^3)$ を取る．
+  各 Markov 核は確率測度に値を取るから，
   \[
     \begin{aligned}
       \gamma(A\times B\times\mathcal{X})
-      &=\int_B K_\pi(y,A)K_\sigma(y,\mathcal{X})\,\d\nu(y)\\
-      &=\int_B K_\pi(y,A)\,\d\nu(y)\\
-      &=\pi(A\times B),\\[3pt]
+      &=\int_B K_\pi(y,A)\,\d\nu(y)=\pi(A\times B),\\
       \gamma(\mathcal{X}\times B\times C)
-      &=\int_B K_\pi(y,\mathcal{X})K_\sigma(y,C)\,\d\nu(y)\\
-      &=\int_B K_\sigma(y,C)\,\d\nu(y)\\
-      &=\sigma(B\times C).
+      &=\int_B K_\sigma(y,C)\,\d\nu(y)=\sigma(B\times C).
     \end{aligned}
   \]
-  したがって $\gamma$ は主張された二つの周辺分布をもつ．
+  よって主張を得る．
 \end{proof}
-
-\begin{remark}{接着補題の確率的な意味}{wp-gluing-meaning}
-  $\gamma$ は，まず $y\sim\nu$ を取り，$y$ を固定した条件のもとで
-  $x\sim K_\pi(y,\cdot)$ と $z\sim K_\sigma(y,\cdot)$ を独立に取る，
-  という三段階の操作で得られる同時分布である．
-  したがって $(x,y)$ の同時分布は $\pi$，$(y,z)$ の同時分布は $\sigma$ のまま，
-  二つの輸送を共通の中間点 $y$ を介して一つにまとめられる．
-\end{remark}
 
 \begin{proposition}{Wasserstein 距離は距離である（Villani Def 6.4）}{wp-metric}
   $1\leq p<\infty$ に対し，

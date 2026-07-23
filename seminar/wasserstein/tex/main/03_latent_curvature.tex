@@ -1,0 +1,604 @@
+\chapter{Gaussian decoder が作る潜在空間の曲率}
+\label{ch:latent-curvature}
+
+前章では，対角 Gaussian decoder の $W_2$ 距離が
+パラメータ写像 $F=(m,\sigma)$ の像の間の Euclid 距離に一致することを示した．
+本章では $F$ を微分して潜在空間上の計量テンソルを取り出し，
+その計量から曲率を計算する．ここで計算するのは周囲の
+$\R^{2n}$ の曲率ではなく，decoder 像に沿って測った
+潜在空間の\textbf{内在的な曲率}である．
+
+\section{微小な \texorpdfstring{$W_2$}{W2} 距離と引き戻し計量}
+\label{sec:lc-pullback-metric}
+
+以下では，潜在空間 $\mathcal{Z}\subset\R^d$ は開集合とし，
+\[
+  m\colon\mathcal{Z}\to\R^n,
+  \qquad
+  \sigma\colon\mathcal{Z}\to(0,\infty)^n
+\]
+は滑らか，すなわち何回でも連続微分可能であるとする．
+前章と同じく
+\[
+  K_z=\mathcal{N}\bigl(m(z),\operatorname{diag}(\sigma(z)^2)\bigr),
+  \qquad
+  F(z)=(m(z),\sigma(z))\in\R^{2n}
+\]
+とおく．
+
+\begin{definition}{Jacobi 行列と immersion}{lc-immersion}
+  $z=(z^1,\dots,z^d)\in\mathcal{Z}$ における $F$ の
+  \textbf{Jacobi 行列}を
+  \[
+    J_F(z)
+    :=\left(\frac{\partial F^\alpha}{\partial z^i}(z)\right)_
+      {\substack{1\leq\alpha\leq2n\\1\leq i\leq d}}
+    \in\R^{2n\times d}
+  \]
+  とする．すべての $z\in\mathcal{Z}$ で
+  $\operatorname{rank}J_F(z)=d$ であるとき，$F$ を
+  \textbf{immersion}（はめ込み）という．
+\end{definition}
+
+\begin{definition}{Gaussian decoder の引き戻し計量}{lc-pullback-metric}
+  $F$ が immersion であるとする．各 $z\in\mathcal{Z}$ において
+  \[
+    \boxed{
+      G(z):=J_F(z)^{\mathsf T}J_F(z)
+      =J_m(z)^{\mathsf T}J_m(z)
+       +J_\sigma(z)^{\mathsf T}J_\sigma(z)
+    }
+  \]
+  と定める．成分で書けば
+  \[
+    G_{ij}(z)
+    =\sum_{\alpha=1}^n
+       \frac{\partial m^\alpha}{\partial z^i}(z)
+       \frac{\partial m^\alpha}{\partial z^j}(z)
+     +\sum_{\alpha=1}^n
+       \frac{\partial \sigma^\alpha}{\partial z^i}(z)
+       \frac{\partial \sigma^\alpha}{\partial z^j}(z).
+  \]
+  この対称行列場 $G=(G_{ij})$ を，Gaussian decoder が定める
+  潜在空間上の\textbf{引き戻し Riemann 計量}という．
+\end{definition}
+
+\begin{proposition}{引き戻し計量の正定値性}{lc-positive-definite}
+  固定した $z\in\mathcal{Z}$ に対して，次は同値である．
+  \begin{enumerate}
+    \item $G(z)$ は正定値である．
+    \item $J_F(z)$ の列は1次独立である．
+    \item $\operatorname{rank}J_F(z)=d$ である．
+  \end{enumerate}
+\end{proposition}
+
+\begin{proof}
+  $a\in\R^d$ に対して
+  \[
+    a^{\mathsf T}G(z)a
+    =a^{\mathsf T}J_F(z)^{\mathsf T}J_F(z)a
+    =\norm{J_F(z)a}^2.
+  \]
+  したがって $a\neq0$ のとき左辺が常に正であることと，
+  $J_F(z)a=0$ の解が $a=0$ のみであることは同値である．
+  後者は $J_F(z)$ の列1次独立性，すなわち階数が $d$ であることと同値である．
+\end{proof}
+
+\begin{theorem}{微小 $W_2$ 距離の二次展開}{lc-local-expansion}
+  $z\in\mathcal{Z}$ を固定する．$h\to0$ かつ $z+h\in\mathcal{Z}$ のとき
+  \[
+    \boxed{
+      \Wass_2(K_z,K_{z+h})^2
+      =h^{\mathsf T}G(z)h+o(\norm{h}^2)
+    }
+  \]
+  が成り立つ．
+\end{theorem}
+
+\begin{proof}
+  $F$ の微分可能性より
+  \[
+    F(z+h)-F(z)=J_F(z)h+r(h),
+    \qquad
+    \frac{\norm{r(h)}}{\norm{h}}\longrightarrow0
+  \]
+  である．命題~\ref{prop:gw-pullback-distance}を用いると
+  \[
+    \begin{aligned}
+      \Wass_2(K_z,K_{z+h})^2
+      &=\norm{F(z+h)-F(z)}^2\\
+      &=\norm{J_F(z)h}^2
+        +2\langle J_F(z)h,r(h)\rangle+\norm{r(h)}^2.
+    \end{aligned}
+  \]
+  第一項は $h^{\mathsf T}G(z)h$ である．また $J_F(z)$ は固定された
+  線形写像なので $\norm{J_F(z)h}\leq C\norm{h}$ となる $C<\infty$ があり，
+  Cauchy--Schwarz の不等式から残り二項はともに $o(\norm{h}^2)$ である．
+\end{proof}
+
+\begin{remark}{単射性と immersion は別の条件である}{lc-injective-immersion}
+  $F$ の単射性は，大域的に
+  $W_2(K_z,K_{z'})=0\Rightarrow z=z'$ を保証する条件である．
+  一方 immersion は，各点で $G(z)$ が退化せず，すべての潜在方向の
+  微小な長さを測れることを保証する局所条件である．
+  単射写像でも微分が退化する点をもつことがあり，逆に immersion でも
+  離れた二点を同じ像に写すことがあるため，両者は区別しなければならない．
+\end{remark}
+
+\section{弦長と内在距離の区別}
+\label{sec:lc-intrinsic-distance}
+
+\begin{definition}{計量 $G$ による曲線長}{lc-curve-length}
+  区分的に $C^1$ 級の曲線 $c\colon[0,1]\to\mathcal{Z}$ に対して
+  \[
+    L_G(c)
+    :=\int_0^1
+      \sqrt{\dot c(t)^{\mathsf T}G(c(t))\dot c(t)}\,\d t
+  \]
+  を $G$ に関する曲線 $c$ の\textbf{長さ}という．
+\end{definition}
+
+\begin{proposition}{曲線長は decoder 像の長さである}{lc-image-length}
+  任意の区分的 $C^1$ 曲線 $c$ に対して
+  \[
+    \boxed{
+      L_G(c)=\int_0^1\left\|\frac{\d}{\d t}F(c(t))\right\|\,\d t
+    }
+  \]
+  が成り立つ．さらに
+  \[
+    \Wass_2(K_{c(0)},K_{c(1)})\leq L_G(c)
+  \]
+  である．
+\end{proposition}
+
+\begin{proof}
+  連鎖律より
+  \[
+    \frac{\d}{\d t}F(c(t))=J_F(c(t))\dot c(t).
+  \]
+  したがって
+  \[
+    \left\|\frac{\d}{\d t}F(c(t))\right\|^2
+    =\dot c(t)^{\mathsf T}J_F(c(t))^{\mathsf T}
+      J_F(c(t))\dot c(t)
+    =\dot c(t)^{\mathsf T}G(c(t))\dot c(t),
+  \]
+  となり，第一の等式を得る．また，微積分学の基本定理と
+  積分に対する三角不等式より
+  \[
+    \begin{aligned}
+      \Wass_2(K_{c(0)},K_{c(1)})
+      &=\norm{F(c(1))-F(c(0))}\\
+      &=\left\|\int_0^1\frac{\d}{\d t}F(c(t))\,\d t\right\|\\
+      &\leq\int_0^1
+        \left\|\frac{\d}{\d t}F(c(t))\right\|\,\d t
+       =L_G(c).
+    \end{aligned}
+  \]
+\end{proof}
+
+\begin{definition}{引き戻し計量の内在距離}{lc-intrinsic-metric}
+  $z_0,z_1\in\mathcal{Z}$ を結ぶ区分的 $C^1$ 曲線全体を
+  $\mathcal{C}(z_0,z_1)$ と書き，
+  \[
+    d_G(z_0,z_1)
+    :=\inf_{c\in\mathcal{C}(z_0,z_1)}L_G(c)
+  \]
+  と定める．ただし該当する曲線がなければ $d_G(z_0,z_1)=+\infty$ とする．
+  同じ連結成分上では $d_G$ は $G$ が定める\textbf{内在距離}である．
+\end{definition}
+
+\begin{corollary}{弦長は内在距離以下である}{lc-chord-intrinsic}
+  $z_0,z_1$ が同じ連結成分に属するとき
+  \[
+    \boxed{
+      \Wass_2(K_{z_0},K_{z_1})\leq d_G(z_0,z_1)
+    }
+  \]
+  である．
+\end{corollary}
+
+\begin{proof}
+  命題~\ref{prop:lc-image-length}の不等式を
+  $c\in\mathcal{C}(z_0,z_1)$ 全体について下限を取ればよい．
+\end{proof}
+
+\begin{remark}{どちらの距離の曲率か}{lc-which-distance}
+  $W_2(K_{z_0},K_{z_1})$ は $F(\mathcal{Z})$ の外を通る直線も許した弦長である．
+  $d_G(z_0,z_1)$ は decoder が表現できる分布の族
+  $F(\mathcal{Z})$ に沿う曲線だけで測った距離である．
+  以下の Riemann 曲率は後者，すなわち $G$ の内在幾何に対して定義する．
+\end{remark}
+
+\section{計量テンソルから曲率を計算する}
+\label{sec:lc-curvature-formulas}
+
+以下では $F$ は immersion とし，$G^{-1}$ の成分を $G^{ij}$ と書く．
+すなわち
+\[
+  \sum_{j=1}^dG_{ij}G^{jk}=\begin{cases}1&(i=k),\\0&(i\neq k)\end{cases}
+\]
+である．また $\partial_i:=\partial/\partial z^i$ と略記する．
+
+\begin{definition}{Christoffel 記号}{lc-christoffel}
+  $1\leq i,j,k\leq d$ に対して
+  \[
+    \boxed{
+      \Gamma^k_{ij}
+      :=\frac12\sum_{\ell=1}^dG^{k\ell}
+      \left(
+        \partial_iG_{j\ell}
+        +\partial_jG_{i\ell}
+        -\partial_\ell G_{ij}
+      \right)
+    }
+  \]
+  と定め，これを $G$ の\textbf{Christoffel 記号}という．
+  これは Levi--Civita 接続を座標表示した係数であり，
+  \[
+    \nabla_{\partial_i}\partial_j
+    =\sum_{k=1}^d\Gamma^k_{ij}\partial_k
+  \]
+  と書く．
+\end{definition}
+
+\begin{remark}{測地線方程式}{lc-geodesic-equation}
+  曲線 $c(t)=(c^1(t),\dots,c^d(t))$ が $G$ の測地線であるための
+  座標方程式は
+  \[
+    \ddot c^k(t)
+    +\sum_{i,j=1}^d
+      \Gamma^k_{ij}(c(t))\dot c^i(t)\dot c^j(t)=0
+    \qquad(k=1,\dots,d)
+  \]
+  である．曲率の計算自体には測地線を先に解く必要はないが，
+  $\Gamma^k_{ij}$ は最短経路と曲率の双方を決める．
+\end{remark}
+
+\begin{definition}{Riemann 曲率テンソル}{lc-riemann-tensor}
+  本資料では符号規約を
+  \[
+    R(X,Y)Z
+    :=\nabla_X\nabla_YZ-\nabla_Y\nabla_XZ-\nabla_{[X,Y]}Z
+  \]
+  とする．座標成分 $R^\ell{}_{kij}$ を
+  \[
+    R(\partial_i,\partial_j)\partial_k
+    =\sum_{\ell=1}^dR^\ell{}_{kij}\partial_\ell
+  \]
+  で定めると，座標ベクトル場は可換なので
+  \[
+    \boxed{
+      R^\ell{}_{kij}
+      =\partial_i\Gamma^\ell_{jk}
+       -\partial_j\Gamma^\ell_{ik}
+       +\sum_{r=1}^d
+        \left(
+          \Gamma^r_{jk}\Gamma^\ell_{ir}
+          -\Gamma^r_{ik}\Gamma^\ell_{jr}
+        \right)
+    }
+  \]
+  となる．これを $G$ の\textbf{Riemann 曲率テンソル}という．
+\end{definition}
+
+引き戻し計量 $G=J_F^{\mathsf T}J_F$ は Euclid 空間への immersion から
+作られているため，曲率には二階微分だけを用いる別の計算式がある．
+
+\begin{theorem}{Gauss 方程式}{lc-gauss-equation}
+  $I_{2n}$ を $2n$ 次単位行列とし，
+  \[
+    P(z):=J_F(z)G(z)^{-1}J_F(z)^{\mathsf T}
+  \]
+  とおく．これは $\R^{2n}$ から
+  $J_F(z)\R^d$ への直交射影である．また
+  \[
+    B_{ij}(z)
+    :=\bigl(I_{2n}-P(z)\bigr)\partial_i\partial_jF(z)
+    \in\R^{2n}
+  \]
+  とおく．このとき
+  \[
+    \boxed{
+      \left\langle
+        R(\partial_i,\partial_j)\partial_k,\partial_\ell
+      \right\rangle_G
+      =\langle B_{i\ell},B_{jk}\rangle
+       -\langle B_{ik},B_{j\ell}\rangle
+    }
+  \]
+  が成り立つ．$B=(B_{ij})$ を immersion $F$ の\textbf{第二基本形式}という．
+\end{theorem}
+
+\begin{proof}
+  $P$ は対称であり，$P^2=P$，$PJ_F=J_F$ をみたすため，
+  $J_F(z)\R^d$ への直交射影である．
+
+  $e_i:=\partial_iF$ とおく．$G_{ij}=\langle e_i,e_j\rangle$ を微分し，
+  混合偏微分の順序を交換すると
+  \[
+    \langle\partial_i\partial_jF,e_\ell\rangle
+    =\frac12\left(
+      \partial_iG_{j\ell}+\partial_jG_{i\ell}-\partial_\ell G_{ij}
+    \right).
+  \]
+  定義~\ref{def:lc-christoffel}より，$\partial_i\partial_jF$ の
+  $J_F(z)\R^d$ への射影の係数は $\Gamma^k_{ij}$ である．したがって
+  \[
+    \partial_i\partial_jF
+    =\sum_{k=1}^d\Gamma^k_{ij}e_k+B_{ij}.             \tag{3}
+  \]
+  ここで $B_{ij}$ はすべての $e_\ell$ と直交する．
+
+  (3) をもう一度微分し，$i,j$ を入れ替えた式との差を取る．
+  $F$ の三階混合偏微分は相殺する．また
+  $\langle B_{jk},e_\ell\rangle=0$ を $z^i$ で微分すると
+  \[
+    \langle\partial_iB_{jk},e_\ell\rangle
+    =-\langle B_{jk},\partial_i e_\ell\rangle
+    =-\langle B_{jk},B_{i\ell}\rangle
+  \]
+  となる．差の $e_\ell$ 方向成分を取り，
+  定義~\ref{def:lc-riemann-tensor}の座標式を用いれば
+  \[
+    \left\langle
+      R(\partial_i,\partial_j)\partial_k,\partial_\ell
+    \right\rangle_G
+    =\langle B_{i\ell},B_{jk}\rangle
+     -\langle B_{ik},B_{j\ell}\rangle
+  \]
+  を得る．
+\end{proof}
+
+\begin{definition}{断面曲率，Ricci 曲率，スカラー曲率}{lc-curvature-summaries}
+  $z\in\mathcal{Z}$ と1次独立な $u,v\in\R^d$ に対し，
+  $u,v$ が張る2次元平面の\textbf{断面曲率}を
+  \[
+    \operatorname{Sec}_z(u,v)
+    :=\frac{
+      \langle R(u,v)v,u\rangle_G
+    }{
+      \langle u,u\rangle_G\langle v,v\rangle_G
+      -\langle u,v\rangle_G^2
+    }
+  \]
+  と定める．ここで $\langle u,v\rangle_G:=u^{\mathsf T}G(z)v$ である．
+  また
+  \[
+    \operatorname{Ric}_{jk}
+    :=\sum_{i=1}^dR^i{}_{kij},
+    \qquad
+    \operatorname{Scal}
+    :=\sum_{j,k=1}^dG^{jk}\operatorname{Ric}_{jk}
+  \]
+  をそれぞれ\textbf{Ricci 曲率テンソル}，\textbf{スカラー曲率}という．
+\end{definition}
+
+\begin{corollary}{第二基本形式による断面曲率}{lc-sectional-gauss}
+  $B(u,v):=\sum_{i,j=1}^du^iv^jB_{ij}$ と書くと，
+  \[
+    \boxed{
+      \operatorname{Sec}_z(u,v)
+      =\frac{
+        \langle B(u,u),B(v,v)\rangle-\norm{B(u,v)}^2
+      }{
+        \langle u,u\rangle_G\langle v,v\rangle_G
+        -\langle u,v\rangle_G^2
+      }
+    }
+  \]
+  である．
+\end{corollary}
+
+\begin{proof}
+  Gauss 方程式（定理~\ref{thm:lc-gauss-equation}）を
+  $u,v$ について多重線形に展開すると
+  \[
+    \langle R(u,v)v,u\rangle_G
+    =\langle B(u,u),B(v,v)\rangle-\norm{B(u,v)}^2
+  \]
+  を得る．これを断面曲率の定義へ代入すればよい．
+\end{proof}
+
+\begin{remark}{潜在次元が1の場合}{lc-one-dimensional-flat}
+  $d=1$ では $R^1{}_{111}=0$ であり，Riemann 曲率は恒等的に $0$ になる．
+  これは1次元の曲線が周囲の空間で曲がって見えても，曲線自身の
+  内在曲率は検出できないことを意味する．通常の断面曲率を調べるには
+  $d\geq2$ が必要である．
+\end{remark}
+
+\begin{remark}{2次元では Gauss 曲率だけを計算すればよい}{lc-gaussian-curvature}
+  $d=2$ のとき，独立な二方向が張る平面は接空間全体なので，
+  断面曲率は一つの値に定まる．これを\textbf{Gauss 曲率}といい，
+  座標ベクトル $\partial_1,\partial_2$ を用いると
+  \[
+    \mathcal{K}(z)
+    =\frac{
+      \langle R(\partial_1,\partial_2)\partial_2,\partial_1\rangle_G
+    }{
+      G_{11}G_{22}-G_{12}^2
+    }
+    =\frac{
+      \langle R(\partial_1,\partial_2)\partial_2,\partial_1\rangle_G
+    }{\det G}
+  \]
+  で計算できる．
+\end{remark}
+
+\section{曲率を最後まで計算する例}
+\label{sec:lc-paraboloid-example}
+
+\begin{example}{分散が放物面状に変化する decoder}{lc-paraboloid-decoder}
+  潜在次元とデータ次元を $d=n=2$ とし，
+  $\mathcal{Z}=\R^2$ とする．定数 $c>0$，$\kappa>0$ に対して
+  \[
+    m(z^1,z^2)=(z^1,z^2),
+    \qquad
+    \sigma(z^1,z^2)
+    =\left(
+      c+\frac{\kappa}{2}\bigl((z^1)^2+(z^2)^2\bigr),\ c
+    \right)
+  \]
+  とおく．両標準偏差は正なので
+  \[
+    K_z=\mathcal{N}\bigl(m(z),\operatorname{diag}(\sigma(z)^2)\bigr)
+  \]
+  はすべての $z\in\R^2$ で定義される．
+\end{example}
+
+\textbf{1. 計量テンソル．}
+
+$r^2:=(z^1)^2+(z^2)^2$ とおく．パラメータ写像とその Jacobi 行列は
+\[
+  F(z)=\left(z^1,z^2,c+\frac{\kappa}{2}r^2,c\right),
+  \qquad
+  J_F(z)=
+  \begin{pmatrix}
+    1&0\\
+    0&1\\
+    \kappa z^1&\kappa z^2\\
+    0&0
+  \end{pmatrix}.
+\]
+したがって
+\[
+  G(z)=J_F(z)^{\mathsf T}J_F(z)
+  =\begin{pmatrix}
+    1+\kappa^2(z^1)^2&\kappa^2z^1z^2\\
+    \kappa^2z^1z^2&1+\kappa^2(z^2)^2
+  \end{pmatrix}.
+\]
+特に
+\[
+  D:=\det G=1+\kappa^2r^2>0
+\]
+だから $G$ は全点で正定値であり，$F$ は immersion である．逆行列は
+\[
+  G^{-1}
+  =\frac1D
+  \begin{pmatrix}
+    1+\kappa^2(z^2)^2&-\kappa^2z^1z^2\\
+    -\kappa^2z^1z^2&1+\kappa^2(z^1)^2
+  \end{pmatrix}.
+\]
+
+\textbf{2. Christoffel 記号．}
+
+$i,j,k\in\{1,2\}$ とする．上の $G_{ij}$ を
+定義~\ref{def:lc-christoffel}へ代入すると
+\[
+  \boxed{
+    \Gamma^k_{ij}(z)
+    =\frac{\kappa^2z^k}{D}\,\delta_{ij}
+  }
+\]
+を得る．ここで $\delta_{ij}$ は $i=j$ なら $1$，$i\neq j$ なら $0$ である．
+したがって
+\[
+  \Gamma^k_{12}=\Gamma^k_{21}=0,
+  \qquad
+  \Gamma^k_{11}=\Gamma^k_{22}=\frac{\kappa^2z^k}{D}.
+\]
+
+\textbf{3. Gauss 曲率．}
+
+定義~\ref{def:lc-riemann-tensor}に代入すると
+\[
+  \left\langle
+    R(\partial_1,\partial_2)\partial_2,
+    \partial_1
+  \right\rangle_G
+  =\frac{\kappa^2}{D}
+\]
+となる．よって注意~\ref{rem:lc-gaussian-curvature}と $\det G=D$ より
+\[
+  \boxed{
+    \mathcal{K}(z^1,z^2)
+    =\frac{\kappa^2}
+      {\left(1+\kappa^2((z^1)^2+(z^2)^2)\right)^2}
+  }
+\]
+を得る．特に原点では $\mathcal{K}(0,0)=\kappa^2$ であり，
+原点から離れると曲率は $0$ に向かって減少する．
+定数 $c$ は標準偏差を正に保つが，$F(\mathcal{Z})$ の平行移動にしか
+影響しないため曲率の式には現れない．
+
+\begin{remark}{何が曲率を作ったか}{lc-source-of-curvature}
+  $m$ と $\sigma$ がともに $z$ のアフィン関数なら $J_F$ は定数であり，
+  $G$ も定数になるため曲率は $0$ である．上の例では
+  標準偏差 $\sigma^1(z)$ の二次変化が decoder 像を放物面状に曲げ，
+  正の内在曲率を生んでいる．ただし一般には，写像が非線形であることだけで
+  内在曲率が非零になるとは限らず，最終的には上記の $R$ を計算して判定する．
+\end{remark}
+
+\section{実際の decoder での計算手順}
+\label{sec:lc-computation-map}
+
+学習済み decoder が滑らかな $m(z),\sigma(z)$ を出力するなら，
+各潜在点 $z$ で次の順に計算すればよい．
+
+\begin{enumerate}
+  \item 自動微分で $J_m(z),J_\sigma(z)$ を求める．
+  \item
+    \[
+      G(z)=J_m(z)^{\mathsf T}J_m(z)
+           +J_\sigma(z)^{\mathsf T}J_\sigma(z)
+    \]
+    を計算する．
+  \item $G(z)$ の最小固有値を調べ，正定値性と数値的な退化を確認する．
+  \item 自動微分で $\partial_i\partial_jF(z)$ を求め，
+    $P=J_FG^{-1}J_F^{\mathsf T}$ と
+    $B_{ij}=(I_{2n}-P)\partial_i\partial_jF$ を計算する．
+  \item 系~\ref{cor:lc-sectional-gauss}から断面曲率を計算する．
+    Ricci 曲率とスカラー曲率が必要なら，断面曲率または
+    Gauss 方程式の成分を縮約する．
+  \item 測地線も必要な場合は，別途 $G$ の一階微分から
+    $\Gamma^k_{ij}$ を計算して測地線方程式を解く．
+\end{enumerate}
+
+計量 $G$ は $m,\sigma$ の一階微分を含み，曲率は最終的に
+$m,\sigma$ の二階微分までの情報に依存する．Christoffel 記号を
+微分する定義式では一見三階微分が現れるが，Gauss 方程式の証明にあるとおり
+それらは相殺する．実装では Gauss 方程式を使うことで相殺を明示できる．
+また
+$G^{-1}$ を明示的に作る代わりに線形方程式を解く方が数値的に安定であり，
+$G$ の固有値が $0$ に近い点では曲率値も不安定になり得る．
+
+\begin{remark}{次の一般化と Benamou--Brenier の位置}{lc-next-generalization}
+  本章では対角 Gaussian の閉形式により，
+  \[
+    \Wass_2(K_z,K_{z'})=\norm{F(z)-F(z')}
+  \]
+  と Euclid 空間へ移してから計量を微分した．したがって
+  Benamou--Brenier の動的定式化は必要なかった．
+
+  full-covariance Gaussian へ進むと，共分散行列の部分は
+  Bures--Wasserstein 計量になり，Takatsu (2011) の Gaussian
+  Wasserstein 幾何を用いる．さらに Gaussian 仮定を外した一般の滑らかな
+  decoder 密度へ進むと，二点間の閉形式は失われる．その段階で初めて，
+  Benamou--Brenier の動的定式化と Otto calculus を使って
+  分布の微小変化に対する内積を定義する必要がある．
+\end{remark}
+
+\begin{remark}{本資料の到達点}{lc-endpoint}
+  第\ref{ch:wasserstein-metrics}章の $W_p$ の距離性から始め，
+  本章までに
+  \[
+    \Wass_p\text{ の距離性}
+    \longrightarrow
+    \text{対角 Gaussian の }W_2\text{ 閉形式}
+    \longrightarrow
+    G=J_F^{\mathsf T}J_F
+    \longrightarrow
+    \Gamma^k_{ij}
+    \longrightarrow
+    R^\ell{}_{kij}
+    \longrightarrow
+    \text{潜在曲率}
+  \]
+  という計算経路が得られた．Villani (2009) は前半の Wasserstein 距離と
+  $W_2$ 幾何の一般理論を与える．対角 Gaussian の有限次元化と
+  decoder への引き戻し以降は，その理論を曲率計算へ接続するための
+  本資料の具体化である．
+\end{remark}

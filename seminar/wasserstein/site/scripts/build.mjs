@@ -488,6 +488,7 @@ function mathJaxScript() {
             Normal: "\\\\mathcal{N}",
             Id: "\\\\mathrm{Id}",
             Wass: "W",
+            weakto: "\\\\rightharpoonup",
             d: "\\\\mathrm{d}",
             abs: ["\\\\lvert #1\\\\rvert", 1],
             norm: ["\\\\lVert #1\\\\rVert", 1],
