@@ -231,7 +231,7 @@ Borel $\sigma$-代数 $\Borel(\mathcal{X})$ 上の確率測度全体を
 \begin{enumerate}
   \item 輸送コストの下限に近づく最小化列 $(\pi_k)$ を取る．
   \item coupling の tightness と Prokhorov の定理を用いて，
-    弱収束部分列 $\pi_{k_j}\Rightarrow\pi^*$ を取る．
+    弱収束部分列 $\pi_{k_j}\weakto\pi^*$ を取る．
   \item 弱極限 $\pi^*$ の二つの周辺分布が $\mu,\nu$ のままであることを示す．
   \item 輸送コストの下半連続性を用いて，$\pi^*$ が下限を達成することを示す．
 \end{enumerate}
@@ -241,7 +241,7 @@ $\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)$ を
 $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 （定義~\ref{def:meas-weak-convergence}）をここで再掲すると，
 \[
-  \pi_k\Rightarrow\pi
+  \pi_k\weakto\pi
   \quad\overset{\mathrm{def}}{\Longleftrightarrow}\quad
   \int F\,\d\pi_k\longrightarrow\int F\,\d\pi
   \qquad
@@ -252,7 +252,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   $1\leq p<\infty$ とする．
   $\Prob(\mathcal{X}\times\mathcal{X})$ の列 $(\pi_k)$ が
   $\pi\in\Prob(\mathcal{X}\times\mathcal{X})$ に弱収束，すなわち
-  $\pi_k\Rightarrow\pi$ とする．このとき
+  $\pi_k\weakto\pi$ とする．このとき
   \[
     \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)
     \leq
@@ -519,7 +519,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   Prokhorov の定理より，ある部分列 $(\pi_{k_j})$ と
   $\pi^*\in\Prob(\mathcal{X}\times\mathcal{X})$ が存在して
   \[
-    \pi_{k_j}\Rightarrow\pi^*
+    \pi_{k_j}\weakto\pi^*
   \]
   が成り立つ．
 
@@ -529,7 +529,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
     F_\varphi(x,y):=\varphi(x)
   \]
   とおくと，$F_\varphi\in C_b(\mathcal{X}\times\mathcal{X})$ である．
-  したがって $\pi_{k_j}\Rightarrow\pi^*$ と弱収束の定義より
+  したがって $\pi_{k_j}\weakto\pi^*$ と弱収束の定義より
   \[
     \int_{\mathcal{X}\times\mathcal{X}}
     \varphi(x)\,\d\pi_{k_j}(x,y)
