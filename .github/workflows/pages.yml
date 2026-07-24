@@ -9,10 +9,11 @@ on:
   push:
     branches: [main]
     paths:
-      - "seminar/cuturi/tex/**"
-      - "seminar/cuturi/site/**"
-      - "seminar/wasserstein/tex/**"
-      - "seminar/wasserstein/site/**"
+      - "seminar/*/tex/**"
+      - "seminar/*/site.config.mjs"
+      - "seminar/*/site-demos.mjs"
+      - "seminar/*/site-assets/**"
+      - "tools/site/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -36,17 +37,16 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Generate markdown from TeX (cuturi)
-        run: node seminar/cuturi/site/scripts/tex2md.mjs --strict
+      # --strict は未解決の \ref や未変換マクロがあればここで失敗させる
+      - name: Build site (cuturi)
+        run: |
+          node tools/site/tex2md.mjs seminar/cuturi --strict
+          node tools/site/build.mjs seminar/cuturi
 
-      - name: Build HTML (cuturi)
-        run: node seminar/cuturi/site/scripts/build.mjs
-
-      - name: Generate markdown from TeX (wasserstein)
-        run: node seminar/wasserstein/site/scripts/tex2md.mjs --strict
-
-      - name: Build HTML (wasserstein)
-        run: node seminar/wasserstein/site/scripts/build.mjs
+      - name: Build site (wasserstein)
+        run: |
+          node tools/site/tex2md.mjs seminar/wasserstein --strict
+          node tools/site/build.mjs seminar/wasserstein
 
       - name: Assemble combined site
         run: |

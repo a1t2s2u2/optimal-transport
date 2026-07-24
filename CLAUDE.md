@@ -4,6 +4,7 @@
 
 - `seminar/cuturi/` — Peyré–Cuturi _Computational Optimal Transport_ に基づく資料（詳細は `seminar/cuturi/CLAUDE.md`）
 - `seminar/wasserstein/` — Wasserstein 距離の理論と性質（詳細は `seminar/wasserstein/CLAUDE.md`）
+- `tools/site/` — tex から Web サイトを生成するエンジン（全セミナー共通。詳細は `tools/site/README.md`）
 
 ## セミナー方針（共通）
 
@@ -15,6 +16,9 @@
 ## ビルド
 
 - tex を変更したら、対応するサイトのビルドまで実施する（`make cuturi-site` / `make wasserstein-site`）
+- サイト生成のコードは `tools/site/` の 1 か所だけ。セミナーごとにコピーを作らない
+- セミナー固有の設定は `seminar/<名前>/site.config.mjs` に書く
+- MathJax のマクロは `tex/preamble.tex` から自動抽出される。設定に書き写さない
 
 ## Git 運用
 
