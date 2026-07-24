@@ -1,19 +1,24 @@
 /* ==========================================================================
-   Wasserstein Metrics (Givens--Shortt) — Interactions
+   章ページの対話機能
+   --------------------------------------------------------------------------
+   セミナー固有の情報（用語集・機能の有効/無効）はビルド時に HTML へ
+   window.__glossary / window.__features として埋め込まれる。
+   このファイル自体はセミナーに依存しない。
    ========================================================================== */
 
-/* ---------- Glossary ---------- */
-
-const glossary = {
-  polish: {
-    title: "Polish 空間",
-    body: "完備かつ可分な距離空間。確率測度の tightness や正則条件付き確率を扱う標準的な設定。"
+const glossary = window.__glossary || {};
+const features = Object.assign(
+  {
+    tocProgress: true,
+    fadeIn: true,
+    refPulse: true,
+    keyboardHelp: true,
   },
-  coupling: {
-    title: "結合",
-    body: "二つの確率測度を周辺分布にもつ積空間上の確率測度。輸送計画とも呼ぶ。"
-  }
-};
+  window.__features || {}
+);
+
+const typeLabels = window.__typeLabels || {};
+const typeColors = window.__typeColors || {};
 
 /* ---------- Reading Progress ---------- */
 
@@ -56,6 +61,21 @@ function buildToc() {
     list.appendChild(li);
   });
 
+  let updateTocProgress = () => {};
+  if (features.tocProgress) {
+    const progressBar = document.createElement("div");
+    progressBar.className = "chapter-toc__progress";
+    list.appendChild(progressBar);
+    updateTocProgress = () => {
+      const active = list.querySelector(".chapter-toc__link.is-active");
+      if (active && active.parentElement) {
+        const li = active.parentElement;
+        progressBar.style.top = li.offsetTop + "px";
+        progressBar.style.height = li.offsetHeight + "px";
+      }
+    };
+  }
+
   toc.appendChild(list);
 
   const tocObserver = new IntersectionObserver(
@@ -70,6 +90,7 @@ function buildToc() {
           link.getAttribute("href") === `#${visible.target.id}`
         );
       });
+      updateTocProgress();
     },
     { rootMargin: "-60px 0px -75% 0px", threshold: 0 }
   );
@@ -86,14 +107,8 @@ const refBody = refSidebar?.querySelector(".ref-sidebar__body");
 const refSheet = document.getElementById("ref-sheet");
 const MAX_SIDEBAR_CARDS = 3;
 
-const typeLabels = { definition: "定義", theorem: "定理", remark: "注意", example: "例", algorithm: "アルゴリズム" };
-const typeColors = {
-  definition: "var(--teal)",
-  theorem: "var(--indigo)",
-  remark: "var(--muted)",
-  example: "var(--wine)",
-  algorithm: "var(--amber)"
-};
+const EMPTY_SIDEBAR =
+  '<p class="ref-sidebar__empty">参照リンクをクリックすると<br>ここに定義や定理が表示されます</p>';
 
 function blockJumpHref(block) {
   const current = window.__currentChapter;
@@ -107,8 +122,7 @@ function blockJumpHref(block) {
 function showInSidebar(block) {
   if (!refBody) return;
 
-  const existing = refBody.querySelector(`[data-block-id="${block.id}"]`);
-  if (existing) return;
+  if (refBody.querySelector(`[data-block-id="${block.id}"]`)) return;
 
   const empty = refBody.querySelector(".ref-sidebar__empty");
   if (empty) empty.remove();
@@ -118,7 +132,6 @@ function showInSidebar(block) {
     cards[cards.length - 1].remove();
   }
 
-  const jumpHref = blockJumpHref(block);
   const card = document.createElement("div");
   card.className = "ref-sidebar__card";
   card.dataset.blockId = block.id;
@@ -128,12 +141,12 @@ function showInSidebar(block) {
     `<button class="ref-sidebar__close" type="button" aria-label="閉じる">&times;</button>` +
     `</div>` +
     `<div class="ref-sidebar__content">${block.html}</div>` +
-    `<a class="ref-sidebar__jump" href="${jumpHref}">本文で見る &rarr;</a>`;
+    `<a class="ref-sidebar__jump" href="${blockJumpHref(block)}">本文で見る &rarr;</a>`;
 
   card.querySelector(".ref-sidebar__close").addEventListener("click", () => {
     card.remove();
     if (refBody.querySelectorAll(".ref-sidebar__card").length === 0) {
-      refBody.innerHTML = '<p class="ref-sidebar__empty">参照リンクをクリックすると<br>ここに定義や定理が表示されます</p>';
+      refBody.innerHTML = EMPTY_SIDEBAR;
     }
   });
 
@@ -149,24 +162,27 @@ function showRefMobile(block) {
   const content = refSheet.querySelector(".ref-sheet__content");
   if (!content) return;
   const label = typeLabels[block.type] || "参照";
-  const jumpHref = blockJumpHref(block);
   content.innerHTML =
     `<h3 style="color:${typeColors[block.type] || "var(--teal)"}">${label}: ${block.name}</h3>` +
     `<div>${block.html}</div>` +
-    `<p style="margin-top:12px"><a href="${jumpHref}" style="color:var(--teal);text-decoration:none">本文で見る &rarr;</a></p>`;
+    `<p style="margin-top:12px"><a href="${blockJumpHref(block)}" style="color:var(--teal);text-decoration:none">本文で見る &rarr;</a></p>`;
   refSheet.showModal();
   if (window.MathJax?.typesetPromise) {
     MathJax.typesetPromise([content]);
   }
 }
 
-function showBlock(block, sourceEl) {
+function showBlock(block) {
   const hasWide = window.matchMedia("(min-width: 1400px)").matches;
   if (hasWide && refSidebar) {
     showInSidebar(block);
   } else {
     showRefMobile(block);
   }
+}
+
+function findBlock(name) {
+  return (window.__blocks || []).find((b) => b.name === name);
 }
 
 /* ---------- Hover Tooltip ---------- */
@@ -198,8 +214,7 @@ function hideTooltip() {
 document.addEventListener("mouseover", (e) => {
   const ref = e.target.closest(".ref");
   if (!ref) return;
-  const blocks = window.__blocks || [];
-  const block = blocks.find((b) => b.name === ref.dataset.ref);
+  const block = findBlock(ref.dataset.ref);
   if (!block) return;
   hoverTimeout = setTimeout(() => showTooltip(ref, block), 400);
 });
@@ -210,49 +225,75 @@ document.addEventListener("mouseout", (e) => {
 
 /* ---------- Click Handlers ---------- */
 
+// 参照クリック時に本文側のブロックを一瞬光らせる。
+function pulseBlock(block) {
+  if (!features.refPulse) return;
+  const target = document.getElementById(block.id);
+  if (!target) return;
+  target.classList.remove("is-pulsing");
+  void target.offsetWidth; // アニメーションを再始動させる
+  target.classList.add("is-pulsing");
+  setTimeout(() => target.classList.remove("is-pulsing"), 700);
+}
+
 document.addEventListener("click", (e) => {
   const term = e.target.closest(".term");
   if (term) {
     const item = glossary[term.dataset.term];
     if (!item) return;
-    const fakeBlock = {
+    showBlock({
       id: "glossary-" + term.dataset.term,
       name: item.title,
       type: "definition",
       chapter: window.__currentChapter,
-      html: `<h3>${item.title}</h3><p>${item.body}</p>`
-    };
-    showBlock(fakeBlock, term);
+      html: `<h3>${item.title}</h3><p>${item.body}</p>`,
+    });
     return;
   }
 
   const ref = e.target.closest(".ref");
   if (ref) {
     hideTooltip();
-    const blocks = window.__blocks || [];
-    const block = blocks.find((b) => b.name === ref.dataset.ref);
+    const block = findBlock(ref.dataset.ref);
     if (!block) return;
-    showBlock(block, ref);
-    return;
+    showBlock(block);
+    pulseBlock(block);
   }
 });
 
 /* Close dialog */
 if (refSheet) {
   const closeBtn = refSheet.querySelector(".ref-sheet__close");
-  if (closeBtn) {
-    closeBtn.addEventListener("click", () => refSheet.close());
-  }
+  if (closeBtn) closeBtn.addEventListener("click", () => refSheet.close());
   refSheet.addEventListener("click", (e) => {
     if (e.target === refSheet) refSheet.close();
   });
 }
 
+/* ---------- Keyboard Shortcut Overlay ---------- */
+
+let kbdOverlay = null;
+
+if (features.keyboardHelp) {
+  kbdOverlay = document.createElement("div");
+  kbdOverlay.className = "kbd-overlay";
+  kbdOverlay.hidden = true;
+  kbdOverlay.innerHTML = `<div class="kbd-overlay__card">
+  <h3>キーボードショートカット</h3>
+  <div class="kbd-overlay__row"><span>次のブロックへ</span><span class="kbd-overlay__key">J</span></div>
+  <div class="kbd-overlay__row"><span>前のブロックへ</span><span class="kbd-overlay__key">K</span></div>
+  <div class="kbd-overlay__row"><span>サイドバーを閉じる</span><span class="kbd-overlay__key">Esc</span></div>
+  <div class="kbd-overlay__row"><span>このヘルプ</span><span class="kbd-overlay__key">?</span></div>
+</div>`;
+  document.body.appendChild(kbdOverlay);
+  kbdOverlay.addEventListener("click", (e) => {
+    if (e.target === kbdOverlay) kbdOverlay.hidden = true;
+  });
+}
+
 /* ---------- Keyboard Navigation ---------- */
 
-const allBlockEls = document.querySelectorAll(
-  ".block, .example-band, .margin-note"
-);
+const allBlockEls = document.querySelectorAll(".block, .example-band, .margin-note");
 let currentBlockIdx = -1;
 
 document.addEventListener("keydown", (e) => {
@@ -269,12 +310,38 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
   }
   if (e.key === "Escape") {
-    if (refBody) {
-      refBody.innerHTML = '<p class="ref-sidebar__empty">参照リンクをクリックすると<br>ここに定義や定理が表示されます</p>';
+    if (kbdOverlay && !kbdOverlay.hidden) {
+      kbdOverlay.hidden = true;
+      return;
     }
+    if (refBody) refBody.innerHTML = EMPTY_SIDEBAR;
     refSheet?.close();
   }
+  if (e.key === "?" && kbdOverlay) {
+    kbdOverlay.hidden = !kbdOverlay.hidden;
+    e.preventDefault();
+  }
 });
+
+/* ---------- Block Scroll Fade-in ---------- */
+
+if (features.fadeIn) {
+  const fadeObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add("is-visible");
+          fadeObserver.unobserve(e.target);
+        }
+      });
+    },
+    { rootMargin: "0px 0px -60px 0px", threshold: 0.05 }
+  );
+  allBlockEls.forEach((el) => fadeObserver.observe(el));
+} else {
+  // フェードインを使わない場合は初期状態で表示しておく。
+  allBlockEls.forEach((el) => el.classList.add("is-visible"));
+}
 
 /* ---------- Mermaid ---------- */
 

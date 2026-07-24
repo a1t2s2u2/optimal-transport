@@ -12,10 +12,12 @@ let selectedId = null;
 let focusedId = null;
 let UP = {}, DOWN = {};
 
-const TYPE_LABELS = {
-  definition: '定義', theorem: '定理', proposition: '命題',
-  remark: '注意', example: '例', algorithm: '算法'
-};
+// 種別のラベルはビルド時に window.__typeLabels として埋め込まれる
+// （tools/site/lib/blocks.mjs が唯一の定義元）。単体で開いた場合の保険に既定も持つ。
+const TYPE_LABELS = Object.assign({
+  definition: '定義', theorem: '定理', proposition: '命題', lemma: '補題',
+  claim: '主張', corollary: '系', remark: '注意', example: '例', algorithm: 'アルゴリズム'
+}, window.__typeLabels || {});
 
 function readCssVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -25,6 +27,9 @@ function initColors() {
   ENV_COLOR.definition = readCssVar('--teal') || '#0d9488';
   ENV_COLOR.theorem = readCssVar('--indigo') || '#4338ca';
   ENV_COLOR.proposition = readCssVar('--orange') || '#ea580c';
+  ENV_COLOR.lemma = readCssVar('--violet') || '#a855f7';
+  ENV_COLOR.claim = readCssVar('--green') || '#16a34a';
+  ENV_COLOR.corollary = readCssVar('--cyan') || '#0891b2';
   ENV_COLOR.algorithm = readCssVar('--amber') || '#d97706';
   ENV_COLOR.remark = readCssVar('--muted') || '#78716c';
   ENV_COLOR.example = readCssVar('--wine') || '#be123c';
@@ -32,6 +37,9 @@ function initColors() {
   ENV_LABEL.definition = 'Def';
   ENV_LABEL.theorem = 'Thm';
   ENV_LABEL.proposition = 'Prop';
+  ENV_LABEL.lemma = 'Lem';
+  ENV_LABEL.claim = 'Clm';
+  ENV_LABEL.corollary = 'Cor';
   ENV_LABEL.algorithm = 'Algo';
   ENV_LABEL.remark = 'Rem';
   ENV_LABEL.example = 'Ex';

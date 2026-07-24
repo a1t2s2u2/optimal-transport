@@ -25,25 +25,33 @@ Wasserstein 距離の定義・距離性の証明から W₂ における Gaussia
 ## ディレクトリ構成
 
 ```
+tools/
+  site/               # tex → Web サイトの変換エンジン（全セミナー共通）
 seminar/
   cuturi/
-    tex/          # TeX ソース（source of truth）
-    site/         # Web サイト（tex から生成）
-    reference/    # 参考文献 PDF
+    tex/              # TeX ソース（source of truth）
+    site.config.mjs   # このセミナーのサイト設定
+    site/             # Web サイト（tex から生成・git 管理外）
+    reference/        # 参考文献 PDF
   wasserstein/
-    tex/          # TeX ソース（source of truth）
-    site/         # Web サイト（tex から生成）
-    reference/    # 参考文献 PDF
+    tex/
+    site.config.mjs
+    site/
+    reference/
 ```
+
+サイト生成のエンジンは `tools/site/` に 1 つだけ置き、セミナーごとの違い
+（章立て・タイトル・用語集・数式マクロ）は `site.config.mjs` に閉じ込める。
+詳細は [`tools/site/README.md`](tools/site/README.md)。
 
 ## ビルド
 
 ```sh
-# Cuturi
-make cuturi-site        # Web サイト生成
-make cuturi-pdf         # PDF 生成
-
-# Wasserstein
-make wasserstein-site   # Web サイト生成
-make wasserstein-pdf    # PDF 生成
+make sites              # すべてのセミナーの Web サイトを生成
+make cuturi-site        # 計算最適輸送の Web サイト
+make cuturi-pdf         # 計算最適輸送の PDF
+make wasserstein-site   # Wasserstein 距離の Web サイト（PDF は生成しない）
 ```
+
+`main` へ push すると `.github/workflows/pages.yml` が tex からサイトを生成し
+GitHub Pages へデプロイする。生成物をコミットする必要はない。

@@ -26,7 +26,9 @@ seminar/wasserstein/reference/old_and_new/
 seminar/wasserstein/reference/Billingsley-2eme-edition.pdf
 
 # generated site artifacts
-seminar/cuturi/site/tex-out/
+# site/ は tools/site が丸ごと生成する（content/*.md も dist/ も生成物）。
+# 手で編集する設定は seminar/<名前>/site.config.mjs のみ。
+seminar/*/site/
 
 # uv
 .venv/

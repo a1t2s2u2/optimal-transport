@@ -1,3 +1,0 @@
-# content/*.md は tex から生成され gitignore される。
-# この空ファイルは、fresh clone（CI 含む）でも content/ ディレクトリが
-# 存在し、tex2md.py が書き込めるようにするために追跡する。
