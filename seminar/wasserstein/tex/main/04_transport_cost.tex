@@ -1,0 +1,695 @@
+\chapter{潜在曲率の存在条件と輸送コスト}
+\label{ch:transport-cost}
+
+第\ref{ch:latent-curvature}章では，対角 Gaussian decoder の
+パラメータ写像 $F=(m,\sigma)$ による引き戻し計量 $G=J_F^{\mathsf T}J_F$ から
+断面曲率までを計算する経路を得た．本章では，この経路が
+いつ非自明な結果を与えるのかを先に確定させ，
+その上で潜在空間の二点を結ぶコストとして何を採るべきかを論じる．
+
+主張は二つある．第一に，曲率が恒等的に $0$ になる二つの場合を特定し，
+曲率が非零でありうるためには潜在次元が周囲次元より真に小さいことと，
+$F$ が二階微分可能であることの\textbf{両方}が必要であることを示す．
+第二に，第\ref{ch:latent-curvature}章で得た不等式
+$\Wass_2\leq d_G$ に上からの評価を与え，弦長と内在距離の差が
+第二基本形式の大きさで支配される三次の量にすぎないことを示す．
+後者は，二点間の輸送コストとして弦長を採る根拠を与える．
+
+\begin{remark}{Gauss 方程式は任意の Euclid 空間への immersion で成り立つ}{tc-gauss-general}
+  第\ref{ch:latent-curvature}章では周囲空間を $\R^{2n}$ として述べたが，
+  定理~\ref{thm:lc-gauss-equation}の証明は周囲空間の次元が $2n$ である
+  ことをどこにも用いていない．用いたのは周囲が Euclid 内積をもつことだけである．
+  よって以下では，$N\in\N$ と開集合 $\mathcal{Z}\subset\R^d$，
+  滑らかな immersion
+  \[
+    F\colon\mathcal{Z}\longrightarrow\R^N
+  \]
+  に対して，$G:=J_F^{\mathsf T}J_F$，$P:=J_FG^{-1}J_F^{\mathsf T}$，
+  $B_{ij}:=(I_N-P)\partial_i\partial_jF$ と定め，
+  定理~\ref{thm:lc-gauss-equation}と系~\ref{cor:lc-sectional-gauss}を
+  この一般形で用いる．対角 Gaussian decoder は $N=2n$，$F=(m,\sigma)$ の場合である．
+\end{remark}
+
+\section{曲率が自明になる二つの場合}
+\label{sec:tc-degenerate}
+
+\subsection{潜在次元が周囲次元に等しい場合}
+
+\begin{proposition}{全次元 immersion の引き戻し計量は平坦である}{tc-full-dimensional-flat}
+  注意~\ref{rem:tc-gauss-general}の設定で $d=N$ とする．
+  このとき $\mathcal{Z}$ 上で
+  \[
+    B_{ij}\equiv0,
+    \qquad
+    R^\ell{}_{kij}\equiv0
+  \]
+  である．すなわち引き戻し計量 $G$ の Riemann 曲率は恒等的に $0$ である．
+\end{proposition}
+
+\begin{proof}
+  $F$ は immersion なので $\operatorname{rank}J_F(z)=d=N$ であり，
+  $J_F(z)$ は正則な $N$ 次正方行列である．したがって
+  $G=J_F^{\mathsf T}J_F$ も正則で，$G^{-1}=J_F^{-1}(J_F^{\mathsf T})^{-1}$ となる．
+  ゆえに
+  \[
+    P
+    =J_FG^{-1}J_F^{\mathsf T}
+    =J_FJ_F^{-1}(J_F^{\mathsf T})^{-1}J_F^{\mathsf T}
+    =I_N
+  \]
+  であり，すべての $i,j$ に対して
+  $B_{ij}=(I_N-P)\partial_i\partial_jF=0$ である．
+
+  Gauss 方程式（定理~\ref{thm:lc-gauss-equation}）より，
+  すべての $i,j,k,\ell$ に対して
+  \[
+    \left\langle R(\partial_i,\partial_j)\partial_k,\partial_\ell\right\rangle_G
+    =\langle B_{i\ell},B_{jk}\rangle-\langle B_{ik},B_{j\ell}\rangle
+    =0
+  \]
+  となる．左辺は成分で書けば
+  $\sum_{r}R^r{}_{kij}G_{r\ell}$ である．
+  これがすべての $\ell$ について $0$ であり，$G$ は正定値ゆえ正則だから，
+  すべての $r$ について $R^r{}_{kij}=0$ を得る．
+\end{proof}
+
+\begin{remark}{可逆な生成写像は曲率をもたない}{tc-diffeomorphism-flat}
+  命題~\ref{prop:tc-full-dimensional-flat}は，潜在空間とデータ空間の
+  次元が等しく，生成写像が可逆であるようなモデルには，
+  引き戻し計量の曲率という概念が存在しないことを意味する．
+
+  幾何的には次のように理解できる．$d=N$ のとき $F$ は局所微分同相であり，
+  定義から $F\colon(\mathcal{Z},G)\to(F(\mathcal{Z}),\text{Euclid})$ は
+  局所等長写像である．曲率は等長写像で保たれる量であり，
+  Euclid 空間の開集合の曲率は $0$ だから，$G$ の曲率も $0$ でなければならない．
+
+  ただし平坦であることと $G$ が定数であることは別である．
+  $G$ は一般に $z$ に依存し，潜在座標における直線は測地線ではない．
+  平坦性が意味するのは，測地線を求める問題が
+  $F^{-1}(\text{像の中の線分})$ として閉じた形で解けるということであり，
+  第\ref{ch:latent-curvature}章の道具立てが必要になるのは
+  $F$ に逆写像がない場合，すなわち $d<N$ の場合である．
+\end{remark}
+
+\subsection{パラメータ写像がアフィンな場合}
+
+\begin{proposition}{アフィンな immersion の引き戻し計量は平坦である}{tc-affine-flat}
+  注意~\ref{rem:tc-gauss-general}の設定において，開集合 $U\subset\mathcal{Z}$ 上で
+  $F$ がアフィンである，すなわちある $A\in\R^{N\times d}$，$b\in\R^N$ により
+  \[
+    F(z)=Az+b\qquad(z\in U)
+  \]
+  と書けるとする．このとき $U$ 上で $G\equiv A^{\mathsf T}A$ は定数であり，
+  \[
+    B_{ij}\equiv0,
+    \qquad
+    R^\ell{}_{kij}\equiv0
+  \]
+  である．
+\end{proposition}
+
+\begin{proof}
+  $U$ 上で $J_F(z)=A$ であるから $G(z)=A^{\mathsf T}A$ は定数である．
+  また $\partial_i\partial_jF\equiv0$ であるから
+  $B_{ij}=(I_N-P)\partial_i\partial_jF=0$ となり，
+  命題~\ref{prop:tc-full-dimensional-flat}の証明と同じ議論により
+  $R^\ell{}_{kij}=0$ を得る．
+
+  なお $G$ が定数であることから，定義~\ref{def:lc-christoffel}の
+  $\Gamma^k_{ij}$ もすべて $0$ になり，
+  定義~\ref{def:lc-riemann-tensor}の座標式から直接
+  $R^\ell{}_{kij}=0$ を見ることもできる．
+\end{proof}
+
+\begin{remark}{区分アフィンなパラメータ写像}{tc-piecewise-affine}
+  $F$ が\textbf{区分アフィン}である，すなわち $\mathcal{Z}$ が有限個の
+  多面体に分割され，各多面体の内部で $F$ がアフィンであるとする．
+  このとき命題~\ref{prop:tc-affine-flat}より，各多面体の内部で
+  曲率は $0$ である．これらの内部の合併は $\mathcal{Z}$ で稠密であり，
+  補集合は Lebesgue 測度 $0$ の集合だから，曲率は
+  ほとんどいたるところ $0$ である．
+
+  この状況では曲率は多面体の境界に台をもつ．
+  ただし境界のうち余次元 $1$ の面は内在的には平坦である
+  （多面体曲面の稜線が展開可能であることに対応する）ので，
+  曲率が集中するのはより低次元の層である．
+  本資料では滑らかな $F$ のみを扱うため，この特異な場合には立ち入らない．
+\end{remark}
+
+\begin{remark}{分散チャネルだけが曲率を作る場合がある}{tc-variance-only-curvature}
+  対角 Gaussian decoder では $\sigma$ が正値でなければならないため，
+  実装上は補助写像 $\ell\colon\mathcal{Z}\to\R^n$ を用いて
+  $\sigma^\alpha=\exp(\ell^\alpha)$ と表すことが多い．
+  ここで開集合 $U$ 上で $m$ と $\ell$ がともにアフィンであるとすると，
+  $U$ 上で
+  \[
+    \partial_i\partial_jm\equiv0,
+    \qquad
+    \partial_i\partial_j\sigma^\alpha
+    =\sigma^\alpha\,\partial_i\ell^\alpha\,\partial_j\ell^\alpha
+  \]
+  となる（第二式は $\partial_i\partial_j\ell^\alpha=0$ による）．
+  したがって
+  \[
+    \partial_i\partial_jF
+    =\bigl(0,\ \sigma\odot\partial_i\ell\odot\partial_j\ell\bigr)
+  \]
+  であり，二階微分は分散チャネルにしか現れない．
+  ここで $\odot$ は成分ごとの積である．
+  第二基本形式 $B_{ij}$ はこの二階微分の法成分として定まるから，
+  この場合\textbf{曲率は分散の非線形性のみに由来する}．
+  平均写像 $m$ は計量 $G$ には寄与するが，曲率には寄与しない．
+\end{remark}
+
+\begin{remark}{曲率が非零でありうるための必要条件}{tc-curvature-requirements}
+  命題~\ref{prop:tc-full-dimensional-flat}と命題~\ref{prop:tc-affine-flat}を
+  合わせると，引き戻し計量の曲率がある点で非零であるためには，
+  \begin{enumerate}
+    \item $d<N$ であること（次元の削減），
+    \item $F$ がその点の近傍でアフィンでないこと，
+      特に二階微分 $\partial_i\partial_jF$ が存在して非零であること
+  \end{enumerate}
+  の両方が必要である．どちらか一方が欠ければ曲率は消える．
+  注意~\ref{rem:lc-source-of-curvature}で述べたとおり，
+  これらは必要条件であって十分条件ではない．
+\end{remark}
+
+\subsection{負曲率をもつ decoder}
+
+第\ref{ch:latent-curvature}章の例~\ref{ex:lc-paraboloid-decoder}は
+正の Gauss 曲率をもつ decoder であった．
+符号を変えるだけで負曲率の例が得られる．
+
+\begin{example}{分散が鞍型に変化する decoder}{tc-saddle-decoder}
+  潜在次元とデータ次元を $d=n=2$ とし，$\mathcal{Z}=\R^2$ とする．
+  定数 $c>0$，$\kappa>0$ に対して
+  \[
+    m(z^1,z^2)=(z^1,z^2),
+    \qquad
+    \sigma(z^1,z^2)
+    =\left(
+      c+\frac{\kappa}{2}\bigl((z^1)^2-(z^2)^2\bigr),\ c
+    \right)
+  \]
+  とおく．ただし $\sigma^1>0$ を保証するため，
+  $\mathcal{Z}$ を $\kappa\,((z^2)^2-(z^1)^2)<2c$ をみたす開集合に制限する．
+\end{example}
+
+\textbf{1. 計量テンソル．}
+$r^2:=(z^1)^2+(z^2)^2$ とおく．パラメータ写像とその Jacobi 行列は
+\[
+  F(z)=\left(z^1,z^2,c+\frac{\kappa}{2}\bigl((z^1)^2-(z^2)^2\bigr),c\right),
+  \qquad
+  J_F(z)=
+  \begin{pmatrix}
+    1&0\\
+    0&1\\
+    \kappa z^1&-\kappa z^2\\
+    0&0
+  \end{pmatrix}
+\]
+である．したがって
+\[
+  G(z)
+  =\begin{pmatrix}
+    1+\kappa^2(z^1)^2&-\kappa^2z^1z^2\\
+    -\kappa^2z^1z^2&1+\kappa^2(z^2)^2
+  \end{pmatrix},
+  \qquad
+  D:=\det G=1+\kappa^2r^2>0
+\]
+となり，例~\ref{ex:lc-paraboloid-decoder}と同じ行列式をもつ．
+特に $G$ は全点で正定値であり，$F$ は immersion である．
+
+\textbf{2. 第二基本形式．}
+接空間 $J_F(z)\R^2$ は
+\[
+  e_1=(1,0,\kappa z^1,0),
+  \qquad
+  e_2=(0,1,-\kappa z^2,0)
+\]
+で張られる．
+\[
+  \nu_1:=\frac{1}{\sqrt{D}}\left(-\kappa z^1,\ \kappa z^2,\ 1,\ 0\right),
+  \qquad
+  \nu_2:=(0,0,0,1)
+\]
+とおくと，$\langle\nu_a,e_i\rangle=0$，$\langle\nu_a,\nu_b\rangle=\delta_{ab}$ が
+直接の計算で確かめられるので，$\{\nu_1,\nu_2\}$ は法空間の正規直交基底である．
+二階微分は
+\[
+  \partial_1\partial_1F=(0,0,\kappa,0),
+  \qquad
+  \partial_2\partial_2F=(0,0,-\kappa,0),
+  \qquad
+  \partial_1\partial_2F=0
+\]
+であり，いずれも第4成分が $0$ だから $\nu_2$ 方向の成分をもたない．よって
+\[
+  B_{11}=\frac{\kappa}{\sqrt D}\,\nu_1,
+  \qquad
+  B_{22}=-\frac{\kappa}{\sqrt D}\,\nu_1,
+  \qquad
+  B_{12}=0.
+\]
+
+\textbf{3. Gauss 曲率．}
+Gauss 方程式（定理~\ref{thm:lc-gauss-equation}）より
+\[
+  \left\langle R(\partial_1,\partial_2)\partial_2,\partial_1\right\rangle_G
+  =\langle B_{11},B_{22}\rangle-\norm{B_{12}}^2
+  =-\frac{\kappa^2}{D}
+\]
+であるから，注意~\ref{rem:lc-gaussian-curvature}と $\det G=D$ より
+\[
+  \boxed{
+    \mathcal{K}(z^1,z^2)
+    =\frac{-\kappa^2}
+      {\left(1+\kappa^2\bigl((z^1)^2+(z^2)^2\bigr)\right)^2}
+  }
+\]
+を得る．例~\ref{ex:lc-paraboloid-decoder}と符号だけが異なる．
+特に原点では $\mathcal{K}(0,0)=-\kappa^2$ である．
+
+\begin{remark}{曲率の符号に制約はない}{tc-sign-unconstrained}
+  例~\ref{ex:lc-paraboloid-decoder}と例~\ref{ex:tc-saddle-decoder}は，
+  同一の形の decoder が符号の選び方だけで正曲率にも負曲率にもなることを示している．
+  引き戻し計量が Euclid 空間への immersion から作られているという事実は，
+  曲率の符号にはなんら制約を与えない．
+\end{remark}
+
+\section{引き戻し計量は decoder を決定しない}
+\label{sec:tc-indistinguishable}
+
+計量 $G$ は decoder から作られるが，逆に $G$ から decoder が
+復元できるわけではない．次の例は，計量・測地線・曲率・内在距離が
+完全に一致しながら，生成する分布族がまったく異なる二つの decoder を与える．
+
+\begin{example}{同一の引き戻し計量を与える二つの decoder}{tc-indistinguishable-decoders}
+  $d=n=2$ とし，$c>0$，$R>0$ を定数とする．
+  共通の潜在空間を
+  \[
+    \mathcal{Z}:=\R\times(-c,\infty)
+  \]
+  とし，二つの decoder を
+  \[
+    \text{(A)}\quad
+    m_A(z)=(z^1,z^2),
+    \qquad
+    \sigma_A(z)=(c,c)
+  \]
+  \[
+    \text{(B)}\quad
+    m_B(z)=\left(R\cos\frac{z^1}{R},\ R\sin\frac{z^1}{R}\right),
+    \qquad
+    \sigma_B(z)=(c+z^2,\ c)
+  \]
+  で定める．$\mathcal{Z}$ 上で $\sigma_A,\sigma_B$ の成分はすべて正である．
+\end{example}
+
+\begin{proposition}{二つの decoder は同一の引き戻し計量を与える}{tc-same-metric}
+  例~\ref{ex:tc-indistinguishable-decoders}の $F_A=(m_A,\sigma_A)$ と
+  $F_B=(m_B,\sigma_B)$ はともに immersion であり，
+  $\mathcal{Z}$ 上で
+  \[
+    G_A\equiv G_B\equiv I_2
+  \]
+  が成り立つ．したがって両者の Christoffel 記号，Riemann 曲率，
+  測地線，内在距離 $d_G$ はすべて一致する．
+\end{proposition}
+
+\begin{proof}
+  (A) について
+  \[
+    J_{F_A}(z)=
+    \begin{pmatrix}1&0\\0&1\\0&0\\0&0\end{pmatrix}
+    \quad\Longrightarrow\quad
+    G_A=J_{F_A}^{\mathsf T}J_{F_A}=I_2 .
+  \]
+  (B) について，$\theta:=z^1/R$ と略記すると
+  \[
+    J_{F_B}(z)=
+    \begin{pmatrix}
+      -\sin\theta&0\\
+      \cos\theta&0\\
+      0&1\\
+      0&0
+    \end{pmatrix}
+  \]
+  である．よって
+  \[
+    (G_B)_{11}=\sin^2\theta+\cos^2\theta=1,
+    \qquad
+    (G_B)_{12}=0,
+    \qquad
+    (G_B)_{22}=1,
+  \]
+  すなわち $G_B=I_2$ である．どちらの Jacobi 行列も階数 $2$ をもつので
+  ともに immersion である．
+
+  Christoffel 記号（定義~\ref{def:lc-christoffel}）は $G$ とその一階微分だけから，
+  Riemann 曲率（定義~\ref{def:lc-riemann-tensor}）は Christoffel 記号だけから定まり，
+  測地線と内在距離（定義~\ref{def:lc-intrinsic-metric}）も $G$ だけから定まる．
+  $G_A=G_B$ かつ定義域が共通だから，これらはすべて一致する．
+\end{proof}
+
+\begin{remark}{一致しないもの}{tc-what-differs}
+  命題~\ref{prop:tc-same-metric}の二つの decoder が定める分布族は異なる．
+  (A) では平均 $m_A(\mathcal{Z})$ が $\R^2$ の帯状領域を動き，
+  標準偏差は一定である．
+  (B) では平均 $m_B(\mathcal{Z})$ が半径 $R$ の円周に留まり，
+  第一成分の標準偏差が $z^2$ とともに変化する．
+  たとえば $z^1=0$ と $z^1=2\pi R$ は，(A) では異なる分布に写るが
+  (B) では同一の分布に写る．
+
+  この現象は，注意~\ref{rem:lc-injective-immersion}で述べた
+  単射性と immersion の区別の帰結である．
+  $F_B$ は immersion だが単射ではなく，
+  一方で引き戻し計量は局所的な情報しか見ていない．
+\end{remark}
+
+\begin{remark}{何を加えれば decoder が決まるか}{tc-bonnet}
+  部分多様体論の基本定理（Bonnet の定理）によれば，
+  Euclid 空間へのはめ込みは，第一基本形式（誘導計量 $G$）と
+  第二基本形式 $B$ の両方を与えれば，Gauss--Codazzi--Ricci の
+  適合条件のもとで周囲空間の合同変換を除いて一意に定まる．
+  したがって命題~\ref{prop:tc-same-metric}の不定性は $B$ を加えれば解消する．
+  実際，例~\ref{ex:tc-indistinguishable-decoders}では
+  $B_A\equiv0$ である一方，$B_B$ は後述のとおり非零である．
+
+  本資料ではこの定理を用いないため，ステートメントの引用にとどめる．
+  証明は do~Carmo, \emph{Riemannian Geometry}
+  （Birkh\"auser, 1992）などの標準的な文献を参照．
+\end{remark}
+
+\section{弦長と内在距離の定量的な比較}
+\label{sec:tc-chord-vs-intrinsic}
+
+第\ref{ch:latent-curvature}章の系~\ref{cor:lc-chord-intrinsic}は
+\[
+  \Wass_2(K_{z_0},K_{z_1})\leq d_G(z_0,z_1)
+\]
+を与えた．本節ではこの不等式に上からの評価を与える．
+鍵になるのは，測地線の像の二階微分が第二基本形式そのものになるという事実である．
+
+\begin{lemma}{測地線の像の二階微分は第二基本形式である}{tc-geodesic-image}
+  注意~\ref{rem:tc-gauss-general}の設定とする．
+  $\gamma\colon[0,L]\to\mathcal{Z}$ を $G$ の測地線とし，$c:=F\circ\gamma$ とおく．
+  このとき
+  \[
+    \boxed{
+      \ddot c(t)=B\bigl(\dot\gamma(t),\dot\gamma(t)\bigr)
+    }
+  \]
+  が成り立つ．ここで系~\ref{cor:lc-sectional-gauss}と同じく
+  $B(u,v):=\sum_{i,j=1}^du^iv^jB_{ij}$ である．
+  さらに $\gamma$ が $G$ に関して単位速度ならば $\norm{\dot c(t)}=1$ である．
+\end{lemma}
+
+\begin{proof}
+  $e_k:=\partial_kF$ とおく．
+  定理~\ref{thm:lc-gauss-equation}の証明で示したとおり
+  \[
+    \partial_i\partial_jF
+    =\sum_{k=1}^d\Gamma^k_{ij}e_k+B_{ij}
+    \tag{$*$}
+  \]
+  である（$B_{ij}$ は定義から $(I_N-P)\partial_i\partial_jF$ であり，
+  接成分 $P\,\partial_i\partial_jF$ の $e_k$ に関する係数が
+  $\Gamma^k_{ij}$ になることが，そこで確かめられている）．
+
+  連鎖律より $\dot c=\sum_ie_i(\gamma)\dot\gamma^i$ である．もう一度微分すると
+  \[
+    \ddot c
+    =\sum_{i,j=1}^d\partial_j\partial_iF\,\dot\gamma^i\dot\gamma^j
+     +\sum_{k=1}^de_k\ddot\gamma^k
+  \]
+  となる．ここに $(*)$ を代入して整理すると
+  \[
+    \ddot c
+    =\sum_{k=1}^de_k
+     \left(
+       \ddot\gamma^k+\sum_{i,j=1}^d\Gamma^k_{ij}\dot\gamma^i\dot\gamma^j
+     \right)
+     +B(\dot\gamma,\dot\gamma)
+  \]
+  を得る．$\gamma$ は測地線だから，
+  注意~\ref{rem:lc-geodesic-equation}の測地線方程式により
+  各 $k$ について括弧の中は $0$ である．よって
+  $\ddot c=B(\dot\gamma,\dot\gamma)$ である．
+
+  最後に，命題~\ref{prop:lc-image-length}の証明で見たとおり
+  $\norm{\dot c}^2=\dot\gamma^{\mathsf T}G\dot\gamma$ であるから，
+  $\gamma$ が単位速度なら $\norm{\dot c}=1$ である．
+\end{proof}
+
+\begin{theorem}{第二基本形式による弦長の下界}{tc-chord-lower-bound}
+  注意~\ref{rem:tc-gauss-general}の設定とする．
+  $\gamma\colon[0,L]\to\mathcal{Z}$ を $G$ に関する単位速度の測地線とし，
+  $z_0:=\gamma(0)$，$z_1:=\gamma(L)$ とおく．
+  ある $\Lambda>0$ が存在して，すべての $t\in[0,L]$ で
+  \[
+    \norm{B\bigl(\dot\gamma(t),\dot\gamma(t)\bigr)}\leq\Lambda
+  \]
+  が成り立つとする．このとき $\Lambda L\leq\pi$ ならば
+  \[
+    \boxed{
+      \norm{F(z_1)-F(z_0)}
+      \geq\frac{2}{\Lambda}\sin\frac{\Lambda L}{2}
+    }
+  \]
+  である．また $B(\dot\gamma,\dot\gamma)\equiv0$ のときは
+  $\norm{F(z_1)-F(z_0)}=L$ である．
+\end{theorem}
+
+\begin{proof}
+  $c:=F\circ\gamma$ とおき，$u:=\dot c$ とする．
+  補題~\ref{lem:tc-geodesic-image}より $\norm{u(t)}=1$ であり，
+  \[
+    \norm{\dot u(t)}=\norm{\ddot c(t)}
+    =\norm{B(\dot\gamma(t),\dot\gamma(t))}\leq\Lambda
+  \]
+  である．したがって $u$ は単位球面 $S^{N-1}$ 上の曲線であって，
+  その速さは $\Lambda$ 以下である．
+
+  $B(\dot\gamma,\dot\gamma)\equiv0$ の場合は $u$ が定ベクトルとなり，
+  $c$ は長さ $L$ の線分だから $\norm{c(L)-c(0)}=L$ である．
+  以下 $\Lambda>0$ とする．
+
+  $S^{N-1}$ 上の測地距離を $d_{S}$ と書く．
+  $u$ の速さが $\Lambda$ 以下だから，$s,t\in[0,L]$ に対して
+  \[
+    d_{S}\bigl(u(s),u(t)\bigr)
+    \leq\int_{\min(s,t)}^{\max(s,t)}\norm{\dot u(\tau)}\,\d\tau
+    \leq\Lambda\abs{s-t}
+  \]
+  である．また単位ベクトルの内積と測地距離の関係
+  $\langle u(s),u(t)\rangle=\cos d_{S}(u(s),u(t))$ が成り立つ．
+  仮定 $\Lambda L\leq\pi$ より $\Lambda\abs{s-t}\leq\pi$ であり，
+  $\cos$ は $[0,\pi]$ 上で単調減少だから
+  \[
+    \langle u(s),u(t)\rangle\geq\cos\bigl(\Lambda\abs{s-t}\bigr)
+    \qquad(s,t\in[0,L]).
+  \]
+
+  微積分学の基本定理より $c(L)-c(0)=\int_0^Lu(t)\,\d t$ である．よって
+  \[
+    \norm{c(L)-c(0)}^2
+    =\int_0^L\!\!\int_0^L\langle u(s),u(t)\rangle\,\d s\,\d t
+    \geq\int_0^L\!\!\int_0^L\cos\bigl(\Lambda\abs{s-t}\bigr)\,\d s\,\d t .
+  \]
+  右辺を計算する．被積分関数は $s$ と $t$ の交換で不変だから
+  \[
+    \begin{aligned}
+      \int_0^L\!\!\int_0^L\cos\bigl(\Lambda\abs{s-t}\bigr)\,\d s\,\d t
+      &=2\int_0^L\left(\int_0^t\cos\bigl(\Lambda(t-s)\bigr)\,\d s\right)\d t\\
+      &=2\int_0^L\frac{\sin(\Lambda t)}{\Lambda}\,\d t
+       =\frac{2\bigl(1-\cos(\Lambda L)\bigr)}{\Lambda^2}
+       =\frac{4}{\Lambda^2}\sin^2\frac{\Lambda L}{2}
+    \end{aligned}
+  \]
+  である（最後の等号は半角公式 $1-\cos x=2\sin^2(x/2)$ による）．
+  $\Lambda L\leq\pi$ より $\sin(\Lambda L/2)\geq0$ だから，
+  両辺の平方根をとって
+  \[
+    \norm{c(L)-c(0)}\geq\frac{2}{\Lambda}\sin\frac{\Lambda L}{2}
+  \]
+  を得る．$c(0)=F(z_0)$，$c(L)=F(z_1)$ である．
+\end{proof}
+
+\begin{corollary}{弦長と内在距離は三次まで一致する}{tc-third-order}
+  定理~\ref{thm:tc-chord-lower-bound}の仮定に加えて，
+  $\gamma$ が $z_0,z_1$ を結ぶ長さ最小の測地線であるとする，
+  すなわち $L=d_G(z_0,z_1)$ とする．このとき
+  \[
+    \boxed{
+      d_G(z_0,z_1)-\frac{\Lambda^2}{24}\,d_G(z_0,z_1)^3
+      \ \leq\
+      \Wass_2(K_{z_0},K_{z_1})
+      \ \leq\
+      d_G(z_0,z_1)
+    }
+  \]
+  が成り立つ．
+\end{corollary}
+
+\begin{proof}
+  右側の不等式は系~\ref{cor:lc-chord-intrinsic}である．
+
+  左側を示す．$x\geq0$ に対して $\sin x\geq x-x^3/6$ が成り立つ
+  （両辺の差を微分すると $\cos x-1+x^2/2\geq0$ であり，
+  これはさらに微分して $x-\sin x\geq0$ から従う）．
+  $x=\Lambda L/2$ として定理~\ref{thm:tc-chord-lower-bound}に適用すると
+  \[
+    \frac{2}{\Lambda}\sin\frac{\Lambda L}{2}
+    \geq\frac{2}{\Lambda}
+      \left(\frac{\Lambda L}{2}-\frac{\Lambda^3L^3}{48}\right)
+    =L-\frac{\Lambda^2L^3}{24}
+  \]
+  である．命題~\ref{prop:gw-pullback-distance}より
+  $\norm{F(z_1)-F(z_0)}=\Wass_2(K_{z_0},K_{z_1})$ であり，
+  仮定より $L=d_G(z_0,z_1)$ だから主張を得る．
+\end{proof}
+
+\begin{remark}{等号を実現する例}{tc-circle-extremal}
+  定理~\ref{thm:tc-chord-lower-bound}の下界は改良できない．
+  例~\ref{ex:tc-indistinguishable-decoders}の decoder (B) が等号を実現する．
+
+  実際，命題~\ref{prop:tc-same-metric}より $G_B=I_2$ だから，
+  $z^2$ を固定した曲線 $\gamma(t)=(t,z^2_0)$ は単位速度の測地線であり，
+  $\mathcal{Z}$ は凸だからこれは長さ最小である．$\theta:=t/R$ と書くと
+  \[
+    \partial_1\partial_1F_B
+    =\left(-\frac{1}{R}\cos\theta,\ -\frac1R\sin\theta,\ 0,\ 0\right)
+  \]
+  であり，これは接空間の基底
+  $e_1=(-\sin\theta,\cos\theta,0,0)$，$e_2=(0,0,1,0)$ の
+  いずれとも直交するから
+  \[
+    B(\dot\gamma,\dot\gamma)=B_{11}=\partial_1\partial_1F_B,
+    \qquad
+    \norm{B_{11}}=\frac1R .
+  \]
+  よって $\Lambda=1/R$ ととれる．一方で像 $c(t)=F_B(\gamma(t))$ は
+  $\R^4$ の中の半径 $R$ の円周であり，弦長は
+  \[
+    \norm{c(L)-c(0)}=2R\sin\frac{L}{2R}
+    =\frac{2}{\Lambda}\sin\frac{\Lambda L}{2}
+  \]
+  である．すなわち定理~\ref{thm:tc-chord-lower-bound}は等号で成立する．
+  なお $B_A\equiv0$ であるから，注意~\ref{rem:tc-bonnet}で述べたとおり
+  第二基本形式は二つの decoder を区別する．
+\end{remark}
+
+\section{輸送コストの選択}
+\label{sec:tc-cost-choice}
+
+潜在空間の二点 $z_0,z_1$ に対して，これまでに三つの量が現れた．
+最適輸送のコスト関数としてどれを採るべきかを整理する．
+
+\begin{definition}{三つの候補コスト}{tc-three-costs}
+  対角 Gaussian decoder $F=(m,\sigma)$ と $z_0,z_1\in\mathcal{Z}$ に対して
+  \[
+    \begin{aligned}
+      c_{\mathrm{lat}}(z_0,z_1)&:=\norm{z_0-z_1},\\
+      c_{\mathrm{chord}}(z_0,z_1)&:=\norm{F(z_0)-F(z_1)},\\
+      c_{\mathrm{int}}(z_0,z_1)&:=d_G(z_0,z_1)
+    \end{aligned}
+  \]
+  と定め，それぞれ\textbf{潜在コスト}，\textbf{弦長コスト}，
+  \textbf{内在コスト}という．
+\end{definition}
+
+\begin{proposition}{弦長コストはデータ空間の $W_2$ である}{tc-chord-is-w2}
+  すべての $z_0,z_1\in\mathcal{Z}$ に対して
+  \[
+    c_{\mathrm{chord}}(z_0,z_1)
+    =\Wass_2\bigl(K_{z_0},K_{z_1}\bigr)
+    =\sqrt{\norm{m(z_0)-m(z_1)}^2+\norm{\sigma(z_0)-\sigma(z_1)}^2}
+  \]
+  が成り立つ．また
+  \[
+    \norm{m(z_0)-m(z_1)}
+    \ \leq\ c_{\mathrm{chord}}(z_0,z_1)
+    \ \leq\ c_{\mathrm{int}}(z_0,z_1)
+  \]
+  である．
+\end{proposition}
+
+\begin{proof}
+  第一の等式は命題~\ref{prop:gw-pullback-distance}，
+  第二の等式は定理~\ref{thm:gw-w2-diagonal}である．
+  左側の不等式は
+  $c_{\mathrm{chord}}^2=\norm{m(z_0)-m(z_1)}^2+\norm{\sigma(z_0)-\sigma(z_1)}^2
+  \geq\norm{m(z_0)-m(z_1)}^2$ から，
+  右側の不等式は系~\ref{cor:lc-chord-intrinsic}から従う．
+\end{proof}
+
+\begin{remark}{弦長コストは近似ではない}{tc-chord-not-approximation}
+  命題~\ref{prop:tc-chord-is-w2}が述べているのは，弦長コストが
+  $\Wass_2(K_{z_0},K_{z_1})$ の近似だということではなく，
+  それと\textbf{厳密に等しい}ということである．
+  内在コストとの差は誤差ではなく，測っている対象の違いである．
+  注意~\ref{rem:lc-which-distance}で述べたとおり，
+  \begin{itemize}
+    \item $c_{\mathrm{chord}}$ は，$K_{z_0}$ を $K_{z_1}$ へ直接輸送するコストであり，
+      途中経過の分布が decoder で表現できるかを問わない，
+    \item $c_{\mathrm{int}}$ は，decoder が表現できる分布の族 $F(\mathcal{Z})$ の
+      中だけを通って移動するコストである
+  \end{itemize}
+  という違いがある．
+  したがって，実際に払う輸送コストとして意味をもつのは $c_{\mathrm{chord}}$ であり，
+  $c_{\mathrm{int}}$ は decoder の表現力による制約が加わったぶんだけ大きい．
+\end{remark}
+
+\begin{remark}{三つのコストの比較}{tc-cost-comparison}
+  \begin{itemize}
+    \item $c_{\mathrm{lat}}$ は潜在座標の Euclid 構造に依存する．
+      潜在座標の取り替え $z\mapsto\psi(z)$（$\psi$ は微分同相）に対して
+      $G$ は計量として自然に変換されるのに対し，$c_{\mathrm{lat}}$ は
+      まったく別の値になる．この意味で $c_{\mathrm{lat}}$ は
+      decoder の定める幾何とは無関係な量である．
+    \item $c_{\mathrm{chord}}$ は $F$ の値だけから計算でき，
+      閉じた形をもつ（命題~\ref{prop:tc-chord-is-w2}）．
+      $z_0,z_1$ の組ごとに必要な計算は $F$ の二回の評価と
+      $\R^{2n}$ の Euclid 距離のみである．
+    \item $c_{\mathrm{int}}$ の計算には，各組に対して
+      注意~\ref{rem:lc-geodesic-equation}の測地線方程式を解く必要がある．
+  \end{itemize}
+  系~\ref{cor:tc-third-order}は，第二基本形式が $\Lambda$ で抑えられる領域では
+  $c_{\mathrm{chord}}$ と $c_{\mathrm{int}}$ の差が
+  $\Lambda^2c_{\mathrm{int}}^3/24$ 以下であることを述べている．
+  すなわち曲がりが小さい範囲では両者は三次まで一致し，
+  計算可能な $c_{\mathrm{chord}}$ で $c_{\mathrm{int}}$ を代替できる．
+\end{remark}
+
+\begin{remark}{平坦な decoder では三つの立場が一致する}{tc-flat-coincide}
+  $B\equiv0$ ならば，定理~\ref{thm:tc-chord-lower-bound}の等号の場合により
+  $c_{\mathrm{chord}}=c_{\mathrm{int}}$ である．
+  さらに例~\ref{ex:tc-indistinguishable-decoders}の decoder (A) のように
+  $G\equiv I_d$ であれば $c_{\mathrm{lat}}$ もこれらと一致する．
+  したがって「潜在幾何を考慮してコストを選ぶ」ことと
+  「decoder を平坦に保つ」ことは，同じ差を消すための二つの方法である．
+  命題~\ref{prop:tc-affine-flat}より，後者は $F$ をアフィンに保つことで
+  達成できるが，それは decoder の表現力を大きく損なう．
+\end{remark}
+
+\begin{remark}{本章の到達点}{tc-endpoint}
+  第\ref{ch:latent-curvature}章までで得た計算経路に対して，
+  本章は次の三点を加えた．
+  \begin{enumerate}
+    \item 曲率が非零でありうるのは $d<N$ かつ $F$ が非アフィンな場合に限る
+      （注意~\ref{rem:tc-curvature-requirements}）．
+      特に可逆な生成写像や区分アフィンなパラメータ写像では曲率は消える．
+    \item 引き戻し計量は decoder を決定しない．
+      計量・曲率・内在距離がすべて一致しながら異なる分布族を生む
+      decoder の組が存在する（命題~\ref{prop:tc-same-metric}）．
+      不定性は第二基本形式を加えれば解消する（注意~\ref{rem:tc-bonnet}）．
+    \item 弦長と内在距離の差は第二基本形式で支配され，三次の量である
+      （系~\ref{cor:tc-third-order}）．弦長は
+      $\Wass_2(K_{z_0},K_{z_1})$ と厳密に等しく，閉じた形で計算できる．
+  \end{enumerate}
+  いずれも第\ref{ch:latent-curvature}章の Gauss 方程式と，
+  第\ref{ch:gaussian-w2}章の $W_2$ の閉形式だけから従っており，
+  新たな道具立てを必要としない．
+\end{remark}

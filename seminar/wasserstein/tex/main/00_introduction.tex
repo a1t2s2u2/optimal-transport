@@ -14,8 +14,10 @@ Polish 空間 $\mathcal{X}$ 上で
 平均と標準偏差の Euclid 距離として厳密に計算する．
 この閉形式を Gaussian decoder に適用して潜在空間上の
 引き戻し Riemann 計量を導き，Christoffel 記号，Riemann 曲率，
-断面曲率へ進む．最終目標は，decoder が潜在空間に作る曲率を
+断面曲率へ進む．まず目標とするのは，decoder が潜在空間に作る曲率を
 実際に計算できる形にすることである．
+最後に，こうして得た幾何が何を決めて何を決めないのかを確定させ，
+潜在空間の二点を結ぶ輸送コストとして何を採るべきかを論じる．
 主たる文献は Villani
 \emph{Optimal Transport: Old and New}
 （Grundlehren der mathematischen Wissenschaften 338, Springer, 2009）であり，
@@ -40,6 +42,12 @@ Polish 空間 $\mathcal{X}$ 上で
     引き戻し計量テンソルを導く．その正定値性を確認した後，
     Christoffel 記号と曲率を定義し，2次元の具体例で
     Gaussian 曲率を最後まで計算する．
+  \item 第\ref{ch:transport-cost}章：
+    曲率が恒等的に $0$ になる二つの場合を特定し，曲率が非零で
+    ありうるための必要条件を得る．引き戻し計量が decoder を
+    決定しないことを反例で示したうえで，弦長と内在距離の差が
+    第二基本形式で支配される三次の量であることを証明し，
+    輸送コストの選択に答える．
   \item 付録A：
     距離空間と測度論の準備．
     本編で用いる定義と補題をすべて揃え，
@@ -65,4 +73,6 @@ Polish 空間 $\mathcal{X}$ 上で
     Gaussian 分布（定義~\ref{def:gw-diagonal-gaussian}）．
   \item $G(z)$：Gaussian decoder が潜在空間に定める
     引き戻し計量テンソル（定義~\ref{def:lc-pullback-metric}）．
+  \item $d_G(z_0,z_1)$：$G$ が定める内在距離（定義~\ref{def:lc-intrinsic-metric}）．
+  \item $B_{ij}$：immersion $F$ の第二基本形式（定理~\ref{thm:lc-gauss-equation}）．
 \end{itemize}
