@@ -18,7 +18,6 @@ Wasserstein 距離の定義・距離性の証明から W₂ における Gaussia
 
 - 本編 4 章（導入 / Wₚ の定義と距離性 / Gaussian 集中 / 潜在空間への応用）+ 付録 1 章（距離空間と測度）
 - 参考文献:
-  - [A class of Wasserstein metrics for probability distributions, C. R. Givens & R. M. Shortt (1984)](https://doi.org/10.1307/mmj/1029003026)
   - [Optimal Transport: Old and New, C. Villani (2009)](https://doi.org/10.1007/978-3-540-71050-9)
   - [最適輸送理論とリッチ曲率, 桑江ほか (Encounter with Mathematics 第63回, 2015)](https://www.math.chuo-u.ac.jp/ENCwMATH/EwM63resume.pdf)
 
