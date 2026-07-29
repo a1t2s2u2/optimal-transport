@@ -60,7 +60,9 @@ tangent-constrained generator の oracle 表現限界である。
 ## 数値検証
 
 円周、球面、積 torus、Stiefel、Grassmann の5例について、式の幾何誤差だけを直接
-積分し、有限 $K$ での log--log 傾きを確認する。neural flow の訓練実験ではない。
+積分し、有限 $K$ での log--log 傾きを確認する。さらに円周の $K=8$ chart内では、
+小型 tanh MLP の速度場を conditional Flow Matching で実際に学習し、局所flow誤差と
+decoder幾何floorを分離する。
 
 ```sh
 make paper-experiments

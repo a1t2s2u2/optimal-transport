@@ -36,7 +36,8 @@ $q=Dr-r(r+1)/2$ として
   \leq C_{D,r,p}K^{-2/q}
 \]
 を得る．Grassmann 多様体と積 torus にも同じ結論を導き，$S^1$ では最適値を定数まで
-求める．五例の数値計算では有限 $K$ でも理論傾き $-2/q$ を確認する．これは一般の
+求める．五例の幾何計算では有限 $K$ でも理論傾き $-2/q$ を確認し，円周では局所
+neural flowを実際に学習して式~(2.10) の二項を分離する．これは一般の
 深層生成器に対する下界ではなく，chart数を明示した tangent-constrained neural
 generatorに対する，OT上の構造定理である．
 \end{abstract}
@@ -105,7 +106,9 @@ $k$-flats や geometric multiresolution analysis で研究されている
     $W_p$ 安定性から，population approximation と empirical estimation を分離する．
   \item 五種類の多様体について，明示的な準一様配置または farthest-point sampling
     が達成する $W_2$ 誤差を直接積分する．有限 $K$ でも理論傾き $-2/q$ が現れることを
-    確認し，円周では厳密値に対して数値実装を較正する．
+    確認し，円周では厳密値に対して数値実装を較正する．さらに小型neural ODEを
+    Flow Matchingで学習し，network幅が減らす潜在分布誤差と，減らせない幾何floorを
+    数値的に分離する．
 \end{enumerate}
 
 本稿の主張は，接平面decoderが任意の深層生成モデルより優れているというものではない．
@@ -558,7 +561,14 @@ chart数は，定数を除いて
   K(\varepsilon)\asymp\varepsilon^{-q/2}
   \tag{3.10}
 \]
-である．局所flow networkを大きくするだけではこの指数を改善できない．
+である．さらに任意の有限network parameter $\theta$ と任意のanchor配置が生成する
+$K$-chart tangent-flow測度 $\nu_\theta$ に対して
+\[
+  \Wass_p(\mu,\nu_\theta)\geq cK^{-2/q}
+  \tag{3.11}
+\]
+である．この下界は局所flowの普遍性を必要とせず，flow networkを大きくするだけでは
+指数を改善できないことを直接表す．普遍性を使うのはmatching upper bound側だけである．
 \end{corollary}
 
 指数 $2/q$ は「一つの chart の直径が $K^{-1/q}$，接平面への法方向偏差が
@@ -975,8 +985,11 @@ chart数と曲率が決めるdecoder幾何誤差，有限networkによる局所f
 式~(2.10) の第一項について，漸近指数が現れる $K$ の範囲と接距離公式の実装を
 確認するために五例を計算した．ここでは局所flowを訓練せず，理想的に密度誤差が零に
 なった後にも残るdecoderの幾何項だけを測る．したがって深層学習の実務性能を示す実験
-ではなく，主定理の有限 $K$ sanity checkである．中心配置
-$\boldsymbol{x}=(x_1,\dots,x_K)$ に対する population cost を
+ではなく，主定理の有限 $K$ sanity checkである．
+
+\subsection{五多様体での decoder 幾何 rate}
+
+中心配置 $\boldsymbol{x}=(x_1,\dots,x_K)$ に対する population cost を
 \[
   U_K(\boldsymbol{x})
   :=\left(
@@ -1036,10 +1049,60 @@ greedy 配置の optimization gap を含む．$S^1$ では式~(6.2) の厳密値
 での最大相対誤差が $6.4\times10^{-6}$ であり，積分と接距離の実装を較正できている．
 
 この実験が支持するのは，具体的な準一様decoder配置が有限 $K$ で既に幾何上界rateを
-実現するという主張である．matching lower bound，FPSの最適性，有限neural flowの
-学習可能性を実験から主張してはいない．
-全コードは Python 標準ライブラリだけで再実行でき，生の各 $K$ の値と回帰結果も
-CSV として保存している．
+実現するという主張である．matching lower boundやFPSの最適性は実験から主張しない．
+
+\subsection{局所 neural flow を実際に学習した場合}
+
+式~(2.10) の第二項も含めるため，$S^1$ の $K=8$ 等間隔chart上で小型neural flowを
+実際に学習した．一つのcell内で角度差
+$\Delta\sim\operatorname{Unif}[-\pi/K,\pi/K]$ とすると，接線座標の目標分布は
+\[
+  Z_1=\sin\Delta,\qquad Z_0\sim\mathcal N(0,1)
+\]
+である．linear conditional path $Z_t=(1-t)Z_0+tZ_1$ と
+$\dot Z_t=Z_1-Z_0$ を使い，一層tanh MLP $v_\theta(t,z)$ を
+\[
+  \mathcal L_{\mathrm{FM}}(\theta)
+  =\mathbb E\left[
+    \abs{v_\theta(t,Z_t)-(Z_1-Z_0)}^2
+  \right]
+  \tag{8.3}
+\]
+で学習した．hidden幅を $4,16,64$ とし，各モデルをAdamで $6000$ step，
+batch size $96$ 学習した．生成時には $40$ stepのHeun法でneural ODEを積分した．
+結果は固定seedによる一回のrunであり，model rankingの統計的有意性は主張しない．
+
+目標局所座標分布を $\lambda$，生成終端分布を $\widehat\lambda$ とする．同じchart内で
+一次元単調couplingを取り，法方向と接方向の直交性を使うと
+\[
+  \Wass_2(\mu,\widehat\nu)^2
+  \leq
+  \mathfrak T_{K,2}(\mu;S^1)^2
+  +
+  \Wass_2(\lambda,\widehat\lambda)^2
+  \tag{8.4}
+\]
+という具体的なcoupling上界を得る．表~\ref{tab:neural-flow-circle} の「結合上界」は
+式~(8.4) の右辺の平方根であり，真の $W_2$ の等号値とは限らない．
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \caption{$S^1$, $K=8$ における局所Flow Matching．幾何floorは全行で
+  $\mathfrak T_{8,2}=0.0342$．未学習は $Z_0$ をそのままdecoderへ入れるbaseline．}
+  \label{tab:neural-flow-circle}
+  \input{experiments/neural_flow_table.tex}
+\end{table}
+
+hidden幅を $4$ から $64$ へ増やすと，終端分布の潜在 $W_2$ は
+$0.0634$ から $0.0441$ へ，式~(8.4) の上界は $0.0721$ から $0.0558$ へ減った．
+一方，network幅に依存しない幾何floor $0.0342$ は残る．この実験は大規模実データでの
+実務性能を示すものではないが，「flowの学習が減らす項」と「decoder構造だけが減らす項」
+を実際の勾配学習で分けて観測している．FM loss自体にはconditional regressionの
+既約分散が含まれるため，生成分布の比較には終端 $W_2$ を用いた．
+
+全コードはPython標準ライブラリだけで再実行でき，各 $K$ の幾何値，回帰結果，
+neural flowの学習結果をCSVとして保存している．
 
 \section{関連研究と新規性の境界}
 \label{sec:related}

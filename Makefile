@@ -15,7 +15,7 @@ help:
 	@echo "make cuturi-site       計算最適輸送のサイトを生成"
 	@echo "make cuturi-pdf        計算最適輸送の PDF を生成"
 	@echo "make wasserstein-site  Wasserstein 距離のサイトを生成（PDF は生成しない）"
-	@echo "make paper-experiments 接アトラス近似率の数値実験を再実行"
+	@echo "make paper-experiments 幾何rateと局所Flow Matching実験を再実行"
 	@echo "make paper             論文の PDF を生成"
 	@echo "make paper-all         数値実験を再実行して論文の PDF を生成"
 	@echo "make clean-sites       生成したサイトを削除"
@@ -42,6 +42,7 @@ wasserstein-site:
 # セミナー資料とは独立。既知の内容は引用で済ませ、新規の主張だけを書く。
 paper-experiments:
 	python3 paper/ot-manifold-approximation/experiments/run.py
+	python3 paper/ot-manifold-approximation/experiments/neural_flow_circle.py
 
 paper:
 	cd paper/ot-manifold-approximation && latexmk
