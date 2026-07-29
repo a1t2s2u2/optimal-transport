@@ -1,0 +1,921 @@
+\documentclass[uplatex,dvipdfmx,11pt,a4paper]{jsarticle}
+
+\input{preamble}
+
+\title{\textbf{曲率は何枚の局所座標を要求するか}\\
+{\large ---多様体上の接アトラス Wasserstein 近似幅---}}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+低次元多様体仮説は，高次元データが低い内在次元をもつ集合の近くに分布すると
+主張する．しかしこの仮説だけでは，その分布を有限な表現でどこまで近似できるか，
+また目標精度に何個の局所座標が必要かは決まらない．本稿は学習アルゴリズムや
+ニューラルネットを仮定せず，この問いを最適輸送上の近似幅として定式化する．
+
+埋め込み多様体 $M\subset\R^m$ と $\mu\in\mathcal P_p(M)$ に対し，$K$ 個の
+affine tangent plane の合併に支えをもつ確率測度までの最小 $p$-Wasserstein 距離を
+\textbf{接アトラス Wasserstein 近似幅} $\mathfrak T_{K,p}(\mu;M)$ と定義する．
+まず，この量が多様体から接アトラスへの距離関数の $L^p(\mu)$ ノルムに一致する
+ことを示す．次に $M$ の reach と $K$ 点被覆半径を用いて，内在次元 $q$ の
+正則な多様体に対する $K^{-2/q}$ 上界を得る．
+
+さらに測度の小球正則性と，接平面が多様体へ非局所的に再接近しないための
+quadratic tangent-separation 条件を置くと，$K^{-2/q}$ の matching lower bound
+が成り立つことを示す．したがってこの指数は広い多様体族で改善不能である．
+
+明示例として Frobenius 計量で埋め込まれた Stiefel 多様体
+$M=\St(D,r)$ を扱う．$q=Dr-r(r+1)/2$，$\sigma$ を正規化 Haar 測度とすると，
+任意の $1\leq p\leq\infty$ に対して
+\[
+  c_{D,r,p}K^{-2/q}
+  \leq \mathfrak T_{K,p}(\sigma;M)
+  \leq C_{D,r,p}K^{-2/q}
+\]
+を得る．同じ結論を射影埋め込みされた Grassmann 多様体と積 torus にも導く．さらに
+$\St(2,1)=S^1$ と $p=2$ では，等間隔な接線配置が厳密最適であり，
+$\mathfrak T_{K,2}\sim\pi^2/(\sqrt{20}K^2)$ を得る．最後に近似幅が入力測度に
+関して $W_p$-Lipschitz であることを示し，幾何的近似誤差と有限標本誤差を分離する．
+\end{abstract}
+
+\medskip
+\noindent\textbf{キーワード}：最適輸送，Wasserstein 距離，多様体仮説，
+接空間，reach，Stiefel 多様体，Grassmann 多様体，近似幅，量子化
+
+\section{はじめに}
+\label{sec:intro}
+
+データ分布が低次元多様体の上または近傍に集中するという多様体仮説は，
+高次元学習を説明する代表的な構造仮定である．ところが「内在次元が低い」ことと，
+「有限なモデルで精度よく近似できる」ことは同じではない．同じ次元をもつ多様体でも，
+曲率，reach，体積，位相が異なれば必要な局所表現の数は変わる．さらに任意の可測写像を
+生成器として許せば，低次元の乱数から任意の確率分布を押し出せるため，潜在次元だけを
+用いた近似下界は意味を失う．近似可能性を論じるには，モデルの幾何学的複雑さを
+明示しなければならない．
+
+本稿は，多様体を有限個の局所線形モデルで表すという最小限の構造に固定する．
+$x\in M$ における接空間 $T_xM$ は多様体の一次近似であり，affine tangent plane
+$x+T_xM$ からのずれは第二基本形式によって二次で増加する．そこで $K$ 個の接平面を
+選び，それらに支えをもつ確率測度までの最小 Wasserstein 距離を考える．この定義は
+特定の最適化手法，誤差逆伝播法，パラメータ化に依存しない．問いは純粋に
+\begin{quote}
+  $K$ 枚の局所一次モデルに許された最良の輸送近似誤差はいくらか
+\end{quote}
+である．
+
+点による通常の量子化では，$q$ 次元分布に対する $W_p$ 誤差は典型的に
+$K^{-1/q}$ で減衰する \cite{graf2000,aydin2026}．接平面は一次の接触をもつため，
+曲率が有限なら二次の $K^{-2/q}$ が期待される．この上界に相当する再構成誤差は
+$k$-flats や geometric multiresolution analysis で研究されている
+\cite{canas2012,liao2019}．しかし上界だけでは，その指数が対象多様体に固有の限界か，
+より巧い接平面配置で改善できるかは分からない．本稿は matching lower bound が
+成立する幾何学的条件を分離し，Stiefel，Grassmann，積 torus の一様分布がその条件を
+満たすことを示す．
+
+\subsection{本稿の貢献}
+
+本稿の貢献は次の四点である．
+\begin{enumerate}
+  \item 接平面アトラスによる多様体上の測度の表現能力を，
+    Wasserstein 空間における近似幅として定義する．閉集合への Wasserstein 射影との
+    同値性により，OT と幾何学的再構成誤差を厳密に結ぶ．
+  \item reach が正の一般の埋め込み多様体について，近似幅を接平面中心の被覆半径の
+    二乗で抑える．これにより $q$ 次元多様体では $K^{-2/q}$ 上界を得る．
+  \item Ahlfors 小球正則性と quadratic tangent separation を仮定し，
+    $K^{-2/q}$ の一般 lower bound を証明する．Stiefel，Grassmann，積 torus では
+    tangent distance と chord 距離の二乗の大域的な二側評価を明示する．
+  \item $S^1=\St(2,1)$ では最適配置と誤差を厳密に計算する．また近似幅の
+    $W_p$ 安定性から，population approximation と empirical estimation を分離する．
+\end{enumerate}
+
+本稿の主張は，接平面が常に最良の生成モデルであるというものではない．むしろ
+「局所一次モデルを $K$ 個使う」という明示的な表現予算のもとで，達成可能な精度と
+改善不能な精度を決めることが目的である．
+
+\section{Wasserstein 射影と接アトラス近似幅}
+\label{sec:definition}
+
+\subsection{Wasserstein 距離}
+
+$1\leq p<\infty$ とし，$\mathcal P_p(\R^m)$ を有限な $p$ 次 moment をもつ
+Borel 確率測度全体とする．$\mu,\nu\in\mathcal P_p(\R^m)$ に対して
+\[
+  \Wass_p(\mu,\nu)^p
+  :=\inf_{\pi\in\Pi(\mu,\nu)}
+    \int_{\R^m\times\R^m}\norm{x-y}^p\,\pi(\d x,\d y)
+\]
+を $p$-Wasserstein 距離という \cite{villani2009}．また
+\[
+  \Wass_\infty(\mu,\nu)
+  :=\inf_{\pi\in\Pi(\mu,\nu)}
+    \pi\text{-}\mathop{\mathrm{ess\,sup}}\norm{x-y}
+\]
+とする．
+
+次の事実が，接アトラス近似を OT 上に置く基礎になる．
+
+\begin{proposition}[閉集合への Wasserstein 射影]
+\label{prop:closed-projection}
+非空閉集合 $A\subset\R^m$ と $\mu\in\mathcal P_p(\R^m)$ に対し，
+\[
+  \inf_{\substack{\nu\in\mathcal P_p(\R^m)\\\supp\nu\subset A}}
+  \Wass_p(\mu,\nu)^p
+  =\int_{\R^m}\dist(x,A)^p\,\mu(\d x).
+  \tag{2.1}
+\]
+$p=\infty$ では右辺を $\mu$-本質的上限に置き換えた等式が成り立つ．
+\end{proposition}
+
+\begin{proof}
+任意の $\nu$ with $\supp\nu\subset A$ と $\pi\in\Pi(\mu,\nu)$ に対し，
+$\norm{x-y}\geq\dist(x,A)$ であるから，左辺は右辺以上である．逆向きには，
+$x$ の $A$ 上への最近点を一つ選ぶ Borel 可測写像 $P_A$ をとる．有限次元 Euclid
+空間では閉集合への最近点対応は可測選択をもつ．$\nu=(P_A)_\#\mu$ と
+$\pi=(\mathrm{id},P_A)_\#\mu$ を選べば
+\[
+  \int\norm{x-y}^p\,\d\pi
+  =\int\dist(x,A)^p\,\d\mu
+\]
+となる．$p=\infty$ も同じ coupling で従う．
+\end{proof}
+
+\subsection{接アトラス Wasserstein 近似幅}
+
+$M\subset\R^m$ を $q$ 次元の滑らかな埋め込み部分多様体とする．
+$x\in M$ における affine tangent plane を
+\[
+  L_x:=x+T_xM
+\]
+と書く．中心 $\boldsymbol{x}=(x_1,\dots,x_K)\in M^K$ が定める接アトラスを
+\[
+  A_{\boldsymbol{x}}
+  :=\bigcup_{j=1}^K L_{x_j}
+\]
+とする．
+
+\begin{definition}[接アトラス Wasserstein 近似幅]
+\label{def:tangent-width}
+$\mu\in\mathcal P_p(M)$ と $1\leq p<\infty$ に対して
+\[
+  \boxed{
+  \mathfrak T_{K,p}(\mu;M)
+  :=\inf_{\boldsymbol{x}\in M^K}
+    \inf_{\substack{\nu\in\mathcal P_p(\R^m)\\
+                     \supp\nu\subset A_{\boldsymbol{x}}}}
+       \Wass_p(\mu,\nu)
+  }
+  \tag{2.2}
+\]
+と定める．$p=\infty$ も同様に定義する．
+\end{definition}
+
+命題~\ref{prop:closed-projection} より，有限な affine subspace の合併が閉であることを
+用いると，直ちに
+\[
+  \mathfrak T_{K,p}(\mu;M)
+  =\inf_{\boldsymbol{x}\in M^K}
+    \left(
+      \int_M\min_{1\leq j\leq K}\dist(y,L_{x_j})^p\,\mu(\d y)
+    \right)^{1/p}
+  \tag{2.3}
+\]
+を得る．したがって本幅は，平均再構成誤差を Wasserstein 空間における
+model-class distance として特徴づけた量である．
+
+\begin{remark}[Stiefel と Grassmann の役割]
+各 $T_{x_j}M$ の直交基底を行列 $U_j\in\St(m,q)$ で表せば
+$L_{x_j}=x_j+\operatorname{ran}U_j$ である．しかし $U_j$ と
+$U_jR$（$R\in O(q)$）は同じ接空間を表す．よって基底を保持する計算上の変数は
+Stiefel 多様体に，座標不変な部分空間は商
+$\Gr(m,q)=\St(m,q)/O(q)$ に属する．定義~\ref{def:tangent-width} は後者だけに依存し，
+局所座標の gauge に依存しない．
+\end{remark}
+
+\section{reach と被覆半径による一般上界}
+\label{sec:general-upper}
+
+\begin{definition}[reach]
+閉集合 $M\subset\R^m$ の reach $\reach(M)$ とは，$M$ からの距離が
+$\tau$ 未満のすべての点が $M$ 上に一意な最近点をもつような $\tau$ の上限である
+\cite{federer1959}．
+\end{definition}
+
+reach は自己接近と外在曲率を同時に制御する．次の二次評価が重要である．
+
+\begin{lemma}[接平面からの二次偏差]
+\label{lem:reach-tangent}
+$M\subset\R^m$ を $C^2$ 埋め込み部分多様体とし，$\reach(M)\geq\tau>0$ とする．
+任意の $x,y\in M$ に対して
+\[
+  \dist(y,L_x)
+  \leq\frac{\norm{x-y}^2}{2\tau}.
+  \tag{3.1}
+\]
+\end{lemma}
+
+\begin{proof}
+$n\in N_xM$ を単位法ベクトルとする．$0<s<\tau$ なら，reach の定義と法方向の
+最近点性から，中心 $x+sn$，半径 $s$ の開球は $M$ と交わらない．したがって
+\[
+  \norm{y-(x+sn)}^2\geq s^2,
+\]
+すなわち $\langle n,y-x\rangle\leq\norm{x-y}^2/(2s)$ である．$-n$ にも適用して
+絶対値を取り，$s\uparrow\tau$ とする．単位法ベクトル上の上限を取れば
+\[
+  \norm{\operatorname{proj}_{N_xM}(y-x)}
+  \leq\frac{\norm{x-y}^2}{2\tau}.
+\]
+左辺は $\dist(y,x+T_xM)$ に等しい．
+\end{proof}
+
+$M$ の $K$ 点 chordal covering radius を
+\[
+  \rho_K(M)
+  :=\inf_{x_1,\dots,x_K\in M}
+    \sup_{y\in M}\min_j\norm{y-x_j}
+  \tag{3.2}
+\]
+とする．
+
+\begin{theorem}[被覆半径からの幅上界]
+\label{thm:general-upper}
+$M$ はコンパクトで $\reach(M)\geq\tau>0$ とする．$M$ 上の任意の確率測度
+$\mu$ と任意の $1\leq p\leq\infty$ に対し，
+\[
+  \boxed{
+  \mathfrak T_{K,p}(\mu;M)
+  \leq\frac{\rho_K(M)^2}{2\tau}
+  }
+  \tag{3.3}
+\]
+が成り立つ．
+\end{theorem}
+
+\begin{proof}
+$\varepsilon>0$ に対し，被覆半径が $\rho_K(M)+\varepsilon$ 以下となる中心を選ぶ．
+各 $y\in M$ に対して $\norm{y-x_j}\leq\rho_K(M)+\varepsilon$ となる $j$ があり，
+補題~\ref{lem:reach-tangent} より
+\[
+  \min_j\dist(y,L_{x_j})
+  \leq\frac{(\rho_K(M)+\varepsilon)^2}{2\tau}.
+\]
+式~(2.3) に代入し，$\varepsilon\downarrow0$ とする．
+\end{proof}
+
+\begin{corollary}[内在次元による上界]
+\label{cor:dimension-upper}
+$M$ は $q$ 次元コンパクト $C^2$ 多様体で $\reach(M)>0$ とする．このとき
+$M$ のみに依存する $C_M<\infty$ と $K_0$ が存在し，任意の $K\geq K_0$，
+$1\leq p\leq\infty$，$\mu\in\mathcal P_p(M)$ に対して
+\[
+  \mathfrak T_{K,p}(\mu;M)
+  \leq C_MK^{-2/q}
+  \tag{3.4}
+\]
+が成り立つ．
+\end{corollary}
+
+\begin{proof}
+コンパクトな滑らかな多様体では，十分小さい $s$ に対して
+$q$ 次元体積が $\operatorname{vol}_M(B(x,s))\geq a_Ms^q$ を一様に満たす．
+極大 $s$-separated set の $s/2$ 球は互いに交わらないため，その点数は
+$C_M's^{-q}$ 以下であり，同じ点集合は $M$ の $s$-net になる．したがって
+$\rho_K(M)\leq C_M''K^{-1/q}$．定理~\ref{thm:general-upper} を適用する．
+\end{proof}
+
+\begin{definition}[Ahlfors 正則性]
+\label{def:ahlfors}
+$\mu$ が $M$ 上で局所 $q$-Ahlfors 正則であるとは，ある
+$a,b,s_0>0$ が存在して，任意の $x\in M$ と $0<s\leq s_0$ に対して
+\[
+  as^q\leq\mu(B(x,s))\leq bs^q
+  \tag{3.5}
+\]
+が成り立つことをいう．球は ambient Euclid 距離で定める．
+\end{definition}
+
+上界には有限な外在曲率を表す positive reach だけで十分である．一方，一致する
+下界には，異なる場所の接平面が多様体へ偶然近づくことを排除する条件が必要になる．
+
+\begin{definition}[quadratic tangent separation]
+\label{def:qts}
+$M$ が quadratic tangent separation（QTS）を満たすとは，ある
+$\alpha,r_0>0$ が存在し，任意の $x,y\in M$ に対して
+\[
+  \dist(y,L_x)
+  \geq
+  \alpha\min\{\norm{x-y}^2,r_0^2\}
+  \tag{3.6}
+\]
+が成り立つことをいう．
+\end{definition}
+
+QTS は reach からは従わない．局所的には第二基本形式が全方向で十分に曲がることを，
+大域的には一つの接平面が離れた場所で $M$ と再交差しないことを要求する．
+
+\begin{theorem}[一般の matching rate]
+\label{thm:general-sharp}
+$M\subset\R^m$ を $q$ 次元コンパクト $C^2$ 埋め込み多様体，
+$\mu$ を $M$ 上の局所 $q$-Ahlfors 正則な確率測度とする．さらに
+$\reach(M)>0$ かつ $M$ が QTS を満たすと仮定する．このとき任意の
+$1\leq p\leq\infty$ に対して正定数 $c,C$ と $K_0$ が存在し，
+\[
+  \boxed{
+  cK^{-2/q}
+  \leq\mathfrak T_{K,p}(\mu;M)
+  \leq CK^{-2/q}
+  }
+  \qquad(K\geq K_0)
+  \tag{3.7}
+\]
+が成り立つ．
+\end{theorem}
+
+\begin{proof}
+上界は Ahlfors 下側評価による covering number bound と
+定理~\ref{thm:general-upper} から従う．
+
+下界を示す．任意の中心 $x_1,\dots,x_K$ に対して
+\[
+  Z(y):=\min_j\dist(y,L_{x_j})
+\]
+とおく．$0<t<\alpha r_0^2$ なら QTS により
+\[
+  \{y:\dist(y,L_{x_j})\leq t\}
+  \subset
+  B\left(x_j,\sqrt{t/\alpha}\right).
+\]
+$t$ を十分小さく取れば Ahlfors 上側評価が使え，union bound から
+\[
+  \mu\{Z\leq t\}
+  \leq Kb\alpha^{-q/2}t^{q/2}.
+  \tag{3.8}
+\]
+$t_K=(\alpha^{q/2}/(2bK))^{2/q}$ と選ぶと，十分大きい $K$ に対して
+$\mu\{Z>t_K\}\geq1/2$ である．したがって $p<\infty$ なら
+\[
+  \left(\int Z^p\,\d\mu\right)^{1/p}
+  \geq2^{-1/p}t_K,
+\]
+$p=\infty$ なら $\mu$-本質的上限が $t_K$ 以上である．中心について infimum を
+取れば下界を得る．
+\end{proof}
+
+指数 $2/q$ は「一つの chart の直径が $K^{-1/q}$，接平面への法方向偏差が
+その二乗」という二つの幾何学的事実から生じる．QTS が破れる多様体では
+より速い rate が生じる可能性があり，その場合は曲率の退化方向や接平面の
+再交差集合の次元を別に解析する必要がある．以下では一般定理を適用できる
+三つの非自明な多様体族を調べる．
+
+\section{Stiefel 多様体に対する一致した上下界}
+\label{sec:stiefel}
+
+$1\leq r\leq D$ とし，
+\[
+  M=\St(D,r)
+  :=\{X\in\R^{D\times r}:X^{\mathsf T}X=I_r\}
+\]
+を Frobenius 内積 $\langle A,B\rangle=\tr(A^{\mathsf T}B)$ により
+$\R^{D r}$ の部分多様体とみなす．その次元は
+\[
+  q=Dr-\frac{r(r+1)}2
+  \tag{4.1}
+\]
+である \cite{edelman1998,absil2008}．$\sigma_{D,r}$ を $M$ 上の正規化 Haar 測度とする．
+
+\subsection{接空間と二次接触の厳密評価}
+
+\begin{proposition}[Stiefel の接空間と第二基本形式]
+\label{prop:stiefel-geometry}
+$X\in\St(D,r)$ に対して
+\[
+  T_XM=\{H:X^{\mathsf T}H+H^{\mathsf T}X=0\},
+  \qquad
+  N_XM=\{XS:S^{\mathsf T}=S\}.
+  \tag{4.2}
+\]
+Euclid 埋め込みの第二基本形式は
+\[
+  B_X(H,K)=-X\sym(H^{\mathsf T}K),
+  \qquad
+  \sym(A):=\frac{A+A^{\mathsf T}}2,
+  \tag{4.3}
+\]
+であり，$\norm{B_X(H,K)}_F\leq\norm{H}_F\norm{K}_F$ を満たす．
+\end{proposition}
+
+\begin{proof}
+制約 $X^{\mathsf T}X=I_r$ を微分すれば接空間の式を得る．
+$\R^{D\times r}$ の任意の $A$ の法方向射影は
+$X\sym(X^{\mathsf T}A)$ であるから法空間の式も従う．二変数曲面を制約式に代入して
+混合微分すれば，法方向成分は $-X\sym(H^{\mathsf T}K)$ となる．最後に
+\[
+  \norm{X\sym(H^{\mathsf T}K)}_F
+  =\norm{\sym(H^{\mathsf T}K)}_F
+  \leq\norm{H}_F\norm{K}_F
+\]
+である．
+\end{proof}
+
+次の命題は本稿の Stiefel 解析の核心である．局所 Taylor 展開ではなく，
+全ての二点に対する大域的な二側評価になっている．
+
+\begin{proposition}[chord の二乗と接平面距離]
+\label{prop:stiefel-quadratic}
+任意の $X,Y\in\St(D,r)$ に対して
+\[
+  \dist(Y,L_X)
+  =\norm{I_r-\sym(X^{\mathsf T}Y)}_F
+  \tag{4.4}
+\]
+であり，
+\[
+  \boxed{
+  \frac{1}{2\sqrt r}\norm{X-Y}_F^2
+  \leq\dist(Y,L_X)
+  \leq\frac12\norm{X-Y}_F^2
+  }
+  \tag{4.5}
+\]
+が成り立つ．
+\end{proposition}
+
+\begin{proof}
+$Y-X$ の $N_XM$ への直交射影は
+\[
+  X\sym(X^{\mathsf T}(Y-X))
+  =X\bigl(\sym(X^{\mathsf T}Y)-I_r\bigr)
+\]
+である．$X^{\mathsf T}X=I_r$ より左から $X$ を掛けても Frobenius norm は変わらず，
+式~(4.4) を得る．
+
+$A:=I_r-\sym(X^{\mathsf T}Y)$ とおく．任意の $v\in\R^r$ に対し
+\[
+  v^{\mathsf T}\sym(X^{\mathsf T}Y)v
+  =\langle Xv,Yv\rangle
+  \leq\norm{Xv}\norm{Yv}=\norm v^2
+\]
+なので $A$ は半正定値である．さらに
+\[
+  \tr A
+  =r-\tr(X^{\mathsf T}Y)
+  =\frac12\norm{X-Y}_F^2.
+\]
+半正定値 $r\times r$ 行列について
+$\tr A/\sqrt r\leq\norm A_F\leq\tr A$ であるから，式~(4.5) が従う．
+\end{proof}
+
+\subsection{主定理}
+
+コンパクトな $q$ 次元 Riemann 多様体の体積測度は小球上で $s^q$ と同程度である．
+Stiefel 多様体はコンパクトかつ等質なので，ある $a,b,s_0>0$ が存在し，任意の
+$X\in M$ と $0<s\leq s_0$ に対して
+\[
+  as^q\leq\sigma_{D,r}\bigl(B_F(X,s)\bigr)\leq bs^q
+  \tag{4.6}
+\]
+が成り立つ．ここで $B_F$ は Frobenius chord ball である．
+
+\begin{theorem}[Stiefel--Haar 測度の接アトラス幅]
+\label{thm:stiefel-main}
+$M=\St(D,r)$，$q=Dr-r(r+1)/2$，$\sigma=\sigma_{D,r}$ とする．
+任意の $1\leq p\leq\infty$ に対し，$D,r,p$ のみに依存する正定数
+$c_{D,r,p},C_{D,r,p}$ と $K_0$ が存在して，任意の $K\geq K_0$ で
+\[
+  \boxed{
+  c_{D,r,p}K^{-2/q}
+  \leq\mathfrak T_{K,p}(\sigma;M)
+  \leq C_{D,r,p}K^{-2/q}
+  }
+  \tag{4.7}
+\]
+が成り立つ．特に
+\[
+  \mathfrak T_{K,2}(\sigma;M)^2\asymp K^{-4/q}.
+  \tag{4.8}
+\]
+\end{theorem}
+
+\begin{proof}
+Stiefel 多様体はコンパクトな滑らかな埋め込み多様体なので positive reach をもつ．
+式~(4.6) は Haar 測度の局所 $q$-Ahlfors 正則性である．さらに
+命題~\ref{prop:stiefel-quadratic} の下側評価は，定義~\ref{def:qts} の QTS を
+$\alpha=1/(2\sqrt r)$ で与える．したがって
+定理~\ref{thm:general-sharp} を適用すれば式~(4.7) を得る．
+\end{proof}
+
+定理~\ref{thm:stiefel-main} は，目標誤差を $\varepsilon$ としたとき必要十分な
+接 chart 数が
+\[
+  K\asymp\varepsilon^{-q/2},
+  \qquad q=Dr-\frac{r(r+1)}2
+  \tag{4.9}
+\]
+であることを意味する．これは ambient dimension $Dr$ そのものではなく，Stiefel
+多様体の内在次元で決まる．一方，指数に現れる $q$ は依然として次元の呪いを表す．
+
+\section{Grassmann 多様体と積 torus}
+\label{sec:other-manifolds}
+
+一般定理の対象は Stiefel 多様体に限られない．本節では座標表示の異なる二つの族で
+QTS を直接確認する．
+
+\subsection{Grassmann 多様体}
+
+$r$ 次元部分空間をその直交射影行列で表し，
+\[
+  \mathcal G_{D,r}
+  :=\{P\in\R^{D\times D}:P^{\mathsf T}=P,\ P^2=P,\ \tr P=r\}
+\]
+とおく．これは $\Gr(D,r)$ の Euclid 埋め込みであり，内在次元は
+\[
+  q_G=r(D-r)
+  \tag{5.1}
+\]
+である．
+
+\begin{proposition}[Grassmann の quadratic tangent separation]
+\label{prop:grassmann-qts}
+$P,Q\in\mathcal G_{D,r}$ の主角を $\theta_1,\dots,\theta_r$ とする．このとき
+\[
+  \dist(Q,L_P)^2
+  =2\sum_{i=1}^r\sin^4\theta_i,
+  \qquad
+  \norm{P-Q}_F^2
+  =2\sum_{i=1}^r\sin^2\theta_i.
+  \tag{5.2}
+\]
+したがって
+\[
+  \boxed{
+  \frac{1}{\sqrt{2r}}\norm{P-Q}_F^2
+  \leq\dist(Q,L_P)
+  \leq\frac{1}{\sqrt2}\norm{P-Q}_F^2
+  }.
+  \tag{5.3}
+\]
+\end{proposition}
+
+\begin{proof}
+$P$ が定める分解 $\R^D=\operatorname{ran}P\oplus\ker P$ に関して，
+$T_P\mathcal G_{D,r}$ は対角 block が零の対称行列全体である．したがって
+$Q-P$ の法方向成分は
+\[
+  P(Q-P)P+(I-P)Q(I-P)
+\]
+である．二項は直交し，主角表示ではそれぞれの非零特異値が
+$\sin^2\theta_i$ になるので第一式を得る．第二式は射影行列間の標準的な chord
+距離である．$a_i=\sin^2\theta_i$ とおき，
+\[
+  \frac1{\sqrt r}\sum_i a_i
+  \leq\left(\sum_i a_i^2\right)^{1/2}
+  \leq\sum_i a_i
+\]
+を使えば式~(5.3) が従う．
+\end{proof}
+
+射影埋め込みされた Grassmann 多様体はコンパクトかつ等質であり，正規化 Haar 測度は
+局所 $q_G$-Ahlfors 正則である．命題~\ref{prop:grassmann-qts} と
+定理~\ref{thm:general-sharp} から次を得る．
+
+\begin{corollary}[Grassmann--Haar 測度の幅]
+\label{cor:grassmann-width}
+$\sigma_G$ を $\mathcal G_{D,r}$ 上の正規化 Haar 測度とする．任意の
+$1\leq p\leq\infty$ に対して
+\[
+  \mathfrak T_{K,p}(\sigma_G;\mathcal G_{D,r})
+  \asymp K^{-2/[r(D-r)]}.
+  \tag{5.4}
+\]
+\end{corollary}
+
+\subsection{積 torus}
+
+単位円の $\ell$ 個の直積を標準的に
+\[
+  \mathbb T^\ell=(S^1)^\ell\subset\R^{2\ell}
+\]
+へ埋め込む．$x=x(\theta_1,\dots,\theta_\ell)$ と
+$y=x(\phi_1,\dots,\phi_\ell)$ に対し
+$a_i=1-\cos(\theta_i-\phi_i)\geq0$ とおく．各円因子の法方向成分は $a_i$ なので
+\[
+  \dist(y,L_x)^2=\sum_{i=1}^{\ell}a_i^2,
+  \qquad
+  \norm{x-y}^2=2\sum_{i=1}^{\ell}a_i.
+  \tag{5.5}
+\]
+ゆえに
+\[
+  \frac1{2\sqrt\ell}\norm{x-y}^2
+  \leq\dist(y,L_x)
+  \leq\frac12\norm{x-y}^2.
+  \tag{5.6}
+\]
+積 Haar 測度 $\sigma_{\mathbb T}$ は局所 $\ell$-Ahlfors 正則なので，
+\[
+  \mathfrak T_{K,p}(\sigma_{\mathbb T};\mathbb T^\ell)
+  \asymp K^{-2/\ell}
+  \qquad(1\leq p\leq\infty).
+  \tag{5.7}
+\]
+
+\begin{remark}[さらに含まれる多様体]
+球面は $\St(D,1)$ である．また，主曲率が正の上下界をもち，接超平面が一点でのみ
+接するコンパクト狭義凸超曲面も QTS を満たす．特に楕円体にも
+定理~\ref{thm:general-sharp} が適用できる．一方，平坦方向をもつ cylinder，
+developable surface，接平面が離れた場所で再交差する埋め込みでは QTS が破れ得る．
+この区別により「内在次元だけで rate が決まる」という過剰な主張を避けられる．
+\end{remark}
+
+\section{厳密に解ける例：\texorpdfstring{$\St(2,1)=S^1$}{St(2,1)=S1}}
+\label{sec:circle}
+
+$S^1$ の点を $x(\theta)=(\cos\theta,\sin\theta)$ と書く．$x(\theta)$ における接線は
+\[
+  L_\theta=\{z\in\R^2:\langle z,x(\theta)\rangle=1\}
+\]
+である．角度差の絶対値を $0\leq t\leq\pi$ に取ると
+\[
+  \dist(x(\theta+t),L_\theta)=1-\cos t.
+  \tag{6.1}
+\]
+
+\begin{theorem}[円周上の厳密最適配置]
+\label{thm:circle-exact}
+$\sigma$ を $S^1$ 上の一様確率測度とする．任意の $K\geq1$ に対して，
+$\mathfrak T_{K,2}(\sigma;S^1)$ は等間隔な $K$ 本の接線によって達成され，
+\[
+  \boxed{
+  \mathfrak T_{K,2}(\sigma;S^1)^2
+  =\frac{K}{\pi}
+    \left(
+      \frac{3\pi}{2K}
+      -2\sin\frac{\pi}{K}
+      +\frac14\sin\frac{2\pi}{K}
+    \right)
+  }
+  \tag{6.2}
+\]
+が成り立つ．特に
+\[
+  \mathfrak T_{K,2}(\sigma;S^1)^2
+  =\frac{\pi^4}{20K^4}+O(K^{-6}),
+  \qquad
+  \mathfrak T_{K,2}(\sigma;S^1)
+  \sim\frac{\pi^2}{\sqrt{20}}K^{-2}.
+  \tag{6.3}
+\]
+また
+\[
+  \mathfrak T_{K,\infty}(\sigma;S^1)
+  =1-\cos\frac{\pi}{K}
+  \sim\frac{\pi^2}{2K^2}.
+  \tag{6.4}
+\]
+\end{theorem}
+
+\begin{proof}
+接点を円周順に並べ，隣接接点間の角度を
+$\Delta_1,\dots,\Delta_K\geq0$ とする．$\sum_j\Delta_j=2\pi$ である．
+$1-\cos t$ は $[0,\pi]$ で単調増加するため，隣接する二接線への最近領域の境界は
+角度の中点である．よって式~(2.3) と式~(6.1) から
+\[
+  \mathfrak T_{K,2}^2
+  =\inf_{\substack{\Delta_j\geq0\\\sum_j\Delta_j=2\pi}}
+    \frac1\pi\sum_{j=1}^K
+      \int_0^{\Delta_j/2}(1-\cos t)^2\,\d t.
+  \tag{6.5}
+\]
+$H(s)=\int_0^{s/2}(1-\cos t)^2\,\d t$ とおくと
+$H''(s)=\tfrac12(1-\cos(s/2))\sin(s/2)\geq0$ なので $H$ は凸である．
+Jensen の不等式より最小値は $\Delta_j=2\pi/K$ で達成される．
+\[
+  \int_0^a(1-\cos t)^2\,\d t
+  =\frac{3a}{2}-2\sin a+\frac14\sin2a
+\]
+に $a=\pi/K$ を代入して式~(6.2) を得る．Taylor 展開から式~(6.3) が従う．
+$p=\infty$ では最大角度 gap を最小化すればよく，等間隔配置と式~(6.4) を得る．
+\end{proof}
+
+この例は，$K^{-2/q}$ の指数だけでなく定数も曲率と cell geometry から決まることを
+示している．一般の Stiefel 多様体で sharp leading constant を求めるには，第二基本形式が
+定める四次局所 distortion に対する最適 cell shape を解く必要がある．
+
+\section{有限標本誤差との分離}
+\label{sec:stability}
+
+本稿の近似幅は population quantity であり，どのように中心を計算するかを指定しない．
+それでも経験測度への置換による誤差は，Wasserstein 空間の三角不等式だけで分離できる．
+
+\begin{proposition}[測度に関する安定性]
+\label{prop:stability}
+$M\subset\R^m$ を固定し，$\mu,\mu'\in\mathcal P_p(M)$ とする．任意の
+$K\geq1$ と $1\leq p\leq\infty$ に対して
+\[
+  \boxed{
+  \abs{
+    \mathfrak T_{K,p}(\mu;M)-\mathfrak T_{K,p}(\mu';M)
+  }
+  \leq\Wass_p(\mu,\mu')
+  }
+  \tag{7.1}
+\]
+が成り立つ．
+\end{proposition}
+
+\begin{proof}
+$\mathcal C_K(M)$ を，ある $K$ 個の接平面の合併に支えをもつ確率測度全体とする．
+定義より
+\[
+  \mathfrak T_{K,p}(\mu;M)
+  =\inf_{\nu\in\mathcal C_K(M)}\Wass_p(\mu,\nu).
+\]
+任意の距離空間で，集合までの距離は $1$-Lipschitz である．実際，三角不等式から
+$\Wass_p(\mu,\nu)\leq\Wass_p(\mu,\mu')+\Wass_p(\mu',\nu)$ であり，
+$\nu$ について infimum を取った後に $\mu,\mu'$ を交換する．
+\end{proof}
+
+$X_1,\dots,X_n\sim\mu$ と $\widehat\mu_n=n^{-1}\sum_i\delta_{X_i}$ に対し，
+\[
+  \abs{
+    \mathfrak T_{K,p}(\widehat\mu_n;M)
+    -\mathfrak T_{K,p}(\mu;M)
+  }
+  \leq\Wass_p(\widehat\mu_n,\mu)
+  \tag{7.2}
+\]
+である．したがって任意の empirical Wasserstein bound をそのまま近似幅推定へ
+移せる．多様体上の測度推定では，ambient dimension ではなく内在次元と密度の
+正則性に依存する minimax rate が知られている \cite{divol2022,block2022}．
+
+式~(7.2) は，少なくとも三種類の誤差を区別すべきことを示す．
+\[
+  \underbrace{\mathfrak T_{K,p}(\mu;M)}_{\text{表現クラスの近似誤差}}
+  ,\qquad
+  \underbrace{\Wass_p(\widehat\mu_n,\mu)}_{\text{有限標本誤差}}
+  ,\qquad
+  \underbrace{\text{中心配置の最適化 gap}}_{\text{計算誤差}}.
+\]
+本稿が決定するのは第一項であり，第三項のために特定の学習アルゴリズムを仮定しない．
+
+\section{関連研究と新規性の境界}
+\label{sec:related}
+
+\paragraph{多様体推定．}
+Hausdorff 距離による多様体推定では reach や smoothness を仮定した minimax rate が
+研究され，rate が ambient dimension ではなく内在次元に依存することが知られている
+\cite{genovese2012}．本稿は未知 support の推定量を構成せず，固定した表現予算 $K$ に
+対する population approximation width を扱う．したがって統計的 manifold recovery
+とは相補的である．
+
+\paragraph{$k$-flats と GMRA．}
+Canas, Poggio, Rosasco \cite{canas2012} は $k$ 個の affine $d$-flats による
+expected squared reconstruction error を解析し，第二基本形式を含む $k^{-4/d}$ 上界と
+経験最小化の rate を与えた．GMRA は局所 affine approximation を多重解像度化し，
+未知の正則性へ適応する \cite{liao2019}．命題~\ref{prop:closed-projection} により，
+これらの reconstruction objective は適切な support class までの $W_2^2$ と読める．
+したがって $K^{-4/q}$ という二乗誤差の上界そのものは新規ではない．本稿の差分は，
+接点に anchored された座標不変な model class を Wasserstein 近似幅として定義し，
+matching lower bound のための QTS 条件を分離し，Stiefel，Grassmann，積 torus
+について全ての $p$ でその条件を検証し，$S^1$ では厳密最適値まで求める点にある．
+
+\paragraph{Wasserstein 量子化と測度推定．}
+点を $K$ 個用いる古典的量子化の $K^{-1/q}$ rate は Zador 理論により特徴づけられ，
+Riemann 多様体や rectifiable metric measure space に拡張されている
+\cite{graf2000,aydin2026}．Divol \cite{divol2022} は未知多様体上の滑らかな測度を
+Wasserstein loss で推定し，内在次元に依存する minimax rate を与えた．本稿では
+support atom の代わりに一次接触をもつ局所 $q$-plane を approximation unit とするため，
+rate が $K^{-1/q}$ から $K^{-2/q}$ へ変わる．
+
+\paragraph{chart model．}
+複数の局所座標をもつ autoencoder には universal approximation や有限標本での
+generalization bound がある \cite{schonsheck2020,liu2023}．これらは具体的な関数近似器を
+含む一方，本稿は encoder，decoder，最適化法を捨象し，局所一次 chart の情報理論的な
+表現限界だけを抽出する．また Hamm et al. \cite{hamm2025} は確率測度の族そのものが
+$W_2$ 空間内でなす多様体を学習する理論を構築した．本稿は Euclid 空間内の一般の
+埋め込み多様体に支えられた一つの確率測度を Wasserstein loss で近似するもので，
+対象が異なる．
+
+\section{限界と次の問題}
+\label{sec:limitations}
+
+本稿の結果には明確な限界がある．
+\begin{enumerate}
+  \item $\mathfrak T_{K,p}$ は多様体 $M$ を既知として定義した approximation width である．
+    未知多様体から接平面を推定する statistical problem は式~(7.2) だけでは解決しない．
+  \item $W_p$ は質量で重み付けされた誤差であり，低密度領域の support defect を弱くしか
+    罰しない．$W_\infty$ は $M$ からアトラスへの一方向の最大偏差を制御するが，無限に
+    延びる接平面側の余分な support までは制御しない．二方向 Hausdorff recovery には
+    bounded chart domain を導入する必要がある．
+  \item matching lower bound は Ahlfors 正則性と QTS を使う．密度が消える測度，
+    特異測度，低次元 strata の混合，曲率の退化方向をもつ多様体では指数が変わり得る．
+  \item 一般多様体では指数のみが sharp であり，leading constant は未決定である．
+    これは第二基本形式が定める局所四次 distortion に対する Zador 型問題になる．
+\end{enumerate}
+
+次に狙うべき理論結果は二つある．第一は，半径をもつ bounded tangent charts に対して
+$W_p$ と二方向 Hausdorff 誤差を同時に制御することである．第二は $s$ 次 Taylor chart
+まで表現クラスを拡張し，$C^{s+1}$ 多様体に対して
+\[
+  \mathfrak T^{(s)}_{K,p}\asymp K^{-(s+1)/q}
+\]
+となる条件を特徴づけることである．この階層が得られれば，chart 数と chart の次数の
+どちらに表現予算を配るべきかを幾何から決められる．
+
+\section{結論}
+\label{sec:conclusion}
+
+本稿は「多様体を学習できたか」を最適化損失や特定のモデルで定義せず，有限個の
+局所線形表現に対する Wasserstein 近似幅として定義した．reach が正の $q$ 次元多様体
+では $K^{-2/q}$ が達成可能であり，Ahlfors 正則性と QTS のもとでは同じ rate が
+下界でも強制される．Stiefel，Grassmann，積 torus はこの条件を満たすため，それらを
+精度 $\varepsilon$ で一次近似するために必要な chart 数は，定数を除いて
+$\varepsilon^{-q/2}$ である．
+
+この結果が与えるのは学習手順ではなく，どの学習手順も超えられない表現精度の基準である．
+低次元多様体仮説をモデル設計へ結びつけるには，まずこのような approximation width を
+固定し，その後に統計誤差と計算誤差を足すべきである．
+
+\begin{thebibliography}{99}
+
+\bibitem{absil2008}
+P.-A.~Absil, R.~Mahony, and R.~Sepulchre.
+\newblock \emph{Optimization Algorithms on Matrix Manifolds}.
+\newblock Princeton University Press, 2008.
+
+\bibitem{aydin2026}
+A.~D.~Aydin.
+\newblock Asymptotics of the quantization problem on metric measure spaces.
+\newblock \emph{Mathematische Annalen}, 2026.
+
+\bibitem{block2022}
+A.~Block, Z.~Jia, Y.~Polyanskiy, and A.~Rakhlin.
+\newblock Intrinsic dimension estimation using Wasserstein distances.
+\newblock \emph{Journal of Machine Learning Research}, 23(313):1--37, 2022.
+
+\bibitem{canas2012}
+G.~D.~Canas, T.~Poggio, and L.~Rosasco.
+\newblock Learning manifolds with $k$-means and $k$-flats.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2012.
+
+\bibitem{divol2022}
+V.~Divol.
+\newblock Measure estimation on manifolds: an optimal transport approach.
+\newblock \emph{Probability Theory and Related Fields}, 183:581--647, 2022.
+
+\bibitem{edelman1998}
+A.~Edelman, T.~A.~Arias, and S.~T.~Smith.
+\newblock The geometry of algorithms with orthogonality constraints.
+\newblock \emph{SIAM Journal on Matrix Analysis and Applications},
+20(2):303--353, 1998.
+
+\bibitem{federer1959}
+H.~Federer.
+\newblock Curvature measures.
+\newblock \emph{Transactions of the American Mathematical Society},
+93(3):418--491, 1959.
+
+\bibitem{genovese2012}
+C.~R.~Genovese, M.~Perone-Pacifico, I.~Verdinelli, and L.~Wasserman.
+\newblock Minimax manifold estimation.
+\newblock \emph{Journal of Machine Learning Research}, 13:1263--1291, 2012.
+
+\bibitem{graf2000}
+S.~Graf and H.~Luschgy.
+\newblock \emph{Foundations of Quantization for Probability Distributions}.
+\newblock Springer, 2000.
+
+\bibitem{hamm2025}
+K.~Hamm, C.~Moosm\"uller, B.~Schmitzer, and M.~Thorpe.
+\newblock Manifold learning in Wasserstein space.
+\newblock \emph{SIAM Journal on Mathematical Analysis}, 57(3):2983--3029, 2025.
+
+\bibitem{liao2019}
+W.~Liao and M.~Maggioni.
+\newblock Adaptive geometric multiscale approximations for intrinsically
+low-dimensional data.
+\newblock \emph{Journal of Machine Learning Research}, 20(98):1--63, 2019.
+
+\bibitem{liu2023}
+H.~Liu, A.~Havrilla, R.~Lai, and W.~Liao.
+\newblock Deep nonparametric estimation of intrinsic data structures by chart
+autoencoders: generalization error and robustness.
+\newblock arXiv:2303.09863, 2023.
+
+\bibitem{schonsheck2020}
+S.~Schonsheck, J.~Chen, and R.~Lai.
+\newblock Chart auto-encoders for manifold structured data.
+\newblock arXiv:1912.10094, 2020.
+
+\bibitem{villani2009}
+C.~Villani.
+\newblock \emph{Optimal Transport: Old and New}.
+\newblock Springer, 2009.
+
+\end{thebibliography}
+
+\end{document}

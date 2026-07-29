@@ -39,8 +39,8 @@ wasserstein-site:
 # --- 論文 ---
 # セミナー資料とは独立。既知の内容は引用で済ませ、新規の主張だけを書く。
 paper:
-	cd paper/w2-latent-curvature && latexmk
-	@echo "→ paper/w2-latent-curvature/out/main.pdf"
+	cd paper/ot-manifold-approximation && latexmk
+	@echo "→ paper/ot-manifold-approximation/out/main.pdf"
 
 clean-sites:
 	rm -rf seminar/*/site
