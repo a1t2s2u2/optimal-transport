@@ -1,47 +1,54 @@
-# 潜在空間の曲率を二階微分で計算する
+# 曲率制御付き Wasserstein 潜在拡散
 
-$W_2$ を参照計量とする Gaussian decoder の幾何。
+VAE の潜在コードではなく、decoder が表す条件付き分布を $W_2$ に関して
+等方的に拡散する latent diffusion model の理論草稿。
 
-## 主張
+## 中心仮説
 
-潜在空間の引き戻し幾何において「何を引き戻すか」は設計上の自由度である。
-参照計量に $W_2$ を採ると、対角 Gaussian decoder の出力分布がなす族が
-**平坦**になり、その結果 Gauss 方程式の周囲曲率項が消えて、
-潜在空間の断面曲率が decoder の**二階微分のみ**から決まる。
+標準的な latent diffusion の Euclid noise は、decoder 分布上では非一様である。
+対角 Gaussian decoder
 
-| 参照計量 | $\sigma$ を保つ | 周囲が平坦 | 曲率が二階微分のみ |
-|---|:---:|:---:|:---:|
-| データ空間の Euclid（決定論的 decoder） | ✗ | ✓ | ✓ |
-| Fisher–Rao | ✓ | ✗（曲率 $-1/2$） | ✗ |
-| $W_2$（本稿） | ✓ | ✓ | ✓ |
+$$
+K_z=\mathcal N(m(z),\operatorname{diag}(\sigma(z)^2))
+$$
+
+に対して
+
+$$
+G(z)=J_m(z)^\top J_m(z)+J_\sigma(z)^\top J_\sigma(z)
+$$
+
+とおくと、標準 noise の decoded $W_2^2$ 変化率は
+$\beta\operatorname{tr}G(z)$ になる。共分散を $\beta G(z)^{-1}$ にすると、
+変化率は潜在点によらず $\beta d$ となる。
+
+## 主な主張
+
+- $G^{-1}$ は decoder manifold の接空間上で decoded noise を等方化する唯一の共分散
+- VAE prior を厳密な不変分布にする座標不変な forward generator
+- forward law は $(\mathcal Z,G)$ 上の KL の Wasserstein 勾配流
+- 第二基本形式の trace は decoded process の平均曲率 drift
+- 曲率証明書 $\Lambda$ は geodesic step と decoded $W_2$ の差を三次で抑える
+- natural relative score は matrix-free な Riemannian score matching で学習可能
+
+## 新規性の境界
+
+$W_2$ 引き戻し計量そのものは *Optimal Latent Transport* (Roy & Hauberg, 2022)
+に先行研究がある。一般の Riemannian score model も既知である。
+本稿の対象は、decoder-$W_2$ の等方性から noise covariance を一意に導き、
+prior drift・平均曲率 drift・曲率適応 step まで同じ幾何から設計することである。
+
+## 状態
+
+- 理論草稿
+- 実験は未実施
+- 最初の検証対象は synthetic decoder と低次元 MNIST VAE
+- 大規模画像 LDM には metric inverse の近似または蒸留が必要
 
 ## ビルド
 
 ```sh
-make paper                       # リポジトリルートから
-cd paper/w2-latent-curvature && latexmk   # 直接叩く場合
+make paper
 ```
 
-出力は `out/main.pdf`（git 管理外）。uplatex + dvipdfmx 経路。
-
-## 体裁
-
-ML 会議（NeurIPS 型）に準じた単段組。二段組にしないのは表示数式が多く潰れるため。
-定理環境は装飾なしの `amsthm`（セミナー資料の tcolorbox とは別方針）。
-文献は `thebibliography` を直書きしており、bibtex の実行は不要。
-
-## セミナー資料との関係
-
-`seminar/wasserstein/` は独立に維持する。両者の役割は異なる。
-
-- **セミナー資料** — 定義から積み上げ、前提を全網羅する。$W_p$ の距離性、
-  対角 Gaussian の閉形式、Gauss 方程式の証明までを自前で与える
-- **本稿** — 既知の内容はすべて引用に落とし、新規の主張のみを書く。
-  セミナー資料の第1〜3章に相当する部分は Villani / Peyré–Cuturi /
-  Givens–Shortt / do Carmo の引用で置き換えている
-
-したがってセミナー資料を本稿で置き換えることはしない。
-
-## 状態
-
-理論のみ。実験は未実施（本文 §7 に限界として明記）。
+出力は `out/main.pdf`。uplatex + dvipdfmx を使用する。

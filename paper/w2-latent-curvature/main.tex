@@ -2,8 +2,8 @@
 
 \input{preamble}
 
-\title{\textbf{潜在空間の直線補間はいつ正当化されるか}\\
-{\large ---$W_2$ 引き戻し計量の曲率とその計算---}}
+\title{\textbf{潜在コードではなく decoder 分布を拡散する}\\
+{\large ---曲率制御付き Wasserstein 潜在拡散---}}
 \author{}
 \date{}
 
@@ -12,954 +12,898 @@
 
 \begin{abstract}
 \noindent
-深層生成モデルの潜在空間は，実際上ほぼ常に Euclid 空間として扱われる．
-補間は線分で行われ，潜在空間上の生成モデルは潜在座標の直線に沿って
-確率質量を輸送する．しかしこの Euclid 構造は潜在座標の取り替えで
-変わってしまうため，固有の意味をもたない．
-そこで問いが立つ：\emph{潜在空間の Euclid 構造は座標を取り替えれば
-正当化できるのか，それとも原理的に正当化できないのか}．
-これは計量ではなく\textbf{曲率}の問題である．
-Riemann 多様体が局所的に Euclid 空間と等長になる必要十分条件は
-曲率が消えることだからである．
-ところが既存の潜在幾何の研究は曲率を各点で計算していない．
-素朴な座標計算では decoder の三階微分が必要になり，
-また広く用いられる活性化関数が二階微分をもたないためである．
+潜在拡散モデルは，autoencoder が作る潜在座標に等方的な Gaussian noise を加える．
+しかし潜在座標の Euclid 構造は座標変換で変わり，decoder が表す分布の変化量とも
+一般には一致しない．本稿はこの不整合を定量化し，decoder 分布を
+$2$ 次 Wasserstein 距離 $W_2$ に関して等方的に拡散する
+\textbf{curvature-controlled Wasserstein latent diffusion} を提案する．
 
-本稿は，引き戻しの参照計量として $2$ 次 Wasserstein 距離 $W_2$ を
-採ることでこの障壁が消えることを示す．
-対角 Gaussian decoder の出力分布がなす族は $(\Pp2(\R^n),W_2)$ の
-全測地的部分多様体であり，$\R^n\times(0,\infty)^n$ の Euclid 計量に等長，
-すなわち\textbf{平坦}である．この平坦性により Gauss 方程式の周囲曲率項が消え，
-潜在空間の断面曲率が decoder の\textbf{二階微分のみ}から決まる
-（三階微分は相殺する）．
-同じ族を Fisher--Rao 計量で見ると断面曲率 $-1/2$ の双曲平面の積になり，
-平坦性は失われる．二つの計量は $\sigma$ が有界なら bi-Lipschitz 同値であり
-距離は定数倍の範囲で一致するが，曲率は一致しない．
-帰結として，decoder の二階微分から計算できる単一の量 $\Lambda$ が，
-断面曲率の上界と直線補間の誤差の上界を同時に与えることを示す．
-さらに曲率が恒等的に消える場合を特定し，引き戻し計量が decoder を
-決定しないことを反例で示す．
+対角 Gaussian decoder
+$K_z=\mathcal{N}(m(z),\operatorname{diag}(\sigma(z)^2))$ に対し，
+$F=(m,\sigma)$ と $G=J_F^{\mathsf T}J_F$ を定める．
+通常の Euclid noise が単位時間に引き起こす decoded $W_2^2$ 変化は
+$\beta\operatorname{tr}G(z)$ であり，場所と方向に依存する．
+これに対し共分散 $\beta G^{-1}$ は変化率を潜在次元 $d$ にわたり
+$\beta d$ に一様化し，decoder manifold の接空間上で等方的な decoded noise を
+与える唯一の共分散である．さらに VAE prior $\pi$ を厳密な不変分布にもつ
+座標不変な拡散 generator を構成し，その Fokker--Planck 方程式が
+$(\mathcal{Z},G)$ 上の $\mathrm{KL}(\cdot\Vert\pi)$ の
+Wasserstein 勾配流であることを示す．
+
+本構成では decoder の第二基本形式 $B$ は診断量にとどまらない．
+平均曲率 $\operatorname{tr}_G B$ が decoded process の It\^o drift として現れ，
+$B$ の作用素ノルム $\Lambda$ が geodesic random walk の一 step における
+内在距離と decoded $W_2$ の差を三次で支配する．
+したがって noise covariance，drift，step size の三つが同一の
+Wasserstein 幾何から決まる．最後に自然な relative score の学習目的，
+matrix-free 実装，Schr\"odinger bridge への拡張，および反証可能な実験計画を与える．
 \end{abstract}
 
 \medskip
-\noindent\textbf{キーワード}：最適輸送，Wasserstein 距離，変分オートエンコーダ，
-潜在空間，Riemann 幾何，断面曲率
+\noindent\textbf{キーワード}：潜在拡散，変分オートエンコーダ，最適輸送，
+Wasserstein 距離，Riemann 幾何，Schr\"odinger bridge
 
 \section{はじめに}
 \label{sec:intro}
 
-深層生成モデルの潜在空間は，実際上ほぼ常に Euclid 空間として扱われる．
-二点を結ぶ補間は線分で行われ，潜在空間上で動作する生成モデルは
-潜在座標の直線に沿って確率質量を輸送し，
-最適輸送にもとづく手法は潜在座標の Euclid 距離をコストに用いる．
+潜在拡散モデル（latent diffusion model; LDM）は，高次元のデータ分布を
+直接拡散する代わりに，autoencoder が作る低次元表現上で diffusion model を
+学習する \cite{rombach2022}．計算量と生成品質の均衡に優れる一方，
+その forward process は通常，潜在空間を固定された Euclid 空間とみなし，
+各座標へ同じ強さの Gaussian noise を加える．
 
-しかし潜在空間の Euclid 構造には固有の意味がない．
-潜在座標は微分同相 $z\mapsto\psi(z)$ で自由に取り替えられ，
-そのたびに「直線」も「距離」も別のものになる．
-この問題意識から，decoder を通じてデータ空間の構造を潜在空間へ引き戻し，
-得られた Riemann 計量のもとで距離・測地線・補間を論じる枠組みが
-提案されてきた \cite{arvanitidis2018,shao2018,arvanitidis2022}．
+この設計には見落とされている不整合がある．潜在変数 $z$ は観測そのものではなく，
+decoder を介して初めて意味をもつ．同じ大きさの変位 $\delta z$ でも，
+decoder がほとんど変化しない場所と大きく変化する場所がある．さらに潜在座標は
+微分同相 $z\mapsto\psi(z)$ で取り替えられるため，座標上の「等方的」という性質は
+生成モデルに固有ではない．実際，decoder の引き戻し計量による局所体積歪みが
+LDM の非一様な memorization と関連することが報告されている \cite{rao2026}．
 
-この枠組みを認めたうえで，次の問いが立つ．
-
-\begin{quote}
-  \textbf{潜在空間の Euclid 構造は，座標を取り替えれば正当化できるのか．
-  それとも原理的に正当化できないのか．}
-\end{quote}
-
-これは計量 $G$ の問題ではなく\textbf{曲率}の問題である．
-Riemann 多様体が局所的に Euclid 空間と等長であるための必要十分条件は，
-Riemann 曲率テンソルが消えることだからである \cite{docarmo1992}．
-曲率が $0$ なら，適切な座標系をとれば直線がそのまま測地線になり，
-Euclid 的な扱いは座標の選び直しによって正当化できる．
-曲率が非零なら，どのような座標変換によっても潜在空間を Euclid にはできず，
-そのズレは原理的に取り除けない．
-すなわち\textbf{曲率は，Euclid 近似が可逆な誤りか不可逆な誤りかを分ける量}である．
-
-\subsection{なぜ曲率は計算されてこなかったのか}
-\label{sec:why-not}
-
-にもかかわらず，既存の潜在幾何の研究は曲率を各点で計算していない．
-理由は二つある．
-
-第一に，\textbf{素朴な計算では decoder の三階微分が必要になる}．
-引き戻し計量 $G$ は decoder の一階微分を含むから，
-Christoffel 記号 $\Gamma\sim G^{-1}\partial G$ には二階微分が入り，
-曲率の座標式 $R\sim\partial\Gamma+\Gamma\Gamma$ には三階微分が現れる．
-自動微分で三階まで遡るのは，計算量と数値精度の双方で負担が大きい．
-
-第二に，\textbf{広く用いられる decoder が二階微分をもたない}．
-ReLU は区分アフィンであり，ELU は $C^1$ 級だが $C^2$ 級ではない．
-実際 Shao ら \cite{shao2018} は ELU を採用したうえで，
-自身の手法が「高々一階微分しか必要としない」ことを明記しており，
-曲率については測地距離行列の多次元尺度構成法における
-負の固有値の大きさという\emph{大域的な代理量}を用いている．
-この代理量は各点に局所化できず，また彼らの計量は
-decoder の分散 $\sigma(z)$ を含まない．
-
-本稿は第一の障壁が\textbf{参照計量の選び方によって消える}ことを示し，
-第二の障壁については活性化関数への具体的な要請として整理する．
-
-\subsection{参照計量という自由度}
-\label{sec:reference-metric}
-
-引き戻しの枠組みには，あまり明示されてこなかった自由度がある．
-\textbf{何を引き戻すのか}という選択である．
-decoder は潜在点 $z$ に分布 $p_\theta(\cdot\mid z)$ を対応させるから，
-引き戻しの対象は本来\emph{分布の空間上の計量}であり，一意ではない．
-既存の選択は二つに大別される．
-
-\begin{itemize}
-  \item \textbf{データ空間の Euclid 計量．}
-    decoder を決定論的な写像 $g\colon\mathcal{Z}\to\R^n$ とみなし，
-    $G=J_g^{\mathsf T}J_g$ とする \cite{shao2018}．
-    最も簡単だが，decoder の分散が計量に反映されない．
-  \item \textbf{Fisher--Rao 計量．}
-    decoder 分布の空間に情報幾何の計量を入れて引き戻す \cite{arvanitidis2022}．
-    分散が反映され，分布の空間の計量として自然である．
-\end{itemize}
-
-本稿は第三の選択として $W_2$ を提案する．
-理由は幾何的である．対角 Gaussian 分布の族を $W_2$ で測るとその族は
-\textbf{平坦}になり（命題~\ref{prop:flat}），
-Fisher--Rao で測ると双曲的になる（命題~\ref{prop:fr-hyperbolic}）．
-周囲空間が平坦であることは曲率の計算可能性に直接効く．Gauss 方程式
+そこで本稿は，潜在コードそのものではなく，潜在コードが表す
+\emph{decoder 分布}を等方的に壊すべきだ，という原理から forward process を導く．
+decoder が各 $z$ に対して
 \[
-  \langle R(u,v)v,u\rangle
-  =\underbrace{\langle\bar R(u,v)v,u\rangle}_{\text{周囲曲率}}
-   +\langle B(u,u),B(v,v)\rangle-\norm{B(u,v)}^2
+  K_z=\mathcal{N}\bigl(m(z),\operatorname{diag}(\sigma(z)^2)\bigr)
 \]
-において周囲曲率項が消えるため，潜在曲率が第二基本形式 $B$ だけで決まり，
-$B$ は decoder の二階微分から直接得られるからである．
-三階微分は相殺する．
-
-\begin{table}[t]
-\centering
-\caption{参照計量の選択と，その帰結（第\ref{sec:ambient}--\ref{sec:curvature}節）．
-$W_2$ は分散を保ちながら周囲空間が平坦になる唯一の選択である．}
-\label{tab:comparison}
-\medskip
-\begin{tabular}{lccc}
-\hline
-参照計量 & 分散 $\sigma$ を保つ & 周囲が平坦 & 曲率が二階微分のみ\\
-\hline
-データ空間の Euclid \cite{shao2018} & なし & あり & あり\\
-Fisher--Rao \cite{arvanitidis2022} & あり & なし（曲率 $-1/2$） & なし\\
-$W_2$（本稿） & あり & あり & あり\\
-\hline
-\end{tabular}
-\end{table}
+を対応させるとする．対角 Gaussian 間では
+\[
+  W_2(K_z,K_{z'})^2
+  =\norm{m(z)-m(z')}^2+\norm{\sigma(z)-\sigma(z')}^2
+\]
+が厳密に成り立つ \cite{givens1984}．したがって $F=(m,\sigma)$ とおけば，
+decoder 分布の族は Euclid 空間内の部分多様体 $F(\mathcal{Z})$ として扱え，
+その誘導計量は
+\[
+  G(z)=J_F(z)^{\mathsf T}J_F(z)
+  =J_m(z)^{\mathsf T}J_m(z)+J_\sigma(z)^{\mathsf T}J_\sigma(z)
+\]
+になる．この $W_2$ 引き戻し計量自体は Roy and Hauberg \cite{roy2022} が
+既に導入している．本稿の問いは metric を作ることではなく，
+\emph{その metric から diffusion の noise，drift，離散化を一意的に設計すること}
+である．
 
 \subsection{本稿の貢献}
 
+本稿の主な貢献は次の四点である．
+
 \begin{enumerate}
-  \item \textbf{周囲空間の同定}（第\ref{sec:ambient}節）．
-    対角 Gaussian 分布の族が $(\Pp2(\R^n),W_2)$ の全測地的部分多様体であり
-    Euclid 空間の開集合に等長であること（命題~\ref{prop:flat}），
-    同じ族が Fisher--Rao では断面曲率 $-1/2$ の双曲平面の積になること
-    （命題~\ref{prop:fr-hyperbolic}），
-    両者が bi-Lipschitz 同値であること（命題~\ref{prop:bilipschitz}）を示す．
-    すなわち\emph{距離としてはほぼ同じだが曲率は違う}．
-    参照計量の選択が本質的な選択であることの根拠になる．
-  \item \textbf{二階微分で完結する曲率}（第\ref{sec:curvature}節）．
-    $W_2$ 引き戻し計量の断面曲率が decoder の二階微分のみから決まることを
-    示し（定理~\ref{thm:main}），計算手順をアルゴリズム~\ref{alg:curvature}に与える．
-    Fisher--Rao の場合に何が追加で必要かを明示する（命題~\ref{prop:fr-cost}）．
-  \item \textbf{単一の量による二つの証明書}（第\ref{sec:certificate}節）．
-    第二基本形式の作用素ノルム $\Lambda$ が，
-    断面曲率の上界 $\abs{\operatorname{Sec}}\leq2\Lambda^2$
-    （系~\ref{cor:sec-bound}）と，
-    直線的な輸送と潜在多様体に沿う輸送の差の上界
-    （命題~\ref{prop:chord}）を同時に与えることを示す．
-    $\Lambda$ は decoder の二階微分から計算できるので，
-    学習済みモデルに対する検証可能な証明書になる．
-  \item \textbf{構造的な帰結と限界}（第\ref{sec:consequences}節）．
-    曲率が恒等的に消える二つの場合を特定し（命題~\ref{prop:full-dim}，
-    \ref{prop:affine}），標準的な実装では曲率が分散チャネルのみに
-    由来すること（命題~\ref{prop:variance-only}），
-    引き戻し計量が decoder を決定しないこと
-    （命題~\ref{prop:nonidentifiable}）を示す．
+  \item \textbf{Euclid latent noising の不整合を定量化する．}
+    一般の局所共分散 $a(z,t)$ に対し，単位時間あたりの decoded $W_2^2$ 変化が
+    $\operatorname{tr}(G(z)a(z,t))$ であることを示す．標準的な
+    $a=\beta_tI$ では $\beta_t\operatorname{tr}G(z)$ となり，noise level の意味が
+    潜在点ごとに異なる．
+  \item \textbf{canonical な Wasserstein-isotropic noise を導く．}
+    $a=\beta_tG^{-1}$ は decoded 変化率を $\beta_td$ に一様化し，
+    decoder manifold の接空間上で共分散 $\beta_tP$ の等方 noise を与える．
+    この性質をもつ潜在共分散は一意であり，潜在座標の取り替えに依存しない．
+  \item \textbf{既知の VAE prior を保つ幾何学的拡散を構成する．}
+    VAE prior $\pi$ に可逆な generator
+    \[
+      \mathcal{L}_t f
+      =\frac{\beta_t}{2p_\pi}\partial_i
+       \bigl(p_\pi G^{ij}\partial_jf\bigr)
+    \]
+    を導く．その確率法則は $(\mathcal{Z},G)$ 上の
+    $\mathrm{KL}(\cdot\Vert\pi)$ の Wasserstein 勾配流である．
+  \item \textbf{曲率を生成アルゴリズムの制御量にする．}
+    第二基本形式の trace が decoded process の平均曲率 drift になり，
+    その作用素ノルム $\Lambda$ が geodesic step と decoded $W_2$ の差を支配する．
+    これにより曲率適応 step size を得る．
 \end{enumerate}
 
-本稿は理論的な結果のみを扱い，実験は行わない（第\ref{sec:limitations}節）．
+一般の Riemann 多様体上の score-based model は既に存在する \cite{debortoli2022}．
+本稿の新規性はその一般論ではなく，VAE decoder の確率分布が定める $W_2$ 幾何から
+上記四点を同時に導き，既存の LDM が無視する semantic noising の不均一性を
+直接の対象とする点にある．
 
-\section{準備}
-\label{sec:prelim}
+\section{設定}
+\label{sec:setup}
 
-\subsection{記法}
+\subsection{VAE と学習対象の分布}
 
-$\Pp2(\R^n)$ で $\R^n$ 上の有限二次モーメントをもつ Borel 確率測度全体を表し，
-$W_2$ で $2$ 次 Wasserstein 距離を表す \cite{villani2009,peyre2019}．
-$\R^n$ の Euclid ノルムを $\norm{\cdot}$，成分ごとの積を $\odot$，
-成分ごとの商を $\oslash$ と書く．
-
-\begin{definition}[対角 Gaussian decoder]
-\label{def:decoder}
-  $\mathcal{Z}\subset\R^d$ を開集合とする．
-  $C^2$ 級の写像 $m\colon\mathcal{Z}\to\R^n$ と
-  $\sigma\colon\mathcal{Z}\to(0,\infty)^n$ の組が定める条件付き分布の族
-  \[
-    K_z:=\mathcal{N}\bigl(m(z),\operatorname{diag}(\sigma(z)^2)\bigr)
-    \qquad(z\in\mathcal{Z})
-  \]
-  を\textbf{対角 Gaussian decoder}という．
-  \[
-    F:=(m,\sigma)\colon\mathcal{Z}\longrightarrow
-    H:=\R^n\times(0,\infty)^n\subset\R^{2n}
-  \]
-  を\textbf{パラメータ写像}と呼ぶ．
-  すべての $z$ で $\operatorname{rank}J_F(z)=d$ であるとき $F$ を immersion という．
-\end{definition}
-
-対角 Gaussian 分布全体の族を
-$\mathcal{G}_n:=\{\mathcal{N}(\mu,\operatorname{diag}(s^2)):\mu\in\R^n,\ s\in(0,\infty)^n\}$
-と書き，自然な同一視
-$\iota\colon\mathcal{G}_n\to H$, $\mathcal{N}(\mu,\operatorname{diag}(s^2))\mapsto(\mu,s)$
-を用いる．
-
-\subsection{既知の事実}
-
-\begin{fact}[対角 Gaussian 間の $W_2$ \cite{givens1984}]
-\label{fact:w2-closed-form}
-  $\mu_0,\mu_1\in\R^n$，$s_0,s_1\in(0,\infty)^n$ に対して
-  \[
-    W_2\Bigl(
-      \mathcal{N}(\mu_0,\operatorname{diag}(s_0^2)),\
-      \mathcal{N}(\mu_1,\operatorname{diag}(s_1^2))
-    \Bigr)^2
-    =\norm{\mu_0-\mu_1}^2+\norm{s_0-s_1}^2 .
-  \]
-\end{fact}
-
-\begin{fact}[Gauss 方程式 \cite{docarmo1992}]
-\label{fact:gauss}
-  $M$ を Riemann 多様体 $\bar M$ の部分多様体，$B$ をその第二基本形式，
-  $R,\bar R$ をそれぞれ $M,\bar M$ の Riemann 曲率テンソルとする．
-  $M$ に接する $u,v$ に対して
-  \[
-    \langle R(u,v)v,u\rangle
-    =\langle\bar R(u,v)v,u\rangle
-     +\langle B(u,u),B(v,v)\rangle-\norm{B(u,v)}^2 .
-  \]
-\end{fact}
-
-\begin{fact}[平坦性の特徴づけ \cite{docarmo1992}]
-\label{fact:flatness}
-  Riemann 多様体の各点の近傍が Euclid 空間の開集合と等長であるための
-  必要十分条件は，その近傍で Riemann 曲率テンソルが恒等的に消えることである．
-\end{fact}
-
-事実~\ref{fact:flatness}が，第\ref{sec:intro}節で述べた問いを
-曲率の問題に翻訳する根拠である．
-
-\begin{definition}[引き戻し計量]
-\label{def:pullback}
-  $H$ 上の Riemann 計量 $g$ に対して，$F$ による引き戻し $G:=F^{*}g$，
-  すなわち $G_{ij}(z)=g_{F(z)}(\partial_iF(z),\partial_jF(z))$ を
-  潜在空間 $\mathcal{Z}$ 上の\textbf{引き戻し計量}という．
-\end{definition}
-
-\section{対角 Gaussian 族の周囲幾何}
-\label{sec:ambient}
-
-本節では，引き戻す前の\emph{周囲空間} $\mathcal{G}_n$ の幾何を，
-$W_2$ と Fisher--Rao の二つの計量について同定する．
-
-\subsection{$W_2$：平坦}
-
-\begin{proposition}[$\mathcal{G}_n$ は $W_2$ に関して平坦かつ全測地的である]
-\label{prop:flat}
-  $H=\R^n\times(0,\infty)^n$ に $\R^{2n}$ の Euclid 計量を入れる．このとき
-  \begin{enumerate}
-    \item $\iota\colon(\mathcal{G}_n,W_2)\to(H,\norm{\cdot})$ は
-      全単射な等長写像である．特に $\mathcal{G}_n$ の断面曲率は恒等的に $0$ である．
-    \item $\mathcal{G}_n$ は $(\Pp2(\R^n),W_2)$ の全測地的部分多様体である．
-  \end{enumerate}
-\end{proposition}
-
-\begin{proof}
-  (1) 事実~\ref{fact:w2-closed-form}より $\iota$ は $W_2$ を
-  $H$ 上の Euclid 距離へ写す．$H$ は $\R^{2n}$ の開凸集合だから，
-  制限された Euclid 距離は $H$ 上の内在距離と一致し，
-  対応する Riemann 計量は Euclid 計量である．
-
-  (2) $P_0=\mathcal{N}(\mu_0,\operatorname{diag}(s_0^2))$，
-  $P_1=\mathcal{N}(\mu_1,\operatorname{diag}(s_1^2))$ とする．
-  $T(x):=\mu_1+(s_1\oslash s_0)\odot(x-\mu_0)$ は $P_0$ を $P_1$ へ写し，
-  事実~\ref{fact:w2-closed-form}の等号を実現する最適輸送写像である．
-  対応する McCann 補間は
-  \[
-    P_t=\mathcal{N}\Bigl(
-      (1-t)\mu_0+t\mu_1,\
-      \operatorname{diag}\bigl(((1-t)s_0+ts_1)^2\bigr)
-    \Bigr)
-  \]
-  であり，各 $t\in[0,1]$ で $\mathcal{G}_n$ に属する．
-  $\Pp2$ の測地線は McCann 補間で与えられるから主張が従う．
-\end{proof}
-
-命題~\ref{prop:flat}(2) は，$\mathcal{G}_n$ 上の $W_2$ 計量テンソルが
-$\Pp2$ から誘導される計量と一致することを保証する．
-全測地的でなければ，制限された距離と誘導された計量が食い違いうる．
-
-\subsection{Fisher--Rao：双曲的}
-
-\begin{proposition}[$\mathcal{G}_n$ の Fisher--Rao 幾何]
-\label{prop:fr-hyperbolic}
-  $\mathcal{G}_n$ 上の Fisher--Rao 計量は座標 $(\mu,s)\in H$ において
-  \[
-    g^{\mathrm{FR}}
-    =\sum_{\alpha=1}^n
-      \frac{(\d\mu^\alpha)^2+2(\d s^\alpha)^2}{(s^\alpha)^2}
-  \]
-  で与えられる．これは $n$ 個の断面曲率 $-1/2$ の双曲平面の Riemann 積である．
-  したがって断面曲率は，単一の因子に接する平面で $-1/2$，
-  異なる因子にまたがる平面で $0$ であり，特に $\bar R\neq0$ である．
-\end{proposition}
-
-\begin{proof}
-  対角 Gaussian は座標ごとの独立な積だから Fisher 情報行列はブロック対角になる．
-  一次元の $\mathcal{N}(\mu,s^2)$ について
-  $\log p=-\tfrac12\log(2\pi)-\log s-\tfrac{(x-\mu)^2}{2s^2}$ より，
-  $u:=(x-\mu)/s\sim\mathcal{N}(0,1)$ とおくと
-  $\partial_\mu\log p=u/s$, $\partial_s\log p=(u^2-1)/s$ である．
-  $\E[u^2]=1$，$\E[u^4]=3$，$\E[u^3]=\E[u]=0$ より
-  \[
-    \E\bigl[(\partial_\mu\log p)^2\bigr]=\frac1{s^2},
-    \quad
-    \E\bigl[(\partial_s\log p)^2\bigr]=\frac2{s^2},
-    \quad
-    \E\bigl[\partial_\mu\log p\,\partial_s\log p\bigr]=0 .
-  \]
-  よって $g^{\mathrm{FR}}$ は主張の形をもつ．
-  一因子分について $w:=\mu/\sqrt2$ と置換すると
-  $\frac{\d\mu^2+2\d s^2}{s^2}=2\cdot\frac{\d w^2+\d s^2}{s^2}$ となる．
-  括弧内は断面曲率 $-1$ の Poincar\'e 計量であり，
-  計量を $c>0$ 倍すると断面曲率は $1/c$ 倍になるから，$c=2$ より $-1/2$ を得る．
-  Riemann 積の断面曲率は，各因子に接する平面ではその因子の曲率に一致し，
-  異なる因子にまたがる平面では $0$ になる．
-\end{proof}
-
-\subsection{二つの計量の関係}
-
-\begin{proposition}[bi-Lipschitz 同値]
-\label{prop:bilipschitz}
-  $g^{W}$ を命題~\ref{prop:flat}の Euclid 計量，
-  $g^{\mathrm{FR}}$ を命題~\ref{prop:fr-hyperbolic}の Fisher--Rao 計量とする．
-  $s^\alpha\in[s_{\min},s_{\max}]\subset(0,\infty)$ が成り立つ範囲で
-  \[
-    \frac{1}{s_{\max}^2}\,g^{W}
-    \ \preceq\ g^{\mathrm{FR}}\ \preceq\
-    \frac{2}{s_{\min}^2}\,g^{W}
-  \]
-  である．対応する距離の比は $\sqrt2\,s_{\max}/s_{\min}$ で抑えられる．
-\end{proposition}
-
-\begin{proof}
-  接ベクトル $(a,b)\in\R^n\times\R^n$ に対して
-  $g^{W}(a,b)=\norm{a}^2+\norm{b}^2$ であり，
-  $g^{\mathrm{FR}}(a,b)=\sum_\alpha\bigl((a^\alpha)^2+2(b^\alpha)^2\bigr)/(s^\alpha)^2$
-  である．各項の分母を $s_{\max}^2$ で下から，$s_{\min}^2$ で上から置き換えると
-  \[
-    \frac{\norm{a}^2+2\norm{b}^2}{s_{\max}^2}
-    \ \leq\ g^{\mathrm{FR}}(a,b)\ \leq\
-    \frac{\norm{a}^2+2\norm{b}^2}{s_{\min}^2}
-  \]
-  を得る．さらに
-  $\norm{a}^2+\norm{b}^2\leq\norm{a}^2+2\norm{b}^2\leq2(\norm{a}^2+\norm{b}^2)$
-  だから主張が従う．距離の比は計量の比の平方根で抑えられるので
-  $\sqrt{(2/s_{\min}^2)/(1/s_{\max}^2)}=\sqrt2\,s_{\max}/s_{\min}$ である．
-\end{proof}
-
-命題~\ref{prop:bilipschitz}は本稿の主張の位置づけを明確にする．
-$\sigma$ が有界に保たれる限り，$W_2$ と Fisher--Rao は
-\emph{距離としては定数倍の範囲で一致する}．
-したがって測地線や補間の見た目に大きな差は出ない．
-しかし bi-Lipschitz 同値は曲率を保存しないので，
-\emph{曲率を扱う場面では選択が結果を変える}．
-命題~\ref{prop:flat}と命題~\ref{prop:fr-hyperbolic}の対比がその内容である．
-
-\section{二階微分で完結する曲率}
-\label{sec:curvature}
-
-以下 $F$ は immersion であるとし，
-$G:=J_F^{\mathsf T}J_F$（$W_2$ 引き戻し計量），
-$P:=J_FG^{-1}J_F^{\mathsf T}$，
-$B_{ij}:=(I_{2n}-P)\,\partial_i\partial_jF$，
-$B(u,v):=\sum_{i,j}u^iv^jB_{ij}$ とおく．
-命題~\ref{prop:flat}より $G$ は
+$\mathcal{X}=\R^n$ をデータ空間，$\mathcal{Z}\subset\R^d$ を潜在空間とする．
+VAE \cite{kingma2014} の encoder を $q_\phi(z\mid x)$，decoder を
 \[
-  G(z)=J_m(z)^{\mathsf T}J_m(z)+J_\sigma(z)^{\mathsf T}J_\sigma(z)
+  p_\theta(x\mid z)=K_z
+  :=\mathcal{N}\bigl(m(z),\operatorname{diag}(\sigma(z)^2)\bigr)
+\]
+とする．LDM が学習すべき潜在分布は，単一の posterior ではなく aggregated posterior
+\[
+  \rho_{\mathrm{data}}(z)
+  :=\int q_\phi(z\mid x)p_{\mathrm{data}}(x)\,\d x
+\]
+である．VAE prior を $\pi(\d z)=p_\pi(z)\d z$ とし，典型的には
+$p_\pi=\mathcal{N}(0,I_d)$ とする．
+
+以下，$F=(m,\sigma)\colon\mathcal{Z}\to
+H:=\R^n\times(0,\infty)^n\subset\R^{2n}$ は $C^3$ 級で，
+$J_F$ は全点で列 full rank と仮定する．したがって
+\[
+  G:=J_F^{\mathsf T}J_F
+\]
+は正定値であり，$M:=G^{-1}$ が定義される．境界項を無視する積分では，
+$\mathcal{Z}$ に境界がないか，密度と vector field が十分速く減衰すると仮定する．
+
+\subsection{decoder 分布の Wasserstein 幾何}
+
+\begin{fact}[対角 Gaussian の $W_2$ \cite{givens1984}]
+\label{fact:gaussian-w2}
+  $K_z,K_{z'}$ に対して
+  \[
+    W_2(K_z,K_{z'})^2=\norm{F(z)-F(z')}^2
+  \]
+  が成り立つ．したがって $F$ が誘導する潜在計量は
+  \[
+    \langle u,v\rangle_{G(z)}
+    :=u^{\mathsf T}G(z)v
+    =\langle J_F(z)u,J_F(z)v\rangle
+  \]
+  である．
+\end{fact}
+
+$G$ の Riemann 体積要素を $\d\vol_G=\sqrt{\det G}\,\d z$ とする．
+$p_\pi$ は Lebesgue 測度に関する密度なので，Riemann 体積に関する prior density は
+\[
+  q_\pi(z):=\frac{p_\pi(z)}{\sqrt{\det G(z)}}
+\]
+である．この区別は，既知の標準 Gaussian prior を不変分布として保つために重要である．
+
+\section{Euclid noise は decoder 分布を非一様に破壊する}
+\label{sec:mismatch}
+
+一般の It\^o diffusion
+\[
+  \d Z_t=b(Z_t,t)\,\d t+A(Z_t,t)\,\d W_t,
+  \qquad a:=AA^{\mathsf T}
   \tag{1}
 \]
-と書ける\footnote{%
-  行列 (1) 自体は，確率的生成器 $m(z)+\sigma(z)\odot\varepsilon$ に対する
-  期待引き戻し計量として \cite{arvanitidis2018} が導いたものと一致する．
-  本稿の寄与は行列そのものではなく，これを平坦空間への等長はめ込みの
-  誘導計量として解釈し直す点にある．期待値としての導出には周囲空間がないため，
-  Gauss 方程式の経路が使えない．}．
+を考える．次の命題は forward process の局所的な「意味破壊率」を与える．
 
-\begin{theorem}[断面曲率は二階微分のみで決まる]
-\label{thm:main}
-  対角 Gaussian decoder のパラメータ写像 $F$ が $C^2$ 級の immersion であるとする．
-  $W_2$ 引き戻し計量 $G$ の断面曲率は，1次独立な $u,v\in\R^d$ に対して
+\begin{proposition}[decoded $W_2$ 二次変分]
+\label{prop:qv}
+  (1) のもとで，$Z_t=z$ を条件とする微小時間の変化は
   \[
-    \boxed{
-      \operatorname{Sec}(u,v)
-      =\frac{\langle B(u,u),B(v,v)\rangle-\norm{B(u,v)}^2}
-            {\langle u,u\rangle_G\langle v,v\rangle_G-\langle u,v\rangle_G^2}
-    }
+    \E\!\left[
+      W_2(K_{Z_{t+\d t}},K_{Z_t})^2\mid Z_t=z
+    \right]
+    =\operatorname{tr}\bigl(G(z)a(z,t)\bigr)\,\d t+o(\d t)
   \]
-  で与えられる（$\langle u,v\rangle_G=u^{\mathsf T}G(z)v$）．
-  特に $\operatorname{Sec}$ は $m,\sigma$ の高々二階の偏微分にしか依存しない．
-\end{theorem}
-
-\begin{proof}
-  命題~\ref{prop:flat}(1) より $F$ は $\mathcal{Z}$ から平坦な空間
-  $(H,\text{Euclid})$ への等長はめ込みであり，$G$ はその誘導計量である．
-  周囲が平坦だから $\bar R=0$ であり，事実~\ref{fact:gauss}は
-  $\langle R(u,v)v,u\rangle=\langle B(u,u),B(v,v)\rangle-\norm{B(u,v)}^2$
-  となる．これを断面曲率の定義に代入すればよい．
-  $B_{ij}=(I_{2n}-P)\partial_i\partial_jF$ は $F$ の一階微分（$P$ を通じて）と
-  二階微分のみを含む．
-\end{proof}
-
-\begin{remark}[三階微分の相殺]
-\label{rem:third-order}
-  座標表示による曲率の定義では，$G$ が $F$ の一階微分を含むため
-  $\Gamma^k_{ij}=\tfrac12\sum_\ell G^{k\ell}
-  (\partial_iG_{j\ell}+\partial_jG_{i\ell}-\partial_\ell G_{ij})$ に
-  $F$ の二階微分が入り，$R\sim\partial\Gamma+\Gamma\Gamma$ には
-  $F$ の\textbf{三階微分}が現れる．
-  定理~\ref{thm:main}はこれらが相殺することを示している．
-  数値計算では Gauss 方程式を用いることで相殺を明示でき，
-  三階の自動微分を回避できる．
-\end{remark}
-
-\begin{proposition}[Fisher--Rao 引き戻しに追加で必要なもの]
-\label{prop:fr-cost}
-  同じ decoder に Fisher--Rao 計量を引き戻して得られる計量は
+  をみたす．また decoded process $Y_t:=F(Z_t)$ の二次変分は
   \[
-    G^{\mathrm{FR}}
-    =J_m^{\mathsf T}DJ_m+2\,J_\sigma^{\mathsf T}DJ_\sigma,
-    \qquad
-    D:=\operatorname{diag}\bigl((\sigma^1)^{-2},\dots,(\sigma^n)^{-2}\bigr)
-  \]
-  である．その断面曲率を Gauss 方程式で求めるには，
-  \begin{enumerate}
-    \item 周囲曲率項 $\langle\bar R(u,v)v,u\rangle$
-      （命題~\ref{prop:fr-hyperbolic}より一般に非零），および
-    \item 周囲の Levi--Civita 接続に関する第二基本形式，
-      すなわち周囲の Christoffel 記号（$\sigma^{-1}$ の項を含む）
-  \end{enumerate}
-  の双方が追加で必要である．
-\end{proposition}
-
-\begin{proof}
-  引き戻しの式は定義~\ref{def:pullback}と命題~\ref{prop:fr-hyperbolic}から従う．
-  残りは，周囲が平坦でない場合の Gauss 方程式（事実~\ref{fact:gauss}）が
-  $\bar R$ を含み，第二基本形式が周囲の接続を用いて定義されることによる．
-\end{proof}
-
-\subsection{計算手順}
-
-\begin{algorithm}[t]
-\caption{学習済み decoder の潜在断面曲率}
-\label{alg:curvature}
-\medskip\hrule\medskip
-\noindent\textbf{入力：}$C^2$ 級 decoder $(m,\sigma)$，潜在点 $z\in\mathcal{Z}$，
-1次独立な方向 $u,v\in\R^d$\\
-\noindent\textbf{出力：}$\operatorname{Sec}(u,v)$
-\medskip\hrule\medskip
-\begin{algsteps}
-\item $J_F\leftarrow F=(m,\sigma)$ の Jacobi 行列（自動微分の JVP を $d$ 回）
-\item $G\leftarrow J_F^{\mathsf T}J_F$ を作り Cholesky 分解する
-\item $h_{uu}\leftarrow\partial^2F[u,u]$，$h_{uv}\leftarrow\partial^2F[u,v]$，
-  $h_{vv}\leftarrow\partial^2F[v,v]$（二階方向微分を 3 回）
-\item 各 $w\in\{h_{uu},h_{uv},h_{vv}\}$ について：
-  $G\,y=J_F^{\mathsf T}w$ を三角ソルブで解き，$B[w]\leftarrow w-J_F\,y$
-  \quad（$G^{-1}$ を明示的に作らない）
-\item $N\leftarrow\langle B[h_{uu}],B[h_{vv}]\rangle-\norm{B[h_{uv}]}^2$
-\item $D\leftarrow\langle u,u\rangle_G\langle v,v\rangle_G-\langle u,v\rangle_G^2$
-\item \textbf{return} $N/D$
-\end{algsteps}
-\medskip\hrule
-\end{algorithm}
-
-アルゴリズム~\ref{alg:curvature}は三階微分を用いない．
-一点における $B_{ij}$ 全体が必要な場合は $d(d+1)/2$ 個の二階方向微分で足り，
-自動微分の逆伝播 $O(d^2)$ 回に相当する．
-$G^{-1}$ を明示的に構成せず線形方程式を解くのは数値的安定性のためであり，
-$G$ の最小固有値が $0$ に近い点では曲率も不安定になりうる．
-
-\section{単一の量による二つの証明書}
-\label{sec:certificate}
-
-定理~\ref{thm:main}の実用上の意味は，
-\emph{decoder から計算できる一つの量で二つの問いに答えられる}ことにある．
-以下 $z$ を固定し，
-\[
-  \Lambda(z):=\sup\bigl\{\norm{B(u,v)}\ :\ u,v\in\R^d,\
-  \langle u,u\rangle_G=\langle v,v\rangle_G=1\bigr\}
-\]
-と定める（$B$ の作用素ノルム）．これは第二基本形式，すなわち
-decoder の二階微分から計算できる．
-
-\subsection{証明書 1：曲率の上界}
-
-\begin{corollary}[断面曲率の上界]
-\label{cor:sec-bound}
-  すべての1次独立な $u,v$ に対して
-  \[
-    \boxed{\ \abs{\operatorname{Sec}(u,v)}\ \leq\ 2\,\Lambda(z)^2\ }
-  \]
-  が成り立つ．
-\end{corollary}
-
-\begin{proof}
-  断面曲率は $u,v$ の張る平面のみに依存するから，
-  $G$ に関する正規直交基底 $u,v$（$\langle u,u\rangle_G=\langle v,v\rangle_G=1$,
-  $\langle u,v\rangle_G=0$）で評価してよい．このとき
-  定理~\ref{thm:main}の分母は $1$ であり，Cauchy--Schwarz より
-  \[
-    \abs{\operatorname{Sec}(u,v)}
-    \leq\norm{B(u,u)}\,\norm{B(v,v)}+\norm{B(u,v)}^2
-    \leq\Lambda^2+\Lambda^2 .
-  \]
-\end{proof}
-
-系~\ref{cor:sec-bound}は第\ref{sec:intro}節の問いに定量的な形を与える．
-$\Lambda$ が小さければ潜在空間は平坦に近く，
-事実~\ref{fact:flatness}により適切な座標で Euclid 構造がほぼ正当化される．
-$\Lambda$ が大きい領域では，どのような座標変換をしても
-Euclid 近似は改善しない．
-
-\subsection{証明書 2：直線的な輸送の誤差}
-
-潜在空間には二つの自然な非負量がある．
-事実~\ref{fact:w2-closed-form}による\textbf{弦長}
-$W_2(K_{z_0},K_{z_1})=\norm{F(z_0)-F(z_1)}$ と，
-$G$ が定める\textbf{内在距離} $d_G$ である．
-前者は $K_{z_0}$ を $K_{z_1}$ へ直接輸送するコストであり，
-後者は decoder が表現できる分布の族に沿って移動するコストである
-（図~\ref{fig:chord}）．
-
-\begin{figure}[t]
-\centering
-\begin{tikzpicture}[scale=1.4]
-  \draw[thick,black!70] plot[domain=-2.0:2.0,samples=100] (\x,{0.40*\x*\x});
-  \node[black!70,anchor=west] at (2.06,1.60) {$F(\mathcal{Z})$};
-  \fill (-1.5,0.9) circle (1.6pt);
-  \fill ( 1.5,0.9) circle (1.6pt);
-  \node[anchor=south east,inner sep=3pt] at (-1.5,0.92) {$F(z_0)$};
-  \node[anchor=south west,inner sep=3pt] at ( 1.5,0.92) {$F(z_1)$};
-  \draw[dashed,very thick,blue!55!black] (-1.5,0.9) -- (1.5,0.9);
-  \node[blue!55!black,anchor=north] at (0,0.80) {弦長 $=W_2(K_{z_0},K_{z_1})$};
-  \node[black!70,anchor=north] at (0,-0.12) {内在距離 $d_G(z_0,z_1)$（曲線に沿う長さ）};
-\end{tikzpicture}
-\caption{弦長と内在距離．弦長は周囲空間を突っ切る直線の長さであり，
-事実~\ref{fact:w2-closed-form}によりこれが分布間の $W_2$ と厳密に一致する．
-内在距離は decoder が表現できる分布の族 $F(\mathcal{Z})$ に沿う長さである．
-両者の差は第二基本形式が支配する（命題~\ref{prop:chord}）．}
-\label{fig:chord}
-\end{figure}
-
-\begin{proposition}[弦長と内在距離の比較]
-\label{prop:chord}
-  $\gamma\colon[0,L]\to\mathcal{Z}$ を $G$ に関する単位速度の測地線とし，
-  $z_0=\gamma(0)$，$z_1=\gamma(L)$ とする．
-  $\gamma$ に沿って $\norm{B(\dot\gamma,\dot\gamma)}\leq\Lambda$ かつ
-  $\Lambda L\leq\pi$ ならば
-  \[
-    \frac{2}{\Lambda}\sin\frac{\Lambda L}{2}
-    \ \leq\ W_2(K_{z_0},K_{z_1})\ \leq\ L .
-  \]
-  さらに $\gamma$ が長さ最小ならば $L=d_G(z_0,z_1)$ であり，
-  \[
-    \boxed{\ 0\ \leq\ d_G(z_0,z_1)-W_2(K_{z_0},K_{z_1})
-    \ \leq\ \frac{\Lambda^2}{24}\,d_G(z_0,z_1)^3\ }
+    \d[Y]_t=J_F(Z_t)a(Z_t,t)J_F(Z_t)^{\mathsf T}\,\d t
   \]
   である．
 \end{proposition}
 
-証明は付録~\ref{app:chord}に与える．鍵は，測地線の像 $c=F\circ\gamma$ が
-$\ddot c=B(\dot\gamma,\dot\gamma)$ をみたすこと，
-すなわち像の曲がりがそのまま第二基本形式であることである．
-下界は改良できない（付録~\ref{app:chord}の注意~\ref{rem:sharp}）．
-
-命題~\ref{prop:chord}の不等式そのものは新しくない．
-有界な第二基本形式（あるいは正の reach）のもとで測地距離と Euclid 距離を
-比較する評価は，曲線に対する Schur の定理として古典的であり，
-多様体学習の文脈でも reach を用いた metric distortion の評価として
-確立している \cite{niyogi2008,boissonnat2018}．
-本稿の主張は，定理~\ref{thm:main}のもとで
-$\Lambda$ が\emph{decoder の二階微分から直接計算できる}ため，
-この古典的な評価が学習済みモデルに対する検証可能な証明書になる，という点にある．
-Shao ら \cite{shao2018} が経験的に観測した
-「潜在多様体はほぼ平坦であり，潜在空間の直線は測地線をよく近似する」という現象に対し，
-各点で計算できる定量的な形を与えることに相当する．
-
-\section{構造的な帰結}
-\label{sec:consequences}
-
-\subsection{曲率が恒等的に消える場合}
-
-\begin{proposition}[全次元 immersion]
-\label{prop:full-dim}
-  $C^2$ 級 immersion $F\colon\mathcal{Z}\subset\R^d\to\R^N$ について
-  $d=N$ ならば $B\equiv0$ かつ $R\equiv0$ である．
-\end{proposition}
-
 \begin{proof}
-  $d=N$ のとき $J_F$ は正則な正方行列だから
-  $P=J_F(J_F^{\mathsf T}J_F)^{-1}J_F^{\mathsf T}=I_N$ であり
-  $B_{ij}=(I_N-P)\partial_i\partial_jF=0$ となる．
-  定理~\ref{thm:main}より $\operatorname{Sec}\equiv0$，したがって $R\equiv0$ である．
-\end{proof}
-
-命題~\ref{prop:full-dim}は，潜在空間とデータ空間の次元が等しく
-生成写像が可逆であるモデル（正規化フロー，フローマッチング）には，
-引き戻し計量の曲率という概念が存在しないことを意味する．
-そのような $F$ は局所等長写像であり，曲率は等長不変量だからである．
-すなわち\textbf{本稿の問いが非自明であるためには次元の削減が必要}である．
-ただし平坦であることと $G$ が定数であることは別であり，
-平坦であっても潜在座標の直線が測地線になるとは限らない．
-
-\begin{proposition}[アフィンなパラメータ写像]
-\label{prop:affine}
-  開集合 $U\subset\mathcal{Z}$ 上で $F(z)=Az+b$（$\operatorname{rank}A=d$）ならば，
-  $U$ 上で $G\equiv A^{\mathsf T}A$ は定数であり $B\equiv0$，$R\equiv0$ である．
-\end{proposition}
-
-\begin{proof}
-  $J_F\equiv A$ より $G$ は定数，$\partial_i\partial_jF\equiv0$ より $B\equiv0$．
-  定理~\ref{thm:main}より $R\equiv0$．
-\end{proof}
-
-\begin{proposition}[標準的な実装では曲率は分散チャネルに由来する]
-\label{prop:variance-only}
-  開集合 $U\subset\mathcal{Z}$ 上で $m$ がアフィンであり，
-  正値性のための補助写像 $\ell\colon\mathcal{Z}\to\R^n$ が $U$ 上アフィンで
-  $\sigma^\alpha=\exp(\ell^\alpha)$ と表されているとする．このとき $U$ 上で
+  事実~\ref{fact:gaussian-w2}より左辺は
+  $\E[\norm{F(Z_{t+\d t})-F(Z_t)}^2\mid Z_t=z]$ である．
+  It\^o の公式から $Y=F(Z)$ の martingale 部分は $J_FA\d W$ なので，
+  その二次変分は $J_FaJ_F^{\mathsf T}\d t$ である．drift は二乗平均の
+  $\d t$ 一次項に寄与しない．したがって
   \[
-    \partial_i\partial_jF
-    =\bigl(0,\ \sigma\odot\partial_i\ell\odot\partial_j\ell\bigr)
+    \E[\norm{Y_{t+\d t}-Y_t}^2\mid Z_t=z]
+    =\operatorname{tr}(J_FaJ_F^{\mathsf T})\d t+o(\d t)
+    =\operatorname{tr}(Ga)\d t+o(\d t).
   \]
-  である．したがって第二基本形式，ひいては曲率は分散チャネルの非線形性のみに由来し，
-  平均写像 $m$ は計量 $G$ には寄与するが曲率には寄与しない．
-\end{proposition}
-
-\begin{proof}
-  $U$ 上で $\partial_i\partial_jm=0$ である．
-  $\partial_i\sigma^\alpha=\sigma^\alpha\partial_i\ell^\alpha$ を微分し
-  $\partial_i\partial_j\ell^\alpha=0$ を用いると
-  $\partial_i\partial_j\sigma^\alpha
-  =\sigma^\alpha\partial_i\ell^\alpha\partial_j\ell^\alpha$ を得る．
-  $B_{ij}$ は $\partial_i\partial_jF$ の法成分だから主張が従う．
 \end{proof}
 
-\begin{remark}[活性化関数への要請]
-\label{rem:activation}
-  命題~\ref{prop:affine}より，区分アフィンな decoder（ReLU 等）は
-  各線形領域の内部で曲率が $0$ になる．
-  また定理~\ref{thm:main}は $F$ が $C^2$ 級であることを要求する．
-  ELU は $C^1$ 級だが $C^2$ 級ではない（原点で二階微分が跳ぶ）ため，
-  第二基本形式が定義されない点をもつ．
-  \cite{shao2018} が ELU を採用し，自身の手法が高々一階微分しか
-  必要としないと明記しているのは，この制約と整合的である．
-  各点の曲率を扱うには tanh，softplus，GELU，SiLU など
-  $C^2$ 級の活性化を用いる必要がある．
-\end{remark}
+標準 LDM の局所 noise covariance は $a(z,t)=\beta_tI_d$ である．
+命題~\ref{prop:qv}から decoded 変化率は
+\[
+  \boxed{\ \beta_t\operatorname{tr}G(z)\ }
+\]
+となる．さらに decoded covariance $\beta_tJ_FJ_F^{\mathsf T}$ の非零固有値は
+$\beta_tG$ の固有値と一致する．したがって標準 LDM は，decoder 感度の高い点を
+速く壊し，感度の高い方向を強く壊す．単一の noise level $t$ が全データに対して
+同じ意味をもつという通常の解釈は，一般には成立しない．
 
-\subsection{引き戻し計量は decoder を決定しない}
+\section{Wasserstein-isotropic latent diffusion}
+\label{sec:canonical}
 
-\begin{proposition}[非決定性]
-\label{prop:nonidentifiable}
-  $d=n=2$，$c>0$，$R>0$ とし，$\mathcal{Z}:=\R\times(-c,\infty)$ 上で
+\subsection{canonical covariance}
+
+\begin{theorem}[decoder manifold 上で等方的な唯一の latent noise]
+\label{thm:canonical}
+  $P(z):=J_F(z)G(z)^{-1}J_F(z)^{\mathsf T}$ とする．これは
+  $T_{F(z)}F(\mathcal{Z})=J_F(z)\R^d$ への Euclid 直交射影である．
+  latent covariance を
   \[
-    \begin{aligned}
-      \text{(A)}\quad & m_A(z)=(z^1,z^2), && \sigma_A(z)=(c,c),\\
-      \text{(B)}\quad & m_B(z)=\Bigl(R\cos\tfrac{z^1}{R},\ R\sin\tfrac{z^1}{R}\Bigr),
-        && \sigma_B(z)=(c+z^2,\ c)
-    \end{aligned}
+    \boxed{\ a_*(z,t):=\beta_tG(z)^{-1}\ }
+    \tag{2}
   \]
-  と定める．$F_A,F_B$ はともに immersion であり $G_A\equiv G_B\equiv I_2$ である．
-  したがって両者の計量，Christoffel 記号，曲率，測地線，内在距離はすべて一致するが，
-  生成する分布族は異なる．
-\end{proposition}
-
-\begin{proof}
-  $\theta:=z^1/R$ と書くと
+  とすると，
   \[
-    J_{F_A}=\begin{pmatrix}1&0\\0&1\\0&0\\0&0\end{pmatrix},
+    J_Fa_*J_F^{\mathsf T}=\beta_tP,
     \qquad
-    J_{F_B}=\begin{pmatrix}-\sin\theta&0\\\cos\theta&0\\0&1\\0&0\end{pmatrix}
+    \operatorname{tr}(Ga_*)=\beta_td.
   \]
-  である．ともに階数 $2$ をもち，
-  $J_{F_A}^{\mathsf T}J_{F_A}=J_{F_B}^{\mathsf T}J_{F_B}=I_2$
-  （$(1,1)$ 成分は $\sin^2\theta+\cos^2\theta=1$）である．
-  Christoffel 記号以降はすべて $G$ のみから定まる．
-  一方 $m_A(\mathcal{Z})$ は $\R^2$ の帯状領域，$m_B(\mathcal{Z})$ は
-  半径 $R$ の円周であり，$z^1=0$ と $z^1=2\pi R$ は (A) では異なる分布に，
-  (B) では同一の分布に対応する．
+  したがって decoded noise は接空間上で等方的であり，decoded $W_2^2$ 変化率は
+  潜在点によらず $\beta_td$ である．逆に，対称半正定値な latent covariance
+  $a$ が $J_FaJ_F^{\mathsf T}=\beta_tP$ をみたすなら $a=a_*$ である．
+\end{theorem}
+
+\begin{proof}
+  $P^{\mathsf T}=P$ と $P^2=P$ は $G=J_F^{\mathsf T}J_F$ から従い，
+  $P$ の像は $J_F\R^d$ である．(2) を代入すれば前半を得る．
+  一意性について，$J_F$ の左逆を $J_F^+:=G^{-1}J_F^{\mathsf T}$ とすると
+  \[
+    a=J_F^+(J_FaJ_F^{\mathsf T})(J_F^+)^{\mathsf T}
+      =\beta_tJ_F^+P(J_F^+)^{\mathsf T}
+      =\beta_tG^{-1}
+  \]
+  である．
 \end{proof}
 
-命題~\ref{prop:nonidentifiable}は，潜在幾何にもとづく解析の射程に
-限界があることを示す．
-古典的な部分多様体論の基本定理（Bonnet の定理 \cite{docarmo1992}）によれば，
-Euclid 空間へのはめ込みは第一基本形式 $G$ と第二基本形式 $B$ の双方を
-与えれば合同変換を除いて定まる．
-実際 $B_A\equiv0$ である一方 $B_B\neq0$ であり，不定性は $B$ を加えれば解消する．
-すなわち $B$ は曲率の計算に必要なだけでなく，decoder の同定にも必要な情報である．
-本稿が $B$ を計算可能にすることは，この意味でも意義をもつ．
+この結果は，$G^{-1}$ を heuristic な preconditioner として導入しているのではない
+ことを示す．decoder 分布の $W_2$ 変化を接空間で等方化するという要請が，
+noise covariance を一意に決める．
 
-\section{含意}
-\label{sec:implications}
+\subsection{座標不変性}
 
-\paragraph{直線補間の正当性は検証できる量になる．}
-系~\ref{cor:sec-bound}と命題~\ref{prop:chord}は，
-$\Lambda$ という単一の量で
-「潜在空間はどれだけ Euclid から離れているか」と
-「直線的に輸送したとき何をどれだけ損しているか」に同時に答える．
-$\Lambda$ は学習済み decoder の二階微分から計算できるため，
-補間や潜在空間上の輸送を行う前に，その正当性を数値的に確かめられる．
+\begin{proposition}[潜在座標の取り替えに対する不変性]
+\label{prop:coordinate}
+  $\psi\colon\mathcal{Z}\to\widetilde{\mathcal{Z}}$ を微分同相とし，
+  $\widetilde F:=F\circ\psi^{-1}$ とする．$G$ と $\widetilde G$ から
+  定理~\ref{thm:canonical}の covariance をそれぞれ作ると，
+  $\widetilde Z_t=\psi(Z_t)$ の covariance は
+  \[
+    D\psi\,\beta_tG^{-1}D\psi^{\mathsf T}
+    =\beta_t\widetilde G^{-1}
+  \]
+  となる．対応する幾何学的 drift も含めれば，二つの座標系で構成した process は
+  同一の decoder 分布過程 $K_{Z_t}$ を与える．
+\end{proposition}
 
-\paragraph{平坦化の可否が判定できる．}
-潜在空間を平坦に保つ正則化は，補間や潜在空間上の生成を
-Euclid 的に扱えるようにする目的で自然に考えられる．
-事実~\ref{fact:flatness}より，この目標が達成可能かどうかは
-曲率が消せるかどうかと同値である．
-命題~\ref{prop:variance-only}は，標準的な実装では曲率が
-分散チャネルのみに由来することを示しており，
-正則化を課すべき対象を特定する．
+\begin{proof}
+  $\widetilde G=(D\psi^{-1})^{\mathsf T}G(D\psi^{-1})$ を逆行列にすれば
+  covariance の式を得る．drift を含む主張は次節の generator が
+  Riemann 計量と確率測度だけから定義されることによる．
+\end{proof}
 
-\paragraph{アーキテクチャへの含意．}
-注意~\ref{rem:activation}より，潜在曲率を扱うには $C^2$ 級の活性化が必要である．
-これは精度ではなく\emph{理論が適用可能であるための}要請であり，
-ReLU や ELU を用いる限り各点の曲率は定義されないか恒等的に消える．
-また命題~\ref{prop:full-dim}より，可逆な生成写像を用いるモデルでは
-この解析の対象そのものが存在しない．
+標準 LDM の $I_d$ は一般の $\psi$ で $I_d$ に移らない．したがって
+命題~\ref{prop:coordinate}は，通常の latent noising と提案法を分ける
+直接検証可能な予測を与える．
 
-\section{関連研究}
+\section{VAE prior に可逆な forward process}
+\label{sec:forward}
+
+\subsection{generator と It\^o SDE}
+
+単なる Riemannian Brownian motion は一般に $\mathcal{N}(0,I_d)\d z$ を
+不変分布にもたない．そこで prior 測度 $\pi$ 自体を幾何学的構成に含める．
+
+\begin{definition}[prior-reversible Wasserstein latent diffusion]
+\label{def:generator}
+  滑らかな関数 $f$ に対して
+  \[
+    \boxed{
+    \mathcal{L}_t f
+    :=\frac{\beta_t}{2p_\pi}
+      \partial_i\!\left(p_\pi G^{ij}\partial_jf\right)
+    }
+    \tag{3}
+  \]
+  と定める．Einstein の規約により重複する添字について和をとる．
+\end{definition}
+
+(3) に対応する It\^o SDE は
+\[
+  \d Z_t^i=b_\pi^i(Z_t,t)\d t
+       +\sqrt{\beta_t}\,[G(Z_t)^{-1/2}]^i{}_a\d W_t^a,
+  \tag{4}
+\]
+\[
+  \boxed{
+  b_\pi^i(z,t)
+  =\frac{\beta_t}{2}
+    \left\{\partial_jG^{ij}(z)+G^{ij}(z)\partial_j\log p_\pi(z)\right\}.
+  }
+  \tag{5}
+\]
+ここで $G^{-1/2}$ は $G^{-1/2}(G^{-1/2})^{\mathsf T}=G^{-1}$ をみたす
+任意の滑らかな frame でよい．
+
+\begin{proposition}[prior の不変性と可逆性]
+\label{prop:reversible}
+  $\pi(\d z)=p_\pi(z)\d z$ は (3) の不変分布である．さらに滑らかな
+  $f,g$ に対して
+  \[
+    \int f\,\mathcal{L}_tg\,\d\pi
+    =-\frac{\beta_t}{2}\int
+      \langle\nabla_Gf,\nabla_Gg\rangle_G\,\d\pi
+    =\int g\,\mathcal{L}_tf\,\d\pi
+  \]
+  であり，process は $\pi$ に関して可逆である．
+\end{proposition}
+
+\begin{proof}
+  (3) を $p_\pi\d z$ に関して部分積分すればよい．$f=1$ とおくと
+  $\int\mathcal{L}_tg\d\pi=0$ だから不変性が従う．
+\end{proof}
+
+\subsection{確率測度上の Wasserstein 勾配流}
+
+(3) は Riemann 幾何の記法では
+\[
+  \mathcal{L}_tf
+  =\frac{\beta_t}{2}
+   \left\{\Delta_Gf+
+     \langle\nabla_G\log q_\pi,\nabla_Gf\rangle_G\right\}
+  \tag{6}
+\]
+と書ける．$r_t$ を $Z_t$ の $\d\vol_G$ に関する密度とすると，
+Fokker--Planck 方程式は
+\[
+  \partial_tr_t
+  =\frac{\beta_t}{2}\operatorname{div}_G
+    \left(r_t\nabla_G\log\frac{r_t}{q_\pi}\right).
+  \tag{7}
+\]
+
+\begin{proposition}[二層目の Wasserstein 構造]
+\label{prop:gradient-flow}
+  (7) は，ground metric を $G$ とする確率測度空間
+  $\Pp2(\mathcal{Z},G)$ における
+  \[
+    \mathrm{KL}(r\,\d\vol_G\Vert\pi)
+  \]
+  の最急降下流である．時刻は $\beta_t/2$ で再尺度化される．
+\end{proposition}
+
+これは Fokker--Planck 方程式の Wasserstein 勾配流解釈
+\cite{jordan1998} を $(\mathcal{Z},G)$ に適用したものである．
+本稿では二種類の Wasserstein 幾何が入れ子になる．
+
+\begin{itemize}
+  \item $G$ を定める\textbf{ミクロな $W_2$}：各 decoder 分布 $K_z$ 間の距離．
+  \item (7) を定める\textbf{マクロな $W_2$}：decoder 分布の族上にある
+    確率法則 $\rho_t$ 間の距離．
+\end{itemize}
+
+\section{第二基本形式は diffusion drift になる}
+\label{sec:curvature-drift}
+
+$F(\mathcal{Z})\subset H$ を Euclid 空間内の immersed submanifold とみなす．
+\[
+  P:=J_FG^{-1}J_F^{\mathsf T},
+  \qquad
+  B_{ij}:=(I_{2n}-P)\partial_i\partial_jF
+\]
+を接空間への射影と第二基本形式とし，平均曲率ベクトルを
+\[
+  \mathcal{H}(z):=G^{ij}(z)B_{ij}(z)
+\]
+と定める．この符号規約では $\mathcal{H}=\Delta_GF$ である．
+
+\begin{theorem}[decoded process の extrinsic 表示]
+\label{thm:extrinsic}
+  $Z_t$ が (4) に従い $Y_t=F(Z_t)$ とする．局所的に $F$ が embedding である
+  範囲では，$Y_t$ は
+  \[
+    \boxed{
+    \d Y_t
+    =\frac{\beta_t}{2}
+       \left\{\mathcal{H}(Z_t)
+       +J_F(Z_t)\nabla_G\log q_\pi(Z_t)\right\}\d t
+     +\sqrt{\beta_t}\,P(Z_t)\d W_t^{H}
+    }
+    \tag{8}
+  \]
+  と同じ generator をもつ．$W^H$ は $\R^{2n}$ 上の Brownian motion である．
+\end{theorem}
+
+\begin{proof}
+  (6) を $F$ の各座標関数へ作用させる．等長 immersion の標準公式
+  $\Delta_GF=\mathcal{H}$ より drift の法成分が $\beta_t\mathcal{H}/2$ となる．
+  prior drift は微分 $J_F$ によって接空間へ写る．martingale 部分の共分散は
+  定理~\ref{thm:canonical}より $\beta_tP$ であり，$P^2=P$ なので
+  $\sqrt{\beta_t}P\d W^H$ と表せる．
+\end{proof}
+
+式 (8) は本稿における曲率の役割を明確にする．接空間へ射影した noise だけでは
+It\^o の意味で曲がった部分多様体上の Brownian motion にならず，
+平均曲率 drift が必要である \cite{hsu2002}．しかも $\mathcal{H}$ は
+$F$ の二階微分から計算できる．曲率は生成後の診断量ではなく，forward process の
+一部である．
+
+\section{逆時間過程と自然な relative score}
+\label{sec:score}
+
+$p_t$ を $Z_t$ の Lebesgue 密度とし，natural relative score を
+\[
+  s_t^*(z)
+  :=\nabla_G\log\frac{p_t(z)}{p_\pi(z)}
+  =G(z)^{-1}\nabla_z\log\frac{p_t(z)}{p_\pi(z)}
+  \tag{9}
+\]
+と定める．これは座標微分としての covector ではなく，潜在多様体上の vector field
+である．
+
+\begin{proposition}[逆時間 drift]
+\label{prop:reverse}
+  $Y_s:=Z_{T-s}$ とする．通常の time-reversal の正則性条件
+  \cite{haussmann1986} のもとで，$Y_s$ の drift は
+  \[
+    \boxed{
+      \bar b^i(z,s)
+      =b_\pi^i(z,T-s)+\beta_{T-s}\,[s_{T-s}^*(z)]^i
+    }
+    \tag{10}
+  \]
+  であり，noise covariance は $\beta_{T-s}G^{-1}$ のままである．
+\end{proposition}
+
+\begin{proof}
+  $a^{ij}=\beta_tG^{ij}$ とする．一般の It\^o diffusion の逆時間 drift は
+  \[
+    -b^i+\partial_ja^{ij}+a^{ij}\partial_j\log p_t
+  \]
+  である．(5) を代入して整理すると
+  \[
+    \frac{\beta_t}{2}
+    (\partial_jG^{ij}+G^{ij}\partial_j\log p_\pi)
+    +\beta_tG^{ij}\partial_j\log(p_t/p_\pi)
+  \]
+  となり，(10) を得る．
+\end{proof}
+
+\subsection{transition kernel を要しない score matching}
+
+vector field $s_\vartheta(z,t)$ で (9) を近似する．prior に関する divergence を
+\[
+  \operatorname{div}_\pi s
+  :=\frac{1}{p_\pi}\partial_i(p_\pi s^i)
+\]
+と定める．
+以下は古典的 score matching \cite{hyvarinen2005} を prior-relative な
+Riemann 幾何へ書き直した目的関数である．
+
+\begin{proposition}[relative Riemannian score matching]
+\label{prop:score-matching}
+  時刻 $t$ を固定し，
+  \[
+    \mathcal{J}_t(\vartheta)
+    :=\E_{Z\sim p_t}
+      \left[
+        \frac12s_\vartheta(Z,t)^{\mathsf T}G(Z)s_\vartheta(Z,t)
+        +\operatorname{div}_\pi s_\vartheta(Z,t)
+      \right]
+    \tag{11}
+  \]
+  とする．境界項が消え，関数クラスが十分豊かなら，(11) の最小化解は
+  $s_\vartheta=s_t^*$ である．
+\end{proposition}
+
+\begin{proof}
+  $r=p_t/p_\pi$ とおく．$\pi$ に関する部分積分から
+  \[
+    -\E_{p_t}\langle s,\nabla_G\log r\rangle_G
+    =\E_{p_t}[\operatorname{div}_\pi s]
+  \]
+  である．したがって (11) は
+  $\frac12\E_{p_t}\norm{s-s_t^*}_G^2$ と $\vartheta$ に依存しない定数の和になる．
+\end{proof}
+
+重要なのは
+\[
+  s_\vartheta^{\mathsf T}Gs_\vartheta
+  =\norm{J_Fs_\vartheta}^2
+\]
+である．したがって score loss の metric norm は decoder の JVP 一回で評価でき，
+$G$ や $G^{-1}$ を行列として作る必要がない．divergence は Hutchinson 推定を用いた
+sliced score matching \cite{song2020} で近似できる．forward trajectory の生成は
+依然として $G^{-1/2}$ を要するため，その近似は第\ref{sec:computation}節で論じる．
+
+\section{曲率による step 誤差の証明書}
+\label{sec:certificate}
+
+第二基本形式を双線形写像
+$B(u,v)=u^iv^jB_{ij}$ とみなし，
+\[
+  \Lambda(z)
+  :=\sup\left\{\norm{B(u,v)}:
+      \norm{u}_{G(z)}=\norm{v}_{G(z)}=1\right\}
+\]
+と定める．$\Lambda$ は decoder manifold の最大の外在的曲がりを測る．
+
+\begin{theorem}[geodesic step の decoded distortion]
+\label{thm:chord}
+  $\gamma\colon[0,L]\to\mathcal{Z}$ を単位速度の $G$-測地線とする．
+  $\gamma$ に沿って
+  $\norm{B(\dot\gamma,\dot\gamma)}\leq\Lambda$ かつ $\Lambda L\leq\pi$ ならば
+  \[
+    \frac{2}{\Lambda}\sin\frac{\Lambda L}{2}
+    \leq W_2(K_{\gamma(0)},K_{\gamma(L)})\leq L
+  \]
+  であり，特に
+  \[
+    \boxed{
+    0\leq L-W_2(K_{\gamma(0)},K_{\gamma(L)})
+    \leq\frac{\Lambda^2L^3}{24}.
+    }
+    \tag{12}
+  \]
+\end{theorem}
+
+\begin{proof}
+  $c=F\circ\gamma$ とおく．$F$ は等長 immersion なので $\norm{\dot c}=1$ であり，
+  測地線方程式から $\ddot c=B(\dot\gamma,\dot\gamma)$ となる．したがって $c$ は
+  曲率が $\Lambda$ 以下の長さ $L$ の Euclid 曲線である．Schur 型の弦長評価より
+  $\norm{c(L)-c(0)}\geq2\Lambda^{-1}\sin(\Lambda L/2)$ を得る．
+  上界は弦長が曲線長以下であることによる．最後に
+  $\sin x\geq x-x^3/6$ を用い，事実~\ref{fact:gaussian-w2}を適用する．
+\end{proof}
+
+geodesic random walk の一 step を
+\[
+  z^+=\operatorname{Exp}_z(\sqrt{\beta_th}\,\xi),
+  \qquad \xi\sim\mathcal{N}(0,I_{T_z\mathcal{Z}})
+\]
+とする．この step の内在長は
+$L=\sqrt{\beta_th}\norm{\xi}_G$ なので，(12) は
+\[
+  L-W_2(K_z,K_{z^+})
+  \leq
+  \frac{\Lambda^2}{24}(\beta_th)^{3/2}\norm{\xi}_G^3
+  \tag{13}
+\]
+を与える．よって許容誤差を固定すれば，$\Lambda$ の大きい領域で $h$ を小さくする
+曲率適応 solver が得られる．これは単なる numerical heuristic ではなく，
+decoder 分布上の $W_2$ distortion を直接制御する．
+
+\section{Schr\"odinger bridge への拡張}
+\label{sec:bridge}
+
+有限時刻 $T$ で $\rho_{\mathrm{data}}$ と $\pi$ の endpoint を厳密に合わせるには，
+第\ref{sec:forward}節の process を参照過程 $R_G$ とする
+Schr\"odinger bridge
+\[
+  Q^*
+  =\arg\min_{Q:\,Q_0=\rho_{\mathrm{data}},\,Q_T=\pi}
+    \mathrm{KL}(Q\Vert R_G)
+  \tag{14}
+\]
+を考えればよい．これは path-space 上の entropic optimal transport であり，
+通常の diffusion model と有限時間 OT を結ぶ \cite{debortoli2021,tong2024}．
+
+$\beta_t\equiv1$ とし，generator 全体を $\varepsilon$ 倍して
+$\varepsilon\to0$ とすると，$\varepsilon$ に依存する全体係数を除いた
+(14) の動的 cost の主要部は
+\[
+  \int_0^T\int_{\mathcal{Z}}
+    \frac12\norm{v_t(z)}_{G(z)}^2\rho_t(z)\,\d z\,\d t
+  =\int_0^T\int_{\mathcal{Z}}
+    \frac12\norm{J_F(z)v_t(z)}^2\rho_t(z)\,\d z\,\d t
+  \tag{15}
+\]
+となる．右辺は decoder 分布の瞬間的 $W_2$ 速度の二乗である．
+したがって (14) は潜在座標の移動距離ではなく，decoder が表す分布を運ぶ cost を
+最小化する stochastic generative model である．
+
+本稿では (3)--(11) の prior-reversible diffusion を主モデルとし，
+(14) はより強い有限時間版として位置づける．最初から bridge solver と
+metric approximation を同時に導入すると誤差源を分離できないため，
+実験ではまず reversible model を検証し，その後に bridge 化する．
+
+\section{計算方法}
+\label{sec:computation}
+
+\subsection{matrix-free な metric 演算}
+
+任意の $v\in\R^d$ に対して
+\[
+  Gv=J_F^{\mathsf T}(J_Fv)
+\]
+だから，JVP と VJP を一回ずつ用いれば $Gv$ を計算できる．したがって
+$G^{-1}u$ は共役勾配法，$G^{-1/2}\xi$ は Lanczos 法で近似できる．
+一方，$\norm{s}_G^2=\norm{J_Fs}^2$ と
+$B(u,v)=(I-P)\partial^2F[u,v]$ は，行列を明示せず評価できる．
+
+\begin{algorithm}[t]
+\caption{曲率適応 Wasserstein latent reverse step（概念形）}
+\label{alg:sampler}
+\medskip\hrule\medskip
+\noindent\textbf{入力：}decoder $F$，score $s_\vartheta$，現在点 $z$，時刻 $t$，
+基準 step $h_0$，許容 distortion $\epsilon$\\
+\noindent\textbf{出力：}一 step 前の潜在点
+\medskip\hrule\medskip
+\begin{algsteps}
+  \item JVP/VJP oracle から $Gv=J_F^{\mathsf T}J_Fv$ を定義する
+  \item 方向付き二階微分から $\widehat\Lambda(z)$ を推定する
+  \item (13) の右辺が $\epsilon$ 以下になるよう $h\leq h_0$ を選ぶ
+  \item CG/Lanczos または近似 frame により $b_\pi$ と $G^{-1/2}\xi$ を評価する
+  \item (10) の reverse drift と covariance $\beta_tG^{-1}$ で一 step 更新する
+  \item 必要なら decoder 出力の $W_2$ 変化を測り step を reject / 縮小する
+\end{algsteps}
+\medskip\hrule
+\end{algorithm}
+
+\subsection{高次元 latent への三段階近似}
+
+画像 LDM の latent 次元では exact solve を各 step で行うのは高価である．
+そこで次の三段階を比較する．
+
+\begin{enumerate}
+  \item \textbf{conformal approximation:}
+    $a=(d/\operatorname{tr}G)I$．decoded 変化の総量だけを $\beta_td$ に合わせる．
+  \item \textbf{diagonal / block approximation:}
+    $a\approx\operatorname{diag}(G)^{-1}$，または空間 patch ごとの block inverse．
+    $\operatorname{diag}(G)$ は Hutchinson 推定できる．
+  \item \textbf{metric distillation:}
+    convolutional linear operator $L_\eta(z)$ に
+    \[
+      L_\eta(z)^{\mathsf T}G(z)L_\eta(z)\approx I
+    \]
+    を学習させ，sampling 時は $G^{-1/2}$ を $L_\eta$ で置き換える．
+\end{enumerate}
+
+exact，conformal，diagonal，distilled の順に，座標不変性と計算量の trade-off がある．
+近似法が exact model の性質をどこまで保持するか自体を ablation の対象にする．
+
+\section{実験計画と反証条件}
+\label{sec:experiments}
+
+本稿の主張は生成例の見た目だけでなく，局所量によって反証可能である．
+
+\subsection{段階 I：既知の曲率をもつ synthetic decoder}
+
+潜在次元 $d=2$ とし，放物面型・鞍型の $F$ を用いる．真の $G,B,\Lambda$ が
+閉形式で得られるため，次を検証する．
+
+\begin{enumerate}
+  \item Euclid noise の decoded 変化率が $\beta\operatorname{tr}G(z)$ に一致するか．
+  \item canonical noise の変化率が $\beta d$ に一様化されるか．
+  \item 平均曲率 drift を除いたときにどの程度 manifold bias が生じるか．
+  \item (12)--(13) が実測 step error を上から抑えるか．
+  \item 非線形な座標変換の前後で decoded path law が一致するか．
+\end{enumerate}
+
+\subsection{段階 II：低次元 VAE}
+
+MNIST，Fashion-MNIST，必要なら小規模な連続科学データで，
+$d\in\{2,8,16,32\}$ の $C^2$ 級 VAE を学習する．decoder variance を固定せず，
+$\sigma(z)$ を意味のある aleatoric uncertainty として学習する．baseline は
+
+\begin{itemize}
+  \item Euclidean latent diffusion，
+  \item conformal / diagonal / exact Wasserstein latent diffusion，
+  \item exact model から平均曲率 drift を除いたもの，
+  \item 曲率適応 step を固定 step に置き換えたもの
+\end{itemize}
+
+とする．評価量は FID や precision/recall に加え，
+
+\begin{itemize}
+  \item $z$ ごとの decoded $W_2$ corruption rate の変動係数，
+  \item $\operatorname{tr}G$ または $\det G$ の上下 quartile 別の生成誤差，
+  \item 座標変換前後の decoded sample distribution の距離，
+  \item $\Lambda$ と局所 sampler error の相関，
+  \item 同一品質に必要な neural function evaluations
+\end{itemize}
+
+を用いる．特に座標変換実験は，標準 LDM にはない
+命題~\ref{prop:coordinate}を直接検証する．
+
+\subsection{反証条件}
+
+次のいずれかが成立すれば，提案法の主要仮説は支持されない．
+
+\begin{enumerate}
+  \item 学習済み VAE 上で $\operatorname{tr}G$ の変動が小さく，標準 noising の
+    decoded corruption が既にほぼ一様である．
+  \item corruption の一様化が score 学習，生成品質，あるいは high-distortion
+    領域の誤差を改善しない．
+  \item 平均曲率 drift と $\Lambda$-adaptive step の効果が計算誤差以下である．
+  \item metric approximation の追加計算量が，削減される sampling step 数を上回る．
+\end{enumerate}
+
+\section{関連研究と新規性の境界}
 \label{sec:related}
 
 \paragraph{潜在空間の引き戻し幾何．}
-Arvanitidis ら \cite{arvanitidis2018} は，確率的生成器
-$m(z)+\sigma(z)\odot\varepsilon$ に対する期待引き戻し計量として
-$\E[J^{\mathsf T}J]=J_m^{\mathsf T}J_m+J_\sigma^{\mathsf T}J_\sigma$ を導き，
-分散項が測地線を不確実な領域から遠ざけることを指摘した．
-本稿の $G$ は行列としてこれと一致するが，導出と解釈が異なる．
-彼らの $\E[J^{\mathsf T}J]$ は期待値であって，どの空間へのはめ込みの
-誘導計量でもない．そのため周囲空間が存在せず，
-Gauss 方程式（事実~\ref{fact:gauss}）の経路が使えない．
-命題~\ref{prop:flat}は同じ行列に周囲空間 $(H,\text{Euclid})$ を与え直すものであり，
-定理~\ref{thm:main}はその帰結である．
+確率的 decoder の期待引き戻し計量
+$J_m^{\mathsf T}J_m+J_\sigma^{\mathsf T}J_\sigma$ は
+Arvanitidis ら \cite{arvanitidis2018} が導いた．Fisher--Rao 計量を
+decoder 分布から引き戻す一般的枠組みも提案されている
+\cite{arvanitidis2022}．本稿と最も直接に重なるのは
+Roy and Hauberg \cite{roy2022} であり，VAE decoder 分布の Wasserstein metric を
+潜在空間へ引き戻して geodesic を計算した．したがって $G$ 自体は本稿の新規性ではない．
+本稿は $G^{-1}$ が decoded $W_2$-isotropic diffusion の一意な covariance になること，
+prior-reversible drift，relative score，曲率適応離散化までを導く．
 
-\paragraph{Fisher--Rao の引き戻し．}
-Arvanitidis ら \cite{arvanitidis2022} は decoder 分布の空間の
-Fisher--Rao 計量を潜在空間へ引き戻した．枠組みは本稿と構造的に同一であり，
-異なるのは参照計量の選択のみである．
-命題~\ref{prop:fr-hyperbolic}と命題~\ref{prop:bilipschitz}は，
-この選択が距離をほとんど変えない一方で曲率を変えることを示している．
+\paragraph{Riemannian diffusion と flow matching．}
+De Bortoli ら \cite{debortoli2022} は既知の Riemann 多様体上へ score-based model を
+拡張した．Metric Flow Matching \cite{kapusniak2024} と Pullback Flow Matching
+\cite{dekruiff2024} は data-dependent metric または pullback geometry に沿う
+deterministic flow を学習する．本稿は VAE decoder の条件付き\emph{分布}間の
+$W_2$ を ground metric とし，stochastic noising の局所的意味を一様化する点，
+および第二基本形式を drift と誤差制御に使う点で異なる．
 
-\paragraph{生成モデルの曲率．}
-Shao ら \cite{shao2018} は決定論的な生成器に対する引き戻し計量
-$J_g^{\mathsf T}J_g$ のもとで測地線・平行移動・測地線シューティングの
-アルゴリズムを与え，学習された多様体がほぼ平坦であることを報告した．
-ただし彼らの計量は decoder の分散を含まず，
-曲率の測定は測地距離行列の MDS における負の固有値という大域的な代理量による．
-また使用された ELU は $C^1$ 級であり，彼ら自身が手法は高々一階微分しか
-要しないと述べている．本稿はこの制約を取り除く条件を与え，
-彼らの経験的観測に各点で計算できる定量的な形を与える．
+\paragraph{分布を一点として生成するモデル．}
+Wasserstein Flow Matching \cite{haviv2026} は Gaussian や point cloud のように
+各データ点自体が確率分布である場合の flow matching を扱う．本稿でも $K_z$ を
+一点とみなすが，任意の Gaussian 族を生成するのではなく，固定 VAE が定める
+低次元部分多様体 $F(\mathcal{Z})$ 上で aggregated posterior を学習し，
+既知の VAE prior へ接続する．
 
-\paragraph{Gaussian 測度の Wasserstein 幾何．}
-Gaussian 測度全体の $W_2$ 幾何は Takatsu \cite{takatsu2011} によって
-研究されており，一般の共分散では Bures--Wasserstein 錐が現れる．
-本稿が扱う対角の場合は，その中で平坦になる特別な部分族である．
-パラメータ空間へ $W_2$ を引き戻す構成は Wasserstein 情報行列，
-Wasserstein 自然勾配として研究されている \cite{li2018}．
-本稿は同じ引き戻しを潜在空間に対して行い，曲率まで進める点が異なる．
+\paragraph{diffusion model の幾何．}
+Karczewski ら \cite{karczewski2026} は，data と同次元の probability-flow ODE
+decoder に対する pullback geodesic が data 空間の直線へ写ることを示した．
+本稿は $d<2n$ の VAE bottleneck と stochastic decoder 分布を対象とするため，
+この全次元での退化は生じない．一方，Rao ら \cite{rao2026} の
+decoder distortion と memorization の関連は，本稿が修正しようとする
+non-uniform noising に経験的動機を与える．
 
-\section{限界と今後の課題}
+\section{限界}
 \label{sec:limitations}
 
-\paragraph{実験がない．}
-本稿は理論的な結果のみからなる．
-定理~\ref{thm:main}が実際の学習済みモデルに対してどのような曲率を与えるか，
-また系~\ref{cor:sec-bound}・命題~\ref{prop:chord}の $\Lambda$ が
-実用的な大きさに収まるかは検証していない．
-これは本稿の最も大きな限界であり，
-特に第\ref{sec:implications}節の含意は経験的な裏づけを欠く．
+\paragraph{対角 Gaussian decoder．}
+閉形式と平坦な周囲空間は対角 Gaussian に依存する．一般共分散では
+Bures--Wasserstein 幾何の周囲曲率が現れる．ただし
+$\operatorname{tr}(Ga)$ による局所変化率と canonical covariance $G^{-1}$ の原理は，
+滑らかな正定値 pullback metric に対してそのまま成立する．
 
-\paragraph{対角共分散への限定．}
-命題~\ref{prop:flat}の平坦性は対角性に本質的に依存する．
-一般の共分散へ拡張すると周囲空間は Bures--Wasserstein 錐となり，
-これは非負曲率をもつ \cite{takatsu2011}ため平坦性が失われ，
-定理~\ref{thm:main}の周囲曲率項が復活する．
-このとき「decoder が線形でも潜在空間が曲がりうる」という
-対角の場合にはない現象が生じるはずであり，別途の解析を要する．
+\paragraph{画像における意味のある ground cost．}
+pixel 空間の Gaussian $W_2$ は $\ell_2$ 的であり，知覚的意味を完全には表さない．
+まず ground cost が妥当な低次元データで原理を検証すべきである．画像へ進む場合は，
+固定された知覚特徴への pushforward 分布で metric を定める拡張が必要になるが，
+Gaussian 閉形式は近似になる．
 
-\paragraph{滑らかさの要請．}
-定理~\ref{thm:main}は $C^2$ 級の decoder を要求する（注意~\ref{rem:activation}）．
-広く用いられる ReLU や ELU はこれをみたさない．
+\paragraph{実用 VAE の variance．}
+多くの画像 autoencoder は decoder variance を固定または無視する．その場合
+$J_\sigma=0$ となり，本稿の metric は決定論的 decoder の Euclid pullback に退化する．
+分散チャネル固有の利点を主張するには，$\sigma(z)$ が校正された VAE を学習する必要がある．
 
-\paragraph{弦長評価の新規性の範囲．}
-命題~\ref{prop:chord}の不等式自体は古典的である \cite{niyogi2008,boissonnat2018}．
-本稿の寄与は $\Lambda$ が decoder から計算可能になる点に限られる．
+\paragraph{rank，単射性，完備性．}
+$J_F$ の最小特異値が小さい場所では $G^{-1}$ が不安定になる．また immersion は
+大域的単射性を保証せず，異なる latent が同じ decoder 分布を表す可能性がある．
+理論は full-rank な局所 chart で成立するが，大域的生成には高確率領域での embedding，
+または同値な latent をまとめる quotient の扱いが必要である．
 
-\paragraph{$\Lambda$ の評価．}
-系~\ref{cor:sec-bound}と命題~\ref{prop:chord}は $\Lambda$ の上界を要する．
-一点での $B$ の評価は容易だが，領域全体で一様な上界を得る手続きは
-本稿では扱っていない．
+\paragraph{計算量．}
+exact $G^{-1/2}$，$\partial_jG^{ij}$，$\Lambda$ の評価は標準 LDM より高価である．
+本稿の価値は，追加計算を生成品質または step 数の減少で回収できる場合に限られる．
+第\ref{sec:experiments}節の NFE と wall-clock の比較を省略してはならない．
 
-\appendix
-\renewcommand{\thesection}{\Alph{section}}
+\paragraph{有限時間の prior mismatch．}
+命題~\ref{prop:reversible}は $\pi$ の不変性を保証するが，任意の初期分布が
+有限時刻で $\pi$ に近づく速さまでは保証しない．収束率には $G$ と $\pi$ に関する
+Poincar\'e 不等式や log-Sobolev 不等式などが必要である．実験では終端 mismatch を
+測定し，大きい場合は第\ref{sec:bridge}節の endpoint-constrained bridge を用いる．
 
-\section{命題~\ref{prop:chord}の証明}
-\label{app:chord}
+\section{結論}
 
-$e_k:=\partial_kF$ とおく．$B_{ij}$ の定義から
-$\partial_i\partial_jF=P\,\partial_i\partial_jF+B_{ij}$ であり，
-$P$ は $J_F\R^d=\operatorname{span}\{e_k\}$ への直交射影である．
-$G_{ij}=\langle e_i,e_j\rangle$ を微分して混合偏微分の順序を交換すると
-\[
-  \langle\partial_i\partial_jF,e_\ell\rangle
-  =\tfrac12\bigl(\partial_iG_{j\ell}+\partial_jG_{i\ell}-\partial_\ell G_{ij}\bigr)
-\]
-となるから，接成分の $e_k$ に関する係数は Christoffel 記号 $\Gamma^k_{ij}$ である．
-すなわち
-\[
-  \partial_i\partial_jF=\sum_{k=1}^d\Gamma^k_{ij}e_k+B_{ij}.
-  \tag{A.1}
-\]
+latent diffusion の noise は，潜在座標ではなく decoder が表す対象に対して
+定義されるべきである．対角 Gaussian decoder では $W_2$ が
+$F=(m,\sigma)$ の Euclid 距離に一致するため，この原理から
+$G=J_F^{\mathsf T}J_F$ と canonical covariance $G^{-1}$ が得られる．
+標準 Euclid noise の decoded 変化率は $\beta\operatorname{tr}G(z)$ で非一様だが，
+提案法はそれを $\beta d$ に一様化する．prior-reversible generator は
+この局所設計を大域的な forward process にし，第二基本形式は平均曲率 drift と
+step distortion の証明書を同時に与える．
 
-\begin{lemma}
-\label{lem:geodesic-image}
-  $\gamma$ を $G$ の測地線とし $c:=F\circ\gamma$ とおくと
-  $\ddot c=B(\dot\gamma,\dot\gamma)$ である．
-  $\gamma$ が単位速度なら $\norm{\dot c}=1$ である．
-\end{lemma}
-
-\begin{proof}
-  連鎖律より $\dot c=\sum_ie_i(\gamma)\dot\gamma^i$．もう一度微分し (A.1) を代入すると
-  \[
-    \ddot c
-    =\sum_k e_k\Bigl(\ddot\gamma^k+\sum_{i,j}\Gamma^k_{ij}\dot\gamma^i\dot\gamma^j\Bigr)
-     +B(\dot\gamma,\dot\gamma)
-  \]
-  となる．測地線方程式より括弧内は $0$ である．
-  また $\norm{\dot c}^2=\dot\gamma^{\mathsf T}G\dot\gamma$ である．
-\end{proof}
-
-\begin{proof}[命題~\ref{prop:chord}の証明]
-  上界は事実~\ref{fact:w2-closed-form}と積分の三角不等式
-  \[
-    \norm{F(z_1)-F(z_0)}
-    =\Bigl\|\int_0^L\dot c\,\d t\Bigr\|
-    \leq\int_0^L\norm{\dot c}\,\d t=L
-  \]
-  から従う．
-
-  下界を示す．$u:=\dot c$ とおく．補題~\ref{lem:geodesic-image}より
-  $\norm{u}\equiv1$ かつ
-  $\norm{\dot u}=\norm{B(\dot\gamma,\dot\gamma)}\leq\Lambda$ である
-  （$\Lambda=0$ なら $u$ は定ベクトルで $c$ は長さ $L$ の線分となり，
-  下界は $\Lambda\to0$ の極限として成立する．以下 $\Lambda>0$ とする）．
-  $u$ は単位球面 $S^{2n-1}$ 上の曲線であって速さが $\Lambda$ 以下だから，
-  球面上の測地距離 $d_S$ について
-  $d_S(u(s),u(t))\leq\Lambda\abs{s-t}$ である．
-  $\langle u(s),u(t)\rangle=\cos d_S(u(s),u(t))$ であり，
-  $\Lambda L\leq\pi$ より $\Lambda\abs{s-t}\leq\pi$ で，
-  $\cos$ は $[0,\pi]$ 上単調減少だから
-  $\langle u(s),u(t)\rangle\geq\cos(\Lambda\abs{s-t})$ を得る．よって
-  \[
-    \norm{c(L)-c(0)}^2
-    =\int_0^L\!\!\int_0^L\langle u(s),u(t)\rangle\,\d s\,\d t
-    \geq\int_0^L\!\!\int_0^L\cos\bigl(\Lambda\abs{s-t}\bigr)\,\d s\,\d t .
-  \]
-  右辺は
-  \[
-    2\int_0^L\!\!\int_0^t\cos\bigl(\Lambda(t-s)\bigr)\,\d s\,\d t
-    =2\int_0^L\frac{\sin(\Lambda t)}{\Lambda}\,\d t
-    =\frac{2\bigl(1-\cos(\Lambda L)\bigr)}{\Lambda^2}
-    =\frac{4}{\Lambda^2}\sin^2\frac{\Lambda L}{2}
-  \]
-  である．$\Lambda L\leq\pi$ より $\sin(\Lambda L/2)\geq0$ だから
-  平方根をとって下界を得る．
-
-  最後に $x\geq0$ で $\sin x\geq x-x^3/6$ だから，$x=\Lambda L/2$ として
-  $\frac{2}{\Lambda}\sin\frac{\Lambda L}{2}\geq L-\frac{\Lambda^2L^3}{24}$
-  であり，$L=d_G(z_0,z_1)$ のとき主張の三次評価を得る．
-\end{proof}
-
-\begin{remark}[下界の最良性]
-\label{rem:sharp}
-  命題~\ref{prop:chord}の下界は改良できない．
-  命題~\ref{prop:nonidentifiable}の decoder (B) において
-  $z^2$ を固定した曲線 $\gamma(t)=(t,z_0^2)$ は単位速度の最短測地線であり，
-  $\partial_1\partial_1F_B=(-\tfrac1R\cos\theta,-\tfrac1R\sin\theta,0,0)$ は
-  接空間の基底 $e_1=(-\sin\theta,\cos\theta,0,0)$，$e_2=(0,0,1,0)$ の
-  いずれとも直交するから $\norm{B_{11}}=1/R$，すなわち $\Lambda=1/R$ である．
-  一方で像は半径 $R$ の円周だから弦長は
-  $2R\sin(L/2R)=\frac{2}{\Lambda}\sin\frac{\Lambda L}{2}$ となり，等号が成立する．
-\end{remark}
+したがって最適輸送は損失関数として後付けされるのではない．
+noise covariance，drift，score，step size の設計原理そのものになる．
 
 \begin{thebibliography}{99}
 
 \bibitem{arvanitidis2018}
 G.~Arvanitidis, L.~K.~Hansen, and S.~Hauberg.
 \newblock Latent space oddity: on the curvature of deep generative models.
-\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2018.
+\newblock In \emph{International Conference on Learning Representations}, 2018.
 
 \bibitem{arvanitidis2022}
 G.~Arvanitidis, M.~Gonz\'alez-Duque, A.~Pouplin, D.~Kalatzis, and S.~Hauberg.
 \newblock Pulling back information geometry.
-\newblock In \emph{International Conference on Artificial Intelligence and Statistics (AISTATS)}, 2022.
+\newblock In \emph{AISTATS}, 2022.
 
-\bibitem{boissonnat2018}
-J.-D.~Boissonnat, A.~Lieutier, and M.~Wintraecken.
-\newblock The reach, metric distortion, geodesic convexity and the variation of tangent spaces.
-\newblock In \emph{34th International Symposium on Computational Geometry (SoCG)}, 2018.
+\bibitem{debortoli2021}
+V.~De Bortoli, J.~Thornton, J.~Heng, and A.~Doucet.
+\newblock Diffusion Schr\"odinger bridge with applications to score-based generative modeling.
+\newblock In \emph{NeurIPS}, 2021.
 
-\bibitem{docarmo1992}
-M.~P.~do~Carmo.
-\newblock \emph{Riemannian Geometry}.
-\newblock Birkh\"auser, 1992.
+\bibitem{debortoli2022}
+V.~De Bortoli, E.~Mathieu, M.~Hutchinson, J.~Thornton, Y.~W.~Teh, and A.~Doucet.
+\newblock Riemannian score-based generative modelling.
+\newblock In \emph{NeurIPS}, 2022.
+
+\bibitem{dekruiff2024}
+F.~de Kruiff, E.~J.~Bekkers, O.~\"Oktem, C.-B.~Sch\"onlieb, and W.~Diepeveen.
+\newblock Pullback flow matching on data manifolds.
+\newblock arXiv:2410.04543, 2024.
 
 \bibitem{givens1984}
 C.~R.~Givens and R.~M.~Shortt.
 \newblock A class of Wasserstein metrics for probability distributions.
 \newblock \emph{Michigan Mathematical Journal}, 31(2):231--240, 1984.
 
-\bibitem{li2018}
-W.~Li and G.~Mont\'ufar.
-\newblock Natural gradient via optimal transport.
-\newblock \emph{Information Geometry}, 1:181--214, 2018.
+\bibitem{haussmann1986}
+U.~G.~Haussmann and E.~Pardoux.
+\newblock Time reversal of diffusions.
+\newblock \emph{The Annals of Probability}, 14(4):1188--1205, 1986.
 
-\bibitem{niyogi2008}
-P.~Niyogi, S.~Smale, and S.~Weinberger.
-\newblock Finding the homology of submanifolds with high confidence from random samples.
-\newblock \emph{Discrete \& Computational Geometry}, 39:419--441, 2008.
+\bibitem{haviv2026}
+D.~Haviv, A.-A.~Pooladian, D.~Pe'er, and B.~Amos.
+\newblock Wasserstein flow matching: generative modeling over families of distributions.
+\newblock arXiv:2411.00698, revised 2026.
 
-\bibitem{peyre2019}
-G.~Peyr\'e and M.~Cuturi.
-\newblock Computational optimal transport.
-\newblock \emph{Foundations and Trends in Machine Learning}, 11(5--6):355--607, 2019.
+\bibitem{hsu2002}
+E.~P.~Hsu.
+\newblock \emph{Stochastic Analysis on Manifolds}.
+\newblock American Mathematical Society, 2002.
 
-\bibitem{shao2018}
-H.~Shao, A.~Kumar, and P.~T.~Fletcher.
-\newblock The Riemannian geometry of deep generative models.
-\newblock In \emph{IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)}, 2018.
+\bibitem{hyvarinen2005}
+A.~Hyv\"arinen.
+\newblock Estimation of non-normalized statistical models by score matching.
+\newblock \emph{Journal of Machine Learning Research}, 6:695--709, 2005.
 
-\bibitem{takatsu2011}
-A.~Takatsu.
-\newblock Wasserstein geometry of Gaussian measures.
-\newblock \emph{Osaka Journal of Mathematics}, 48(4):1005--1026, 2011.
+\bibitem{jordan1998}
+R.~Jordan, D.~Kinderlehrer, and F.~Otto.
+\newblock The variational formulation of the Fokker--Planck equation.
+\newblock \emph{SIAM Journal on Mathematical Analysis}, 29(1):1--17, 1998.
 
-\bibitem{villani2009}
-C.~Villani.
-\newblock \emph{Optimal Transport: Old and New}.
-\newblock Grundlehren der mathematischen Wissenschaften 338. Springer, 2009.
+\bibitem{kapusniak2024}
+K.~Kapu\'sniak, P.~Potaptchik, T.~Reu, L.~Zhang, A.~Tong, M.~Bronstein,
+A.~J.~Bose, and F.~Di Giovanni.
+\newblock Metric flow matching for smooth interpolations on the data manifold.
+\newblock In \emph{NeurIPS}, 2024.
+
+\bibitem{karczewski2026}
+R.~Karczewski, M.~Heinonen, A.~Pouplin, S.~Hauberg, and V.~Garg.
+\newblock The spacetime of diffusion models: an information geometry perspective.
+\newblock In \emph{International Conference on Learning Representations}, 2026.
+
+\bibitem{kingma2014}
+D.~P.~Kingma and M.~Welling.
+\newblock Auto-encoding variational Bayes.
+\newblock In \emph{International Conference on Learning Representations}, 2014.
+
+\bibitem{rao2026}
+M.~Rao, B.~Qu, and D.~Moyer.
+\newblock Latent diffusion inversion requires understanding the latent space.
+\newblock In \emph{IEEE/CVF Conference on Computer Vision and Pattern Recognition}, 2026.
+
+\bibitem{rombach2022}
+R.~Rombach, A.~Blattmann, D.~Lorenz, P.~Esser, and B.~Ommer.
+\newblock High-resolution image synthesis with latent diffusion models.
+\newblock In \emph{IEEE/CVF Conference on Computer Vision and Pattern Recognition}, 2022.
+
+\bibitem{song2020}
+Y.~Song, S.~Garg, J.~Shi, and S.~Ermon.
+\newblock Sliced score matching: a scalable approach to density and score estimation.
+\newblock In \emph{Uncertainty in Artificial Intelligence}, 2020.
+
+\bibitem{roy2022}
+H.~Roy and S.~Hauberg.
+\newblock Optimal latent transport.
+\newblock In \emph{NeurIPS Workshop on Symmetry and Geometry in Neural Representations}, 2022.
+
+\bibitem{tong2024}
+A.~Y.~Tong, N.~Malkin, K.~Fatras, L.~Atanackovic, Y.~Zhang, G.~Huguet,
+G.~Wolf, and Y.~Bengio.
+\newblock Simulation-free Schr\"odinger bridges via score and flow matching.
+\newblock In \emph{AISTATS}, 2024.
 
 \end{thebibliography}
 
