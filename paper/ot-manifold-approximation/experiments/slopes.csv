@@ -1,0 +1,6 @@
+manifold,intrinsic_dimension,construction,K_min,K_max,predicted_slope,observed_slope,R_squared,max_circle_relative_error
+S^1,1,等間隔,4,256,-2.000000,-1.999743,1.000000,6.38248e-06
+S^2,2,Fibonacci,8,256,-1.000000,-1.009739,0.999969,
+\mathbb T^2,2,m\times m 格子,9,576,-1.000000,-0.996346,0.999998,
+"\St(3,2)",3,FPS,8,256,-0.666667,-0.655285,0.999805,
+"\Gr(4,2)",4,FPS,8,256,-0.500000,-0.475652,0.999929,

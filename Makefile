@@ -8,14 +8,16 @@
 
 SITE := node tools/site
 
-.PHONY: help sites cuturi-site cuturi-pdf wasserstein-site clean-sites paper
+.PHONY: help sites cuturi-site cuturi-pdf wasserstein-site clean-sites paper paper-experiments paper-all
 
 help:
 	@echo "make sites             すべてのセミナーのサイトを生成"
 	@echo "make cuturi-site       計算最適輸送のサイトを生成"
 	@echo "make cuturi-pdf        計算最適輸送の PDF を生成"
 	@echo "make wasserstein-site  Wasserstein 距離のサイトを生成（PDF は生成しない）"
+	@echo "make paper-experiments 接アトラス近似率の数値実験を再実行"
 	@echo "make paper             論文の PDF を生成"
+	@echo "make paper-all         数値実験を再実行して論文の PDF を生成"
 	@echo "make clean-sites       生成したサイトを削除"
 
 sites: cuturi-site wasserstein-site
@@ -38,9 +40,14 @@ wasserstein-site:
 
 # --- 論文 ---
 # セミナー資料とは独立。既知の内容は引用で済ませ、新規の主張だけを書く。
+paper-experiments:
+	python3 paper/ot-manifold-approximation/experiments/run.py
+
 paper:
 	cd paper/ot-manifold-approximation && latexmk
 	@echo "→ paper/ot-manifold-approximation/out/main.pdf"
+
+paper-all: paper-experiments paper
 
 clean-sites:
 	rm -rf seminar/*/site
