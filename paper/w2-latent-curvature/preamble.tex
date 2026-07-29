@@ -4,10 +4,24 @@
 % ============================================================
 
 \usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{tikz}
+\usepackage{float}
 \usepackage[dvipdfmx,hidelinks]{hyperref}
 \usepackage{pxjahyper}
 \usepackage{geometry}
 \geometry{a4paper,margin=25mm}
+
+% --- アルゴリズム環境（algorithm.sty に依存しない自前定義）---
+\newfloat{algorithm}{tbp}{loa}
+\floatname{algorithm}{アルゴリズム}
+\newcounter{algstep}
+\newenvironment{algsteps}{%
+  \begin{list}{\arabic{algstep}:}{%
+    \usecounter{algstep}%
+    \setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{4pt}%
+    \setlength{\leftmargin}{2.6em}\setlength{\labelwidth}{1.8em}%
+    \setlength{\labelsep}{0.8em}%
+  }}{\end{list}}
 
 % --- 定理環境（論文体裁：装飾なし・節ごとの通し番号）---
 \theoremstyle{plain}

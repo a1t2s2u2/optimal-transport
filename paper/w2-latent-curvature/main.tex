@@ -2,8 +2,8 @@
 
 \input{preamble}
 
-\title{\textbf{潜在空間の曲率を二階微分で計算する}\\
-{\large ---$W_2$ を参照計量とする Gaussian decoder の幾何---}}
+\title{\textbf{潜在空間の直線補間はいつ正当化されるか}\\
+{\large ---$W_2$ 引き戻し計量の曲率とその計算---}}
 \author{}
 \date{}
 
@@ -12,23 +12,33 @@
 
 \begin{abstract}
 \noindent
-深層生成モデルの潜在空間には，decoder による引き戻しを通じて Riemann 計量が入る．
-しかし\emph{何を引き戻すか}は設計上の自由度であり，既存研究はデータ空間の
-Euclid 計量（decoder の分散を捨てる）か Fisher--Rao 計量を用いてきた．
-本稿は参照計量として $2$ 次 Wasserstein 距離 $W_2$ を採ることを提案し，
-対角 Gaussian decoder に対して次を示す．
-(i) decoder の出力分布がなす族は $(\Pp2(\R^n),W_2)$ の全測地的部分多様体であり，
-$\R^n\times(0,\infty)^n$ の Euclid 計量に等長である．すなわち\textbf{平坦}である．
-(ii) この平坦性により Gauss 方程式の周囲曲率項が消え，潜在空間の断面曲率が
-decoder の\textbf{二階微分のみ}から決まる．素朴な座標計算に現れる三階微分は相殺する．
-(iii) 同じ族を Fisher--Rao 計量で見ると断面曲率 $-1/2$ の双曲平面の積になり，
-平坦性は失われる．$\sigma$ が有界な範囲では二つの計量は bi-Lipschitz 同値であり
+深層生成モデルの潜在空間は，実際上ほぼ常に Euclid 空間として扱われる．
+補間は線分で行われ，潜在空間上の生成モデルは潜在座標の直線に沿って
+確率質量を輸送する．しかしこの Euclid 構造は潜在座標の取り替えで
+変わってしまうため，固有の意味をもたない．
+そこで問いが立つ：\emph{潜在空間の Euclid 構造は座標を取り替えれば
+正当化できるのか，それとも原理的に正当化できないのか}．
+これは計量ではなく\textbf{曲率}の問題である．
+Riemann 多様体が局所的に Euclid 空間と等長になる必要十分条件は
+曲率が消えることだからである．
+ところが既存の潜在幾何の研究は曲率を各点で計算していない．
+素朴な座標計算では decoder の三階微分が必要になり，
+また広く用いられる活性化関数が二階微分をもたないためである．
+
+本稿は，引き戻しの参照計量として $2$ 次 Wasserstein 距離 $W_2$ を
+採ることでこの障壁が消えることを示す．
+対角 Gaussian decoder の出力分布がなす族は $(\Pp2(\R^n),W_2)$ の
+全測地的部分多様体であり，$\R^n\times(0,\infty)^n$ の Euclid 計量に等長，
+すなわち\textbf{平坦}である．この平坦性により Gauss 方程式の周囲曲率項が消え，
+潜在空間の断面曲率が decoder の\textbf{二階微分のみ}から決まる
+（三階微分は相殺する）．
+同じ族を Fisher--Rao 計量で見ると断面曲率 $-1/2$ の双曲平面の積になり，
+平坦性は失われる．二つの計量は $\sigma$ が有界なら bi-Lipschitz 同値であり
 距離は定数倍の範囲で一致するが，曲率は一致しない．
-さらに，曲率が恒等的に消える二つの場合を特定し，引き戻し計量が decoder を
+帰結として，decoder の二階微分から計算できる単一の量 $\Lambda$ が，
+断面曲率の上界と直線補間の誤差の上界を同時に与えることを示す．
+さらに曲率が恒等的に消える場合を特定し，引き戻し計量が decoder を
 決定しないことを反例で示す．
-先行研究が曲率を大域的な代理量でしか測ってこなかった理由が，必要な微分階数と
-活性化関数の滑らかさにあることを指摘し，$C^2$ 級の活性化を用いれば
-各点の断面曲率が計算可能になることを述べる．
 \end{abstract}
 
 \medskip
@@ -38,36 +48,82 @@ decoder の\textbf{二階微分のみ}から決まる．素朴な座標計算に
 \section{はじめに}
 \label{sec:intro}
 
-深層生成モデルは，低次元の潜在空間 $\mathcal{Z}\subset\R^d$ から
-高次元のデータ空間 $\R^n$ への非線形写像を学習する．
-このとき潜在空間の Euclid 構造には固有の意味がなく，
-潜在座標の取り替えで自由に変わってしまう．
-そこで，decoder を通じてデータ空間の構造を潜在空間へ引き戻し，
+深層生成モデルの潜在空間は，実際上ほぼ常に Euclid 空間として扱われる．
+二点を結ぶ補間は線分で行われ，潜在空間上で動作する生成モデルは
+潜在座標の直線に沿って確率質量を輸送し，
+最適輸送にもとづく手法は潜在座標の Euclid 距離をコストに用いる．
+
+しかし潜在空間の Euclid 構造には固有の意味がない．
+潜在座標は微分同相 $z\mapsto\psi(z)$ で自由に取り替えられ，
+そのたびに「直線」も「距離」も別のものになる．
+この問題意識から，decoder を通じてデータ空間の構造を潜在空間へ引き戻し，
 得られた Riemann 計量のもとで距離・測地線・補間を論じる枠組みが
 提案されてきた \cite{arvanitidis2018,shao2018,arvanitidis2022}．
 
-この枠組みには，あまり明示されてこなかった自由度がある．
+この枠組みを認めたうえで，次の問いが立つ．
+
+\begin{quote}
+  \textbf{潜在空間の Euclid 構造は，座標を取り替えれば正当化できるのか．
+  それとも原理的に正当化できないのか．}
+\end{quote}
+
+これは計量 $G$ の問題ではなく\textbf{曲率}の問題である．
+Riemann 多様体が局所的に Euclid 空間と等長であるための必要十分条件は，
+Riemann 曲率テンソルが消えることだからである \cite{docarmo1992}．
+曲率が $0$ なら，適切な座標系をとれば直線がそのまま測地線になり，
+Euclid 的な扱いは座標の選び直しによって正当化できる．
+曲率が非零なら，どのような座標変換によっても潜在空間を Euclid にはできず，
+そのズレは原理的に取り除けない．
+すなわち\textbf{曲率は，Euclid 近似が可逆な誤りか不可逆な誤りかを分ける量}である．
+
+\subsection{なぜ曲率は計算されてこなかったのか}
+\label{sec:why-not}
+
+にもかかわらず，既存の潜在幾何の研究は曲率を各点で計算していない．
+理由は二つある．
+
+第一に，\textbf{素朴な計算では decoder の三階微分が必要になる}．
+引き戻し計量 $G$ は decoder の一階微分を含むから，
+Christoffel 記号 $\Gamma\sim G^{-1}\partial G$ には二階微分が入り，
+曲率の座標式 $R\sim\partial\Gamma+\Gamma\Gamma$ には三階微分が現れる．
+自動微分で三階まで遡るのは，計算量と数値精度の双方で負担が大きい．
+
+第二に，\textbf{広く用いられる decoder が二階微分をもたない}．
+ReLU は区分アフィンであり，ELU は $C^1$ 級だが $C^2$ 級ではない．
+実際 Shao ら \cite{shao2018} は ELU を採用したうえで，
+自身の手法が「高々一階微分しか必要としない」ことを明記しており，
+曲率については測地距離行列の多次元尺度構成法における
+負の固有値の大きさという\emph{大域的な代理量}を用いている．
+この代理量は各点に局所化できず，また彼らの計量は
+decoder の分散 $\sigma(z)$ を含まない．
+
+本稿は第一の障壁が\textbf{参照計量の選び方によって消える}ことを示し，
+第二の障壁については活性化関数への具体的な要請として整理する．
+
+\subsection{参照計量という自由度}
+\label{sec:reference-metric}
+
+引き戻しの枠組みには，あまり明示されてこなかった自由度がある．
 \textbf{何を引き戻すのか}という選択である．
-decoder は潜在点 $z$ に対して分布 $p_\theta(\cdot\mid z)$ を対応させるから，
-引き戻しの対象は本来\emph{分布の空間上の計量}であり，
-その選び方は一意ではない．既存の選択は次の二つに大別される．
+decoder は潜在点 $z$ に分布 $p_\theta(\cdot\mid z)$ を対応させるから，
+引き戻しの対象は本来\emph{分布の空間上の計量}であり，一意ではない．
+既存の選択は二つに大別される．
 
 \begin{itemize}
   \item \textbf{データ空間の Euclid 計量．}
     decoder を決定論的な写像 $g\colon\mathcal{Z}\to\R^n$ とみなし，
     $G=J_g^{\mathsf T}J_g$ とする \cite{shao2018}．
-    実装は最も簡単だが，decoder の分散 $\sigma(z)$ が計量に反映されない．
+    最も簡単だが，decoder の分散が計量に反映されない．
   \item \textbf{Fisher--Rao 計量．}
     decoder 分布の空間に情報幾何の計量を入れて引き戻す \cite{arvanitidis2022}．
     分散が反映され，分布の空間の計量として自然である．
 \end{itemize}
 
 本稿は第三の選択として $W_2$ を提案する．
-動機は幾何的なものである．対角 Gaussian 分布の族を $W_2$ で測ると，
-その族は\textbf{平坦}な空間になる（命題~\ref{prop:flat}）．
-一方 Fisher--Rao で測ると双曲的な空間になる（命題~\ref{prop:fr-hyperbolic}）．
-周囲空間が平坦であることは，単に見た目が単純というだけでなく，
-曲率の計算可能性に直接効く．Gauss 方程式
+理由は幾何的である．対角 Gaussian 分布の族を $W_2$ で測るとその族は
+\textbf{平坦}になり（命題~\ref{prop:flat}），
+Fisher--Rao で測ると双曲的になる（命題~\ref{prop:fr-hyperbolic}）．
+周囲空間が平坦であることは曲率の計算可能性に直接効く．Gauss 方程式
 \[
   \langle R(u,v)v,u\rangle
   =\underbrace{\langle\bar R(u,v)v,u\rangle}_{\text{周囲曲率}}
@@ -75,40 +131,54 @@ decoder は潜在点 $z$ に対して分布 $p_\theta(\cdot\mid z)$ を対応さ
 \]
 において周囲曲率項が消えるため，潜在曲率が第二基本形式 $B$ だけで決まり，
 $B$ は decoder の二階微分から直接得られるからである．
+三階微分は相殺する．
 
-この差は無視できない．素朴に Christoffel 記号を微分して Riemann テンソルを
-求めると，$\Gamma\sim G^{-1}\partial G$ に $F$ の二階微分が入るため，
-$\partial\Gamma$ には\textbf{三階微分}が現れる．
-実際，先行研究が曲率の\emph{各点での}計算に踏み込まず，
-大域的な代理量に頼ってきたことは，この計算コストと無関係ではない．
-Shao らは測地線と平行移動のアルゴリズムを与えたうえで，
-自身の手法が「高々一階微分しか必要としない」ことを明記し，
-曲率については測地距離行列の多次元尺度構成法（MDS）における
-負の固有値の大きさという大域的な代理量を用いている \cite{shao2018}．
+\begin{table}[t]
+\centering
+\caption{参照計量の選択と，その帰結（第\ref{sec:ambient}--\ref{sec:curvature}節）．
+$W_2$ は分散を保ちながら周囲空間が平坦になる唯一の選択である．}
+\label{tab:comparison}
+\medskip
+\begin{tabular}{lccc}
+\hline
+参照計量 & 分散 $\sigma$ を保つ & 周囲が平坦 & 曲率が二階微分のみ\\
+\hline
+データ空間の Euclid \cite{shao2018} & なし & あり & あり\\
+Fisher--Rao \cite{arvanitidis2022} & あり & なし（曲率 $-1/2$） & なし\\
+$W_2$（本稿） & あり & あり & あり\\
+\hline
+\end{tabular}
+\end{table}
 
-\subsection*{本稿の貢献}
+\subsection{本稿の貢献}
 
 \begin{enumerate}
   \item \textbf{周囲空間の同定}（第\ref{sec:ambient}節）．
-    対角 Gaussian 分布の族が $(\Pp2(\R^n),W_2)$ の全測地的部分多様体であり，
-    $\R^n\times(0,\infty)^n$ の Euclid 計量に等長であることを示す
-    （命題~\ref{prop:flat}）．同じ族が Fisher--Rao では
-    断面曲率 $-1/2$ の双曲平面の積になること（命題~\ref{prop:fr-hyperbolic}），
-    および両者が bi-Lipschitz 同値であること（命題~\ref{prop:bilipschitz}）を示す．
+    対角 Gaussian 分布の族が $(\Pp2(\R^n),W_2)$ の全測地的部分多様体であり
+    Euclid 空間の開集合に等長であること（命題~\ref{prop:flat}），
+    同じ族が Fisher--Rao では断面曲率 $-1/2$ の双曲平面の積になること
+    （命題~\ref{prop:fr-hyperbolic}），
+    両者が bi-Lipschitz 同値であること（命題~\ref{prop:bilipschitz}）を示す．
     すなわち\emph{距離としてはほぼ同じだが曲率は違う}．
+    参照計量の選択が本質的な選択であることの根拠になる．
   \item \textbf{二階微分で完結する曲率}（第\ref{sec:curvature}節）．
-    $W_2$ 引き戻し計量の断面曲率が decoder の二階微分のみから決まることを示し
-    （定理~\ref{thm:main}），Fisher--Rao の場合に何が余分に必要かを明示する
-    （命題~\ref{prop:fr-cost}）．
-  \item \textbf{構造的な帰結}（第\ref{sec:consequences}節）．
+    $W_2$ 引き戻し計量の断面曲率が decoder の二階微分のみから決まることを
+    示し（定理~\ref{thm:main}），計算手順をアルゴリズム~\ref{alg:curvature}に与える．
+    Fisher--Rao の場合に何が追加で必要かを明示する（命題~\ref{prop:fr-cost}）．
+  \item \textbf{単一の量による二つの証明書}（第\ref{sec:certificate}節）．
+    第二基本形式の作用素ノルム $\Lambda$ が，
+    断面曲率の上界 $\abs{\operatorname{Sec}}\leq2\Lambda^2$
+    （系~\ref{cor:sec-bound}）と，
+    直線的な輸送と潜在多様体に沿う輸送の差の上界
+    （命題~\ref{prop:chord}）を同時に与えることを示す．
+    $\Lambda$ は decoder の二階微分から計算できるので，
+    学習済みモデルに対する検証可能な証明書になる．
+  \item \textbf{構造的な帰結と限界}（第\ref{sec:consequences}節）．
     曲率が恒等的に消える二つの場合を特定し（命題~\ref{prop:full-dim}，
-    \ref{prop:affine}），標準的な実装では曲率が分散チャネルのみに由来すること
-    （命題~\ref{prop:variance-only}），引き戻し計量が decoder を決定しないこと
-    （命題~\ref{prop:nonidentifiable}），弦長と内在距離の差が
-    第二基本形式で支配されること（命題~\ref{prop:chord}）を示す．
-  \item \textbf{実装上の処方箋}．
-    曲率が非零でありうるには潜在次元の削減と $C^2$ 級の decoder の両方が
-    必要である．ELU のような $C^1$ 級の活性化では第二基本形式が定義されない．
+    \ref{prop:affine}），標準的な実装では曲率が分散チャネルのみに
+    由来すること（命題~\ref{prop:variance-only}），
+    引き戻し計量が decoder を決定しないこと
+    （命題~\ref{prop:nonidentifiable}）を示す．
 \end{enumerate}
 
 本稿は理論的な結果のみを扱い，実験は行わない（第\ref{sec:limitations}節）．
@@ -120,43 +190,36 @@ Shao らは測地線と平行移動のアルゴリズムを与えたうえで，
 
 $\Pp2(\R^n)$ で $\R^n$ 上の有限二次モーメントをもつ Borel 確率測度全体を表し，
 $W_2$ で $2$ 次 Wasserstein 距離を表す \cite{villani2009,peyre2019}．
-$\R^n$ の Euclid ノルムを $\norm{\cdot}$，
-成分ごとの積を $\odot$ と書く．$\sigma\in(0,\infty)^n$ に対し
-$\operatorname{diag}(\sigma^2)$ は対角成分が $(\sigma^\alpha)^2$ の対角行列である．
+$\R^n$ の Euclid ノルムを $\norm{\cdot}$，成分ごとの積を $\odot$，
+成分ごとの商を $\oslash$ と書く．
 
 \begin{definition}[対角 Gaussian decoder]
 \label{def:decoder}
   $\mathcal{Z}\subset\R^d$ を開集合とする．
   $C^2$ 級の写像 $m\colon\mathcal{Z}\to\R^n$ と
-  $\sigma\colon\mathcal{Z}\to(0,\infty)^n$ の組が定める
-  条件付き分布の族
+  $\sigma\colon\mathcal{Z}\to(0,\infty)^n$ の組が定める条件付き分布の族
   \[
     K_z:=\mathcal{N}\bigl(m(z),\operatorname{diag}(\sigma(z)^2)\bigr)
     \qquad(z\in\mathcal{Z})
   \]
   を\textbf{対角 Gaussian decoder}という．
   \[
-    F:=(m,\sigma)\colon\mathcal{Z}\longrightarrow H:=\R^n\times(0,\infty)^n\subset\R^{2n}
+    F:=(m,\sigma)\colon\mathcal{Z}\longrightarrow
+    H:=\R^n\times(0,\infty)^n\subset\R^{2n}
   \]
   を\textbf{パラメータ写像}と呼ぶ．
   すべての $z$ で $\operatorname{rank}J_F(z)=d$ であるとき $F$ を immersion という．
 \end{definition}
 
-以下，対角 Gaussian 分布全体の族を
-\[
-  \mathcal{G}_n:=\bigl\{\mathcal{N}(\mu,\operatorname{diag}(s^2))
-  \ :\ \mu\in\R^n,\ s\in(0,\infty)^n\bigr\}\subset\Pp2(\R^n)
-\]
+対角 Gaussian 分布全体の族を
+$\mathcal{G}_n:=\{\mathcal{N}(\mu,\operatorname{diag}(s^2)):\mu\in\R^n,\ s\in(0,\infty)^n\}$
 と書き，自然な同一視
 $\iota\colon\mathcal{G}_n\to H$, $\mathcal{N}(\mu,\operatorname{diag}(s^2))\mapsto(\mu,s)$
 を用いる．
 
 \subsection{既知の事実}
 
-次は古典的な結果である \cite{givens1984}（$\Pp2$ 上の $W_2$ の定義と
-距離性については \cite{villani2009} を参照）．
-
-\begin{fact}[対角 Gaussian 間の $W_2$]
+\begin{fact}[対角 Gaussian 間の $W_2$ \cite{givens1984}]
 \label{fact:w2-closed-form}
   $\mu_0,\mu_1\in\R^n$，$s_0,s_1\in(0,\infty)^n$ に対して
   \[
@@ -168,7 +231,7 @@ $\iota\colon\mathcal{G}_n\to H$, $\mathcal{N}(\mu,\operatorname{diag}(s^2))\maps
   \]
 \end{fact}
 
-\begin{fact}[Gauss 方程式，例えば \cite{docarmo1992}]
+\begin{fact}[Gauss 方程式 \cite{docarmo1992}]
 \label{fact:gauss}
   $M$ を Riemann 多様体 $\bar M$ の部分多様体，$B$ をその第二基本形式，
   $R,\bar R$ をそれぞれ $M,\bar M$ の Riemann 曲率テンソルとする．
@@ -180,18 +243,26 @@ $\iota\colon\mathcal{G}_n\to H$, $\mathcal{N}(\mu,\operatorname{diag}(s^2))\maps
   \]
 \end{fact}
 
+\begin{fact}[平坦性の特徴づけ \cite{docarmo1992}]
+\label{fact:flatness}
+  Riemann 多様体の各点の近傍が Euclid 空間の開集合と等長であるための
+  必要十分条件は，その近傍で Riemann 曲率テンソルが恒等的に消えることである．
+\end{fact}
+
+事実~\ref{fact:flatness}が，第\ref{sec:intro}節で述べた問いを
+曲率の問題に翻訳する根拠である．
+
 \begin{definition}[引き戻し計量]
 \label{def:pullback}
-  $H$ 上の Riemann 計量 $g$ に対して，$F$ による引き戻し
-  $G:=F^{*}g$，すなわち
-  $G_{ij}(z)=g_{F(z)}\bigl(\partial_iF(z),\partial_jF(z)\bigr)$
-  を潜在空間 $\mathcal{Z}$ 上の\textbf{引き戻し計量}という．
+  $H$ 上の Riemann 計量 $g$ に対して，$F$ による引き戻し $G:=F^{*}g$，
+  すなわち $G_{ij}(z)=g_{F(z)}(\partial_iF(z),\partial_jF(z))$ を
+  潜在空間 $\mathcal{Z}$ 上の\textbf{引き戻し計量}という．
 \end{definition}
 
 \section{対角 Gaussian 族の周囲幾何}
 \label{sec:ambient}
 
-本節では，引き戻す前の\emph{周囲空間} $\mathcal{G}_n$ の幾何を
+本節では，引き戻す前の\emph{周囲空間} $\mathcal{G}_n$ の幾何を，
 $W_2$ と Fisher--Rao の二つの計量について同定する．
 
 \subsection{$W_2$：平坦}
@@ -200,25 +271,21 @@ $W_2$ と Fisher--Rao の二つの計量について同定する．
 \label{prop:flat}
   $H=\R^n\times(0,\infty)^n$ に $\R^{2n}$ の Euclid 計量を入れる．このとき
   \begin{enumerate}
-    \item $\iota\colon(\mathcal{G}_n,W_2)\to(H,\norm{\cdot})$ は全単射な等長写像である．
-      特に $\mathcal{G}_n$ の断面曲率は恒等的に $0$ である．
+    \item $\iota\colon(\mathcal{G}_n,W_2)\to(H,\norm{\cdot})$ は
+      全単射な等長写像である．特に $\mathcal{G}_n$ の断面曲率は恒等的に $0$ である．
     \item $\mathcal{G}_n$ は $(\Pp2(\R^n),W_2)$ の全測地的部分多様体である．
-      すなわち $\mathcal{G}_n$ の二点を結ぶ $\Pp2(\R^n)$ の測地線は
-      $\mathcal{G}_n$ に留まる．
   \end{enumerate}
 \end{proposition}
 
 \begin{proof}
-  (1) 事実~\ref{fact:w2-closed-form}より，
-  $\iota$ は $W_2$ を $H$ 上の Euclid 距離へ写す．
-  $H$ は $\R^{2n}$ の開凸集合だから，制限された Euclid 距離は
-  $H$ 上の内在距離と一致し，対応する Riemann 計量は Euclid 計量である．
-  Euclid 空間の開集合の曲率は $0$ である．
+  (1) 事実~\ref{fact:w2-closed-form}より $\iota$ は $W_2$ を
+  $H$ 上の Euclid 距離へ写す．$H$ は $\R^{2n}$ の開凸集合だから，
+  制限された Euclid 距離は $H$ 上の内在距離と一致し，
+  対応する Riemann 計量は Euclid 計量である．
 
   (2) $P_0=\mathcal{N}(\mu_0,\operatorname{diag}(s_0^2))$，
   $P_1=\mathcal{N}(\mu_1,\operatorname{diag}(s_1^2))$ とする．
-  $T(x):=\mu_1+\bigl(s_1\oslash s_0\bigr)\odot(x-\mu_0)$
-  （$\oslash$ は成分ごとの商）は $P_0$ を $P_1$ へ写す単調な写像であり，
+  $T(x):=\mu_1+(s_1\oslash s_0)\odot(x-\mu_0)$ は $P_0$ を $P_1$ へ写し，
   事実~\ref{fact:w2-closed-form}の等号を実現する最適輸送写像である．
   対応する McCann 補間は
   \[
@@ -227,60 +294,50 @@ $W_2$ と Fisher--Rao の二つの計量について同定する．
       \operatorname{diag}\bigl(((1-t)s_0+ts_1)^2\bigr)
     \Bigr)
   \]
-  であり，これは各 $t\in[0,1]$ で $\mathcal{G}_n$ に属する．
-  $\Pp2$ の測地線は McCann 補間で与えられるから，主張が従う．
+  であり，各 $t\in[0,1]$ で $\mathcal{G}_n$ に属する．
+  $\Pp2$ の測地線は McCann 補間で与えられるから主張が従う．
 \end{proof}
 
 命題~\ref{prop:flat}(2) は，$\mathcal{G}_n$ 上の $W_2$ 計量テンソルが
-$\Pp2$ から誘導される計量と一致することを保証する
-（全測地的でなければ，制限された距離と誘導された計量が食い違いうる）．
+$\Pp2$ から誘導される計量と一致することを保証する．
+全測地的でなければ，制限された距離と誘導された計量が食い違いうる．
 
 \subsection{Fisher--Rao：双曲的}
 
 \begin{proposition}[$\mathcal{G}_n$ の Fisher--Rao 幾何]
 \label{prop:fr-hyperbolic}
-  $\mathcal{G}_n$ 上の Fisher--Rao 計量は，座標 $(\mu,s)\in H$ において
+  $\mathcal{G}_n$ 上の Fisher--Rao 計量は座標 $(\mu,s)\in H$ において
   \[
     g^{\mathrm{FR}}
     =\sum_{\alpha=1}^n
       \frac{(\d\mu^\alpha)^2+2(\d s^\alpha)^2}{(s^\alpha)^2}
   \]
   で与えられる．これは $n$ 個の断面曲率 $-1/2$ の双曲平面の Riemann 積である．
-  したがって $\mathcal{G}_n$ の Fisher--Rao 断面曲率は，
-  単一の因子に接する平面で $-1/2$，異なる因子にまたがる平面で $0$ である．
-  特に $\bar R\neq0$ であり，$(\mathcal{G}_n,g^{\mathrm{FR}})$ は平坦でない．
+  したがって断面曲率は，単一の因子に接する平面で $-1/2$，
+  異なる因子にまたがる平面で $0$ であり，特に $\bar R\neq0$ である．
 \end{proposition}
 
 \begin{proof}
-  対角 Gaussian は座標ごとの独立な積だから，Fisher 情報行列は
-  座標ごとのブロック対角になる．一次元の $\mathcal{N}(\mu,s^2)$ に対して
+  対角 Gaussian は座標ごとの独立な積だから Fisher 情報行列はブロック対角になる．
+  一次元の $\mathcal{N}(\mu,s^2)$ について
   $\log p=-\tfrac12\log(2\pi)-\log s-\tfrac{(x-\mu)^2}{2s^2}$ より，
   $u:=(x-\mu)/s\sim\mathcal{N}(0,1)$ とおくと
-  \[
-    \partial_\mu\log p=\frac{u}{s},
-    \qquad
-    \partial_s\log p=\frac{u^2-1}{s}
-  \]
-  である．$\E[u^2]=1$，$\E[u^4]=3$，$\E[u^3]=\E[u]=0$ より
+  $\partial_\mu\log p=u/s$, $\partial_s\log p=(u^2-1)/s$ である．
+  $\E[u^2]=1$，$\E[u^4]=3$，$\E[u^3]=\E[u]=0$ より
   \[
     \E\bigl[(\partial_\mu\log p)^2\bigr]=\frac1{s^2},
     \quad
-    \E\bigl[(\partial_s\log p)^2\bigr]=\frac{\E[(u^2-1)^2]}{s^2}=\frac2{s^2},
+    \E\bigl[(\partial_s\log p)^2\bigr]=\frac2{s^2},
     \quad
     \E\bigl[\partial_\mu\log p\,\partial_s\log p\bigr]=0 .
   \]
-  よって $g^{\mathrm{FR}}$ は主張の形である．
-
+  よって $g^{\mathrm{FR}}$ は主張の形をもつ．
   一因子分について $w:=\mu/\sqrt2$ と置換すると
-  \[
-    \frac{\d\mu^2+2\,\d s^2}{s^2}
-    =2\cdot\frac{\d w^2+\d s^2}{s^2}
-  \]
-  となる．右辺の括弧内は上半平面の Poincaré 計量で断面曲率 $-1$ をもつ．
-  計量を定数 $c>0$ 倍すると断面曲率は $1/c$ 倍になるから，
-  $c=2$ より断面曲率は $-1/2$ である．
-  Riemann 積の断面曲率については，各因子に接する平面では
-  その因子の曲率に一致し，異なる因子にまたがる平面では $0$ になる．
+  $\frac{\d\mu^2+2\d s^2}{s^2}=2\cdot\frac{\d w^2+\d s^2}{s^2}$ となる．
+  括弧内は断面曲率 $-1$ の Poincar\'e 計量であり，
+  計量を $c>0$ 倍すると断面曲率は $1/c$ 倍になるから，$c=2$ より $-1/2$ を得る．
+  Riemann 積の断面曲率は，各因子に接する平面ではその因子の曲率に一致し，
+  異なる因子にまたがる平面では $0$ になる．
 \end{proof}
 
 \subsection{二つの計量の関係}
@@ -289,26 +346,20 @@ $\Pp2$ から誘導される計量と一致することを保証する
 \label{prop:bilipschitz}
   $g^{W}$ を命題~\ref{prop:flat}の Euclid 計量，
   $g^{\mathrm{FR}}$ を命題~\ref{prop:fr-hyperbolic}の Fisher--Rao 計量とする．
-  $\mathcal{G}_n$ の部分集合上で
-  $s^\alpha\in[s_{\min},s_{\max}]\subset(0,\infty)$ が成り立つならば，
-  その上で
+  $s^\alpha\in[s_{\min},s_{\max}]\subset(0,\infty)$ が成り立つ範囲で
   \[
     \frac{1}{s_{\max}^2}\,g^{W}
     \ \preceq\ g^{\mathrm{FR}}\ \preceq\
     \frac{2}{s_{\min}^2}\,g^{W}
   \]
-  である．すなわち二つの計量は bi-Lipschitz 同値であり，
-  対応する距離の比は $\sqrt{2}\,s_{\max}/s_{\min}$ で抑えられる．
+  である．対応する距離の比は $\sqrt2\,s_{\max}/s_{\min}$ で抑えられる．
 \end{proposition}
 
 \begin{proof}
   接ベクトル $(a,b)\in\R^n\times\R^n$ に対して
   $g^{W}(a,b)=\norm{a}^2+\norm{b}^2$ であり，
-  \[
-    g^{\mathrm{FR}}(a,b)
-    =\sum_{\alpha=1}^n\frac{(a^\alpha)^2+2(b^\alpha)^2}{(s^\alpha)^2} .
-  \]
-  各項の分母を $s_{\max}^2$ で下から，$s_{\min}^2$ で上から置き換えると
+  $g^{\mathrm{FR}}(a,b)=\sum_\alpha\bigl((a^\alpha)^2+2(b^\alpha)^2\bigr)/(s^\alpha)^2$
+  である．各項の分母を $s_{\max}^2$ で下から，$s_{\min}^2$ で上から置き換えると
   \[
     \frac{\norm{a}^2+2\norm{b}^2}{s_{\max}^2}
     \ \leq\ g^{\mathrm{FR}}(a,b)\ \leq\
@@ -316,8 +367,7 @@ $\Pp2$ から誘導される計量と一致することを保証する
   \]
   を得る．さらに
   $\norm{a}^2+\norm{b}^2\leq\norm{a}^2+2\norm{b}^2\leq2(\norm{a}^2+\norm{b}^2)$
-  だから主張が従う．
-  距離の比は計量の比の平方根で抑えられるので
+  だから主張が従う．距離の比は計量の比の平方根で抑えられるので
   $\sqrt{(2/s_{\min}^2)/(1/s_{\max}^2)}=\sqrt2\,s_{\max}/s_{\min}$ である．
 \end{proof}
 
@@ -332,12 +382,12 @@ $\sigma$ が有界に保たれる限り，$W_2$ と Fisher--Rao は
 \section{二階微分で完結する曲率}
 \label{sec:curvature}
 
-以下，$F$ は immersion であるとし，
+以下 $F$ は immersion であるとし，
 $G:=J_F^{\mathsf T}J_F$（$W_2$ 引き戻し計量），
 $P:=J_FG^{-1}J_F^{\mathsf T}$，
 $B_{ij}:=(I_{2n}-P)\,\partial_i\partial_jF$，
 $B(u,v):=\sum_{i,j}u^iv^jB_{ij}$ とおく．
-命題~\ref{prop:flat}より $G$ は成分で
+命題~\ref{prop:flat}より $G$ は
 \[
   G(z)=J_m(z)^{\mathsf T}J_m(z)+J_\sigma(z)^{\mathsf T}J_\sigma(z)
   \tag{1}
@@ -346,8 +396,8 @@ $B(u,v):=\sum_{i,j}u^iv^jB_{ij}$ とおく．
   行列 (1) 自体は，確率的生成器 $m(z)+\sigma(z)\odot\varepsilon$ に対する
   期待引き戻し計量として \cite{arvanitidis2018} が導いたものと一致する．
   本稿の寄与は行列そのものではなく，これを平坦空間への等長はめ込みの
-  誘導計量として解釈し直す点にある．期待値としての導出には
-  周囲空間がないため，Gauss 方程式の経路が使えない．}．
+  誘導計量として解釈し直す点にある．期待値としての導出には周囲空間がないため，
+  Gauss 方程式の経路が使えない．}．
 
 \begin{theorem}[断面曲率は二階微分のみで決まる]
 \label{thm:main}
@@ -360,45 +410,33 @@ $B(u,v):=\sum_{i,j}u^iv^jB_{ij}$ とおく．
             {\langle u,u\rangle_G\langle v,v\rangle_G-\langle u,v\rangle_G^2}
     }
   \]
-  で与えられる．ここで $\langle u,v\rangle_G=u^{\mathsf T}G(z)v$ である．
+  で与えられる（$\langle u,v\rangle_G=u^{\mathsf T}G(z)v$）．
   特に $\operatorname{Sec}$ は $m,\sigma$ の高々二階の偏微分にしか依存しない．
 \end{theorem}
 
 \begin{proof}
-  命題~\ref{prop:flat}(1) より，$F$ は $\mathcal{Z}$ から平坦な空間
+  命題~\ref{prop:flat}(1) より $F$ は $\mathcal{Z}$ から平坦な空間
   $(H,\text{Euclid})$ への等長はめ込みであり，$G$ はその誘導計量である．
-  周囲が平坦だから $\bar R=0$ であり，事実~\ref{fact:gauss}の Gauss 方程式は
-  \[
-    \langle R(u,v)v,u\rangle
-    =\langle B(u,u),B(v,v)\rangle-\norm{B(u,v)}^2
-  \]
-  となる．これを断面曲率の定義
-  $\operatorname{Sec}(u,v)=\langle R(u,v)v,u\rangle/
-  \bigl(\langle u,u\rangle_G\langle v,v\rangle_G-\langle u,v\rangle_G^2\bigr)$
-  に代入すればよい．
+  周囲が平坦だから $\bar R=0$ であり，事実~\ref{fact:gauss}は
+  $\langle R(u,v)v,u\rangle=\langle B(u,u),B(v,v)\rangle-\norm{B(u,v)}^2$
+  となる．これを断面曲率の定義に代入すればよい．
   $B_{ij}=(I_{2n}-P)\partial_i\partial_jF$ は $F$ の一階微分（$P$ を通じて）と
   二階微分のみを含む．
 \end{proof}
 
 \begin{remark}[三階微分の相殺]
 \label{rem:third-order}
-  座標表示による曲率の定義
-  \[
-    R^\ell{}_{kij}
-    =\partial_i\Gamma^\ell_{jk}-\partial_j\Gamma^\ell_{ik}
-     +\sum_r\bigl(\Gamma^r_{jk}\Gamma^\ell_{ir}-\Gamma^r_{ik}\Gamma^\ell_{jr}\bigr),
-    \qquad
-    \Gamma^k_{ij}=\tfrac12\sum_\ell G^{k\ell}
-      \bigl(\partial_iG_{j\ell}+\partial_jG_{i\ell}-\partial_\ell G_{ij}\bigr)
-  \]
-  では，$G$ が $F$ の一階微分を含むため $\Gamma$ に $F$ の二階微分が入り，
-  $\partial\Gamma$ には $F$ の\textbf{三階微分}が現れる．
+  座標表示による曲率の定義では，$G$ が $F$ の一階微分を含むため
+  $\Gamma^k_{ij}=\tfrac12\sum_\ell G^{k\ell}
+  (\partial_iG_{j\ell}+\partial_jG_{i\ell}-\partial_\ell G_{ij})$ に
+  $F$ の二階微分が入り，$R\sim\partial\Gamma+\Gamma\Gamma$ には
+  $F$ の\textbf{三階微分}が現れる．
   定理~\ref{thm:main}はこれらが相殺することを示している．
   数値計算では Gauss 方程式を用いることで相殺を明示でき，
   三階の自動微分を回避できる．
 \end{remark}
 
-\begin{proposition}[Fisher--Rao 引き戻しに必要なもの]
+\begin{proposition}[Fisher--Rao 引き戻しに追加で必要なもの]
 \label{prop:fr-cost}
   同じ decoder に Fisher--Rao 計量を引き戻して得られる計量は
   \[
@@ -409,29 +447,157 @@ $B(u,v):=\sum_{i,j}u^iv^jB_{ij}$ とおく．
   \]
   である．その断面曲率を Gauss 方程式で求めるには，
   \begin{enumerate}
-    \item 周囲曲率項 $\langle\bar R(u,v)v,u\rangle$（命題~\ref{prop:fr-hyperbolic}
-      により一般に非零），および
-    \item 周囲の Levi--Civita 接続 $\bar\nabla$ に関する第二基本形式
-      $\bar B(u,v)=\bigl(\bar\nabla_u\,\d F(v)\bigr)^{\perp}$，
-      すなわち周囲の Christoffel 記号 $\bar\Gamma$（$\sigma^{-1}$ の項を含む）
+    \item 周囲曲率項 $\langle\bar R(u,v)v,u\rangle$
+      （命題~\ref{prop:fr-hyperbolic}より一般に非零），および
+    \item 周囲の Levi--Civita 接続に関する第二基本形式，
+      すなわち周囲の Christoffel 記号（$\sigma^{-1}$ の項を含む）
   \end{enumerate}
   の双方が追加で必要である．
 \end{proposition}
 
 \begin{proof}
-  引き戻しの式は定義~\ref{def:pullback}と命題~\ref{prop:fr-hyperbolic}から直接従う．
+  引き戻しの式は定義~\ref{def:pullback}と命題~\ref{prop:fr-hyperbolic}から従う．
   残りは，周囲が平坦でない場合の Gauss 方程式（事実~\ref{fact:gauss}）が
   $\bar R$ を含み，第二基本形式が周囲の接続を用いて定義されることによる．
 \end{proof}
 
-\begin{remark}[計算コスト]
-\label{rem:cost}
-  定理~\ref{thm:main}のもとで，一点 $z$ における $B_{ij}$ 全体の計算は
-  $F$ の $d(d+1)/2$ 個の二階方向微分（Hessian-vector 積）で足り，
-  自動微分の逆伝播 $O(d^2)$ 回に相当する．三階微分は不要である．
-  実装上は $G^{-1}$ を明示的に構成せず線形方程式を解くほうが数値的に安定であり，
-  $G$ の最小固有値が $0$ に近い点では曲率も不安定になりうる．
-\end{remark}
+\subsection{計算手順}
+
+\begin{algorithm}[t]
+\caption{学習済み decoder の潜在断面曲率}
+\label{alg:curvature}
+\medskip\hrule\medskip
+\noindent\textbf{入力：}$C^2$ 級 decoder $(m,\sigma)$，潜在点 $z\in\mathcal{Z}$，
+1次独立な方向 $u,v\in\R^d$\\
+\noindent\textbf{出力：}$\operatorname{Sec}(u,v)$
+\medskip\hrule\medskip
+\begin{algsteps}
+\item $J_F\leftarrow F=(m,\sigma)$ の Jacobi 行列（自動微分の JVP を $d$ 回）
+\item $G\leftarrow J_F^{\mathsf T}J_F$ を作り Cholesky 分解する
+\item $h_{uu}\leftarrow\partial^2F[u,u]$，$h_{uv}\leftarrow\partial^2F[u,v]$，
+  $h_{vv}\leftarrow\partial^2F[v,v]$（二階方向微分を 3 回）
+\item 各 $w\in\{h_{uu},h_{uv},h_{vv}\}$ について：
+  $G\,y=J_F^{\mathsf T}w$ を三角ソルブで解き，$B[w]\leftarrow w-J_F\,y$
+  \quad（$G^{-1}$ を明示的に作らない）
+\item $N\leftarrow\langle B[h_{uu}],B[h_{vv}]\rangle-\norm{B[h_{uv}]}^2$
+\item $D\leftarrow\langle u,u\rangle_G\langle v,v\rangle_G-\langle u,v\rangle_G^2$
+\item \textbf{return} $N/D$
+\end{algsteps}
+\medskip\hrule
+\end{algorithm}
+
+アルゴリズム~\ref{alg:curvature}は三階微分を用いない．
+一点における $B_{ij}$ 全体が必要な場合は $d(d+1)/2$ 個の二階方向微分で足り，
+自動微分の逆伝播 $O(d^2)$ 回に相当する．
+$G^{-1}$ を明示的に構成せず線形方程式を解くのは数値的安定性のためであり，
+$G$ の最小固有値が $0$ に近い点では曲率も不安定になりうる．
+
+\section{単一の量による二つの証明書}
+\label{sec:certificate}
+
+定理~\ref{thm:main}の実用上の意味は，
+\emph{decoder から計算できる一つの量で二つの問いに答えられる}ことにある．
+以下 $z$ を固定し，
+\[
+  \Lambda(z):=\sup\bigl\{\norm{B(u,v)}\ :\ u,v\in\R^d,\
+  \langle u,u\rangle_G=\langle v,v\rangle_G=1\bigr\}
+\]
+と定める（$B$ の作用素ノルム）．これは第二基本形式，すなわち
+decoder の二階微分から計算できる．
+
+\subsection{証明書 1：曲率の上界}
+
+\begin{corollary}[断面曲率の上界]
+\label{cor:sec-bound}
+  すべての1次独立な $u,v$ に対して
+  \[
+    \boxed{\ \abs{\operatorname{Sec}(u,v)}\ \leq\ 2\,\Lambda(z)^2\ }
+  \]
+  が成り立つ．
+\end{corollary}
+
+\begin{proof}
+  断面曲率は $u,v$ の張る平面のみに依存するから，
+  $G$ に関する正規直交基底 $u,v$（$\langle u,u\rangle_G=\langle v,v\rangle_G=1$,
+  $\langle u,v\rangle_G=0$）で評価してよい．このとき
+  定理~\ref{thm:main}の分母は $1$ であり，Cauchy--Schwarz より
+  \[
+    \abs{\operatorname{Sec}(u,v)}
+    \leq\norm{B(u,u)}\,\norm{B(v,v)}+\norm{B(u,v)}^2
+    \leq\Lambda^2+\Lambda^2 .
+  \]
+\end{proof}
+
+系~\ref{cor:sec-bound}は第\ref{sec:intro}節の問いに定量的な形を与える．
+$\Lambda$ が小さければ潜在空間は平坦に近く，
+事実~\ref{fact:flatness}により適切な座標で Euclid 構造がほぼ正当化される．
+$\Lambda$ が大きい領域では，どのような座標変換をしても
+Euclid 近似は改善しない．
+
+\subsection{証明書 2：直線的な輸送の誤差}
+
+潜在空間には二つの自然な非負量がある．
+事実~\ref{fact:w2-closed-form}による\textbf{弦長}
+$W_2(K_{z_0},K_{z_1})=\norm{F(z_0)-F(z_1)}$ と，
+$G$ が定める\textbf{内在距離} $d_G$ である．
+前者は $K_{z_0}$ を $K_{z_1}$ へ直接輸送するコストであり，
+後者は decoder が表現できる分布の族に沿って移動するコストである
+（図~\ref{fig:chord}）．
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[scale=1.4]
+  \draw[thick,black!70] plot[domain=-2.0:2.0,samples=100] (\x,{0.40*\x*\x});
+  \node[black!70,anchor=west] at (2.06,1.60) {$F(\mathcal{Z})$};
+  \fill (-1.5,0.9) circle (1.6pt);
+  \fill ( 1.5,0.9) circle (1.6pt);
+  \node[anchor=south east,inner sep=3pt] at (-1.5,0.92) {$F(z_0)$};
+  \node[anchor=south west,inner sep=3pt] at ( 1.5,0.92) {$F(z_1)$};
+  \draw[dashed,very thick,blue!55!black] (-1.5,0.9) -- (1.5,0.9);
+  \node[blue!55!black,anchor=north] at (0,0.80) {弦長 $=W_2(K_{z_0},K_{z_1})$};
+  \node[black!70,anchor=north] at (0,-0.12) {内在距離 $d_G(z_0,z_1)$（曲線に沿う長さ）};
+\end{tikzpicture}
+\caption{弦長と内在距離．弦長は周囲空間を突っ切る直線の長さであり，
+事実~\ref{fact:w2-closed-form}によりこれが分布間の $W_2$ と厳密に一致する．
+内在距離は decoder が表現できる分布の族 $F(\mathcal{Z})$ に沿う長さである．
+両者の差は第二基本形式が支配する（命題~\ref{prop:chord}）．}
+\label{fig:chord}
+\end{figure}
+
+\begin{proposition}[弦長と内在距離の比較]
+\label{prop:chord}
+  $\gamma\colon[0,L]\to\mathcal{Z}$ を $G$ に関する単位速度の測地線とし，
+  $z_0=\gamma(0)$，$z_1=\gamma(L)$ とする．
+  $\gamma$ に沿って $\norm{B(\dot\gamma,\dot\gamma)}\leq\Lambda$ かつ
+  $\Lambda L\leq\pi$ ならば
+  \[
+    \frac{2}{\Lambda}\sin\frac{\Lambda L}{2}
+    \ \leq\ W_2(K_{z_0},K_{z_1})\ \leq\ L .
+  \]
+  さらに $\gamma$ が長さ最小ならば $L=d_G(z_0,z_1)$ であり，
+  \[
+    \boxed{\ 0\ \leq\ d_G(z_0,z_1)-W_2(K_{z_0},K_{z_1})
+    \ \leq\ \frac{\Lambda^2}{24}\,d_G(z_0,z_1)^3\ }
+  \]
+  である．
+\end{proposition}
+
+証明は付録~\ref{app:chord}に与える．鍵は，測地線の像 $c=F\circ\gamma$ が
+$\ddot c=B(\dot\gamma,\dot\gamma)$ をみたすこと，
+すなわち像の曲がりがそのまま第二基本形式であることである．
+下界は改良できない（付録~\ref{app:chord}の注意~\ref{rem:sharp}）．
+
+命題~\ref{prop:chord}の不等式そのものは新しくない．
+有界な第二基本形式（あるいは正の reach）のもとで測地距離と Euclid 距離を
+比較する評価は，曲線に対する Schur の定理として古典的であり，
+多様体学習の文脈でも reach を用いた metric distortion の評価として
+確立している \cite{niyogi2008,boissonnat2018}．
+本稿の主張は，定理~\ref{thm:main}のもとで
+$\Lambda$ が\emph{decoder の二階微分から直接計算できる}ため，
+この古典的な評価が学習済みモデルに対する検証可能な証明書になる，という点にある．
+Shao ら \cite{shao2018} が経験的に観測した
+「潜在多様体はほぼ平坦であり，潜在空間の直線は測地線をよく近似する」という現象に対し，
+各点で計算できる定量的な形を与えることに相当する．
 
 \section{構造的な帰結}
 \label{sec:consequences}
@@ -440,14 +606,13 @@ $B(u,v):=\sum_{i,j}u^iv^jB_{ij}$ とおく．
 
 \begin{proposition}[全次元 immersion]
 \label{prop:full-dim}
-  $d=2n$ ならば，$W_2$ 引き戻し計量の曲率は恒等的に $0$ である．
-  より一般に，$C^2$ 級 immersion $F\colon\mathcal{Z}\subset\R^d\to\R^N$ について
+  $C^2$ 級 immersion $F\colon\mathcal{Z}\subset\R^d\to\R^N$ について
   $d=N$ ならば $B\equiv0$ かつ $R\equiv0$ である．
 \end{proposition}
 
 \begin{proof}
   $d=N$ のとき $J_F$ は正則な正方行列だから
-  $P=J_F(J_F^{\mathsf T}J_F)^{-1}J_F^{\mathsf T}=I_N$ であり，
+  $P=J_F(J_F^{\mathsf T}J_F)^{-1}J_F^{\mathsf T}=I_N$ であり
   $B_{ij}=(I_N-P)\partial_i\partial_jF=0$ となる．
   定理~\ref{thm:main}より $\operatorname{Sec}\equiv0$，したがって $R\equiv0$ である．
 \end{proof}
@@ -455,19 +620,19 @@ $B(u,v):=\sum_{i,j}u^iv^jB_{ij}$ とおく．
 命題~\ref{prop:full-dim}は，潜在空間とデータ空間の次元が等しく
 生成写像が可逆であるモデル（正規化フロー，フローマッチング）には，
 引き戻し計量の曲率という概念が存在しないことを意味する．
-実際そのような $F$ は局所等長写像であり，曲率は等長不変量だからである．
+そのような $F$ は局所等長写像であり，曲率は等長不変量だからである．
+すなわち\textbf{本稿の問いが非自明であるためには次元の削減が必要}である．
 ただし平坦であることと $G$ が定数であることは別であり，
-潜在座標の直線が測地線になるとは限らない点に注意する．
+平坦であっても潜在座標の直線が測地線になるとは限らない．
 
 \begin{proposition}[アフィンなパラメータ写像]
 \label{prop:affine}
-  開集合 $U\subset\mathcal{Z}$ 上で $F(z)=Az+b$（$A\in\R^{2n\times d}$，
-  $\operatorname{rank}A=d$）ならば，$U$ 上で $G\equiv A^{\mathsf T}A$ は定数であり
-  $B\equiv0$，$R\equiv0$ である．
+  開集合 $U\subset\mathcal{Z}$ 上で $F(z)=Az+b$（$\operatorname{rank}A=d$）ならば，
+  $U$ 上で $G\equiv A^{\mathsf T}A$ は定数であり $B\equiv0$，$R\equiv0$ である．
 \end{proposition}
 
 \begin{proof}
-  $J_F\equiv A$ より $G$ は定数．$\partial_i\partial_jF\equiv0$ より $B\equiv0$．
+  $J_F\equiv A$ より $G$ は定数，$\partial_i\partial_jF\equiv0$ より $B\equiv0$．
   定理~\ref{thm:main}より $R\equiv0$．
 \end{proof}
 
@@ -480,16 +645,17 @@ $B(u,v):=\sum_{i,j}u^iv^jB_{ij}$ とおく．
     \partial_i\partial_jF
     =\bigl(0,\ \sigma\odot\partial_i\ell\odot\partial_j\ell\bigr)
   \]
-  である．したがって第二基本形式，ひいては曲率は，分散チャネルの
-  非線形性のみに由来する．平均写像 $m$ は計量 $G$ には寄与するが曲率には寄与しない．
+  である．したがって第二基本形式，ひいては曲率は分散チャネルの非線形性のみに由来し，
+  平均写像 $m$ は計量 $G$ には寄与するが曲率には寄与しない．
 \end{proposition}
 
 \begin{proof}
-  $U$ 上で $\partial_i\partial_jm=0$ である．また
+  $U$ 上で $\partial_i\partial_jm=0$ である．
   $\partial_i\sigma^\alpha=\sigma^\alpha\partial_i\ell^\alpha$ を微分し
   $\partial_i\partial_j\ell^\alpha=0$ を用いると
-  $\partial_i\partial_j\sigma^\alpha=\sigma^\alpha\partial_i\ell^\alpha\partial_j\ell^\alpha$
-  を得る．$B_{ij}$ は $\partial_i\partial_jF$ の法成分であるから主張が従う．
+  $\partial_i\partial_j\sigma^\alpha
+  =\sigma^\alpha\partial_i\ell^\alpha\partial_j\ell^\alpha$ を得る．
+  $B_{ij}$ は $\partial_i\partial_jF$ の法成分だから主張が従う．
 \end{proof}
 
 \begin{remark}[活性化関数への要請]
@@ -517,10 +683,9 @@ $B(u,v):=\sum_{i,j}u^iv^jB_{ij}$ とおく．
         && \sigma_B(z)=(c+z^2,\ c)
     \end{aligned}
   \]
-  と定める．$F_A,F_B$ はともに immersion であり，$\mathcal{Z}$ 上で
-  $G_A\equiv G_B\equiv I_2$ である．
-  したがって両者の計量，Christoffel 記号，曲率，測地線，内在距離は
-  すべて一致するが，生成する分布族は異なる．
+  と定める．$F_A,F_B$ はともに immersion であり $G_A\equiv G_B\equiv I_2$ である．
+  したがって両者の計量，Christoffel 記号，曲率，測地線，内在距離はすべて一致するが，
+  生成する分布族は異なる．
 \end{proposition}
 
 \begin{proof}
@@ -528,66 +693,52 @@ $B(u,v):=\sum_{i,j}u^iv^jB_{ij}$ とおく．
   \[
     J_{F_A}=\begin{pmatrix}1&0\\0&1\\0&0\\0&0\end{pmatrix},
     \qquad
-    J_{F_B}=\begin{pmatrix}-\sin\theta&0\\\cos\theta&0\\0&1\\0&0\end{pmatrix} .
+    J_{F_B}=\begin{pmatrix}-\sin\theta&0\\\cos\theta&0\\0&1\\0&0\end{pmatrix}
   \]
-  ともに階数 $2$ であり，$J_{F_A}^{\mathsf T}J_{F_A}=I_2$，
-  $J_{F_B}^{\mathsf T}J_{F_B}=I_2$（第 $(1,1)$ 成分は $\sin^2\theta+\cos^2\theta=1$）
-  である．Christoffel 記号以降はすべて $G$ のみから定まる．
+  である．ともに階数 $2$ をもち，
+  $J_{F_A}^{\mathsf T}J_{F_A}=J_{F_B}^{\mathsf T}J_{F_B}=I_2$
+  （$(1,1)$ 成分は $\sin^2\theta+\cos^2\theta=1$）である．
+  Christoffel 記号以降はすべて $G$ のみから定まる．
   一方 $m_A(\mathcal{Z})$ は $\R^2$ の帯状領域，$m_B(\mathcal{Z})$ は
   半径 $R$ の円周であり，$z^1=0$ と $z^1=2\pi R$ は (A) では異なる分布に，
   (B) では同一の分布に対応する．
 \end{proof}
 
 命題~\ref{prop:nonidentifiable}は，潜在幾何にもとづく解析の射程に
-明確な限界があることを示す．
-古典的な部分多様体論の基本定理（Bonnet の定理，\cite{docarmo1992}）によれば，
+限界があることを示す．
+古典的な部分多様体論の基本定理（Bonnet の定理 \cite{docarmo1992}）によれば，
 Euclid 空間へのはめ込みは第一基本形式 $G$ と第二基本形式 $B$ の双方を
-与えれば合同変換を除いて定まる．実際 $B_A\equiv0$ である一方 $B_B\neq0$ であり，
-不定性は $B$ を加えれば解消する．
-すなわち $B$ は曲率の計算に必要なだけでなく，
-decoder の同定に必要な情報でもある．
+与えれば合同変換を除いて定まる．
+実際 $B_A\equiv0$ である一方 $B_B\neq0$ であり，不定性は $B$ を加えれば解消する．
+すなわち $B$ は曲率の計算に必要なだけでなく，decoder の同定にも必要な情報である．
+本稿が $B$ を計算可能にすることは，この意味でも意義をもつ．
 
-\subsection{弦長と内在距離}
+\section{含意}
+\label{sec:implications}
 
-$\mathcal{Z}$ 上には二つの自然な非負量がある．
-事実~\ref{fact:w2-closed-form}による\textbf{弦長}
-$W_2(K_{z_0},K_{z_1})=\norm{F(z_0)-F(z_1)}$ と，
-$G$ が定める\textbf{内在距離} $d_G$ である．
-前者は $K_{z_0}$ を $K_{z_1}$ へ直接輸送するコストであり，
-後者は decoder が表現できる分布の族に沿って移動するコストである．
+\paragraph{直線補間の正当性は検証できる量になる．}
+系~\ref{cor:sec-bound}と命題~\ref{prop:chord}は，
+$\Lambda$ という単一の量で
+「潜在空間はどれだけ Euclid から離れているか」と
+「直線的に輸送したとき何をどれだけ損しているか」に同時に答える．
+$\Lambda$ は学習済み decoder の二階微分から計算できるため，
+補間や潜在空間上の輸送を行う前に，その正当性を数値的に確かめられる．
 
-\begin{proposition}[弦長と内在距離の比較]
-\label{prop:chord}
-  $\gamma\colon[0,L]\to\mathcal{Z}$ を $G$ に関する単位速度の測地線とし，
-  $z_0=\gamma(0)$，$z_1=\gamma(L)$，
-  $\Lambda:=\sup_{t}\norm{B(\dot\gamma(t),\dot\gamma(t))}$ とする．
-  $\Lambda L\leq\pi$ ならば
-  \[
-    \frac{2}{\Lambda}\sin\frac{\Lambda L}{2}
-    \ \leq\ W_2(K_{z_0},K_{z_1})\ \leq\ L .
-  \]
-  さらに $\gamma$ が長さ最小ならば $L=d_G(z_0,z_1)$ であり，
-  \[
-    0\ \leq\ d_G(z_0,z_1)-W_2(K_{z_0},K_{z_1})
-    \ \leq\ \frac{\Lambda^2}{24}\,d_G(z_0,z_1)^3 .
-  \]
-\end{proposition}
+\paragraph{平坦化の可否が判定できる．}
+潜在空間を平坦に保つ正則化は，補間や潜在空間上の生成を
+Euclid 的に扱えるようにする目的で自然に考えられる．
+事実~\ref{fact:flatness}より，この目標が達成可能かどうかは
+曲率が消せるかどうかと同値である．
+命題~\ref{prop:variance-only}は，標準的な実装では曲率が
+分散チャネルのみに由来することを示しており，
+正則化を課すべき対象を特定する．
 
-証明は付録~\ref{app:chord}に与える．鍵は，測地線の像 $c=F\circ\gamma$ が
-$\ddot c=B(\dot\gamma,\dot\gamma)$ をみたすこと，すなわち像の曲がりが
-そのまま第二基本形式であることである．
-
-命題~\ref{prop:chord}の不等式そのものは新しくない．
-有界な第二基本形式（あるいは正の reach）のもとで測地距離と
-Euclid 距離を比較する評価は，曲線に対する Schur の定理として古典的であり，
-多様体学習の文脈でも reach を用いた metric distortion の評価として
-確立している \cite{niyogi2008,boissonnat2018}．
-本稿の主張は，定理~\ref{thm:main}のもとで
-$\Lambda=\norm{B}$ が\emph{decoder の二階微分から直接計算できる}ため，
-この古典的な評価が学習済みモデルに対する検証可能な証明書になる，という点にある．
-\cite{shao2018} が経験的に観測した「潜在多様体はほぼ平坦であり，
-潜在空間の直線は測地線をよく近似する」という現象に対して，
-各点で計算できる定量的な形を与えることに相当する．
+\paragraph{アーキテクチャへの含意．}
+注意~\ref{rem:activation}より，潜在曲率を扱うには $C^2$ 級の活性化が必要である．
+これは精度ではなく\emph{理論が適用可能であるための}要請であり，
+ReLU や ELU を用いる限り各点の曲率は定義されないか恒等的に消える．
+また命題~\ref{prop:full-dim}より，可逆な生成写像を用いるモデルでは
+この解析の対象そのものが存在しない．
 
 \section{関連研究}
 \label{sec:related}
@@ -598,8 +749,8 @@ $m(z)+\sigma(z)\odot\varepsilon$ に対する期待引き戻し計量として
 $\E[J^{\mathsf T}J]=J_m^{\mathsf T}J_m+J_\sigma^{\mathsf T}J_\sigma$ を導き，
 分散項が測地線を不確実な領域から遠ざけることを指摘した．
 本稿の $G$ は行列としてこれと一致するが，導出と解釈が異なる．
-彼らの $\E[J^{\mathsf T}J]$ は期待値であって，どの空間への
-はめ込みの誘導計量でもない．そのため周囲空間が存在せず，
+彼らの $\E[J^{\mathsf T}J]$ は期待値であって，どの空間へのはめ込みの
+誘導計量でもない．そのため周囲空間が存在せず，
 Gauss 方程式（事実~\ref{fact:gauss}）の経路が使えない．
 命題~\ref{prop:flat}は同じ行列に周囲空間 $(H,\text{Euclid})$ を与え直すものであり，
 定理~\ref{thm:main}はその帰結である．
@@ -607,7 +758,7 @@ Gauss 方程式（事実~\ref{fact:gauss}）の経路が使えない．
 \paragraph{Fisher--Rao の引き戻し．}
 Arvanitidis ら \cite{arvanitidis2022} は decoder 分布の空間の
 Fisher--Rao 計量を潜在空間へ引き戻した．枠組みは本稿と構造的に同一であり，
-異なるのは周囲計量の選択のみである．
+異なるのは参照計量の選択のみである．
 命題~\ref{prop:fr-hyperbolic}と命題~\ref{prop:bilipschitz}は，
 この選択が距離をほとんど変えない一方で曲率を変えることを示している．
 
@@ -618,13 +769,13 @@ $J_g^{\mathsf T}J_g$ のもとで測地線・平行移動・測地線シュー�
 ただし彼らの計量は decoder の分散を含まず，
 曲率の測定は測地距離行列の MDS における負の固有値という大域的な代理量による．
 また使用された ELU は $C^1$ 級であり，彼ら自身が手法は高々一階微分しか
-要しないと述べている．本稿はこの制約を取り除く条件を与える．
+要しないと述べている．本稿はこの制約を取り除く条件を与え，
+彼らの経験的観測に各点で計算できる定量的な形を与える．
 
 \paragraph{Gaussian 測度の Wasserstein 幾何．}
 Gaussian 測度全体の $W_2$ 幾何は Takatsu \cite{takatsu2011} によって
 研究されており，一般の共分散では Bures--Wasserstein 錐が現れる．
-本稿が扱う対角の場合は，その中で平坦になる特別な部分族である
-（第\ref{sec:limitations}節）．
+本稿が扱う対角の場合は，その中で平坦になる特別な部分族である．
 パラメータ空間へ $W_2$ を引き戻す構成は Wasserstein 情報行列，
 Wasserstein 自然勾配として研究されている \cite{li2018}．
 本稿は同じ引き戻しを潜在空間に対して行い，曲率まで進める点が異なる．
@@ -635,8 +786,10 @@ Wasserstein 自然勾配として研究されている \cite{li2018}．
 \paragraph{実験がない．}
 本稿は理論的な結果のみからなる．
 定理~\ref{thm:main}が実際の学習済みモデルに対してどのような曲率を与えるか，
-また命題~\ref{prop:chord}の $\Lambda$ が実用的な大きさに収まるかは，
-本稿では検証していない．
+また系~\ref{cor:sec-bound}・命題~\ref{prop:chord}の $\Lambda$ が
+実用的な大きさに収まるかは検証していない．
+これは本稿の最も大きな限界であり，
+特に第\ref{sec:implications}節の含意は経験的な裏づけを欠く．
 
 \paragraph{対角共分散への限定．}
 命題~\ref{prop:flat}の平坦性は対角性に本質的に依存する．
@@ -647,20 +800,26 @@ Wasserstein 自然勾配として研究されている \cite{li2018}．
 対角の場合にはない現象が生じるはずであり，別途の解析を要する．
 
 \paragraph{滑らかさの要請．}
-定理~\ref{thm:main}は $C^2$ 級の decoder を要求する
-（注意~\ref{rem:activation}）．広く用いられる ReLU や ELU はこれをみたさない．
+定理~\ref{thm:main}は $C^2$ 級の decoder を要求する（注意~\ref{rem:activation}）．
+広く用いられる ReLU や ELU はこれをみたさない．
 
 \paragraph{弦長評価の新規性の範囲．}
 命題~\ref{prop:chord}の不等式自体は古典的である \cite{niyogi2008,boissonnat2018}．
 本稿の寄与は $\Lambda$ が decoder から計算可能になる点に限られる．
 
+\paragraph{$\Lambda$ の評価．}
+系~\ref{cor:sec-bound}と命題~\ref{prop:chord}は $\Lambda$ の上界を要する．
+一点での $B$ の評価は容易だが，領域全体で一様な上界を得る手続きは
+本稿では扱っていない．
+
 \appendix
+\renewcommand{\thesection}{\Alph{section}}
 
 \section{命題~\ref{prop:chord}の証明}
 \label{app:chord}
 
-まず補題を用意する．$e_k:=\partial_kF$ とおく．
-$B_{ij}$ の定義から $\partial_i\partial_jF=P\,\partial_i\partial_jF+B_{ij}$ であり，
+$e_k:=\partial_kF$ とおく．$B_{ij}$ の定義から
+$\partial_i\partial_jF=P\,\partial_i\partial_jF+B_{ij}$ であり，
 $P$ は $J_F\R^d=\operatorname{span}\{e_k\}$ への直交射影である．
 $G_{ij}=\langle e_i,e_j\rangle$ を微分して混合偏微分の順序を交換すると
 \[
@@ -693,8 +852,7 @@ $G_{ij}=\langle e_i,e_j\rangle$ を微分して混合偏微分の順序を交換
 \end{proof}
 
 \begin{proof}[命題~\ref{prop:chord}の証明]
-  上界 $W_2(K_{z_0},K_{z_1})\leq L$ は，
-  事実~\ref{fact:w2-closed-form}と積分の三角不等式
+  上界は事実~\ref{fact:w2-closed-form}と積分の三角不等式
   \[
     \norm{F(z_1)-F(z_0)}
     =\Bigl\|\int_0^L\dot c\,\d t\Bigr\|
@@ -703,19 +861,17 @@ $G_{ij}=\langle e_i,e_j\rangle$ を微分して混合偏微分の順序を交換
   から従う．
 
   下界を示す．$u:=\dot c$ とおく．補題~\ref{lem:geodesic-image}より
-  $\norm{u}\equiv1$ かつ $\norm{\dot u}=\norm{B(\dot\gamma,\dot\gamma)}\leq\Lambda$
-  である（$\Lambda=0$ なら $u$ は定ベクトルで $c$ は長さ $L$ の線分となり，
-  下界は $L$ の極限として成立する．以下 $\Lambda>0$ とする）．
+  $\norm{u}\equiv1$ かつ
+  $\norm{\dot u}=\norm{B(\dot\gamma,\dot\gamma)}\leq\Lambda$ である
+  （$\Lambda=0$ なら $u$ は定ベクトルで $c$ は長さ $L$ の線分となり，
+  下界は $\Lambda\to0$ の極限として成立する．以下 $\Lambda>0$ とする）．
   $u$ は単位球面 $S^{2n-1}$ 上の曲線であって速さが $\Lambda$ 以下だから，
   球面上の測地距離 $d_S$ について
-  \[
-    d_S\bigl(u(s),u(t)\bigr)\leq\Lambda\abs{s-t}
-    \qquad(s,t\in[0,L]).
-  \]
+  $d_S(u(s),u(t))\leq\Lambda\abs{s-t}$ である．
   $\langle u(s),u(t)\rangle=\cos d_S(u(s),u(t))$ であり，
   $\Lambda L\leq\pi$ より $\Lambda\abs{s-t}\leq\pi$ で，
   $\cos$ は $[0,\pi]$ 上単調減少だから
-  $\langle u(s),u(t)\rangle\geq\cos(\Lambda\abs{s-t})$ である．よって
+  $\langle u(s),u(t)\rangle\geq\cos(\Lambda\abs{s-t})$ を得る．よって
   \[
     \norm{c(L)-c(0)}^2
     =\int_0^L\!\!\int_0^L\langle u(s),u(t)\rangle\,\d s\,\d t
@@ -732,20 +888,20 @@ $G_{ij}=\langle e_i,e_j\rangle$ を微分して混合偏微分の順序を交換
   平方根をとって下界を得る．
 
   最後に $x\geq0$ で $\sin x\geq x-x^3/6$ だから，$x=\Lambda L/2$ として
-  \[
-    \frac{2}{\Lambda}\sin\frac{\Lambda L}{2}
-    \geq L-\frac{\Lambda^2L^3}{24}
-  \]
+  $\frac{2}{\Lambda}\sin\frac{\Lambda L}{2}\geq L-\frac{\Lambda^2L^3}{24}$
   であり，$L=d_G(z_0,z_1)$ のとき主張の三次評価を得る．
 \end{proof}
 
-\begin{remark}
+\begin{remark}[下界の最良性]
+\label{rem:sharp}
   命題~\ref{prop:chord}の下界は改良できない．
   命題~\ref{prop:nonidentifiable}の decoder (B) において
   $z^2$ を固定した曲線 $\gamma(t)=(t,z_0^2)$ は単位速度の最短測地線であり，
-  $\norm{B_{11}}=1/R$ すなわち $\Lambda=1/R$，
-  かつ像は半径 $R$ の円周だから弦長は
-  $2R\sin(L/2R)=\frac{2}{\Lambda}\sin\frac{\Lambda L}{2}$ である．
+  $\partial_1\partial_1F_B=(-\tfrac1R\cos\theta,-\tfrac1R\sin\theta,0,0)$ は
+  接空間の基底 $e_1=(-\sin\theta,\cos\theta,0,0)$，$e_2=(0,0,1,0)$ の
+  いずれとも直交するから $\norm{B_{11}}=1/R$，すなわち $\Lambda=1/R$ である．
+  一方で像は半径 $R$ の円周だから弦長は
+  $2R\sin(L/2R)=\frac{2}{\Lambda}\sin\frac{\Lambda L}{2}$ となり，等号が成立する．
 \end{remark}
 
 \begin{thebibliography}{99}
