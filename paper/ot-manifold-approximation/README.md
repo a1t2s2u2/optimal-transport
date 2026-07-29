@@ -45,10 +45,24 @@ $$
 
 本稿は最適化法、ニューラルネット、誤差逆伝播法を仮定しない。
 
+## 数値検証
+
+円周、球面、積 torus、Stiefel、Grassmann の5例について、有限 $K$ での
+log--log 傾きが理論値 $-2/q$ に近づくかを直接積分で確認する。外部 Python
+パッケージや勾配法は使わない。
+
+```sh
+make paper-experiments
+```
+
+実験の設計と生成物は `experiments/README.md` を参照。
+
 ## ビルド
 
 ```sh
 make paper
 ```
+
+実験を再実行してから PDF を生成する場合は `make paper-all`。
 
 出力は `paper/ot-manifold-approximation/out/main.pdf`。

@@ -103,6 +103,28 @@ def grassmann_tangent_sq(x: Frame, y: Frame) -> float:
     return max(0.0, 2.0 * (rank - 2.0 * cosine_sq_sum + cosine_fourth_sum))
 
 
+def validate_geometry_formulas() -> None:
+    """Check the global two-sided inequalities used by the implementation."""
+    rng = random.Random(SEED + 7)
+    for _ in range(200):
+        st_x = haar_frame(3, 2, rng)
+        st_y = haar_frame(3, 2, rng)
+        st_chord_sq = frame_chordal_sq(st_x, st_y)
+        st_distance = math.sqrt(stiefel_tangent_sq(st_x, st_y))
+        assert st_chord_sq / (2.0 * math.sqrt(2.0)) <= st_distance + 1e-12
+        assert st_distance <= st_chord_sq / 2.0 + 1e-12
+
+        gr_x = haar_frame(4, 2, rng)
+        gr_y = haar_frame(4, 2, rng)
+        gr_chord_sq = grassmann_chordal_sq(gr_x, gr_y)
+        gr_distance = math.sqrt(grassmann_tangent_sq(gr_x, gr_y))
+        assert gr_chord_sq / 2.0 <= gr_distance + 1e-12
+        assert gr_distance <= gr_chord_sq / math.sqrt(2.0) + 1e-12
+
+    assert stiefel_tangent_sq(st_x, st_x) < 1e-24
+    assert grassmann_tangent_sq(gr_x, gr_x) < 1e-12
+
+
 def farthest_point_order(
     candidates: Sequence[Point],
     count: int,
@@ -334,6 +356,7 @@ def write_results(groups: Sequence[Sequence[Result]]) -> None:
 
 
 def main() -> None:
+    validate_geometry_formulas()
     groups = [
         circle_experiment(),
         sphere_experiment(),

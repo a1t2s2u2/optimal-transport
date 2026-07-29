@@ -40,6 +40,8 @@ $M=\St(D,r)$ を扱う．$q=Dr-r(r+1)/2$，$\sigma$ を正規化 Haar 測度と�
 $\St(2,1)=S^1$ と $p=2$ では，等間隔な接線配置が厳密最適であり，
 $\mathfrak T_{K,2}\sim\pi^2/(\sqrt{20}K^2)$ を得る．最後に近似幅が入力測度に
 関して $W_p$-Lipschitz であることを示し，幾何的近似誤差と有限標本誤差を分離する．
+円周，球面，積 torus，Stiefel，Grassmann の五例では，勾配法を使わない数値計算に
+よって有限 $K$ での log--log 傾きも検証する．
 \end{abstract}
 
 \medskip
@@ -78,7 +80,7 @@ $k$-flats や geometric multiresolution analysis で研究されている
 
 \subsection{本稿の貢献}
 
-本稿の貢献は次の四点である．
+本稿の貢献は次の五点である．
 \begin{enumerate}
   \item 接平面アトラスによる多様体上の測度の表現能力を，
     Wasserstein 空間における近似幅として定義する．閉集合への Wasserstein 射影との
@@ -90,6 +92,9 @@ $k$-flats や geometric multiresolution analysis で研究されている
     tangent distance と chord 距離の二乗の大域的な二側評価を明示する．
   \item $S^1=\St(2,1)$ では最適配置と誤差を厳密に計算する．また近似幅の
     $W_p$ 安定性から，population approximation と empirical estimation を分離する．
+  \item 五種類の多様体について，明示的な準一様配置または farthest-point sampling
+    が達成する $W_2$ 誤差を直接積分する．有限 $K$ でも理論傾き $-2/q$ が現れることを
+    確認し，円周では厳密値に対して数値実装を較正する．
 \end{enumerate}
 
 本稿の主張は，接平面が常に最良の生成モデルであるというものではない．むしろ
@@ -761,6 +766,75 @@ $X_1,\dots,X_n\sim\mu$ と $\widehat\mu_n=n^{-1}\sum_i\delta_{X_i}$ に対し，
   \underbrace{\text{中心配置の最適化 gap}}_{\text{計算誤差}}.
 \]
 本稿が決定するのは第一項であり，第三項のために特定の学習アルゴリズムを仮定しない．
+
+\section{有限 \texorpdfstring{$K$}{K} での数値検証}
+\label{sec:experiments}
+
+定理の証明は数値実験に依存しないが，漸近指数が現れる $K$ の範囲と，接距離公式の
+実装を確認するために五例を計算した．中心配置
+$\boldsymbol{x}=(x_1,\dots,x_K)$ に対する population cost を
+\[
+  U_K(\boldsymbol{x})
+  :=\left(
+      \int_M\min_{1\leq j\leq K}
+      \dist(y,L_{x_j})^2\,\mu(\d y)
+    \right)^{1/2}
+  \geq\mathfrak T_{K,2}(\mu;M)
+  \tag{8.1}
+\]
+とし，標本 $Y_1,\dots,Y_N$ による直接積分
+\[
+  \widehat U_K(\boldsymbol{x})
+  :=\left(
+      \frac1N\sum_{i=1}^N\min_{1\leq j\leq K}
+      \dist(Y_i,L_{x_j})^2
+    \right)^{1/2}
+  \tag{8.2}
+\]
+を報告する．したがって，数値値を未知の最適配置が達成する
+$\mathfrak T_{K,2}$ そのものとは同一視しない．式~(8.1) は固定した配置が与える
+構成的上界であり，式~(8.2) はその積分の近似である．
+
+\paragraph{配置と積分．}
+$S^1$ には定理~\ref{thm:circle-exact} の等間隔配置，$S^2$ には Fibonacci 配置，
+$\mathbb T^2$ には $m\times m$ 直積格子を用いた．$\St(3,2)$ と $\Gr(4,2)$ では，
+固定 seed の Haar 標本 $6000$ 点を候補集合とし，ambient chord 距離に関する
+greedy farthest-point sampling (FPS) で最大 $256$ 中心の nested 配置を作った．
+積分点数は順に $131072,16387,32771,24000,24000$ である．円周，球面，torus には
+決定論的な等分点，Fibonacci 点，rank-one lattice rule を使い，二つの行列多様体には
+中心候補とは独立な Haar 標本を使った．ニューラルネット，誤差逆伝播法，連続最適化は
+用いていない．
+
+\paragraph{評価式．}
+球面では $\dist(y,L_x)=1-\langle x,y\rangle$，積 torus では式~(5.5)，
+Stiefel では式~(4.4) を直接使う．Grassmann では主角を $\theta_i$ として
+\[
+  \dist(Q,L_P)^2=2\sum_i\sin^4\theta_i
+\]
+を cross-Gram 行列の二次・四次 trace から評価した．これにより接平面を数値的に
+構成して projection を解く工程を避け，理論式とコードを一対一に対応させた．
+
+各多様体について最後の四つの $K$ に最小二乗直線
+$\log\widehat U_K=a+b\log K$ を当てた結果を表~\ref{tab:numerical-rates} に示す．
+\begin{table}[htbp]
+  \centering
+  \small
+  \caption{有限 $K$ における $W_2$ 接アトラス誤差の log--log 傾き．理論傾きは
+  $-2/q$，観測傾きは各系列の最後の四点による．}
+  \label{tab:numerical-rates}
+  \input{experiments/results_table.tex}
+\end{table}
+
+全例で観測傾きは理論値に近く，特に明示的な準一様配置を使った
+$S^2$ と $\mathbb T^2$ では差がそれぞれ $0.010$ と $0.004$ である．FPS を使った
+$\St(3,2)$ と $\Gr(4,2)$ の差は $0.012$ と $0.024$ であり，候補集合が有限であることと
+greedy 配置の optimization gap を含む．$S^1$ では式~(6.2) の厳密値に対する全 $K$
+での最大相対誤差が $6.4\times10^{-6}$ であり，積分と接距離の実装を較正できている．
+
+この実験が支持するのは，具体的な準一様配置が有限 $K$ で既に上界 rate を実現する
+という主張である．matching lower bound や FPS の最適性を実験から主張してはいない．
+全コードは Python 標準ライブラリだけで再実行でき，生の各 $K$ の値と回帰結果も
+CSV として保存している．
 
 \section{関連研究と新規性の境界}
 \label{sec:related}
