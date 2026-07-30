@@ -8,14 +8,16 @@
 
 SITE := node tools/site
 
-.PHONY: help sites cuturi-site cuturi-pdf wasserstein-site clean-sites paper paper-ja paper-experiments paper-all
+.PHONY: help sites cuturi-site cuturi-pdf wasserstein-site clean-sites paper paper-ja paper-experiments paper-cartography-experiment paper-distillation-experiment paper-mnist-experiment paper-all
 
 help:
 	@echo "make sites             すべてのセミナーのサイトを生成"
 	@echo "make cuturi-site       計算最適輸送のサイトを生成"
 	@echo "make cuturi-pdf        計算最適輸送の PDF を生成"
 	@echo "make wasserstein-site  Wasserstein 距離のサイトを生成（PDF は生成しない）"
-	@echo "make paper-experiments Wasserstein潜在地図実験を再実行"
+	@echo "make paper-experiments 幾何保存付き蒸留実験を再実行"
+	@echo "make paper-distillation-experiment 幾何保存蒸留の容量実験を再実行"
+	@echo "make paper-mnist-experiment MNIST VAE head圧縮実験を再実行"
 	@echo "make paper             英語論文の PDF を生成"
 	@echo "make paper-ja          日本語論文の PDF を生成"
 	@echo "make paper-all         数値実験を再実行して両言語の PDF を生成"
@@ -41,8 +43,17 @@ wasserstein-site:
 
 # --- 論文 ---
 # セミナー資料とは独立。既知の内容は引用で済ませ、新規の主張だけを書く。
-paper-experiments:
+paper-cartography-experiment:
 	uv run --python 3.12 paper/ot-manifold-approximation/experiments/wasserstein_cartography.py
+
+paper-distillation-experiment:
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/geometry_distillation.py
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/lowrank_torus.py
+
+paper-mnist-experiment:
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/mnist_low_rank_geometry.py
+
+paper-experiments: paper-distillation-experiment paper-mnist-experiment
 
 paper:
 	cd paper/ot-manifold-approximation && latexmk

@@ -42,5 +42,8 @@ uv.lock
 __pycache__/
 *.pyc
 
+# reproducible experiment downloads and learned checkpoints
+paper/ot-manifold-approximation/experiments/.cache/
+
 # proofgraph viewer smoke artifacts
 utils/proofgraph/viewer/_smoke.png
