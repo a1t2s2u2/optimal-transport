@@ -1,60 +1,78 @@
-# 画像から潜在空間の形を選べるか
+# Wasserstein Cartography of Gaussian Decoders
 
-高次元画像の背後にある潜在空間を、候補 $\mathbb R^2,\mathbb T^2,S^2$ から選ぶ
-距離保存型オートエンコーダの理論・実験論文です。
+This directory contains the paper and reproducible experiment for studying
+which decoder accuracy is needed to recover latent geometry.
 
-## 入力と出力
+## Main statement
 
-入力:
+For a diagonal Gaussian decoder
 
-- 高次元画像 $x_i$
-- 画像間の近さ $\widehat d(x_i,x_j)$
-- 潜在空間の有限候補 $M_1,\ldots,M_m$
+\[
+K_z=\mathcal N\!\left(m(z),\operatorname{diag}(\sigma(z)^2)\right),
+\qquad F(z)=(m(z),\sigma(z)),
+\]
 
-出力:
+the exact 2-Wasserstein distance is
 
-- 選ばれた潜在空間 $\widehat M$
-- 各画像の潜在座標 $E_{\widehat M}(x_i)$
+\[
+W_2(K_z,K_{z'})=\lVert F(z)-F(z')\rVert,
+\]
 
-真の潜在座標は学習にも候補選択にも使いません。
+and the latent pullback metric is
 
-## 主結果
+\[
+G(z)=J_F(z)^\top J_F(z).
+\]
 
-入力として使う画像間距離の誤差を $\varepsilon_{\mathrm{obs}}$、学習された符号化器の
-距離歪みを $\eta$ とすると、
+The paper proves the regularity hierarchy
 
-$$
-\text{真の潜在距離の誤差}
-\le
-\eta+\varepsilon_{\mathrm{obs}}
-$$
+\[
+C^0\not\Rightarrow G,
+\qquad
+C^1\Rightarrow G\text{ and }d_G,
+\qquad
+C^2\Rightarrow B\text{ and }\mathcal K.
+\]
 
-です。また、最良候補と次点の評価値の差が、画像間距離と有限検証標本の誤差を上回れば、
-正しい候補を高確率で選べます。
+The positive implications have explicit finite-error bounds. The negative
+implications are witnessed by smooth Gaussian decoders. A piecewise-affine
+ReLU parameter decoder is flat almost everywhere.
 
-## 制御実験
+## Controlled benchmark
 
-- 真の潜在空間: $S^2$
-- 入力: $32\times32\times3=3{,}072$ 次元の応答画像
-- 学習900枚、独立検証300枚
-- 同一規模、約41万パラメータの畳み込みオートエンコーダ
-- 正解座標を使わず、画像間距離から候補を選択
+The visible latent coordinates are a Mercator chart, while each coordinate
+generates a diagonal Gaussian distribution. The hidden geometric answer is a
+unit sphere:
 
-検証評価値は $S^2$で `0.00079`、$\mathbb T^2$で `0.00620`、$\mathbb R^2$で
-`0.06190` となります。選択モデルの真の距離RMSEは `0.00112` です。
+\[
+G_*(\lambda,y)=\operatorname{sech}^2(y)I_2,
+\qquad \mathcal K_*=1.
+\]
 
-## 再現
+Training never uses the sphere coordinates, metric, curvature, or geodesic
+distance. The experiment evaluates all four quantities against their exact
+answers over five independent trials.
 
-実験のみ:
+## Reproduction
 
-~~~sh
+Run the experiment:
+
+```sh
 make paper-experiments
-~~~
+```
 
-実験からPDFまで:
+Build the PDF:
 
-~~~sh
+```sh
+make paper
+```
+
+Regenerate everything:
+
+```sh
 make paper-all
-~~~
+```
 
-PDFは `out/main.pdf` に生成されます。
+The paper is written to `out/main.pdf`. Raw and aggregated measurements are
+stored in `experiments/cartography_results.csv` and
+`experiments/cartography_summary.csv`.

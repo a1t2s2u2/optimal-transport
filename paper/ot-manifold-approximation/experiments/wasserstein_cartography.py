@@ -390,6 +390,12 @@ def evaluate(
 
     with torch.no_grad():
         all_parameters = model(coordinate_tensor).cpu().numpy()
+        minimum_standard_deviation = float(all_parameters[:, 3:].min())
+        if minimum_standard_deviation <= MIN_STD + 1.0e-8:
+            raise RuntimeError(
+                "the positivity clamp is active; the evaluated parameter map "
+                "is not differentiable at all reported states"
+            )
         test_nll = gaussian_nll(
             model(coordinate_tensor[test_indices]),
             empirical_mean[test_indices],
@@ -409,6 +415,7 @@ def evaluate(
     )
     metrics = {
         "test_nll": float(test_nll),
+        "minimum_standard_deviation": minimum_standard_deviation,
         "parameter_rmse": test_parameter_rmse,
         "metric_relative_error": float(np.mean(relative_metric_error)),
         "metric_relative_median": float(np.median(relative_metric_error)),
@@ -448,6 +455,7 @@ def oracle_evaluation(
     surface_rmse_value, embedded = surface_error(parameters, sphere)
     metrics = {
         "test_nll": float("nan"),
+        "minimum_standard_deviation": float(parameters[:, 3:].min()),
         "parameter_rmse": 0.0,
         "metric_relative_error": 0.0,
         "metric_relative_median": 0.0,
@@ -689,18 +697,24 @@ def write_outputs(
     histories: dict[str, list[dict[str, float]]],
 ) -> None:
     with (HERE / "cartography_results.csv").open("w", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(results[0].keys()))
+        writer = csv.DictWriter(
+            handle, fieldnames=list(results[0].keys()), lineterminator="\n"
+        )
         writer.writeheader()
         writer.writerows(results)
     with (HERE / "cartography_summary.csv").open("w", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(summary[0].keys()))
+        writer = csv.DictWriter(
+            handle, fieldnames=list(summary[0].keys()), lineterminator="\n"
+        )
         writer.writeheader()
         writer.writerows(summary)
     history_rows = [
         {"model": key, **row} for key, values in histories.items() for row in values
     ]
     with (HERE / "cartography_history.csv").open("w", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(history_rows[0].keys()))
+        writer = csv.DictWriter(
+            handle, fieldnames=list(history_rows[0].keys()), lineterminator="\n"
+        )
         writer.writeheader()
         writer.writerows(history_rows)
 

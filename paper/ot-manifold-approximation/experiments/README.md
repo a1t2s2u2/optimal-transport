@@ -1,28 +1,27 @@
-# 球面から生成した応答画像の潜在構造選択
+# Wasserstein cartography experiment
 
-`sensor_sphere_manifold.py` が論文の再現scriptです。
+Run from the repository root:
 
-~~~sh
-uv run --python 3.12 sensor_sphere_manifold.py
-~~~
+```sh
+make paper-experiments
+```
 
-モデルへ渡すのは $32\times32\times3$ の画像と、第一チャネルから計算する画像間距離です。
-真の状態 $z\in S^2$ は診断評価にしか使いません。PEP 723 metadataによりNumPy、PyTorch、
-Matplotlibを一時環境へ導入します。
+The PEP 723 script installs its runtime dependencies through `uv` and executes
+five independent trials.
 
-## 出力
+## Outputs
 
-- `sensor_source_to_image.png`: 潜在状態から入力画像が生じる対応
-- `sensor_examples.png`: モデルへ与える入力画像
-- `sensor_reconstructions.png`: 各候補による同一画像の再構成
-- `sensor_accuracy.png`: 画像解像度とノイズに対する距離RMSE
-- `sensor_diagnostics.png`: 学習曲線、真の距離と潜在距離、候補選択の評価値
-- `sensor_manifold_results.csv`: 全候補の評価値
-- `sensor_manifold_history.csv`: 50 stepごとの学習履歴
-- `sensor_distance_scatter.csv`: 真の距離と潜在距離の描画標本
-- `sensor_resolution_study.csv`: 画像解像度を変えた距離精度
-- `sensor_noise_study.csv`: ノイズを変えた距離精度
-- `sensor_manifold_table.tex`: 論文用の結果表
+- `cartography_pipeline.png`: distorted chart, observed distributions, and the
+  learned decoder surface.
+- `cartography_geometry.png`: learned metric scale and Gaussian curvature.
+- `cartography_distances.png`: flat distance, global Wasserstein chord, and
+  local Wasserstein path distance.
+- `cartography_training.png`: Gaussian negative log-likelihood curves.
+- `cartography_results.csv`: every trial and every model.
+- `cartography_summary.csv`: mean and sample standard deviation over trials.
+- `cartography_history.csv`: first-trial optimization histories.
+- `cartography_table.tex`: generated paper table.
 
-固定値は学習900枚、検証300枚、画像 $32\times32\times3$、AdamW 1,500 step、batch size 96、
-距離損失係数0.55、各モデル2初期値、seed 20260730です。
+The experiment uses only the Mercator coordinates and samples from each
+Gaussian during training. Sphere positions, the exact metric `sech(y)^2 I`,
+curvature one, and great-circle distances are evaluation-only targets.

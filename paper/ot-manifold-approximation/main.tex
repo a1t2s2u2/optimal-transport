@@ -1,465 +1,736 @@
-\documentclass[uplatex,dvipdfmx,11pt,a4paper]{jsarticle}
+\documentclass[10pt,twocolumn]{article}
 
 \input{preamble}
 
-\title{\textbf{画像から潜在空間の形を選べるか}\\
-{\large ---距離保存による構造選択と誤差保証---}}
-\author{}
+\title{\textbf{Wasserstein Cartography of Gaussian Decoders}\\
+\large A Regularity Hierarchy for Latent Metrics, Distances, and Curvature}
+\author{Anonymous Authors}
 \date{}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-オートエンコーダが画像を再構成できても，その潜在空間がデータの幾何を正しく表すとは限らない．
-本稿は，複数の候補から潜在空間の形を選ぶ問題を考える．入力は高次元画像，画像間の近さを表す
-距離，および候補$\R^2,\mathbb T^2,S^2$である．各候補上に同規模のオートエンコーダを学習し，
-独立な検証データ上の再構成誤差と距離歪みで候補を選ぶ．出力は，選ばれた空間と各画像の潜在座標である．
+A probabilistic decoder may fit its observations accurately while inducing the
+wrong geometry on its latent space.  We make this gap quantitative for diagonal
+Gaussian decoders equipped with the 2-Wasserstein distance.  The Gaussian
+closed form turns the decoder into a Euclidean parameter immersion
+$F=(m,\sigma)$, whose pullback metric is $G=J_F^{\trans}J_F$.  Our main result
+establishes a regularity hierarchy: uniform first-derivative error controls the
+metric and every intrinsic distance multiplicatively, whereas curvature
+requires uniform second-derivative control.  Both requirements are necessary.
+We also show that noisy local $W_2^2$ measurements recover the metric with the
+bias--noise tradeoff $O(h^2+\eta/h^2)$, yielding $O(\sqrt\eta)$ accuracy at the
+optimal probe scale.
+We construct Gaussian decoders that converge uniformly without metric
+convergence, and decoders that converge in $C^1$ while their Gaussian curvature
+does not converge.  In particular, a piecewise-affine ReLU parameter decoder is
+flat almost everywhere, regardless of its distributional fit.
 
-理論上の主結果は二つである．第一に，入力として使う画像間距離の誤差を
-$\varepsilon_{\rm obs}$，学習後の距離歪みを$\eta$とすると，真の潜在距離の復元誤差は
-$\eta+\varepsilon_{\rm obs}$以下になる．第二に，最良候補と次点の母集団評価値の差が，
-観測距離の誤差と有限検証標本の誤差を上回れば，正しい候補を高確率で選べる．どちらの結果も
-最適化法や誤差逆伝播法を仮定しない．
-
-理論を数値検証できる制御データとして，球面上の状態$z\in S^2$から
-$32\times32\times3=3{,}072$次元の応答画像を生成する．正解座標を隠して900枚で学習し，
-独立な300枚で候補を比較した結果，$S^2$が選ばれた．検証評価値は$S^2$で$0.00079$，
-$\mathbb T^2$で$0.00620$，$\R^2$で$0.06190$であり，真の距離に対するRMSEは$0.00112$だった．
-さらに，画像解像度による距離誤差がほぼ$D^{-1}$で減少することを理論と実験の両方で確認した．
-本稿の貢献は無仮定な多様体発見ではなく，候補と画像間距離を与えたとき，潜在構造を選べる条件を
-明示したことである．
+We introduce a controlled ``Wasserstein cartography'' benchmark in which a
+Mercator chart hides a unit sphere behind a learned family of Gaussian
+distributions.  The exact solution has metric $\sech^2(y)I$, curvature one, and
+an analytic distinction between the global Wasserstein chord and the intrinsic
+transport path.  Over five independent trials, a smooth Tanh decoder reaches
+metric relative error $0.075\pm0.008$, curvature MAE $0.140\pm0.016$, and
+geodesic RMSE $0.021\pm0.003$.  A ReLU decoder obtains nearly the same held-out
+likelihood but curvature MAE $1.000\pm0.000$.  The results show that
+reconstruction, distance, and curvature are different statistical targets, and
+identify the derivative accuracy needed for each.
 \end{abstract}
 
-\medskip
-\noindent\textbf{キーワード}：表現学習，潜在多様体，オートエンコーダ，距離保存，有限標本
+\section{Introduction}
 
-\section{はじめに}
-\label{sec:introduction}
+Latent variables are coordinates, not geometry.  Reparameterizing a latent
+space can drastically change Euclidean distances while leaving the generated
+distribution unchanged.  Pullback Riemannian geometry addresses this problem
+by measuring a latent displacement through the decoder
+\cite{arvanitidis2018,chen2018}.  The resulting geodesics have been used for
+interpolation, clustering, motion synthesis, and geometry-aware generation.
 
-高次元データが少数の潜在変数から生成されるという仮説は，表現学習の基本的な動機である．しかし，
-通常のオートエンコーダが直接保証するのは画像の再構成であり，潜在空間の距離や形ではない．例えば，
-球面上のデータを一枚の平面へ連続的に開けば，どこかに切れ目または距離歪みが生じる．それでも十分な
-表現力を持つ復号器は，有限個の訓練画像を再構成できる可能性がある．したがって，再構成誤差だけでは
-潜在空間$\R^2$，トーラス$\mathbb T^2$，球面$S^2$を選べない．
+A fundamental issue remains.  A decoder is trained to fit distributions or
+samples, but its metric depends on first derivatives and its curvature on
+second derivatives.  Small reconstruction or likelihood error therefore need
+not imply small geometric error.  This mismatch is particularly consequential
+for modern piecewise-linear networks: they may approximate a smooth decoder
+well in value while having a qualitatively different second-order geometry.
 
-本稿では問題を次のように限定する．画像$x_i$に加えて，意味的な近さを表す距離
-$\widehat d(x_i,x_j)$が利用でき，潜在空間は有限候補$M_1,\dots,M_m$のどれかであると仮定する．
-各候補について，画像を$M_j$上の点へ写す符号化器$E_j$と，画像へ戻す復号器$G_j$を学習する．
-候補選択には，画像の再構成と点間距離の保存を同時に測る独立検証評価値を用いる．
-
-\begin{center}
-\fbox{\begin{minipage}{0.91\linewidth}
-\textbf{問題設定を一行で表すと}
+We study this issue in the simplest nontrivial optimal-transport setting.  Let
 \[
- \underbrace{\{x_i\},\ \widehat d(x_i,x_j),\ \{M_j\}_{j=1}^m}_{\text{入力}}
- \quad\longrightarrow\quad
- \underbrace{\widehat M,\ \{E_{\widehat M}(x_i)\}}_{\text{出力}}.
+ K_z=\mathcal N\!\left(m(z),\diag(\sigma(z)^2)\right),
+ \qquad z\in\cZ\subset\R^d,
 \]
-真の潜在座標は学習にも候補選択にも使わない．復元できるのは座標軸そのものではなく，
-回転や反転を同一視した距離空間としての構造である．
-\end{minipage}}
-\end{center}
+be a diagonal Gaussian decoder.  The exact Gaussian formula gives
+\[
+ \W(K_z,K_{z'})^2
+ =\norm{m(z)-m(z')}^2+\norm{\sigma(z)-\sigma(z')}^2.
+\]
+Thus $F=(m,\sigma)$ embeds the decoder family into a Euclidean space, and
+local optimal-transport cost induces the pullback metric
+$G=J_F^{\trans}J_F$.  This setting isolates the learning question without
+requiring an approximation to the ambient Wasserstein metric.
 
-\clearpage
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=\linewidth]{experiments/sensor_source_to_image.png}
-  \caption{本稿の入力と隠れた生成過程．球面上の一点が3,072次元画像を一枚生成する．番号と色は
-  対応を説明するためだけに表示する．モデルへの入力は右側の画像，画像間距離，候補空間であり，
-  左側の正解座標ではない．}
-  \label{fig:input-output}
-\end{figure}
-
-図~\ref{fig:input-output}は本稿の制御実験を表す．左の状態$z\in S^2$から右の応答画像が一枚
-生成されるが，ニューラルネットが見るのは右側だけである．MNISTなら，右側を一枚の数字画像，左側を
-数字の形を決める未知の要因と考えればよい．本稿では正解が分かる合成画像を使うことで，選択結果だけでなく
-真の距離に対する誤差まで測定する．
-
-\paragraph{本稿の貢献．}
+\paragraph{Contributions.}
 \begin{enumerate}
-  \item 画像間距離の誤差と符号化器の距離歪みを分離し，真の潜在距離をどこまで復元できるかを示す．
-  \item 独立検証標本を用いて有限個の潜在空間から正しい候補を選べる分離条件を与える．
-  \item 球面から生成される画像データを構成し，画像解像度，ノイズ，モデル誤差を同じ距離RMSEで比較する．
+  \item We prove explicit stability bounds from decoder derivative error to the
+  pullback metric, all intrinsic distances, the second fundamental form, and
+  Gaussian curvature.  In short, $C^1$ accuracy controls distance and $C^2$
+  accuracy controls curvature.
+  \item We give a central local-transport estimator for the full metric tensor.
+  Under squared-distance error $\eta$, its error is
+  $O(h^2+\eta/h^2)$ and is minimized at spatial scale $h\asymp\eta^{1/4}$.
+  \item We prove that the hierarchy is necessary through two smooth
+  counterexamples inside the class of Gaussian decoders.  We also formalize the
+  almost-everywhere flatness of piecewise-affine parameter decoders.
+  \item We connect the global Wasserstein chord to intrinsic transport through
+  a curvature-controlled cubic bound.  This distinguishes direct transport
+  between endpoint distributions from paths constrained to the decoder family.
+  \item We provide a fully reproducible benchmark with known metric, curvature,
+  geodesics, and surface.  Unlike a generic synthetic point cloud, every plotted
+  object has an explicit statistical input and a unique evaluation target.
 \end{enumerate}
 
-\section{潜在空間を選ぶ方法}
-\label{sec:method}
+\section{Related Work}
 
-\subsection{利用する情報と利用しない情報}
+The pullback geometry of deep generative models was developed for deterministic
+and stochastic decoders by Arvanitidis et al.~\cite{arvanitidis2018} and Chen
+et al.~\cite{chen2018}.  For Gaussian decoders, their expected stochastic
+metric has the same expression $J_m^{\trans}J_m+J_\sigma^{\trans}J_\sigma$ that
+we derive directly from $W_2$.  Later work regularizes this metric toward
+flatness \cite{chen2020}, enriches the ambient metric with domain knowledge
+\cite{arvanitidis2021}, approximates it using the latent prior
+\cite{arvanitidis2022prior}, or replaces the ambient geometry with Fisher--Rao
+geometry for more general distributions \cite{arvanitidis2022fisher}.  Recent
+methods use decoder ensembles \cite{syrota2024}, Riemannian data spaces
+\cite{rozo2025}, and score models \cite{diepeveen2025}.  These works construct
+or exploit latent metrics.  We instead ask which mode of decoder convergence is
+sufficient for the learned metric and curvature themselves to converge.
 
-真の潜在状態を$Z\in M_\star$，観測画像を$X\in\R^P$とし，
+Graph shortest paths estimate manifold geodesics from local ambient distances,
+as in Isomap \cite{tenenbaum2000}.  Our local edge costs are not generic
+Euclidean proxies: they are exact $W_2$ distances between decoder distributions.
+We retain the distinction between this global chord metric and the path metric
+it induces on the decoder family.  Riemannian diffusion models
+\cite{debortoli2022} illustrate a downstream setting in which recovering the
+correct intrinsic geometry is operationally important.
+
+The Gaussian $W_2$ formula goes back to Givens and Shortt
+\cite{givensshortt1984}; the geometry of the full Gaussian family is studied by
+Takatsu \cite{takatsu2011}.  We follow the Wasserstein notation of
+Villani \cite{villani2009} and restrict the main results to diagonal covariance,
+where the parameter immersion and all constants are transparent.
+
+\section{Wasserstein Pullback Geometry}
+\label{sec:setup}
+
+Let $\cZ\subset\R^d$ be connected and let
+$m:\cZ\to\R^n$ and $\sigma:\cZ\to(0,\infty)^n$.  Define
 \[
- Z\sim\mu_\star,\qquad X=F(Z)+\xi
- \tag{2.1}
+ F(z):=(m(z),\sigma(z))\in\R^{2n}.
 \]
-と書く．$F$は未知でもよい．真の距離$d_\star(Z,Z')$は学習時には観測できないため，画像から計算できる
-距離$\widehat d(X,X')$を使う．実データでは，この距離は既知の変換，時系列上の近さ，画像特徴，あるいは
-画像を質量分布とみなした最適輸送距離から構成できる．ただし，距離の質が悪ければ潜在幾何も回復できない．
-この依存性を隠さず誤差項として扱うことが本稿の要点である．
+For diagonal Gaussians, the common-noise optimal coupling yields the following
+identity.
 
-\subsection{再構成に距離保存を加える}
-
-候補$(M_j,d_j)$ごとに，同程度のパラメータ数を持つ符号化器
-$E_j:\R^P\to M_j$と復号器$G_j:M_j\to\R^P$を用意する．訓練標本上で
+\begin{proposition}[Gaussian Wasserstein immersion]
+\label{prop:w2-immersion}
+For every $z,z'\in\cZ$,
+\begin{equation}
+ \W(K_z,K_{z'})=\norm{F(z)-F(z')}.
+ \label{eq:w2-chord}
+\end{equation}
+If $F$ is $C^1$ and $\rank J_F(z)=d$, the infinitesimal metric induced by
+\eqref{eq:w2-chord} is
+\begin{equation}
+ G(z)=J_F(z)^{\trans}J_F(z)
+ =J_m(z)^{\trans}J_m(z)+J_\sigma(z)^{\trans}J_\sigma(z).
+ \label{eq:pullback}
+\end{equation}
+In particular,
 \[
- \widehat L_j
- =\frac1N\sum_{i=1}^N\ell\!\left(x_i,G_jE_jx_i\right)
- +\frac{\lambda}{\binom N2}\sum_{i<i'}
- \left\{\widehat d(x_i,x_{i'})
- -d_j(E_jx_i,E_jx_{i'})\right\}^2
- \tag{2.2}
+ \W(K_z,K_{z+h})^2=h^{\trans}G(z)h+o(\norm{h}^2).
 \]
-を小さくする．第一項は再構成誤差，第二項は距離保存損失である．本稿の理論は式~(2.2)をどのように
-最適化するかには依存せず，学習後の$E_j,G_j$を評価する．
+\end{proposition}
 
-独立な検証標本でも同じ二項を計算し，検証評価値が最小の候補を選ぶ．手順は次の四段階だけである．
-\begin{enumerate}
-  \item 画像と画像間距離を用意する．
-  \item 候補空間ごとに同規模のオートエンコーダを学習する．
-  \item 独立検証データで再構成誤差と距離歪みを計算する．
-  \item 合計評価値が最小の空間と符号化器を出力する．
-\end{enumerate}
+The identity follows coordinatewise from the one-dimensional Gaussian
+transport map.  The expansion follows by differentiating $F$.  We include the
+statement to fix the geometry; a self-contained derivation appears in the
+companion seminar notes.
 
-\section{何が保証されるか}
+\subsection{Recovering the metric from noisy local transport}
+
+Proposition~\ref{prop:w2-immersion} defines $G$ infinitesimally.  The following
+result makes the approximation scale explicit and uses only local endpoint
+distances.  It also shows why taking arbitrarily short edges is harmful when
+transport measurements are noisy.
+
+\begin{proposition}[Central Wasserstein metric probe]
+\label{prop:local-probe}
+Let $F$ be $C^3$, let $v\in\R^d$ be a unit vector, and suppose
+$z\pm hv\in\cZ$.  Assume along this segment that
+\[
+ \norm{J_F}\le M_1,
+ \qquad \norm{D^3F[v,v,v]}\le M_3.
+\]
+Suppose $\widetilde D^2(z+hv,z-hv)$ estimates
+$\W(K_{z+hv},K_{z-hv})^2$ with absolute error at most $\eta$.  Define
+\[
+ \widetilde Q_h(z;v)
+ :=\frac{\widetilde D^2(z+hv,z-hv)}{4h^2}.
+\]
+Then
+\begin{equation}
+ \abs{\widetilde Q_h(z;v)-v^{\trans}G(z)v}
+ \le \frac{M_1M_3}{3}h^2+\frac{M_3^2}{36}h^4
+ +\frac{\eta}{4h^2}.
+ \label{eq:local-probe}
+\end{equation}
+In particular, the leading error is $O(h^2+\eta/h^2)$ and choosing
+$h\asymp\eta^{1/4}$ gives $O(\sqrt\eta)$ error.  In two dimensions, evaluating
+$\widetilde Q_h$ at $e_1,e_2$ and
+$e_\pm=(e_1\pm e_2)/\sqrt2$ recovers every metric entry via
+\begin{align*}
+ \widehat G_{11}&=\widetilde Q_h(e_1),
+ &\widehat G_{22}&=\widetilde Q_h(e_2),\\
+ \widehat G_{12}&=
+ \frac{\widetilde Q_h(e_+)-\widetilde Q_h(e_-)}{2}.
+\end{align*}
+\end{proposition}
+
+\begin{proof}
+Symmetric Taylor expansion gives
+\begin{align*}
+ F(z+hv)-F(z-hv)&=2hJ_F(z)v+r_h,\\
+ \norm{r_h}&\le M_3h^3/3.
+\end{align*}
+After division by $2h$, the remainder has norm at most $M_3h^2/6$.
+Expanding the squared norm and using \eqref{eq:w2-chord} yields the first two
+terms in \eqref{eq:local-probe}; the measurement error contributes
+$\eta/(4h^2)$.  The polarization identities follow from
+$Q(v)=v^{\trans}Gv$.
+\end{proof}
+
+For a piecewise $C^1$ curve $c:[0,1]\to\cZ$, define
+\begin{align*}
+ L_G(c)&=\int_0^1
+ \sqrt{\dot c(t)^{\trans}G(c(t))\dot c(t)}\dd t,\\
+ d_G(z,z')&=\inf_{c(0)=z,\,c(1)=z'}L_G(c).
+\end{align*}
+The chain rule shows that $L_G(c)$ is exactly the Euclidean length of
+$F\circ c$.  Therefore
+\begin{equation}
+ \W(K_z,K_{z'})\le d_G(z,z').
+ \label{eq:chord-intrinsic}
+\end{equation}
+The left side permits a straight chord through distributions outside the
+decoder family; the right side constrains the entire path to $F(\cZ)$.
+
+When $d=2$ and $F$ is $C^2$, let
+\[
+ P=J_FG^{-1}J_F^{\trans},\qquad
+ B_{ij}=(I-P)\partial_i\partial_jF.
+\]
+Here $P$ projects onto the tangent space and $B$ is the second fundamental
+form.  The Gauss equation gives
+\begin{equation}
+ \mathcal K_F
+ =\frac{\langle B_{11},B_{22}\rangle-\norm{B_{12}}^2}{\det G}.
+ \label{eq:gauss}
+\end{equation}
+Equations \eqref{eq:pullback} and \eqref{eq:gauss} expose the central learning
+issue: values determine the fitted distributions, first derivatives determine
+distance, and second derivatives determine curvature.
+
+\section{Which Decoder Accuracy Controls Geometry?}
 \label{sec:theory}
 
-\subsection{距離復元誤差の分解}
+We now quantify the derivative hierarchy.  Matrix norms without a subscript
+are Euclidean operator norms.  For a tensor of second derivatives, maxima are
+taken over the two coordinate indices.
 
-学習後の候補$j$について，観測距離に対する歪みと観測距離自体の誤差を
+\begin{theorem}[Quantitative stability of learned geometry]
+\label{thm:stability}
+Let $d=2$ and let $F,\widehat F:\cZ\to\R^N$ be $C^2$ maps.  Assume $F$ is an
+immersion and, uniformly on $\cZ$,
 \[
-\begin{aligned}
- \eta_j
- &:=\norm{d_j(E_jX,E_jX')-\widehat d(X,X')}_{L^2},\\
- \varepsilon_{\rm obs}
- &:=\norm{\widehat d(X,X')-d_\star(Z,Z')}_{L^2}
-\end{aligned}
-\tag{3.1}
+ \sigma_{\min}(J_F)\ge s>0,\quad
+ \norm{J_F}\le M_1,\quad
+ \max_{i,j}\norm{\partial_i\partial_jF}\le M_2.
 \]
-と定める．
-
-\begin{proposition}[距離誤差の分解]
-\label{prop:decomposition}
-任意の符号化器と候補空間について
-\[
- \norm{d_j(E_jX,E_jX')-d_\star(Z,Z')}_{L^2}
- \leq \eta_j+\varepsilon_{\rm obs}.
- \tag{3.2}
-\]
-\end{proposition}
-
-\begin{proof}
-$L^2$空間の三角不等式を適用すればよい．
-\end{proof}
-
-式~(3.2)は単純だが，実験設計上重要である．左辺は最終的に知りたい真の幾何誤差である．右辺の
-$\eta_j$はモデルを改善すると減り，$\varepsilon_{\rm obs}$は画像間距離を改善すると減る．この二つを
-一つの潜在損失として混同しないことで，失敗がモデルと観測のどちらに由来するかを判定できる．
-
-\subsection{有限標本で候補を正しく選べる条件}
-
-すべての距離を$[0,1]$へ正規化する．真の距離を使えたと仮定した候補$j$の理想評価値を
-\[
- R_j^\circ
- :=\E\ell(X,G_jE_jX)
- +\lambda\E\left\{d_\star(Z,Z')-d_j(E_jX,E_jX')\right\}^2
- \tag{3.3}
-\]
-とする．実際の母集団評価値$R_j$は$d_\star$を$\widehat d$へ置き換えたものである．
-$\abs{(a-c)^2-(b-c)^2}\leq2\abs{a-b}$より
-\[
- \abs{R_j-R_j^\circ}\leq2\lambda\varepsilon_{\rm obs}
- \tag{3.4}
-\]
-である．
-
-学習後の$m$個の候補を固定し，学習に使っていない$n$標本で経験評価値$\widehat R_j$を計算する．
-
-\begin{theorem}[潜在構造の選択保証]
-\label{thm:selection}
-$0\leq\ell\leq B$とする．理想評価値の最良候補を$j^\star$，次点との分離幅を
-\[
- \Gamma:=\min_{j\neq j^\star}(R_j^\circ-R_{j^\star}^\circ)
- \tag{3.5}
-\]
-とおく．さらに
-\[
- r_n(\delta)
- :=B\sqrt{\frac{\log(4m/\delta)}{2n}}
- +\lambda\sqrt{\frac{\log(4m/\delta)}{2\lfloor n/2\rfloor}}
- \tag{3.6}
-\]
-とする．もし
-\[
- \boxed{\Gamma>4\lambda\varepsilon_{\rm obs}+2r_n(\delta)}
- \tag{3.7}
-\]
-ならば，学習標本を条件付けた上で，確率$1-\delta$以上で
-$\arg\min_j\widehat R_j=j^\star$となる．
+Set
+\begin{align*}
+ \varepsilon_1&:=\sup_z\norm{J_{\widehat F}(z)-J_F(z)},\\
+ \varepsilon_2&:=\max_{i,j}\sup_z
+ \norm{\partial_i\partial_j\widehat F(z)-\partial_i\partial_jF(z)}.
+\end{align*}
+Suppose $\varepsilon_1<s$ and define
+\begin{align*}
+ q&:=2M_1\varepsilon_1+\varepsilon_1^2,
+ &\delta&:=q/s^2<1,\\
+ p&:=\frac{\varepsilon_1}{s-\varepsilon_1},
+ &\beta&:=\varepsilon_2+pM_2.
+\end{align*}
+Then $\widehat F$ is an immersion and the following statements hold.
+\begin{enumerate}[label=(\roman*)]
+  \item The metrics satisfy
+  \begin{equation}
+   \begin{aligned}
+   \norm{\widehat G-G}&\le q,\\
+   (1-\delta)G&\preceq\widehat G\preceq(1+\delta)G.
+   \end{aligned}
+   \label{eq:metric-stability}
+  \end{equation}
+  Consequently, for every $z,z'$ in the same component,
+  \begin{equation}
+   \sqrt{1-\delta}\,d_G(z,z')
+   \le d_{\widehat G}(z,z')
+   \le\sqrt{1+\delta}\,d_G(z,z').
+   \label{eq:distance-stability}
+  \end{equation}
+  \item The second fundamental forms obey
+  $\max_{i,j}\norm{\widehat B_{ij}-B_{ij}}\le\beta$.  Moreover,
+  \begin{align}
+  \abs{\mathcal K_{\widehat F}-\mathcal K_F}
+  &\le \frac{4M_2\beta+2\beta^2}{(s-\varepsilon_1)^4}\notag\\
+  &\quad+\frac{2M_2^2(2M_1^2q+q^2)}
+  {s^4(s-\varepsilon_1)^4}.
+  \label{eq:curvature-stability}
+  \end{align}
+\end{enumerate}
 \end{theorem}
 
+The theorem is agnostic to the optimizer and architecture.  It is a transfer
+result: any statistical or approximation guarantee for decoder derivatives
+immediately becomes a geometric guarantee.  The denominator also identifies a
+failure mode: geometry is unstable near rank-deficient decoder Jacobians.
+
 \begin{proof}
-再構成項にはHoeffding不等式，点対の距離項には有界な2次U統計量のHoeffding不等式を適用する．
-候補について和事象を取ると，確率$1-\delta$以上で
-$\max_j\abs{\widehat R_j-R_j}\leq r_n(\delta)$を得る．式~(3.4)により，二候補の
-理想評価値の差は観測距離の置換で最大$4\lambda\varepsilon_{\rm obs}$，経験推定で最大$2r_n$だけ
-縮む．式~(3.7)の下では順位が逆転しない．
+Write $J=J_F$, $\widehat J=J+E$.  Expanding
+$\widehat J^{\trans}\widehat J-J^{\trans}J$ gives
+\[
+ \norm{\widehat G-G}\le2\norm{J}\norm{E}+\norm{E}^2\le q.
+\]
+Since $G\succeq s^2I$, this implies \eqref{eq:metric-stability} as quadratic
+forms.  Integrating the square-root bounds along every curve and taking infima
+proves \eqref{eq:distance-stability}.  Also
+$\sigma_{\min}(\widehat J)\ge s-\varepsilon_1>0$.
+
+Let $P$ and $\widehat P$ be the tangent-space projectors.  The elementary
+subspace perturbation bound
+$\norm{\widehat P-P}\le\varepsilon_1/(s-\varepsilon_1)=p$ follows by measuring
+the distance from a unit vector in either column space to the other space.
+Writing $H_{ij}=\partial_i\partial_jF$,
+\[
+ \widehat B_{ij}-B_{ij}
+ =(I-\widehat P)(\widehat H_{ij}-H_{ij})
+ +(P-\widehat P)H_{ij},
+\]
+proves the $\beta$ bound.
+
+Let $N=\langle B_{11},B_{22}\rangle-\norm{B_{12}}^2$.  Projection does not
+increase norms, so $\norm{B_{ij}}\le M_2$ and
+\[
+ \abs{\widehat N-N}\le4M_2\beta+2\beta^2,
+ \qquad \abs{N}\le2M_2^2.
+\]
+Furthermore, $\det G\ge s^4$, $\det\widehat G\ge(s-\varepsilon_1)^4$, and the
+two-dimensional determinant identity gives
+\[
+ \abs{\det\widehat G-\det G}\le2M_1^2q+q^2.
+\]
+Applying these inequalities to
+$\widehat N/\det\widehat G-N/\det G$ proves
+\eqref{eq:curvature-stability}.
 \end{proof}
 
-この定理の意味は明瞭である．正しい候補を選ぶには，候補間の差$\Gamma$が大きいだけでなく，
-入力距離が正確で，検証標本が十分多くなければならない．ニューラルネットの表現力や最適化失敗は
-学習後の評価値と分離幅へ入り，特定の学習アルゴリズムを仮定する必要はない．
+\subsection{The regularity requirements are necessary}
 
-\section{正解を測れる球面画像データ}
-\label{sec:controlled-data}
+Small value error alone cannot control derivatives, and first-derivative
+control alone cannot control curvature.  The next proposition makes both gaps
+explicit without leaving the Gaussian decoder class.
 
-\subsection{画像の生成}
-
-理論の各誤差項を別々に測るため，正解多様体が既知の画像データを用意する．潜在状態
-$z\in S^2$を球面上一様に選び，$D=q^2$個の方向$a_1,\dots,a_D\in S^2$を$q\times q$格子へ
-並べる．各方向の三種類の応答をRGBの三チャネルとして表示し，一枚の画像$X(z)$を得る．第一チャネルは
-\[
- r_z(a)=\frac12+\alpha\langle a,z\rangle,
- \qquad 0<\alpha<\frac12
- \tag{4.1}
-\]
-であり，第二チャネルは$z$付近で明るくなる局所応答，第三チャネルは波面状の応答である．
-ニューラルネットは三チャネルすべてを再構成するが，画像間距離の計算には解析可能な第一チャネルだけを
-用いる．正解$z$は最後の診断評価まで隠す．
-
-このデータは実測画像の代用品ではなく，画像解像度とノイズが潜在距離へ与える影響を定理と同じ量で
-測るための制御実験である．
-
-\subsection{有限解像度による距離誤差}
-
-球面の直径を1へ正規化した距離を
-$d_\star(z,z')=\norm{z-z'}_2/2$とする．球面一様確率測度を$\omega$とすると，回転対称性から
-$\int aa^\top\omega(\d a)=I_3/3$である．したがって
-\[
- \frac{3}{4\alpha^2}\int_{S^2}
- \abs{r_z(a)-r_{z'}(a)}^2\omega(\d a)
- =d_\star(z,z')^2.
- \tag{4.2}
-\]
-無限解像度では，画像の第一チャネルが真の球面距離を厳密に保存する．
-
-有限個の方向と重み$w_\ell\geq0$，$\sum_\ell w_\ell=1$に対し
-\[
- Q_D:=\sum_{\ell=1}^D w_\ell a_\ell a_\ell^\top,
- \qquad
- \widehat d_D^2
- :=\frac{3}{4\alpha^2}\sum_{\ell=1}^D w_\ell
- \abs{r_z(a_\ell)-r_{z'}(a_\ell)}^2
- \tag{4.3}
-\]
-と定める．
-
-\begin{proposition}[有限解像度の一様誤差]
-\label{prop:resolution}
-任意の$z,z'\in S^2$について
-\[
- \abs{\widehat d_D(z,z')^2-d_\star(z,z')^2}
- \leq3\norm{Q_D-I_3/3}_{\rm op}.
- \tag{4.4}
-\]
-緯度経度のmidpoint格子では右辺は$O(q^{-2})=O(D^{-1})$である．
+\begin{proposition}[Sharpness of the regularity hierarchy]
+\label{prop:counterexamples}
+On $\cZ=(-1,1)^2$, there are smooth immersed diagonal Gaussian decoders with
+the following properties.
+\begin{enumerate}[label=(\alph*)]
+  \item $F_k\to F_0$ uniformly, while the induced metrics do not converge
+  uniformly.
+  \item $H_k\to H_0$ in $C^1$, while their Gaussian curvatures do not converge
+  pointwise at the origin.
+\end{enumerate}
 \end{proposition}
 
 \begin{proof}
-$u=z-z'$とおくと左辺は
-$\frac34\abs{u^\top(Q_D-I_3/3)u}$である．$\norm{u}_2\leq2$より式~(4.4)を得る．
-格子については経度方向の対称性と緯度方向のmidpoint積分則を適用する．
+It suffices to specify the mean immersion in $\R^3$ and append a constant
+positive standard-deviation vector.  For (a), take
+\begin{align*}
+ F_k(x,y)&=(x,y,k^{-1}\sin(kx)),\\
+ F_0(x,y)&=(x,y,0).
+\end{align*}
+The value error is at most $k^{-1}$, but at $x=0$ the $(1,1)$ metric entry is
+$1+\cos^2(kx)=2$, rather than the limiting value $1$.
+
+For (b), let
+\begin{align*}
+ H_k(x,y)&=\left(x,y,k^{-2}[\cos(kx)+\cos(ky)]\right),\\
+ H_0(x,y)&=(x,y,0).
+\end{align*}
+The value error is at most $2k^{-2}$ and the Jacobian error at most
+$\sqrt2/k$.  Thus $H_k\to H_0$ in $C^1$.  For a graph $(x,y,f(x,y))$,
+\[
+ \mathcal K=\frac{f_{xx}f_{yy}-f_{xy}^2}
+ {(1+f_x^2+f_y^2)^2}.
+\]
+At the origin, $f_x=f_y=f_{xy}=0$ and $f_{xx}=f_{yy}=-1$, so
+$\mathcal K_{H_k}(0,0)=1$ for every $k$, whereas
+$\mathcal K_{H_0}(0,0)=0$.
 \end{proof}
 
-各画素へ独立な平均0のsub-Gaussianノイズを加え，既知の分散$2\sigma^2$を二画像間の二乗差から
-差し引く．$n$枚の画像の全点対について，weighted Bernstein不等式と和事象評価から，確率
-$1-\delta$以上で
+\begin{corollary}[Piecewise-affine decoders are flat almost everywhere]
+\label{cor:relu-flat}
+If the parameter map $F=(m,\sigma)$ is a piecewise-affine immersion, then its
+pullback curvature is zero in the interior of every linear region and hence
+almost everywhere.  This applies to a ReLU network with an affine parameter
+output, independently of its value approximation error.
+\end{corollary}
+
+Nonlinear output transformations such as $\sigma=\exp(\ell)$ can themselves
+create curvature, so Corollary~\ref{cor:relu-flat} concerns the actual parameter
+map $F$, not merely its pre-activation.  Our ReLU baseline outputs $\sigma$
+directly and enforces positivity with a piecewise-affine clamp.
+
+\subsection{Global chords versus intrinsic transport}
+
+The stability theorem controls the path metric.  It does not make the endpoint
+Wasserstein distance equal to that path metric.  Their local discrepancy is
+controlled by extrinsic bending.
+
+\begin{theorem}[Cubic chord--intrinsic gap]
+\label{thm:chord-gap}
+Let $\gamma:[0,L]\to\cZ$ be a unit-speed minimizing $G$-geodesic.  If
 \[
- \max_{i<j}\abs{\widehat d_{D,\sigma}^2-\widehat d_D^2}
- \leq C\left(\frac{\sigma}{\alpha}+\frac{\sigma^2}{\alpha^2}\right)
- \norm{w}_2\sqrt{\log\frac{2n^2}{\delta}}
- +C\frac{\sigma^2}{\alpha^2}\norm{w}_\infty\log\frac{2n^2}{\delta}
- \tag{4.5}
+ \norm{B(\dot\gamma(t),\dot\gamma(t))}\le\Lambda
+ \quad\text{and}\quad \Lambda L\le\pi,
 \]
-となる普遍定数$C$が存在する．等重みなら$\norm{w}_2=D^{-1/2}$，
-$\norm{w}_\infty=D^{-1}$である．式~(4.4)，(4.5)が定理~\ref{thm:selection}の
-$\varepsilon_{\rm obs}$を画像解像度とノイズへ結びつける．
+then
+\begin{equation}
+ \frac{2}{\Lambda}\sin\frac{\Lambda L}{2}
+ \le \W(K_{\gamma(0)},K_{\gamma(L)})\le L,
+ \label{eq:sine-bound}
+\end{equation}
+with the limiting interpretation when $\Lambda=0$.  Consequently,
+\begin{equation}
+ 0\le L-\W(K_{\gamma(0)},K_{\gamma(L)})
+ \le\frac{\Lambda^2L^3}{24}.
+ \label{eq:cubic-gap}
+\end{equation}
+\end{theorem}
 
-\section{実験}
-\label{sec:experiment}
+The upper bound is \eqref{eq:chord-intrinsic}.  For completeness, the lower
+bound follows because $c=F\circ\gamma$ has unit speed and
+$\norm{\ddot c}=\norm{B(\dot\gamma,\dot\gamma)}\le\Lambda$.  Hence the angle
+between $\dot c(s)$ and $\dot c(t)$ is at most $\Lambda\abs{s-t}$.  Expanding
+$\norm{\int_0^L\dot c(t)\dd t}^2$ as a double integral and lower-bounding the
+inner product by $\cos(\Lambda\abs{s-t})$ yields
+\eqref{eq:sine-bound}.  The inequality $\sin x\ge x-x^3/6$ gives
+\eqref{eq:cubic-gap}.  A circle of radius $1/\Lambda$ attains the sine bound.
 
-\subsection{設定}
+\section{A Benchmark with an Exact Geometric Answer}
+\label{sec:benchmark}
 
-画像サイズは$32\times32\times3$，したがって$D=1{,}024$，入力次元は3,072である．
-第一チャネルの$\alpha$は$0.42$，全チャネルへ標準偏差$0.006$のノイズを加える．学習900枚，
-独立検証300枚を生成した．検証集合で，画像から計算した距離と真の距離の相関は$0.999997$，
-RMSEは$0.000620$である．
+We construct a benchmark whose observations are distributions, whose visible
+coordinates are distorted, and whose complete geometry is known analytically.
+This realizes the map analogy literally: equal coordinate displacements on a
+flat map need not represent equal travel distances.
 
-候補は$\R^2,\mathbb T^2=S^1\times S^1,S^2$であり，各距離を直径1へ正規化する．すべて同じ
-二層畳み込み符号化器・復号器を使い，潜在層だけを候補空間へ射影する．各モデルは約41万パラメータ，
-AdamWで1,500 step，batch size 96，$\lambda=0.55$とした．各候補を二つの初期値で学習し，
-初期値も別候補と数えるため定理~\ref{thm:selection}では$m=8$である．また，距離保存損失を除いた
-$S^2$モデルを比較対象に加える．
+Let $u=(\lambda,y)\in[-\pi,\pi)\times[-2.5,2.5]$ be Mercator coordinates and
+define the inverse map to the unit sphere by
+\begin{equation}
+ s(\lambda,y)=
+ \bigl(\sech(y)\cos\lambda,\ \sech(y)\sin\lambda,\ \tanh y\bigr).
+ \label{eq:mercator}
+\end{equation}
+At every coordinate, generate a three-dimensional diagonal Gaussian
+\begin{equation}
+ K_u=\mathcal N\!\left(a s(u),
+ \diag\bigl((\sigma_0\mathbf 1+b s(u))^2\bigr)\right),
+ \label{eq:benchmark-decoder}
+\end{equation}
+where $a=0.8$, $b=0.6$, and $\sigma_0=0.75$.  Positivity follows from
+$\sigma_0>b$, and $a^2+b^2=1$.  Therefore the true parameter map $F_*$ obeys
+\begin{equation}
+ \W(K_u,K_v)=\norm{F_*(u)-F_*(v)}=\norm{s(u)-s(v)}.
+ \label{eq:exact-sphere-chord}
+\end{equation}
+The benchmark has the exact answers
+\begin{align}
+ G_*(\lambda,y)&=\sech^2(y)I_2,
+ &\mathcal K_*&=1,\notag\\
+ d_{G_*}(u,v)&=\arccos\langle s(u),s(v)\rangle.
+ \label{eq:benchmark-truth}
+\end{align}
+If $d=d_{G_*}(u,v)$, then
+\begin{align}
+ \W(K_u,K_v)&=2\sin(d/2),\notag\\
+ d-\W(K_u,K_v)&=d^3/24+O(d^5).
+ \label{eq:sphere-gap}
+\end{align}
+Thus the sphere attains Theorem~\ref{thm:chord-gap} with $\Lambda=1$.
 
-\subsection{主結果：正しい潜在空間を選べるか}
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.98\textwidth]{experiments/cartography_pipeline.png}
+  \caption{The benchmark and its learned output.  The input consists of a
+  distorted coordinate and samples from its Gaussian distribution.  RGB
+  images visualize the three pairwise marginal densities; they are not extra
+  supervision.  The Tanh decoder never observes the sphere coordinates, but
+  its six-dimensional parameter surface has a three-dimensional principal
+  subspace that recovers the sphere.  Equal numbers denote the same state.}
+  \label{fig:pipeline}
+\end{figure*}
 
-\begin{table}[htbp]
+The parameter surface lies in $\R^6$, but its centered image has rank three.
+Consequently, PCA provides a faithful three-dimensional visualization rather
+than an arbitrary surface reconstructed from the metric alone.  This avoids an
+identifiability error: in general, an intrinsic metric does not uniquely
+determine an extrinsic decoder without the second fundamental form.
+
+\section{Experiments}
+\label{sec:experiments}
+
+\paragraph{Data.}
+We discretize \eqref{eq:mercator} on $72$ longitudes and $41$ Mercator rows,
+giving $2{,}952$ states.  At each state we draw $64$ samples from
+\eqref{eq:benchmark-decoder}.  Seventy percent of states are used for training
+and thirty percent for testing.  The model sees coordinates and sample
+sufficient statistics, never $s(u)$, $G_*$, or $\mathcal K_*$.  We report means
+and sample standard deviations over five independently generated datasets,
+splits, and initializations.
+
+\paragraph{Models and training.}
+All decoders are three-layer MLPs of width $96$ and output
+$(m_\theta,\sigma_\theta)\in\R^6$.  They differ only in hidden activation:
+Tanh, Softplus, or ReLU.  We minimize the exact Gaussian negative
+log-likelihood from empirical means and variances using AdamW for $2{,}400$
+steps.  Standard deviations are output directly with a positive clamp, keeping
+the ReLU parameter map piecewise affine.  Jacobians and Hessians are then
+computed by automatic differentiation.  Local intrinsic distance is estimated
+by shortest paths on a periodic grid graph with exact $W_2$ edge weights.
+
+\paragraph{Metrics.}
+We evaluate held-out parameter RMSE, mean relative Frobenius metric error,
+curvature MAE on $\abs y\le2$, geodesic RMSE over $800$ held-out pairs, and PCA
+surface RMSE after orthogonal alignment.  The oracle geodesic error measures
+grid discretization alone.
+
+\begin{table*}[t]
   \centering
   \small
-  \setlength{\tabcolsep}{4pt}
-  \caption{独立な300枚による候補選択．再構成MSE，距離RMSE，検証評価値は正解座標を使わない．
-  true RMSEと10-NN recallだけが隠していた$z\in S^2$を使う診断値である．}
-  \label{tab:results}
-  \input{experiments/sensor_manifold_table.tex}
-\end{table}
+  \setlength{\tabcolsep}{5pt}
+  \caption{Geometry recovery over five independent trials (mean $\pm$ sample
+  standard deviation).  Smooth decoders recover first- and second-order
+  geometry.  ReLU fits the parameters but is flat almost everywhere, as
+  predicted by Corollary~\ref{cor:relu-flat}.}
+  \label{tab:main-results}
+  \resizebox{0.98\textwidth}{!}{\input{experiments/cartography_table.tex}}
+\end{table*}
 
-表~\ref{tab:results}の検証評価値は$\R^2$で$0.06190$，$\mathbb T^2$で$0.00620$，
-$S^2$の再構成のみで$0.00089$，$S^2$の距離保存ありで$0.00079$となり，正しい候補が選ばれた．
-選択モデルの真の距離RMSEは$0.00112$，10近傍recallは$0.994$である．
+\subsection{Likelihood fit does not determine curvature}
 
-\begin{figure}[htbp]
+Held-out NLL is $0.0708\pm0.0028$ for Tanh,
+$0.0709\pm0.0028$ for Softplus, and $0.0715\pm0.0030$ for ReLU.  These values
+are nearly indistinguishable, and parameter RMSE remains below $0.020$ for all
+models.  Nevertheless, Table~\ref{tab:main-results} shows a qualitative
+difference in geometry.  Tanh reaches curvature MAE $0.140\pm0.016$, whereas
+ReLU returns zero curvature at every evaluation point and therefore MAE exactly
+one in all five trials.  This is not an optimization accident: it is the
+architecture-level prediction of Corollary~\ref{cor:relu-flat}.
+
+\begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{experiments/sensor_diagnostics.png}
-  \caption{左：再構成誤差の学習曲線．中央：選択された$S^2$モデルの真の距離と潜在距離．
-  破線は完全な距離保存を表す．右：正解座標を使わない検証評価値（対数軸）．黒枠が選択モデルである．}
-  \label{fig:diagnostics}
+  \includegraphics[width=\linewidth]{experiments/cartography_training.png}
+  \caption{Training NLL for the first trial.  All architectures fit the
+  observed distributions, so the curvature failure is invisible to the
+  training objective.}
+  \label{fig:training}
 \end{figure}
 
-\subsection{距離保存損失は必要か}
-
-$S^2$の二モデルは再構成MSEがともに約$0.0008$であり，画像だけを見ればほとんど区別できない．
-しかし，距離保存を使わないモデルの真の距離RMSEは$0.0119$で，提案モデルの$0.00112$より約11倍
-大きい．これは本稿の出発点，すなわち「再構成できることと幾何を復元できることは異なる」を直接示す．
-
-\begin{figure}[htbp]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\linewidth]{experiments/sensor_reconstructions.png}
-  \caption{同じ入力画像の再構成比較．平面候補は球面を一枚の座標で表す歪みのため応答を平均化する．
-  球面候補は細部まで再構成するが，再構成画像だけでは距離保存の有無を判定できない．}
-  \label{fig:reconstruction}
-\end{figure}
+  \includegraphics[width=0.98\textwidth]{experiments/cartography_geometry.png}
+  \caption{Learned local length scale $(\det G)^{1/4}$ (top) and Gaussian
+  curvature (bottom) in the distorted chart.  The ground-truth scale is
+  $\sech y$ and the ground-truth curvature is one.  Smooth models recover both
+  fields; the ReLU metric is usable but noisy, while its curvature is
+  identically zero.}
+  \label{fig:geometry}
+\end{figure*}
 
-\subsection{画像解像度とノイズの影響}
+The first-order targets are less fragile.  The ReLU metric error is larger than
+that of Tanh, but its geodesic RMSE is still $0.042\pm0.008$.  This is consistent
+with Theorem~\ref{thm:stability}: a piecewise-affine function can approximate a
+smooth map and its first derivatives sufficiently for distances, while its
+classical Hessian remains zero inside every linear region.
 
-\begin{figure}[htbp]
+\subsection{Local transport removes the chord shortcut}
+
+Figure~\ref{fig:distance} separates three objects that are often conflated.
+Flat coordinate distance has RMSE $0.854\pm0.035$ against the great-circle
+distance.  Direct endpoint $W_2$ is the correct sphere chord but still has RMSE
+$0.362\pm0.013$ as an intrinsic-distance estimator.  Summing only local $W_2$
+edges from the learned Tanh decoder reduces this to $0.021\pm0.003$, close to
+the oracle graph discretization error $0.0148\pm0.0008$.
+
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=0.92\linewidth]{experiments/sensor_accuracy.png}
-  \caption{左：画像を構成する観測方向数$D$と真の距離に対するRMSE．破線は$D^{-1}$の目安である．
-  右：$D=1{,}024$でノイズを増やした結果．各点は6回の平均，帯は標準偏差である．}
-  \label{fig:accuracy}
-\end{figure}
+  \includegraphics[width=0.88\textwidth]{experiments/cartography_distances.png}
+  \caption{Left: flat map distance is coordinate dependent, while global
+  endpoint $W_2$ systematically shortcuts the sphere.  A shortest chain of
+  local $W_2$ edges recovers intrinsic travel distance.  Right: the exact
+  sphere realizes $d-W_2=d-2\sin(d/2)$ and the local cubic law from
+  Theorem~\ref{thm:chord-gap}.}
+  \label{fig:distance}
+\end{figure*}
 
-図~\ref{fig:accuracy}左では$D=16$のRMSE $0.00944$が$D=4{,}096$で$0.0000319$まで減少し，
-ほぼ$D^{-1}$となった．これは命題~\ref{prop:resolution}のmidpoint積分則と整合する．右では
-ノイズ標準偏差$0.0025$から$0.04$の範囲でRMSEがほぼ線形に増え，式~(4.5)の一次項と整合する．
-図の破線は傾きを示す目安であり，理論上界をデータへfitしたものではない．
+Finally, the learned Tanh parameter surface has PCA reconstruction RMSE
+$0.021\pm0.002$ after rigid alignment.  This supplies the visual ``map to
+sphere'' result in Figure~\ref{fig:pipeline}, while the metric, curvature, and
+distance evaluations specify exactly what geometric recovery means.
 
-\section{関連研究と本稿の位置づけ}
-\label{sec:related}
+\clearpage
 
-潜在表現の位相を保存するTopological Autoencoder\cite{moor2020}，復号器が誘導する計量を平坦化する
-VAE\cite{chen2020}，近傍graphの幾何を保存するGraph Geometry-Preserving Autoencoder
-\cite{lim2024}など，オートエンコーダの再構成以外の構造を保つ研究がある．これらに対し本稿は，
-一つの固定された潜在空間で表現を改善するのではなく，複数の位相を持つ候補から一つを選ぶ条件を扱う．
+\section{Discussion and Limitations}
 
-球面潜在分布を用いるVAE\cite{davidson2018}のように，潜在空間へ非Euclid構造を事前に与える研究もある．
-本稿は球面が常に良いとは仮定せず，平面・torus・球面を同じ検証基準で比較する．また，GW距離は異なる
-距離空間の内部距離を比較し\cite{memoli2011}，GWAE\cite{nakagawa2023}はデータ分布と潜在分布を
-直接整合する．本稿では計算が単純な符号化器対応の距離歪みを用い，観測距離の誤差と候補選択の有限標本
-誤差を分離する．
+\paragraph{Implication for generative models.}
+The theorem changes the interpretation of decoder accuracy.  Likelihood or
+reconstruction is a zeroth-order target.  Geometry-aware interpolation requires
+first-order generalization, and curvature-dependent modeling requires
+second-order generalization.  Smooth activations are therefore necessary for a
+classical curvature field, but not sufficient: the learning procedure must also
+control derivative error.  Sobolev regularization, derivative observations, or
+architecture-specific derivative bounds are natural ways to instantiate the
+premises of Theorem~\ref{thm:stability}.
 
-滑らかな多様体に対するrandom projectionの距離保存結果\cite{baraniuk2009}は，一般の多様体を
-低次元Euclid空間へ埋め込む条件を与える．本稿の球面画像は一般的な埋め込み定理ではなく，特定の
-画像生成写像について有限解像度誤差を閉形式で求め，その誤差を深層モデルの選択保証へ接続する例である．
+\paragraph{From a chart to a VAE.}
+The benchmark supplies the latent chart in order to isolate decoder geometry.
+For a VAE, the same analysis is applied after encoding: $z$ is the learned code
+and $F=(m,\sigma)$ is the probabilistic decoder.  When data contain discrete
+classes such as MNIST digits, a single smooth manifold need not be appropriate.
+A natural extension is a class-conditional or stratified family
+$\bigcup_k\cZ_k$, with one pullback geometry per decoder branch.  The present
+theory applies within each smooth stratum but does not identify their topology.
 
-\section{MNISTへ進むために何が必要か}
-\label{sec:mnist}
+\paragraph{Scope.}
+Our exact $W_2$ immersion uses diagonal Gaussians.  Full covariance introduces
+the Bures--Wasserstein geometry, and non-Gaussian decoders require a different
+ambient metric or numerical OT.  The experiment is deliberately controlled:
+real datasets do not provide ground-truth curvature, making them unsuitable for
+validating a curvature consistency theorem by themselves.  We also do not
+claim that the metric determines the extrinsic decoder; recovering an immersion
+up to rigid motion generally requires compatible first and second fundamental
+forms.  Finally, our theorem transfers derivative accuracy to geometry but does
+not by itself prove a neural-network derivative estimation rate.
 
-本稿の入力は画像だけではなく，信頼できる画像間距離$\widehat d$を含む．球面実験ではこの距離を
-解析的に構成したが，MNISTでは真の生成写像も真の距離も未知である．したがって，本稿の結果をそのまま
-使って「MNISTの潜在空間は球面である」と主張することはできない．
+\section{Conclusion}
 
-理論を保ったまま実画像へ近づく最初の段階は，既知変換付きMNISTである．一枚の数字へ回転
-$\theta\in S^1$，平行移動，拡大率，線の太さを加えて画像を生成すれば，少なくとも回転成分の位相は既知で
-ある．画素ごとの差ではなく，変換量またはインクを質量とみなした画像間輸送距離を$\widehat d$に使い，
-$S^1$を含む候補と平面候補を比較できる．必要な理論課題は，この画像間距離が変換パラメータの真の距離を
-どの精度で近似するか，すなわち$\varepsilon_{\rm obs}$を評価することである．
+Optimal transport gives a coordinate-invariant definition of local decoder
+geometry, but it does not make that geometry automatically learnable from a
+good reconstruction.  For diagonal Gaussian decoders, we proved the precise
+hierarchy: $C^1$ decoder control yields stable metrics and intrinsic distances,
+whereas $C^2$ control is required for curvature.  Smooth counterexamples and
+the ReLU result show that these levels cannot be collapsed.  The Wasserstein
+cartography benchmark makes the distinction visible: local transport corrects
+a distorted map and recovers spherical travel, while a model with essentially
+the same likelihood can erase curvature completely.  The appropriate
+``structure'' of a geometry-aware generative model is therefore not specified
+by its latent dimension alone; it includes the differential regularity of its
+decoder and the order of geometry the task requires.
 
-実MNIST全体では，0から9の離散的な数字と，筆跡の連続変化が混在する．単一の滑らかな多様体より
-\[
- \mathcal X=\bigcup_{k=0}^9 M_k
- \tag{7.1}
-\]
-というクラスごとの多様体，またはそれらが交差する層状空間として扱う方が適切である可能性がある．
-この拡張は本稿の有限候補選択を，単一多様体から混合構造の選択へ進める次の研究課題である．
+\section*{Reproducibility}
 
-\section{限界と結論}
-\label{sec:conclusion}
-
-本稿には四つの限界がある．第一に，実験は解析可能な合成画像であり，実データの未知な画像間距離を
-解決していない．第二に，正解$S^2$を候補へ含めており，候補外の位相を自動発見しない．第三に，
-選択定理は学習後の有限候補を固定しており，ニューラルネット全体の最適化誤差を評価しない．第四に，
-実験は一つのデータ分割と二初期値であり，より大規模な反復評価が必要である．したがって現段階の位置づけは，
-実画像に対する完成手法ではなく，潜在構造選択を誤差保証付きで研究するための基準問題である．
-
-その上で，本稿の結論は簡潔である．再構成誤差だけでは潜在空間の形を選べない．画像間距離を使って
-候補ごとの距離歪みを測れば，選ばれた潜在距離の誤差を
-\[
- \boxed{\text{真の距離誤差}\leq
- \text{モデルの距離歪み}+\text{入力距離の誤差}}
- \tag{8.1}
-\]
-と分解できる．さらに，候補間の分離幅が入力距離と有限標本の誤差を上回れば，独立検証データから
-正しい候補を選べる．球面画像の実験では，正解座標を使わずに$S^2$を選び，真の距離をRMSE
-$0.00112$まで復元した．次の本質的課題は，既知変換付きMNISTで画像間距離の誤差を理論化し，
-その後に実データの混合多様体へ進むことである．
-
-\section*{再現方法}
-
-実験からPDFまでを次で再現できる．
+The experiment, all five trials, figures, tables, and this PDF are regenerated
+with:
 \begin{verbatim}
 make paper-all
 \end{verbatim}
-実験scriptはPEP 723 metadataに依存関係を固定する．乱数seed，データ分割，画像生成，ノイズ，
-最適化設定，二初期値はscript内で固定した．
+The script uses fixed PEP~723 dependencies and records every reported trial in
+CSV form.
 
-\small
 \begin{thebibliography}{99}
+\small
 
-\bibitem{baraniuk2009}
-R.~G.~Baraniuk and M.~B.~Wakin.
-\newblock Random projections of smooth manifolds.
-\newblock \emph{Foundations of Computational Mathematics}, 9(1):51--77, 2009.
+\bibitem{arvanitidis2018}
+G.~Arvanitidis, L.~K. Hansen, and S.~Hauberg.
+\newblock Latent space oddity: on the curvature of deep generative models.
+\newblock In \emph{International Conference on Learning Representations}, 2018.
+
+\bibitem{arvanitidis2021}
+G.~Arvanitidis, S.~Hauberg, and B.~Sch\"olkopf.
+\newblock Geometrically enriched latent spaces.
+\newblock In \emph{AISTATS}, pages 631--639, 2021.
+
+\bibitem{arvanitidis2022prior}
+G.~Arvanitidis, S.~Hauberg, P.~Hennig, and M.~Schober.
+\newblock A prior-based approximate latent Riemannian metric.
+\newblock In \emph{AISTATS}, 2022.
+
+\bibitem{arvanitidis2022fisher}
+G.~Arvanitidis, M.~Gonz\'alez-Duque, A.~Pouplin, D.~Kalatzis, and S.~Hauberg.
+\newblock Pulling back information geometry.
+\newblock In \emph{AISTATS}, pages 4872--4894, 2022.
+
+\bibitem{chen2018}
+N.~Chen, A.~Klushyn, R.~Kurle, X.~Jiang, J.~Bayer, and P.~van der Smagt.
+\newblock Metrics for deep generative models.
+\newblock In \emph{AISTATS}, pages 1540--1550, 2018.
 
 \bibitem{chen2020}
 N.~Chen, A.~Klushyn, F.~Ferroni, J.~Bayer, and P.~van der Smagt.
 \newblock Learning flat latent manifolds with VAEs.
-\newblock In \emph{Proceedings of ICML}, pages 1587--1596, 2020.
+\newblock In \emph{ICML}, pages 1587--1596, 2020.
 
-\bibitem{davidson2018}
-T.~R.~Davidson, L.~Falorsi, N.~De Cao, T.~Kipf, and J.~M.~Tomczak.
-\newblock Hyperspherical variational auto-encoders.
-\newblock In \emph{Proceedings of UAI}, pages 856--865, 2018.
+\bibitem{debortoli2022}
+V.~De~Bortoli, E.~Mathieu, M.~Hutchinson, J.~Thornton, Y.~W. Teh, and
+A.~Doucet.
+\newblock Riemannian score-based generative modelling.
+\newblock In \emph{NeurIPS}, 2022.
 
-\bibitem{lim2024}
-J.~Lim, J.~Kim, Y.~Lee, C.~Jang, and F.~C.~Park.
-\newblock Graph geometry-preserving autoencoders.
-\newblock In \emph{Proceedings of ICML}, pages 29795--29815, 2024.
+\bibitem{diepeveen2025}
+W.~Diepeveen, G.~Batzolis, Z.~Shumaylov, and C.-B. Sch\"onlieb.
+\newblock Score-based pullback Riemannian geometry: Extracting the data
+manifold geometry using anisotropic flows.
+\newblock In \emph{ICML}, pages 13746--13773, 2025.
 
-\bibitem{memoli2011}
-F.~M\'emoli.
-\newblock Gromov--Wasserstein distances and the metric approach to object matching.
-\newblock \emph{Foundations of Computational Mathematics}, 11(4):417--487, 2011.
+\bibitem{givensshortt1984}
+C.~R. Givens and R.~M. Shortt.
+\newblock A class of Wasserstein metrics for probability distributions.
+\newblock \emph{Michigan Mathematical Journal}, 31(2):231--240, 1984.
 
-\bibitem{moor2020}
-M.~Moor, M.~Horn, B.~Rieck, and K.~Borgwardt.
-\newblock Topological autoencoders.
-\newblock In \emph{Proceedings of ICML}, pages 7045--7054, 2020.
+\bibitem{rozo2025}
+L.~Rozo, M.~Gonz\'alez-Duque, N.~Jaquier, and S.~Hauberg.
+\newblock Riemann$^2$: Learning Riemannian submanifolds from Riemannian data.
+\newblock In \emph{AISTATS}, pages 3097--3105, 2025.
 
-\bibitem{nakagawa2023}
-N.~Nakagawa, R.~Togo, T.~Ogawa, and M.~Haseyama.
-\newblock Gromov--Wasserstein autoencoders.
-\newblock In \emph{Proceedings of ICLR}, 2023.
+\bibitem{syrota2024}
+S.~Syrota, P.~Moreno-Mu\~noz, and S.~Hauberg.
+\newblock Decoder ensembling for learned latent geometries.
+\newblock In \emph{Geometry-grounded Representation Learning and Generative
+Modeling Workshop}, pages 277--285, 2024.
+
+\bibitem{takatsu2011}
+A.~Takatsu.
+\newblock Wasserstein geometry of Gaussian measures.
+\newblock \emph{Osaka Journal of Mathematics}, 48(4):1005--1026, 2011.
+
+\bibitem{tenenbaum2000}
+J.~B. Tenenbaum, V.~de Silva, and J.~C. Langford.
+\newblock A global geometric framework for nonlinear dimensionality reduction.
+\newblock \emph{Science}, 290(5500):2319--2323, 2000.
+
+\bibitem{villani2009}
+C.~Villani.
+\newblock \emph{Optimal Transport: Old and New}.
+\newblock Springer, 2009.
 
 \end{thebibliography}
 

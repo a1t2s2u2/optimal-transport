@@ -1,51 +1,43 @@
-% ============================================================
-%  preamble.tex — 論文「画像から潜在空間の形を選べるか」
-%  ML 会議（NeurIPS 型・単段組）に準じた体裁
-% ============================================================
+% Conference-style preamble for the standalone paper.
+\usepackage[letterpaper,margin=0.72in,columnsep=0.25in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{graphicx,booktabs,microtype}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
 
-\usepackage{amsmath,amssymb,amsthm,mathtools}
-\usepackage{graphicx,booktabs}
-\usepackage[dvipdfmx,hidelinks]{hyperref}
-\usepackage{pxjahyper}
-\usepackage{geometry}
-\geometry{a4paper,margin=25mm}
+\definecolor{linkblue}{RGB}{25,83,135}
+\hypersetup{colorlinks=true,linkcolor=linkblue,citecolor=linkblue,urlcolor=linkblue}
+\setlist{nosep,leftmargin=*}
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0pt}
 
-% --- 定理環境（論文体裁：装飾なし・節ごとの通し番号）---
 \theoremstyle{plain}
-\newtheorem{theorem}{定理}[section]
-\newtheorem{proposition}[theorem]{命題}
-\newtheorem{lemma}[theorem]{補題}
-\newtheorem{corollary}[theorem]{系}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
 
 \theoremstyle{definition}
-\newtheorem{definition}[theorem]{定義}
-\newtheorem{fact}[theorem]{事実}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
 
 \theoremstyle{remark}
-\newtheorem{remark}[theorem]{注意}
+\newtheorem{remark}[theorem]{Remark}
 
-\renewcommand{\proofname}{証明}
-
-% --- 記法 ---
 \newcommand{\R}{\mathbb{R}}
-\newcommand{\N}{\mathbb{N}}
 \newcommand{\E}{\mathbb{E}}
-\newcommand{\St}{\operatorname{St}}
-\newcommand{\Gr}{\operatorname{Gr}}
-\newcommand{\dist}{\operatorname{dist}}
-\newcommand{\supp}{\operatorname{supp}}
-\newcommand{\sym}{\operatorname{sym}}
-\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\W}{W_2}
+\newcommand{\cP}{\mathcal{P}}
+\newcommand{\cZ}{\mathcal{Z}}
+\newcommand{\norm}[1]{\lVert #1\rVert}
+\newcommand{\abs}[1]{\lvert #1\rvert}
+\newcommand{\op}{\mathrm{op}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\sech}{\operatorname{sech}}
 \newcommand{\rank}{\operatorname{rank}}
-\newcommand{\reach}{\operatorname{reach}}
-\newcommand{\Wass}{\mathrm{W}}
-\newcommand{\Haar}{\operatorname{Haar}}
-\newcommand{\abs}[1]{\lvert #1 \rvert}
-\newcommand{\norm}[1]{\lVert #1 \rVert}
-\newcommand{\Pp}[1]{\mathcal{P}_{#1}}
-\newcommand{\vol}{\operatorname{vol}}
-\renewcommand{\d}{\mathrm{d}}
-
-% --- 体裁 ---
-\setlength{\parindent}{1zw}
-\renewcommand{\abstractname}{要旨}
+\newcommand{\dist}{\operatorname{dist}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\dd}{\,\mathrm{d}}
+\newcommand{\trans}{\mathsf{T}}
