@@ -2,8 +2,8 @@
 
 \input{preamble}
 
-\title{\textbf{ニューラル局所チャートはいくつ必要か}\\
-{\large ---最適輸送による多様体生成モデルの表現限界---}}
+\title{\textbf{局所線形 decoder は何個必要か}\\
+{\large ---最適輸送による多様体生成の近似限界---}}
 \author{}
 \date{}
 
@@ -12,73 +12,48 @@
 
 \begin{abstract}
 \noindent
-VAE や Flow Matching の局所ネットワークを十分に強くすれば，多様体データを
-任意精度で生成できるという普遍近似だけでは，必要なモデル構造は決まらない．本稿は
-「内在次元 $q$ の分布を精度 $\varepsilon$ で生成するには，局所decoderが何個必要か」
-を問う．離散chart $J\in\{1,\dots,K\}$，chart内の $q$ 次元 neural flow，および
-接平面に値を取る affine decoder からなる \textbf{$K$-chart tangent-flow generator}
-を定義し，その最良 $p$-Wasserstein 生成誤差をニューラル近似幅
-$\mathfrak N_{K,p}$ とする．
-
-局所flowが $W_p$ の意味で潜在分布を普遍近似できるなら，$\mathfrak N_{K,p}$ は
-$K$ 個の affine tangent plane の合併までの接アトラス Wasserstein 近似幅
-$\mathfrak T_{K,p}$ と厳密に一致する．この同値性により，flowの密度表現誤差と
-decoderの幾何学的表現誤差を分離する．特に局所flowを任意に深くしても，affine
-decoderが残す曲率誤差は消えない．
-
-reach が正の $q$ 次元多様体では $\mathfrak N_{K,p}\lesssim K^{-2/q}$ である．さらに
-測度の小球正則性と quadratic tangent separation のもとで matching lower bound を
-証明する．Frobenius 埋め込みされた Stiefel 多様体では
-$q=Dr-r(r+1)/2$ として
+多様体上のデータを，$K$ 個の局所線形decoderでどこまで生成できるかを考える．
+モデルはまずbranch $J\in\{1,\dots,K\}$ を選び，局所潜在変数 $Z\in\R^q$ を
 \[
-  c_{D,r,p}K^{-2/q}
-  \leq \mathfrak N_{K,p}(\sigma;M)
-  \leq C_{D,r,p}K^{-2/q}
+  X=x_J+U_JZ,\qquad \operatorname{ran}U_J=T_{x_J}M
 \]
-を得る．Grassmann 多様体と積 torus にも同じ結論を導き，$S^1$ では最適値を定数まで
-求める．五例の幾何計算では有限 $K$ でも理論傾き $-2/q$ を確認し，円周では局所
-neural flowを実際に学習して式~(2.10) の二項を分離する．これは一般の
-深層生成器に対する下界ではなく，chart数を明示した tangent-constrained neural
-generatorに対する，OT上の構造定理である．
+で出力する．各branch内の潜在分布には任意の表現力を許し，decoder数 $K$ だけを
+表現予算として固定する．このモデルの最良 $p$-Wasserstein生成誤差を
+$\mathfrak T_{K,p}(\mu;M)$ とする．
+
+主結果は単純である．positive reach，小球正則性，および接平面の二次分離条件のもとで，
+$q$ 次元多様体上の分布に対して
+\[
+  cK^{-2/q}
+  \leq \mathfrak T_{K,p}(\mu;M)
+  \leq CK^{-2/q}
+\]
+が成り立つ．したがって誤差 $\varepsilon$ に必要な局所decoder数は
+$K\asymp\varepsilon^{-q/2}$ である．Stiefel，Grassmann，積torusで条件を検証し，
+$S^1$ では最適値を厳密に求める．数値実験でも有限 $K$ で同じrateを確認する．
+multi-branch VAEはbranchと潜在変数を学習する方法，Flow Matchingは各branch内の潜在分布を
+学習する方法として解釈できるが，本結果は一般のVAEや任意の深層decoderに対する
+下界ではない．
 \end{abstract}
 
 \medskip
-\noindent\textbf{キーワード}：深層生成モデル，Flow Matching，ニューラルアトラス，
-最適輸送，Wasserstein 距離，多様体仮説，接空間，Stiefel 多様体，近似幅
+\noindent\textbf{キーワード}：局所decoder，生成モデル，最適輸送，Wasserstein 距離，
+多様体仮説，接空間，Stiefel 多様体，近似幅
 
 \section{はじめに}
 \label{sec:intro}
 
-VAE は encoder と decoder を通して低次元潜在変数からデータを生成し
-\cite{kingma2014}，Flow Matching は neural ODE の速度場を回帰することで基準分布を
-目標分布へ輸送する \cite{lipman2023}．しかし一つの Euclid 潜在空間と一つのdecoderで
-複雑な位相と曲率を同時に表現させると，「潜在空間内の密度をどう運ぶか」と
-「潜在空間をデータ空間へどう埋め込むか」が一つの巨大なネットワークに混在する．
-Chart Auto-Encoder や AtlasNet は複数の局所chartをニューラルモデルへ導入し，この
-分離が実際に有効であることを示した \cite{schonsheck2020,groueix2018}．
-
-それでもモデル設計上の基本問題が残る．普遍近似定理はネットワークを十分大きくすれば
-誤差を小さくできることを保証するが，目標精度に必要なchart数を決めない．AtlasNetでも
-patch数はhyperparameterであり，Chart Auto-Encoderでも十分なchart数を事前に知ることは
-難しいとされる．そこで本稿は
+VAEなどの生成モデルが多様体上のデータを学習するとき，decoderは潜在空間を
+データ空間へ写す \cite{kingma2014}．その近似精度は，最適化法の前に，decoderがどのような
+幾何を表現できるかに制約される．本稿はこの表現限界を次の一問に絞る．
 \begin{quote}
   $q$ 次元多様体上の分布を $W_p$ 誤差 $\varepsilon$ で生成するには，
   局所affine decoderを何個用意すべきか
 \end{quote}
-を理論問題として固定する．
-
-扱うモデルは，categorical latent $J\in\{1,\dots,K\}$，各chart内の連続潜在変数
-$Z\in\R^q$，$Z$ の分布を作る局所neural flow，および $Z$ をデータ空間の接平面へ
-写すaffine decoderからなる．これはVAEのaggregate posteriorをchartごとに分け，その
-局所潜在分布をFlow Matchingで生成する構成と解釈できる．接平面は深層ネットワークが
-自動的に接平面になるという仮定ではない．$C^2$ 多様体の標準的な一次jetをdecoderの
-表現クラスとして明示的に選んでいる．
-
-この制約が必要なのは，任意の可測decoderや無制限なニューラルネットを許せば，有限の
-潜在次元からでも任意の確率測度を押し出せて，幾何学的な下界が消えるからである．本稿が
-特徴づけるのは一般の深層学習器ではなく，\emph{tangent-constrained $K$-chart
-generator} の表現能力である．一方，chart内のflowには十分な表現力を許す．これにより
-flowの能力では消せないdecoder側の誤差だけを抽出できる．
+そのため，$K$ 個の基準点 $x_j$ と接空間 $T_{x_j}M$ を用意し，選ばれた枝 $J$ に対して
+$X=x_J+U_JZ$ を出力する有限混合decoderを考える．各枝の潜在分布は任意とし，
+表現予算は枝数 $K$ のみで測る．接平面は「深層ネットワークが自動的に線形になる」
+という仮定ではない．多様体の局所幾何を最も単純に表す一次モデルを，明示的に選んでいる．
 
 点による通常の量子化では，$q$ 次元分布に対する $W_p$ 誤差は典型的に
 $K^{-1/q}$ で減衰する \cite{graf2000,aydin2026}．接平面は一次の接触をもつため，
@@ -91,31 +66,24 @@ $k$-flats や geometric multiresolution analysis で研究されている
 
 \subsection{本稿の貢献}
 
-本稿の貢献は次の五点である．
+本稿の貢献は次の三点である．
 \begin{enumerate}
-  \item categorical chart，局所neural flow，affine tangent decoderからなる
-    $K$-chart生成モデルと，その最良 $W_p$ 誤差 $\mathfrak N_{K,p}$ を定義する．
-  \item 局所flowの $W_p$ 普遍性のもとで，ニューラル近似幅 $\mathfrak N_{K,p}$ が
-    接アトラス幅 $\mathfrak T_{K,p}$ と厳密に一致することを示す．さらに生成誤差を
-    $K$-chartの幾何誤差と局所flowの分布誤差へ分解する．
+  \item $K$ 個の局所線形decoderで達成できる最良 $W_p$ 生成誤差
+    $\mathfrak T_{K,p}$ を定義し，閉集合へのOT射影として書き直す．
   \item reach による $K^{-2/q}$ 上界と，Ahlfors 小球正則性および
     quadratic tangent separation による
     $K^{-2/q}$ の一般 lower bound を証明する．Stiefel，Grassmann，積 torus では
     tangent distance と chord 距離の二乗の大域的な二側評価を明示する．
-  \item $S^1=\St(2,1)$ では最適配置と誤差を厳密に計算する．また近似幅の
-    $W_p$ 安定性から，population approximation と empirical estimation を分離する．
-  \item 五種類の多様体について，明示的な準一様配置または farthest-point sampling
-    が達成する $W_2$ 誤差を直接積分する．有限 $K$ でも理論傾き $-2/q$ が現れることを
-    確認し，円周では厳密値に対して数値実装を較正する．さらに小型neural ODEを
-    Flow Matchingで学習し，network幅が減らす潜在分布誤差と，減らせない幾何floorを
-    数値的に分離する．
+  \item $S^1$ で最適値を厳密に求め，Stiefelを含む五種類の多様体で
+    有限 $K$ の数値傾きを確認する．小型Flow Matching実験は，潜在分布を学習しても
+    decoderの幾何誤差が残ることを補助的に示す．
 \end{enumerate}
 
-本稿の主張は，接平面decoderが任意の深層生成モデルより優れているというものではない．
-主張するのは，「一次decoderを $K$ 個使い，chart内のflowは任意に強くする」という
-明示的な構造予算のもとで，$K\asymp\varepsilon^{-q/2}$ が必要十分だということである．
+結論を先に言えば，一つのdecoderが担う領域の直径は $K^{-1/q}$，接平面への
+法方向誤差はその二乗なので，最良誤差は $K^{-2/q}$ となる．本稿はこの直観を
+上下界の一致する定理にする．
 
-\section{ニューラルアトラスと Wasserstein 近似幅}
+\section{局所線形生成モデル}
 \label{sec:definition}
 
 \subsection{Wasserstein 距離}
@@ -135,7 +103,7 @@ Borel 確率測度全体とする．$\mu,\nu\in\mathcal P_p(\R^m)$ に対して
 \]
 とする．
 
-次の事実が，接アトラス近似を OT 上に置く基礎になる．
+次の事実が，局所線形近似を OT 上に置く基礎になる．
 
 \begin{proposition}[閉集合への Wasserstein 射影]
 \label{prop:closed-projection}
@@ -162,48 +130,74 @@ $\pi=(\mathrm{id},P_A)_\#\mu$ を選べば
 となる．$p=\infty$ も同じ coupling で従う．
 \end{proof}
 
-\subsection{接アトラス Wasserstein 近似幅}
+\subsection{\texorpdfstring{$K$}{K} 個の局所線形decoder}
 
 $M\subset\R^m$ を $q$ 次元の滑らかな埋め込み部分多様体とする．
-$x\in M$ における affine tangent plane を
+$x_j\in M$ を基準点，$U_j:\R^q\to\R^m$ を
+$\operatorname{ran}U_j=T_{x_j}M$ を満たす線形等長埋め込みとする．第 $j$ 枝のdecoderを
 \[
-  L_x:=x+T_xM
+  D_j(z):=x_j+U_jz
+  \tag{2.2}
 \]
-と書く．中心 $\boldsymbol{x}=(x_1,\dots,x_K)\in M^K$ が定める接アトラスを
+と定める．この像は affine tangent plane
+$L_{x_j}:=x_j+T_{x_j}M$ である．生成モデルは
 \[
-  A_{\boldsymbol{x}}
-  :=\bigcup_{j=1}^K L_{x_j}
+  J\sim\operatorname{Categorical}(\pi_1,\dots,\pi_K),
+  \qquad Z\mid J=j\sim\lambda_j,
+  \qquad X=D_J(Z)
+  \tag{2.3}
 \]
-とする．
+である．ここで $\lambda_j\in\mathcal P_p(\R^q)$ は任意とする．つまり本稿は
+各枝の密度を学ぶ難しさを理想化し，$K$ 個の線形decoderが課す幾何誤差だけを測る．
 
-\begin{definition}[接アトラス Wasserstein 近似幅]
+\begin{definition}[局所線形生成誤差]
 \label{def:tangent-width}
 $\mu\in\mathcal P_p(M)$ と $1\leq p<\infty$ に対して
 \[
   \boxed{
   \mathfrak T_{K,p}(\mu;M)
   :=\inf_{\boldsymbol{x}\in M^K}
-    \inf_{\substack{\nu\in\mathcal P_p(\R^m)\\
-                     \supp\nu\subset A_{\boldsymbol{x}}}}
-       \Wass_p(\mu,\nu)
+    \inf_{\substack{\pi\in\Delta_{K-1}\\
+                     \lambda_1,\dots,\lambda_K\in\mathcal P_p(\R^q)}}
+      \Wass_p\left(
+        \mu,\sum_{j=1}^K\pi_j(D_j)_\#\lambda_j
+      \right)
   }
-  \tag{2.2}
+ \tag{2.4}
 \]
-と定める．$p=\infty$ も同様に定義する．
+と定める．ここで $\Delta_{K-1}$ は $K$ 成分の確率simplexである．
+$p=\infty$ も同様に定義する．
 \end{definition}
 
-命題~\ref{prop:closed-projection} より，有限な affine subspace の合併が閉であることを
-用いると，直ちに
+\begin{proposition}[OTによる誤差の表示]
+\label{prop:model-projection}
 \[
   \mathfrak T_{K,p}(\mu;M)
   =\inf_{\boldsymbol{x}\in M^K}
     \left(
       \int_M\min_{1\leq j\leq K}\dist(y,L_{x_j})^p\,\mu(\d y)
     \right)^{1/p}
-  \tag{2.3}
+  \tag{2.5}
 \]
-を得る．したがって本幅は，平均再構成誤差を Wasserstein 空間における
-model-class distance として特徴づけた量である．
+が成り立つ．$p=\infty$ では積分を $\mu$-本質的上限に置き換える．
+\end{proposition}
+
+\begin{proof}
+固定した $\boldsymbol{x}$ に対し，モデルが生成できる測度全体は
+$A_{\boldsymbol{x}}:=\bigcup_{j=1}^K L_{x_j}$ 上の確率測度全体に等しい．
+実際，一方向は明らかである．逆方向は $A_{\boldsymbol{x}}$ を各 $L_{x_j}$ の可測部分へ
+分割し，各部分の質量を $\pi_j$，$D_j$ で引き戻した条件付き分布を $\lambda_j$ とすればよい．
+命題~\ref{prop:closed-projection} を $A_{\boldsymbol{x}}$ に適用し，
+$\boldsymbol{x}$ について下限を取れば式~(2.5)を得る．
+\end{proof}
+
+\begin{remark}[VAEとFlow Matchingとの関係]
+離散潜在変数 $J$ はdecoderの枝，$Z$ は各枝の連続潜在変数である．mixture VAEはencoderを用いて
+$(J,Z)$ を学習でき，Flow Matchingは各 $\lambda_j$ を基準分布から生成できる
+\cite{kingma2014,lipman2023}．ただし定義~\ref{def:tangent-width} は
+$\lambda_j$ を初めから任意としている．したがって以後の定理は学習法の性能ではなく，
+局所線形decoderそのものの限界を述べる．単一の一般的な非線形VAE decoderは対象外である．
+\end{remark}
 
 \begin{remark}[Stiefel と Grassmann の役割]
 各 $T_{x_j}M$ の直交基底を行列 $U_j\in\St(m,q)$ で表せば
@@ -213,167 +207,6 @@ Stiefel 多様体に，座標不変な部分空間は商
 $\Gr(m,q)=\St(m,q)/O(q)$ に属する．定義~\ref{def:tangent-width} は後者だけに依存し，
 局所座標の gauge に依存しない．
 \end{remark}
-
-\subsection{\texorpdfstring{$K$}{K}-chart tangent-flow generator}
-
-ここで深層生成モデルを明示する．$\gamma_q\in\mathcal P_p(\R^q)$ を標準 Gaussian
-などの基準分布とし，$v_j:[0,1]\times\R^q\to\R^q$ を neural network で表した
-時間依存速度場とする．その flow map を $\Phi_{v_j}$ と書く．Flow Matching は
-$v_j$ を学習する一つの方法であり，本稿では学習アルゴリズムではなく，終端分布
-$(\Phi_{v_j})_\#\gamma_q$ の表現能力を扱う \cite{lipman2023}．
-
-$x_j\in M$ をchartのanchorとし，線形等長埋め込み
-$U_j:\R^q\to\R^m$ を $\operatorname{ran}U_j=T_{x_j}M$ となるように選ぶ．局所decoderを
-\[
-  D_j(z):=x_j+U_jz
-  \tag{2.4}
-\]
-とする．$J\sim\operatorname{Categorical}(\pi_1,\dots,\pi_K)$ を独立に選び，
-\[
-  Z_0\sim\gamma_q,\qquad
-  Z_1=\Phi_{v_J}(Z_0),\qquad
-  X=D_J(Z_1)
-  \tag{2.5}
-\]
-で生成するモデルを \emph{$K$-chart tangent-flow generator} と呼ぶ．離散変数 $J$ は
-chart gating，$v_j$ はchart内の密度，$D_j$ はデータ空間への局所埋め込みを担当する．
-VAEを用いる場合には，encoderが出力するaggregate posteriorをchartごとに分け，
-$(\Phi_{v_j})_\#\gamma_q$ が各条件付き潜在分布を近似すると解釈できる．
-
-neural flowの族を $\mathcal V$ とする．以下では，密度表現をdecoder幾何から切り離すため
-次の理想化された仮定を置く．
-\begin{definition}[局所flowの $W_p$ 普遍性]
-\label{def:flow-universality}
-$1\leq p<\infty$ とする．$\mathcal V$ が $\gamma_q$ に対して $W_p$ 普遍であるとは
-\[
-  \overline{
-    \{(\Phi_v)_\#\gamma_q:v\in\mathcal V\}
-  }^{\Wass_p}
-  =\mathcal P_p(\R^q)
-  \tag{2.6}
-\]
-が成り立つことをいう．
-\end{definition}
-
-この仮定は有限サイズのflowが全ての分布を厳密に表すという意味ではない．ネットワーク
-サイズを増やしたときの model-class closure に関する仮定である．neural ODEによる
-diffeomorphismの普遍近似が知られていること \cite{teshima2023} と，滑らかな正密度が
-$W_p$ で一般の $p$ 次momentをもつ測度に稠密であることが，この理想化の根拠になる．
-訓練された有限ネットワークの誤差は後で別項として残す．
-
-固定した $\boldsymbol{x}$ に対して式~(2.5) が生成する測度全体の $W_p$ 閉包を
-$\mathcal G^{\mathrm{TF}}_{\boldsymbol{x},p}$ と書く．
-\begin{definition}[tangent-flow ニューラル近似幅]
-\label{def:neural-width}
-\[
-  \boxed{
-  \mathfrak N_{K,p}(\mu;M)
-  :=\inf_{\boldsymbol{x}\in M^K}
-    \inf_{\nu\in\mathcal G^{\mathrm{TF}}_{\boldsymbol{x},p}}
-      \Wass_p(\mu,\nu)
-  }
-  \tag{2.7}
-\]
-と定める．
-\end{definition}
-
-\begin{theorem}[ニューラル生成誤差と接アトラス幅の同値性]
-\label{thm:neural-equivalence}
-$1\leq p<\infty$ とし，$\mathcal V$ が定義~\ref{def:flow-universality} の
-$W_p$ 普遍性を満たすとする．このとき任意の $K\geq1$ に対して
-\[
-  \boxed{
-    \mathfrak N_{K,p}(\mu;M)
-    =\mathfrak T_{K,p}(\mu;M)
-  }
-  \tag{2.8}
-\]
-が成り立つ．すなわち，局所flowを任意に表現的にしても，affine tangent decoderが
-課す最良生成誤差は接アトラス幅に一致する．
-\end{theorem}
-
-\begin{proof}
-固定した $\boldsymbol{x}$ を考える．式~(2.4) の像は $L_{x_j}$ なので，
-$\mathcal G^{\mathrm{TF}}_{\boldsymbol{x},p}$ の各要素は閉集合
-$A_{\boldsymbol{x}}$ に支えをもつ．逆に
-$\nu\in\mathcal P_p(A_{\boldsymbol{x}})$ を取る．tieを添字順に処理して
-$A_{\boldsymbol{x}}$ を各 $L_{x_j}$ の可測部分へ分割すれば
-\[
-  \nu=\sum_{j=1}^K\pi_j(D_j)_\#\lambda_j
-\]
-と書ける．ここで $\pi$ は確率vector，$\lambda_j\in\mathcal P_p(\R^q)$ である．
-$W_p$ 普遍性により各 $\lambda_j$ は neural flowの終端分布で近似でき，有限混合の
-couplingを取れば混合測度も $W_p$ で近似できる．したがって
-\[
-  \mathcal G^{\mathrm{TF}}_{\boldsymbol{x},p}
-  =\{\nu\in\mathcal P_p(\R^m):\supp\nu\subset A_{\boldsymbol{x}}\}.
-  \tag{2.9}
-\]
-両辺で $\mu$ までの距離を取り，さらに $\boldsymbol{x}$ についてinfimumを取れば
-式~(2.8) を得る．
-\end{proof}
-
-\subsection{幾何誤差と局所 Flow Matching 誤差}
-
-定理~\ref{thm:neural-equivalence} は無限表現力の極限だけでなく，有限flowの誤差を
-分離する基準も与える．固定した $\boldsymbol{x}$ に対し，$y\in M$ を最近接平面へ
-割り当てる可測なindexを $a(y)$ とする．$C_j=\{y:a(y)=j\}$，
-$\pi_j=\mu(C_j)$ とおき，$\mu_j$ を $C_j$ 上の条件付き測度とする．理想的な局所潜在分布は
-\[
-  \lambda_j
-  :=\bigl(U_j^{\mathsf T}(\,\cdot-x_j)\bigr)_\#\mu_j
-\]
-である．$D_j$ は $\lambda_j$ を最近接射影された測度へ戻す．有限のFlow Matchingモデルが
-$\widehat\lambda_j$ を生成するとし
-\[
-  \widehat\nu
-  :=\sum_{j=1}^K\pi_j(D_j)_\#\widehat\lambda_j
-\]
-とおく．三角不等式と，$D_j$ が等長写像であることから
-\begin{proposition}[生成誤差の二項分解]
-\label{prop:flow-decomposition}
-\[
-  \boxed{
-  \Wass_p(\mu,\widehat\nu)
-  \leq
-  \underbrace{
-    \left(
-      \int_M\min_j\dist(y,L_{x_j})^p\,\mu(\d y)
-    \right)^{1/p}
-  }_{\text{decoderの幾何誤差}}
-  +
-  \underbrace{
-    \left(
-      \sum_{j=1}^K\pi_j
-      \Wass_p(\lambda_j,\widehat\lambda_j)^p
-    \right)^{1/p}
-  }_{\text{局所flowの分布誤差}}
-  }
-  \tag{2.10}
-\]
-が成り立つ．一方，$\widehat\nu$ が $A_{\boldsymbol{x}}$ に支えをもつ限り
-\[
-  \Wass_p(\mu,\widehat\nu)\geq\mathfrak T_{K,p}(\mu;M).
-  \tag{2.11}
-\]
-\end{proposition}
-
-\begin{proof}
-最近接射影のpushforwardを
-$\nu_{\boldsymbol{x}}=\sum_j\pi_j(D_j)_\#\lambda_j$ とする．
-命題~\ref{prop:closed-projection} により第一項は
-$\Wass_p(\mu,\nu_{\boldsymbol{x}})$ に等しい．各 $j$ で
-$\lambda_j$ と $\widehat\lambda_j$ のcouplingを取り，同じ $j$ の成分同士を結合すれば
-\[
-  \Wass_p(\nu_{\boldsymbol{x}},\widehat\nu)^p
-  \leq\sum_j\pi_j\Wass_p(\lambda_j,\widehat\lambda_j)^p.
-\]
-三角不等式から上界を得る．下界は定義~\ref{def:tangent-width} から従う．
-\end{proof}
-
-式~(2.10) はarchitectureとtrainingの役割を分ける．$K$ とdecoder次数は第一項を，
-flow networkの幅・深さ，標本数，最適化は第二項を支配する．本稿がsharpに決定するのは
-第一項の $K$ 依存性である．
 
 \section{reach と被覆半径による一般上界}
 \label{sec:general-upper}
@@ -443,7 +276,7 @@ $\varepsilon>0$ に対し，被覆半径が $\rho_K(M)+\varepsilon$ 以下とな
   \min_j\dist(y,L_{x_j})
   \leq\frac{(\rho_K(M)+\varepsilon)^2}{2\tau}.
 \]
-式~(2.3) に代入し，$\varepsilon\downarrow0$ とする．
+式~(2.5) に代入し，$\varepsilon\downarrow0$ とする．
 \end{proof}
 
 \begin{corollary}[内在次元による上界]
@@ -497,7 +330,7 @@ $\alpha,r_0>0$ が存在し，任意の $x,y\in M$ に対して
 QTS は reach からは従わない．局所的には第二基本形式が全方向で十分に曲がることを，
 大域的には一つの接平面が離れた場所で $M$ と再交差しないことを要求する．
 
-\begin{theorem}[一般の matching rate]
+\begin{theorem}[主定理：必要な局所decoder数]
 \label{thm:general-sharp}
 $M\subset\R^m$ を $q$ 次元コンパクト $C^2$ 埋め込み多様体，
 $\mu$ を $M$ 上の局所 $q$-Ahlfors 正則な確率測度とする．さらに
@@ -545,33 +378,15 @@ $p=\infty$ なら $\mu$-本質的上限が $t_K$ 以上である．中心につ�
 取れば下界を得る．
 \end{proof}
 
-\begin{corollary}[tangent-flow generator の必要十分 chart 数]
-\label{cor:neural-sharp}
-定理~\ref{thm:general-sharp} の仮定に加えて局所flowが $W_p$ 普遍であるとする．
-$1\leq p<\infty$ に対して
-\[
-  cK^{-2/q}
-  \leq\mathfrak N_{K,p}(\mu;M)
-  \leq CK^{-2/q}
-  \tag{3.9}
-\]
-である．したがってtangent-flow generatorが $W_p$ 誤差を $\varepsilon$ 以下にするための
-chart数は，定数を除いて
+したがって $W_p$ 誤差を $\varepsilon$ 以下にするために必要な局所decoder数は，
+定数を除いて
 \[
   K(\varepsilon)\asymp\varepsilon^{-q/2}
-  \tag{3.10}
+  \tag{3.9}
 \]
-である．さらに任意の有限network parameter $\theta$ と任意のanchor配置が生成する
-$K$-chart tangent-flow測度 $\nu_\theta$ に対して
-\[
-  \Wass_p(\mu,\nu_\theta)\geq cK^{-2/q}
-  \tag{3.11}
-\]
-である．この下界は局所flowの普遍性を必要とせず，flow networkを大きくするだけでは
-指数を改善できないことを直接表す．普遍性を使うのはmatching upper bound側だけである．
-\end{corollary}
+である．
 
-指数 $2/q$ は「一つの chart の直径が $K^{-1/q}$，接平面への法方向偏差が
+指数 $2/q$ は「一つのdecoderが担う領域の直径が $K^{-1/q}$，接平面への法方向偏差が
 その二乗」という二つの幾何学的事実から生じる．QTS が破れる多様体では
 より速い rate が生じる可能性があり，その場合は曲率の退化方向や接平面の
 再交差集合の次元を別に解析する必要がある．以下では一般定理を適用できる
@@ -650,10 +465,6 @@ $X\sym(X^{\mathsf T}A)$ であるから法空間の式も従う．二変数曲�
 が成り立つ．
 \end{proposition}
 
-局所flowが $W_p$ 普遍で $p<\infty$ なら
-$\mathfrak N_{K,p}=\mathfrak T_{K,p}$ なので，同じ安定性がニューラル近似幅にも
-そのまま成り立つ．
-
 \begin{proof}
 $Y-X$ の $N_XM$ への直交射影は
 \[
@@ -690,7 +501,7 @@ $X\in M$ と $0<s\leq s_0$ に対して
 \]
 が成り立つ．ここで $B_F$ は Frobenius chord ball である．
 
-\begin{theorem}[Stiefel tangent-flow generator の表現限界]
+\begin{theorem}[Stiefel--Haar分布の局所線形生成誤差]
 \label{thm:stiefel-main}
 $M=\St(D,r)$，$q=Dr-r(r+1)/2$，$\sigma=\sigma_{D,r}$ とする．
 任意の $1\leq p\leq\infty$ に対し，$D,r,p$ のみに依存する正定数
@@ -708,12 +519,6 @@ $c_{D,r,p},C_{D,r,p}$ と $K_0$ が存在して，任意の $K\geq K_0$ で
   \mathfrak T_{K,2}(\sigma;M)^2\asymp K^{-4/q}.
   \tag{4.8}
 \]
-さらに局所flowが $W_p$ 普遍で $p<\infty$ なら
-\[
-  \mathfrak N_{K,p}(\sigma;M)
-  =\mathfrak T_{K,p}(\sigma;M)
-  \asymp K^{-2/q}.
-\]
 \end{theorem}
 
 \begin{proof}
@@ -725,7 +530,7 @@ $\alpha=1/(2\sqrt r)$ で与える．したがって
 \end{proof}
 
 定理~\ref{thm:stiefel-main} は，目標誤差を $\varepsilon$ としたときStiefel分布を
-生成するtangent-flow modelに必要十分なchart数が
+生成するために必要十分な局所decoder数が
 \[
   K\asymp\varepsilon^{-q/2},
   \qquad q=Dr-\frac{r(r+1)}2
@@ -798,7 +603,7 @@ $\sin^2\theta_i$ になるので第一式を得る．第二式は射影行列間
 局所 $q_G$-Ahlfors 正則である．命題~\ref{prop:grassmann-qts} と
 定理~\ref{thm:general-sharp} から次を得る．
 
-\begin{corollary}[Grassmann--Haar 測度のニューラル近似幅]
+\begin{corollary}[Grassmann--Haar測度の局所線形生成誤差]
 \label{cor:grassmann-width}
 $\sigma_G$ を $\mathcal G_{D,r}$ 上の正規化 Haar 測度とする．任意の
 $1\leq p\leq\infty$ に対して
@@ -807,8 +612,6 @@ $1\leq p\leq\infty$ に対して
   \asymp K^{-2/[r(D-r)]}.
   \tag{5.4}
 \]
-局所flowが $W_p$ 普遍で $p<\infty$ なら，左辺を
-$\mathfrak N_{K,p}(\sigma_G;\mathcal G_{D,r})$ に置き換えても同じrateである．
 \end{corollary}
 
 \subsection{積 torus}
@@ -840,9 +643,6 @@ $a_i=1-\cos(\theta_i-\phi_i)\geq0$ とおく．各円因子の法方向成分は
   \qquad(1\leq p\leq\infty).
   \tag{5.7}
 \]
-局所flowが $W_p$ 普遍で $p<\infty$ なら
-$\mathfrak N_{K,p}(\sigma_{\mathbb T};\mathbb T^\ell)$ も同じrateをもつ．
-
 \begin{remark}[さらに含まれる多様体]
 球面は $\St(D,1)$ である．また，主曲率が正の上下界をもち，接超平面が一点でのみ
 接するコンパクト狭義凸超曲面も QTS を満たす．特に楕円体にも
@@ -896,15 +696,13 @@ $\mathfrak T_{K,2}(\sigma;S^1)$ は等間隔な $K$ 本の接線によって達�
   \sim\frac{\pi^2}{2K^2}.
   \tag{6.4}
 \]
-局所flowが $W_2$ 普遍なら，同じ厳密値が
-$\mathfrak N_{K,2}(\sigma;S^1)$ に対しても成り立つ．
 \end{theorem}
 
 \begin{proof}
 接点を円周順に並べ，隣接接点間の角度を
 $\Delta_1,\dots,\Delta_K\geq0$ とする．$\sum_j\Delta_j=2\pi$ である．
 $1-\cos t$ は $[0,\pi]$ で単調増加するため，隣接する二接線への最近領域の境界は
-角度の中点である．よって式~(2.3) と式~(6.1) から
+角度の中点である．よって式~(2.5) と式~(6.1) から
 \[
   \mathfrak T_{K,2}^2
   =\inf_{\substack{\Delta_j\geq0\\\sum_j\Delta_j=2\pi}}
@@ -974,20 +772,16 @@ $X_1,\dots,X_n\sim\mu$ と $\widehat\mu_n=n^{-1}\sum_i\delta_{X_i}$ に対し，
 移せる．多様体上の測度推定では，ambient dimension ではなく内在次元と密度の
 正則性に依存する minimax rate が知られている \cite{divol2022,block2022}．
 
-式~(2.10) と式~(7.2) は，少なくとも四種類の誤差を区別すべきことを示す：
-chart数と曲率が決めるdecoder幾何誤差，有限networkによる局所flow誤差，有限標本誤差，
-およびanchor・接空間・flow parameterを求める最適化誤差である．本稿がsharpに決定する
-のは第一項だけである．
+式~(7.2) は，モデル自体の近似誤差と有限標本による推定誤差を分離する．
+anchorと接空間を実際に推定するアルゴリズムの誤差は，本稿の定理には含めない．
 
-\section{decoder 幾何項の有限 \texorpdfstring{$K$}{K} 検証}
+\section{数値実験}
 \label{sec:experiments}
 
-式~(2.10) の第一項について，漸近指数が現れる $K$ の範囲と接距離公式の実装を
-確認するために五例を計算した．ここでは局所flowを訓練せず，理想的に密度誤差が零に
-なった後にも残るdecoderの幾何項だけを測る．したがって深層学習の実務性能を示す実験
-ではなく，主定理の有限 $K$ sanity checkである．
+主定理の指数が有限 $K$ でも現れるかを確認するため，五例を計算した．
+これは深層学習の実務性能を示す実験ではなく，定理の数値的な整合性確認である．
 
-\subsection{五多様体での decoder 幾何 rate}
+\subsection{五多様体での近似率}
 
 中心配置 $\boldsymbol{x}=(x_1,\dots,x_K)$ に対する population cost を
 \[
@@ -1036,7 +830,7 @@ $\log\widehat U_K=a+b\log K$ を当てた結果を表~\ref{tab:numerical-rates} 
 \begin{table}[htbp]
   \centering
   \small
-  \caption{有限 $K$ における $W_2$ 接アトラス誤差の log--log 傾き．理論傾きは
+  \caption{有限 $K$ における局所線形生成誤差の log--log 傾き．理論傾きは
   $-2/q$，観測傾きは各系列の最後の四点による．}
   \label{tab:numerical-rates}
   \input{experiments/results_table.tex}
@@ -1051,10 +845,10 @@ greedy 配置の optimization gap を含む．$S^1$ では式~(6.2) の厳密値
 この実験が支持するのは，具体的な準一様decoder配置が有限 $K$ で既に幾何上界rateを
 実現するという主張である．matching lower boundやFPSの最適性は実験から主張しない．
 
-\subsection{局所 neural flow を実際に学習した場合}
+\subsection{補助実験：局所Flow Matching}
 
-式~(2.10) の第二項も含めるため，$S^1$ の $K=8$ 等間隔chart上で小型neural flowを
-実際に学習した．一つのcell内で角度差
+潜在分布の学習を加えた場合も見るため，$S^1$ の $K=8$ 等間隔decoder上で
+小型neural flowを実際に学習した．一つのcell内で角度差
 $\Delta\sim\operatorname{Unif}[-\pi/K,\pi/K]$ とすると，接線座標の目標分布は
 \[
   Z_1=\sin\Delta,\qquad Z_0\sim\mathcal N(0,1)
@@ -1072,7 +866,7 @@ $\dot Z_t=Z_1-Z_0$ を使い，一層tanh MLP $v_\theta(t,z)$ を
 batch size $96$ 学習した．生成時には $40$ stepのHeun法でneural ODEを積分した．
 結果は固定seedによる一回のrunであり，model rankingの統計的有意性は主張しない．
 
-目標局所座標分布を $\lambda$，生成終端分布を $\widehat\lambda$ とする．同じchart内で
+目標局所座標分布を $\lambda$，生成終端分布を $\widehat\lambda$ とする．同じ枝の中で
 一次元単調couplingを取り，法方向と接方向の直交性を使うと
 \[
   \Wass_2(\mu,\widehat\nu)^2
@@ -1111,18 +905,17 @@ neural flowの学習結果をCSVとして保存している．
 VAEはneural encoder--decoderをもつ潜在変数モデルを変分推論で学習する
 \cite{kingma2014}．Flow Matchingは指定した確率pathを生成するCNFの速度場を
 simulation-freeに回帰する \cite{lipman2023}．既知多様体上でneural ODEを動かす
-manifold CNFも提案されている \cite{lou2020}．これらに対して本稿は新しいflowの
-訓練損失を提案しない．局所flowを十分表現的とした上で，その出力をambient空間へ移す
-decoderのchart数に，どのようなOT表現限界が残るかを決定する．式~(2.10) が両者を
-幾何誤差と分布誤差へ分離する．
+manifold CNFも提案されている \cite{lou2020}．本稿は新しい学習損失を提案しない．
+各枝の潜在分布を任意とすることで密度学習を理想化し，局所線形decoderの個数だけが
+決める表現誤差を解析する．
 
 \paragraph{multi-chart neural generator．}
 AtlasNetは複数のlearned parametric surface patchで3次元形状を生成し，patch数を増やす
 実験を行った \cite{groueix2018}．Chart Auto-Encoderは複雑な位相をもつデータに対して
 複数chartを導入し，普遍近似と近接性保存を扱う \cite{schonsheck2020}．後続研究には
 generalization boundもある \cite{liu2023}．これらは非線形decoderを実際に学習する一方，
-本稿はtangent-constrained affine decoderへクラスを狭め，局所flowの表現力を除去した後の
-最良 $W_p$ 誤差についてmatching upper/lower rateと厳密な必要chart数を与える．したがって
+本稿は接平面に沿うaffine decoderへクラスを狭め，最良 $W_p$ 誤差について
+一致する上下界と必要decoder数を与える．したがって
 一般のChart Auto-EncoderやAtlasNetに対する下界ではない．
 
 \paragraph{多様体推定．}
@@ -1165,9 +958,8 @@ Hamm et al. \cite{hamm2025} は確率測度の族そのものが $W_2$ 空間内
     未知多様体からencoder，anchor，接空間を同時学習する問題は式~(7.2) だけでは解けない．
   \item 下界はtangent-constrained affine decoderに対するもので，任意のMLP decoder，
     Transformer，拡散モデルに対する下界ではない．非線形decoderは曲率を内部表現できる．
-  \item flowの $W_p$ 普遍性はmodel-class closureの仮定である．有限networkの幅・深さ，
-    Flow Matchingの標本誤差と最適化誤差は式~(2.10) の第二項に残り，本稿はそのrateを
-    決定しない．
+  \item 各枝の潜在分布を任意としているため，有限networkによる密度近似，標本誤差，
+    Flow Matchingの最適化誤差は解析していない．
   \item $W_p$ は質量で重み付けされた誤差であり，低密度領域の support defect を弱くしか
     罰しない．$W_\infty$ は $M$ からアトラスへの一方向の最大偏差を制御するが，無限に
     延びる接平面側の余分な support までは制御しない．二方向 Hausdorff recovery には
@@ -1178,11 +970,11 @@ Hamm et al. \cite{hamm2025} は確率測度の族そのものが $W_2$ 空間内
     これは第二基本形式が定める局所四次 distortion に対する Zador 型問題になる．
 \end{enumerate}
 
-次に狙うべき理論結果は，総parameter budget $P$ のもとで「chart数」と「各decoderの
-非線形性」へどう予算を配るかを決めることである．$s$ 次 Taylor neural chartまで
+次に狙うべき理論結果は，総parameter budget $P$ のもとで「decoder数」と「各decoderの
+非線形性」へどう予算を配るかを決めることである．$s$ 次 Taylor decoderまで
 表現クラスを拡張し，$C^{s+1}$ 多様体に対して
 \[
-  \mathfrak N^{(s)}_{K,p}\asymp K^{-(s+1)/q}
+  \mathfrak T^{(s)}_{K,p}\asymp K^{-(s+1)/q}
 \]
 となる条件を特徴づけ，局所networkの近似誤差と合わせて $K$ を最適化する必要がある．
 同時に，bounded chart domainによって $W_p$ と二方向Hausdorff誤差を制御し，学習された
@@ -1191,17 +983,15 @@ anchorと接空間の統計誤差を解析することが，oracle定理から�
 \section{結論}
 \label{sec:conclusion}
 
-本稿は，categorical chart，局所neural flow，affine tangent decoderからなる
-$K$-chart生成モデルを定義した．局所flowが普遍的なら，その最良Wasserstein生成誤差は
-接アトラス近似幅に厳密に一致する．したがって密度モデルをいくら深くしても，decoderが
-一次である限り曲率由来の幾何誤差は残る．
+本稿は，$K$ 個の局所線形decoderからなる生成モデルを定義し，その最良
+Wasserstein誤差を解析した．各枝の潜在分布を任意としても，decoderが一次である限り
+曲率由来の幾何誤差は残る．
 
 positive reach，Ahlfors正則性，QTSのもとで，この誤差は $K^{-2/q}$ と上下から一致する．
 Stiefel，Grassmann，積torusは条件を満たし，精度 $\varepsilon$ に必要な局所decoder数は
-$K\asymp\varepsilon^{-q/2}$ である．これは一般の深層学習モデルの最適構造を解いた
-ものではないが，モデルの一部を無制限に強くした上で，別の構造予算だけをOTにより
-同定する一つの方法を与える．次の課題は，decoder次数とparameter数まで含めてこの
-architecture trade-offを閉じることである．
+$K\asymp\varepsilon^{-q/2}$ である．これは一般の深層学習モデルに対する下界ではない．
+明示したdecoderクラスについて，必要な構造予算をOTで厳密に決めた結果である．
+次の課題は，非線形decoderの次数とparameter数まで含めた最適な予算配分を求めることである．
 
 \begin{thebibliography}{99}
 
@@ -1294,11 +1084,6 @@ A.~Lou, D.~Lim, I.~Katsman, L.~Huang, Q.~Jiang, S.-N.~Lim, and C.~De~Sa.
 S.~Schonsheck, J.~Chen, and R.~Lai.
 \newblock Chart auto-encoders for manifold structured data.
 \newblock arXiv:1912.10094, 2020.
-
-\bibitem{teshima2023}
-I.~Ishikawa, T.~Teshima, K.~Tojo, K.~Oono, M.~Ikeda, and M.~Sugiyama.
-\newblock Universal approximation property of invertible neural networks.
-\newblock \emph{Journal of Machine Learning Research}, 24(287):1--68, 2023.
 
 \bibitem{villani2009}
 C.~Villani.
