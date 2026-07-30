@@ -7,13 +7,13 @@
 #   "torch>=2.4",
 # ]
 # ///
-"""Recover a spherical source manifold from high-dimensional sensor images.
+"""Recover a spherical latent space from high-dimensional response images.
 
-A hidden source z lies on S^2.  A calibrated 32 x 32 sensor array turns z into
-a three-channel response image, but the network never receives z.  We compare
-R^2, T^2, and S^2 autoencoders with a deterministic-coupling
-Monge--Gromov--Wasserstein objective.  The first sensor channel is linear and
-therefore gives an explicit finite-sensor approximation to the normalized
+A hidden state z lies on S^2.  A calibrated 32 x 32 observation grid turns z
+into a three-channel response image, but the network never receives z.  We
+compare R^2, T^2, and S^2 autoencoders using a pairwise distance-preservation
+loss.  The first response channel is linear and therefore gives an explicit
+finite-resolution approximation to the normalized
 chordal metric on S^2; the other channels make the inverse observation map
 nonlinear and visually interpretable.
 
@@ -202,10 +202,10 @@ class ModelSpec:
 
 
 SPECS = [
-    ModelSpec("r2_gw", r"$\mathbb{R}^2$+MGW", "euclidean", METRIC_WEIGHT),
-    ModelSpec("t2_gw", r"$\mathbb{T}^2$+MGW", "torus", METRIC_WEIGHT),
-    ModelSpec("s2_recon", r"$S^2$ recon-only", "sphere", 0.0),
-    ModelSpec("s2_gw", r"$S^2$+MGW", "sphere", METRIC_WEIGHT),
+    ModelSpec("r2_gw", r"$\mathbb{R}^2$+distance", "euclidean", METRIC_WEIGHT),
+    ModelSpec("t2_gw", r"$\mathbb{T}^2$+distance", "torus", METRIC_WEIGHT),
+    ModelSpec("s2_recon", r"$S^2$ reconstruction only", "sphere", 0.0),
+    ModelSpec("s2_gw", r"$S^2$+distance", "sphere", METRIC_WEIGHT),
 ]
 
 
@@ -264,7 +264,7 @@ def train_model(
                     "step": float(step),
                     "objective": float(loss.detach()),
                     "reconstruction": float(recon_loss.detach()),
-                    "mgw_squared": float(metric_loss.detach()),
+                    "distance_squared": float(metric_loss.detach()),
                 }
             )
     return model, history
@@ -301,12 +301,12 @@ def evaluate_model(
         recon = float(reconstruction_loss(reconstruction, images))
         latent_metric_t = model.pairwise_distance(code)
     latent_metric = latent_metric_t.cpu().numpy()
-    mgw = pair_rmse(latent_metric, observation_metric)
+    distance_rmse = pair_rmse(latent_metric, observation_metric)
     true_stress = pair_rmse(latent_metric, true_metric)
     result = {
         "reconstruction_mse": recon,
-        "mgw_stress": mgw,
-        "selection_score": recon + METRIC_WEIGHT * mgw * mgw,
+        "distance_rmse": distance_rmse,
+        "selection_score": recon + METRIC_WEIGHT * distance_rmse * distance_rmse,
         "true_sphere_stress": true_stress,
         "true_distance_correlation": pair_correlation(latent_metric, true_metric),
         "true_10nn_recall": neighbour_recall(true_metric, latent_metric),
@@ -380,7 +380,7 @@ def write_csvs(
             writer.writeheader()
             writer.writerows(rows)
     with (HERE / "sensor_manifold_history.csv").open("w", newline="") as handle:
-        fields = ["model", "step", "objective", "reconstruction", "mgw_squared"]
+        fields = ["model", "step", "objective", "reconstruction", "distance_squared"]
         writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n")
         writer.writeheader()
         for key, rows in histories.items():
@@ -429,7 +429,7 @@ def save_sensor_explainer_figure(
     sphere_axis.set_axis_off()
     sphere_axis.set_box_aspect((1, 1, 1))
     sphere_axis.view_init(elev=18, azim=-58)
-    sphere_axis.set_title(r"hidden source $z\in S^2$", fontsize=11, pad=0)
+    sphere_axis.set_title(r"hidden state $z\in S^2$", fontsize=11, pad=0)
 
     for index, (image, colour) in enumerate(zip(images, colours)):
         row, column = divmod(index, 3)
@@ -437,7 +437,7 @@ def save_sensor_explainer_figure(
         axis.imshow(np.moveaxis(image, 0, -1), interpolation="nearest")
         axis.set_xticks([])
         axis.set_yticks([])
-        axis.set_title(f"sensor image {index + 1}", fontsize=8, color=colour)
+        axis.set_title(f"response image {index + 1}", fontsize=8, color=colour)
         for spine in axis.spines.values():
             spine.set_color(colour)
             spine.set_linewidth(2.0)
@@ -445,12 +445,12 @@ def save_sensor_explainer_figure(
     figure.text(
         0.70,
         0.025,
-        "the model sees only these 32 x 32 x 3 response images",
+        "input to the model: only these 32 x 32 x 3 images",
         ha="center",
         fontsize=9,
     )
     figure.suptitle(
-        "One low-dimensional source position generates one high-dimensional observation",
+        "One latent state generates one high-dimensional image",
         fontsize=11,
         y=0.98,
     )
@@ -466,7 +466,7 @@ def save_example_figure(images: np.ndarray) -> None:
         axis.set_xticks([])
         axis.set_yticks([])
     figure.suptitle(
-        "Observed data: 3,072-dimensional sensor images (source labels hidden)",
+        "Observed data: 3,072-dimensional response images (latent states hidden)",
         fontsize=11,
     )
     figure.tight_layout(rect=(0, 0, 1, 0.92), pad=0.25)
@@ -516,9 +516,9 @@ def save_accuracy_figure(
     guide = errors[0] * counts[0] / counts
     axes[0].loglog(counts, guide, "--", color="#888888", label=r"$D^{-1}$ guide")
     axes[0].axvline(IMAGE_SIZE**2, color="#b43b3b", alpha=0.55, linewidth=1)
-    axes[0].set_xlabel(r"number of sensors $D$")
-    axes[0].set_ylabel(r"metric RMSE $\varepsilon_{\rm sensor}$")
-    axes[0].set_title("finite-sensor discretization")
+    axes[0].set_xlabel(r"number of observation directions $D$")
+    axes[0].set_ylabel(r"distance RMSE $\varepsilon_{\rm obs}$")
+    axes[0].set_title("finite image resolution")
     axes[0].grid(alpha=0.25, which="both")
     axes[0].legend(frameon=False, fontsize=8)
 
@@ -528,9 +528,9 @@ def save_accuracy_figure(
     axes[1].plot(noise, means, "o-", color="#b43b3b", linewidth=1.8)
     axes[1].fill_between(noise, means - stds, means + stds, color="#b43b3b", alpha=0.18)
     axes[1].axvline(NOISE_STD, color="#333333", linestyle="--", linewidth=1)
-    axes[1].set_xlabel(r"sensor noise $\sigma$")
+    axes[1].set_xlabel(r"observation noise $\sigma$")
     axes[1].set_ylabel("metric RMSE")
-    axes[1].set_title("noise sensitivity at 1,024 sensors")
+    axes[1].set_title("noise sensitivity at 1,024 directions")
     axes[1].grid(alpha=0.25)
     figure.tight_layout(pad=0.8)
     figure.savefig(HERE / "sensor_accuracy.png", dpi=190, bbox_inches="tight")
@@ -599,7 +599,7 @@ def save_diagnostics_figure(
         )
     axes[2].set_xticks(x, labels, rotation=18, ha="right")
     axes[2].set_ylabel("held-out selection score")
-    axes[2].set_title(r"model selection: $S^2$ wins", fontsize=10)
+    axes[2].set_title(r"candidate selection: $S^2$ wins", fontsize=10)
     axes[2].set_yscale("log")
     axes[2].set_ylim(min(scores) * 0.65, max(scores) * 1.55)
     axes[2].grid(axis="y", alpha=0.25)
@@ -618,7 +618,7 @@ def write_latex_table(results: list[dict[str, str | float]]) -> None:
     lines = [
         r"\begin{tabular}{lrrrrr}",
         r"\toprule",
-        r"latent model & recon. MSE & MGW stress & score & true stress & 10-NN recall \\",
+        r"latent space & recon. MSE & distance RMSE & score & true RMSE & 10-NN recall \\",
         r"\midrule",
     ]
     for row in results:
@@ -628,7 +628,7 @@ def write_latex_table(results: list[dict[str, str | float]]) -> None:
             score_text = rf"\textbf{{{score_text}}}"
         lines.append(
             f"{row['latex_label']} & {float(row['reconstruction_mse']):.4f} & "
-            f"{float(row['mgw_stress']):.3f} & {score_text} & "
+            f"{float(row['distance_rmse']):.3f} & {score_text} & "
             f"{float(row['true_sphere_stress']):.3f} & "
             f"{float(row['true_10nn_recall']):.3f} \\\\"
         )
@@ -650,7 +650,7 @@ def main() -> None:
     observation_correlation = pair_correlation(valid_observation, valid_true)
     observation_rmse = pair_rmse(valid_observation, valid_true)
     print(
-        f"sensor metric: correlation={observation_correlation:.5f}, "
+        f"observation distance: correlation={observation_correlation:.5f}, "
         f"RMSE={observation_rmse:.5f}",
         flush=True,
     )
@@ -688,10 +688,10 @@ def main() -> None:
         result: dict[str, str | float] = {
             "model": spec.key,
             "short_label": {
-                "r2_gw": "R2+MGW",
-                "t2_gw": "T2+MGW",
-                "s2_recon": "S2-only",
-                "s2_gw": "S2+MGW",
+                "r2_gw": "R2+distance",
+                "t2_gw": "T2+distance",
+                "s2_recon": "S2 recon. only",
+                "s2_gw": "S2+distance",
             }[spec.key],
             "latex_label": spec.label,
             "geometry": spec.geometry,
@@ -722,7 +722,7 @@ def main() -> None:
         )
         print(
             f"  recon={metrics['reconstruction_mse']:.5f} "
-            f"MGW={metrics['mgw_stress']:.4f} "
+            f"distance={metrics['distance_rmse']:.4f} "
             f"true={metrics['true_sphere_stress']:.4f} "
             f"recall={metrics['true_10nn_recall']:.3f}",
             flush=True,

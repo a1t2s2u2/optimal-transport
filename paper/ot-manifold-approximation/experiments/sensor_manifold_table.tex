@@ -1,10 +1,10 @@
 \begin{tabular}{lrrrrr}
 \toprule
-latent model & recon. MSE & MGW stress & score & true stress & 10-NN recall \\
+latent space & recon. MSE & distance RMSE & score & true RMSE & 10-NN recall \\
 \midrule
-$\mathbb{R}^2$+MGW & 0.0164 & 0.288 & 0.06190 & 0.288 & 0.590 \\
-$\mathbb{T}^2$+MGW & 0.0028 & 0.079 & 0.00620 & 0.079 & 0.857 \\
-$S^2$ recon-only & 0.0008 & 0.012 & 0.00089 & 0.012 & 0.974 \\
-$S^2$+MGW & 0.0008 & 0.001 & \textbf{0.00079} & 0.001 & 0.994 \\
+$\mathbb{R}^2$+distance & 0.0164 & 0.288 & 0.06190 & 0.288 & 0.590 \\
+$\mathbb{T}^2$+distance & 0.0028 & 0.079 & 0.00620 & 0.079 & 0.857 \\
+$S^2$ reconstruction only & 0.0008 & 0.012 & 0.00089 & 0.012 & 0.974 \\
+$S^2$+distance & 0.0008 & 0.001 & \textbf{0.00079} & 0.001 & 0.994 \\
 \bottomrule
 \end{tabular}
