@@ -1,0 +1,476 @@
+\begin{abstract}
+確率的デコーダーは観測分布を高精度に適合させながら、その潜在空間に
+誤った幾何を誘導しうる。本研究では、2-Wasserstein距離を備えた
+対角Gaussianデコーダーを対象として、この乖離を定量化する。
+Gaussian分布間の閉形式により、デコーダーは
+$F=(m,\sigma)$ で与えられるユークリッド・パラメータはめ込みとなり、
+その引き戻し計量は $G=J_F^{\trans}J_F$ となる。本研究の主要結果は、
+次の正則性階層を与える。一様な1階微分誤差は計量とすべての内在距離を
+乗法的に制御する一方、曲率の制御には一様な2階微分誤差が必要である。
+さらに、これらの要件はいずれも必要である。
+また、ノイズを含む局所的な $W_2^2$ の観測から、計量を
+$O(h^2+\eta/h^2)$ のバイアス・ノイズ間のトレードオフのもとで復元でき、
+最適なプローブスケールでは $O(\sqrt\eta)$ の精度が得られることを示す。
+一様収束しても計量が収束しないGaussianデコーダー、および $C^1$ 収束しても
+Gaussian曲率が収束しないデコーダーを構成する。特に、区分アフィンな
+ReLUパラメータデコーダーは、分布適合の精度によらず、ほとんど至る所で
+平坦である。
+
+さらに、Mercator座標により歪められた単位球面を、学習される
+Gaussian分布族の背後に隠した、制御可能な
+「Wasserstein地図学（Wasserstein cartography）」ベンチマークを導入する。
+この問題の厳密解は、計量 $\sech^2(y)I$ と曲率1をもち、大域的な
+Wasserstein弦と内在的な輸送経路の違いを解析的に記述できる。
+5回の独立試行において、滑らかなTanhデコーダーは計量相対誤差
+$0.075\pm0.008$、曲率MAE $0.140\pm0.016$、測地距離RMSE
+$0.021\pm0.003$ を達成した。ReLUデコーダーは、ほぼ同一の
+検証尤度を達成する一方、その曲率MAEは $1.000\pm0.000$ となった。
+これらの結果は、再構成、距離、曲率が互いに異なる統計的推定対象である
+ことを示すとともに、それぞれの復元に必要な微分精度を明らかにする。
+\end{abstract}
+
+\section{はじめに}
+
+潜在変数は座標であって、幾何そのものではない。潜在空間を再パラメータ化
+すると、生成分布を変えないままユークリッド距離を大きく変化させることが
+できる。引き戻しRiemann幾何（pullback Riemannian geometry）は、
+潜在空間内の変位をデコーダーを通して測定することで、この問題に対処する
+\cite{arvanitidis2018,chen2018}。これにより得られる測地線は、補間、
+クラスタリング、動作生成、および幾何を考慮した生成に利用されてきた。
+
+しかし、根本的な問題が残されている。デコーダーは分布または標本に適合する
+ように学習される一方、その計量は1階微分に、曲率は2階微分に依存する。
+したがって、再構成誤差または尤度誤差が小さいことは、幾何誤差が小さい
+ことを必ずしも意味しない。この不整合は、現代的な区分線形ネットワーク
+において特に重要である。そのようなネットワークは、滑らかなデコーダーの
+値を高精度に近似できる一方、2階の幾何については質的に異なる構造を
+もつ可能性がある。
+
+本研究では、この問題を、最も単純でありながら非自明な最適輸送の設定で
+解析する。対角Gaussianデコーダーを
+\[
+ K_z=\mathcal N\!\left(m(z),\diag(\sigma(z)^2)\right),
+ \qquad z\in\cZ\subset\R^d
+\]
+とする。Gaussian分布間の厳密な公式から、
+\[
+ \W(K_z,K_{z'})^2
+ =\norm{m(z)-m(z')}^2+\norm{\sigma(z)-\sigma(z')}^2
+\]
+を得る。したがって、$F=(m,\sigma)$ はデコーダーが表す分布族を
+ユークリッド空間に埋め込み、局所的な最適輸送コストは引き戻し計量
+$G=J_F^{\trans}J_F$ を誘導する。この設定により、母空間におけるWasserstein
+距離を近似する必要なく、幾何の学習という問題そのものを分離して解析できる。
+
+\paragraph{本研究の貢献}
+\begin{enumerate}
+  \item デコーダーの微分誤差から、引き戻し計量、すべての内在距離、
+  第二基本形式、およびGaussian曲率への明示的な安定性評価を証明する。
+  要約すれば、$C^1$ 精度は距離を制御し、$C^2$ 精度は曲率を制御する。
+  \item 計量テンソル全体を復元する中心差分型の局所輸送推定量を与える。
+  距離二乗の誤差が $\eta$ であるとき、その誤差は
+  $O(h^2+\eta/h^2)$ であり、空間スケール $h\asymp\eta^{1/4}$ において
+  最小化される。
+  \item Gaussianデコーダーのクラス内で二つの滑らかな反例を構成し、
+  この正則性階層が必要であることを示す。また、区分アフィンな
+  パラメータデコーダーがほとんど至る所で平坦になることを定式化する。
+  \item 曲率で制御される3次の評価を通して、大域的なWasserstein弦と
+  内在的な輸送を結び付ける。これにより、端点分布間の直接輸送と、
+  デコーダーが表す分布族上に制約された経路とを区別する。
+  \item 計量、曲率、測地線、および曲面の真値がすべて既知である、
+  完全に再現可能なベンチマークを提供する。一般的な合成点群とは異なり、
+  可視化される各対象には、明示的な統計的入力と一意な評価対象が存在する。
+\end{enumerate}
+
+\section{関連研究}
+
+深層生成モデルの引き戻し幾何は、Arvanitidisら
+\cite{arvanitidis2018} およびChenら \cite{chen2018} により、
+決定論的デコーダーと確率的デコーダーの双方に対して構築された。
+Gaussianデコーダーについて、彼らの期待確率計量は、本研究が $W_2$ から
+直接導出する
+$J_m^{\trans}J_m+J_\sigma^{\trans}J_\sigma$
+と同じ表式をもつ。その後の研究では、この計量を平坦性へ向けて正則化する
+方法 \cite{chen2020}、母空間の計量に領域知識を導入する方法
+\cite{arvanitidis2021}、潜在事前分布を用いて計量を近似する方法
+\cite{arvanitidis2022prior}、および、より一般の分布を扱うために
+母空間の幾何をFisher--Rao幾何で置き換える方法
+\cite{arvanitidis2022fisher} が提案されている。近年では、
+デコーダーアンサンブル \cite{syrota2024}、Riemannデータ空間
+\cite{rozo2025}、およびスコアモデル \cite{diepeveen2025} を用いる
+手法も提案されている。これらの研究は潜在計量を構成または利用するのに
+対し、本研究は、学習された計量と曲率そのものを収束させるために、
+どの収束様式が十分であるかを問う。
+
+最も直接的な先行研究であるRoyとHaubergの
+\emph{Optimal Latent Transport} \cite{roy2022} は、離散デコーダー
+分布間のWasserstein距離をVAEの潜在空間へ引き戻し、離散化した曲線長を
+最適化して測地線を計算する。同研究の問いは、学習済みデコーダーを固定した
+とき、そのWasserstein幾何がどの経路を誘導するかという計算上の問題である。
+これに対し本研究は、推定されたデコーダーが真のデコーダーを近似するとき、
+誘導される計量、内在距離、曲率をどの階数の微分精度から信頼できるかという、
+相補的な近似理論上の問題を扱う。対角Gaussianの $W_2$ 設定に限定することで、
+明示的な計量テンソル、定量的安定性評価、必要性を示す反例、および
+ノイズを含む有限スケールでの復元保証を得る。本研究は同研究の離散
+$W_1$ 構成を包含する直接の一般化ではない。異なるデコーダークラスにおいて、
+その幾何の信頼性と高階構造を扱う、相補的な理論的発展である。
+
+Isomap \cite{tenenbaum2000} に代表されるように、グラフ上の最短経路は、
+局所的な外在距離から多様体上の測地距離を推定する。本研究の局所辺コストは、
+一般的なユークリッド距離の近似ではなく、デコーダー分布間の厳密な $W_2$
+距離である。本研究では、この大域的な弦距離と、それがデコーダー分布族上に
+誘導する経路距離との区別を維持する。Riemann拡散モデル
+\cite{debortoli2022} は、正しい内在幾何の復元が実際の生成操作において
+重要となる下流タスクの一例である。
+
+Gaussian分布間の $W_2$ の公式はGivensとShortt
+\cite{givensshortt1984} に遡り、完全なGaussian分布族の幾何は
+Takatsu \cite{takatsu2011} によって研究されている。本研究では
+Villani \cite{villani2009} のWasserstein記法に従い、主要結果を
+対角共分散に限定する。この場合、パラメータはめ込みとすべての定数を
+明示的に記述できる。
+
+\section{Wasserstein引き戻し幾何}
+\label{sec:setup}
+
+$\cZ\subset\R^d$ を連結集合とし、
+$m:\cZ\to\R^n$ および $\sigma:\cZ\to(0,\infty)^n$ とする。次を定義する。
+\[
+ F(z):=(m(z),\sigma(z))\in\R^{2n}.
+\]
+対角Gaussian分布に対し、共通ノイズを用いた最適カップリングから
+次の恒等式が得られる。
+
+\begin{proposition}[Gaussian Wassersteinはめ込み]
+\label{prop:w2-immersion}
+任意の $z,z'\in\cZ$ に対して、
+\begin{equation}
+ \W(K_z,K_{z'})=\norm{F(z)-F(z')}
+ \label{eq:w2-chord}
+\end{equation}
+が成り立つ。$F$ が $C^1$ 級であり、$\rank J_F(z)=d$ ならば、
+\eqref{eq:w2-chord} が誘導する無限小計量は
+\begin{equation}
+ \begin{aligned}
+ G(z)&=J_F(z)^{\trans}J_F(z)\\
+ &=J_m(z)^{\trans}J_m(z)
+   +J_\sigma(z)^{\trans}J_\sigma(z)
+ \end{aligned}
+ \label{eq:pullback}
+\end{equation}
+である。特に、
+\[
+ \W(K_z,K_{z+h})^2=h^{\trans}G(z)h+o(\norm{h}^2)
+\]
+が成り立つ。
+\end{proposition}
+
+この恒等式は、1次元Gaussian分布の輸送写像を各座標に適用することで
+得られる。また、展開式は $F$ を微分することで得られる。
+ここでは幾何を明確に定めるために命題を記載した。自己完結した導出は、
+対応するセミナーノートに与えている。
+
+\subsection{ノイズ下での局所計量復元}
+
+命題~\ref{prop:w2-immersion} は $G$ を無限小の極限として定義する。
+次の結果は、その近似スケールを明示し、局所的な端点間距離のみを用いて
+計量を復元する。また、輸送距離の観測にノイズが含まれる場合には、
+辺を任意に短くすることがかえって有害になる理由も示す。
+
+\begin{proposition}[中心差分型Wasserstein計量プローブ]
+\label{prop:local-probe}
+$F$ を $C^3$ 級、$v\in\R^d$ を単位ベクトルとし、
+$z\pm hv\in\cZ$ とする。この線分上で
+\[
+ \norm{J_F}\le M_1,
+ \qquad \norm{D^3F[v,v,v]}\le M_3
+\]
+を仮定する。
+$\widetilde D^2(z+hv,z-hv)$ は
+$\W(K_{z+hv},K_{z-hv})^2$ の推定量であり、その絶対誤差は
+高々 $\eta$ であるとする。次を定義する。
+\[
+ \widetilde Q_h(z;v)
+ :=\frac{\widetilde D^2(z+hv,z-hv)}{4h^2}.
+\]
+このとき、
+\begin{equation}
+ \begin{aligned}
+ \abs{\widetilde Q_h(z;v)-v^{\trans}G(z)v}
+ &\le \frac{M_1M_3}{3}h^2+\frac{M_3^2}{36}h^4\\
+ &\quad+\frac{\eta}{4h^2}
+ \end{aligned}
+ \label{eq:local-probe}
+\end{equation}
+が成り立つ。特に、主要誤差は $O(h^2+\eta/h^2)$ であり、
+$h\asymp\eta^{1/4}$ を選ぶと $O(\sqrt\eta)$ の誤差が得られる。
+2次元の場合、$e_1,e_2$ および
+$e_\pm=(e_1\pm e_2)/\sqrt2$ において $\widetilde Q_h$ を評価すれば、
+次式により計量のすべての成分を復元できる。
+\begin{gather*}
+ \widehat G_{11}=\widetilde Q_h(e_1),\qquad
+ \widehat G_{22}=\widetilde Q_h(e_2),\\
+ \widehat G_{12}=
+ \frac{\widetilde Q_h(e_+)-\widetilde Q_h(e_-)}{2}.
+\end{gather*}
+\end{proposition}
+
+\begin{proof}
+対称Taylor展開により、
+\begin{align*}
+ F(z+hv)-F(z-hv)&=2hJ_F(z)v+r_h,\\
+ \norm{r_h}&\le M_3h^3/3
+\end{align*}
+を得る。$2h$ で除した後の剰余項のノルムは高々 $M_3h^2/6$ である。
+ノルム二乗を展開し、\eqref{eq:w2-chord} を用いると、
+\eqref{eq:local-probe} の右辺の最初の二項が得られる。観測誤差からは
+$\eta/(4h^2)$ が生じる。計量成分の復元式は、
+$Q(v)=v^{\trans}Gv$ に対する極化恒等式から従う。
+\end{proof}
+
+区分的に $C^1$ 級の曲線 $c:[0,1]\to\cZ$ に対し、次を定義する。
+\begin{align*}
+ L_G(c)&=\int_0^1
+ \sqrt{\dot c(t)^{\trans}G(c(t))\dot c(t)}\dd t,\\
+ d_G(z,z')&=\inf_{c(0)=z,\,c(1)=z'}L_G(c).
+\end{align*}
+連鎖律から、$L_G(c)$ は $F\circ c$ のユークリッド長に厳密に一致する。
+したがって、
+\begin{equation}
+ \W(K_z,K_{z'})\le d_G(z,z')
+ \label{eq:chord-intrinsic}
+\end{equation}
+が成り立つ。左辺ではデコーダー分布族の外部を通る直線的な弦が許されるが、
+右辺では経路全体が $F(\cZ)$ 上に制約される。
+
+$d=2$ かつ $F$ が $C^2$ 級であるとき、
+\[
+ P=J_FG^{-1}J_F^{\trans},\qquad
+ B_{ij}=(I-P)\partial_i\partial_jF
+\]
+とする。ここで、$P$ は接空間への射影であり、$B$ は第二基本形式
+（second fundamental form）である。Gauss方程式から、
+\begin{equation}
+ \mathcal K_F
+ =\frac{\langle B_{11},B_{22}\rangle-\norm{B_{12}}^2}{\det G}
+ \label{eq:gauss}
+\end{equation}
+を得る。\eqref{eq:pullback} と \eqref{eq:gauss} は、本研究が扱う
+中心的な学習上の問題を明確にする。すなわち、関数値は適合された分布を、
+1階微分は距離を、2階微分は曲率を決定する。
+
+\section{潜在幾何に必要な近似精度}
+\label{sec:theory}
+
+ここでは、上述の微分階層を定量化する。添字をもたない行列ノルムは
+ユークリッド作用素ノルムとする。2階微分テンソルについては、
+二つの座標添字に関する最大値をとる。
+
+\begin{theorem}[学習された幾何の安定性]
+\label{thm:stability}
+$d=2$ とし、$F,\widehat F:\cZ\to\R^N$ を $C^2$ 級写像とする。
+$F$ ははめ込みであり、$\cZ$ 上で一様に
+\[
+ \begin{aligned}
+ \sigma_{\min}(J_F)&\ge s>0,
+ &\norm{J_F}&\le M_1,\\
+ \max_{i,j}\norm{\partial_i\partial_jF}&\le M_2
+ \end{aligned}
+\]
+が成り立つと仮定する。次をおく。
+\begin{align*}
+ \varepsilon_1&:=\sup_z\norm{J_{\widehat F}(z)-J_F(z)},\\
+ \varepsilon_2&:=\max_{i,j}\sup_z
+ \norm{\partial_i\partial_j\widehat F(z)-\partial_i\partial_jF(z)}.
+\end{align*}
+$\varepsilon_1<s$ を仮定し、次を定義する。
+\begin{align*}
+ q&:=2M_1\varepsilon_1+\varepsilon_1^2,
+ &\delta&:=q/s^2<1,\\
+ p&:=\frac{\varepsilon_1}{s-\varepsilon_1},
+ &\beta&:=\varepsilon_2+pM_2.
+\end{align*}
+曲率評価のために、
+\[
+ r_N:=4M_2\beta+2\beta^2,
+ \qquad r_D:=2M_1^2q+q^2
+\]
+と略記する。このとき、$\widehat F$ ははめ込みであり、以下が成り立つ。
+\begin{enumerate}[label=(\roman*)]
+  \item 計量について、
+  \begin{equation}
+   \begin{aligned}
+   \norm{\widehat G-G}&\le q,\\
+   (1-\delta)G&\preceq\widehat G\preceq(1+\delta)G
+   \end{aligned}
+   \label{eq:metric-stability}
+  \end{equation}
+  が成り立つ。したがって、同じ連結成分に属する任意の $z,z'$ に対して、
+  \begin{equation}
+   \begin{aligned}
+   \sqrt{1-\delta}\,d_G(z,z')
+   &\le d_{\widehat G}(z,z')\\
+   &\le\sqrt{1+\delta}\,d_G(z,z')
+   \end{aligned}
+   \label{eq:distance-stability}
+  \end{equation}
+  が成り立つ。
+  \item 第二基本形式について、
+  \[
+   \max_{i,j}\norm{\widehat B_{ij}-B_{ij}}\le\beta
+  \]
+  が成り立つ。さらに、
+  \begin{equation}
+  \abs{\mathcal K_{\widehat F}-\mathcal K_F}
+  \le
+  \frac{r_N+2M_2^2r_D/s^4}{(s-\varepsilon_1)^4}
+  \label{eq:curvature-stability}
+  \end{equation}
+  が成り立つ。
+\end{enumerate}
+\end{theorem}
+
+この定理は、最適化手法およびネットワーク構造に依存しない。
+これは一種の転送結果であり、デコーダーの微分に対する任意の統計的保証または
+近似保証を、直ちに幾何に対する保証へ変換できる。また、評価式の分母は、
+デコーダーJacobianが階数落ちに近づくと幾何が不安定になることを示している。
+
+\begin{proof}
+$J=J_F$、$\widehat J=J+E$ と書く。
+$\widehat J^{\trans}\widehat J-J^{\trans}J$ を展開すると、
+\[
+ \norm{\widehat G-G}\le2\norm{J}\norm{E}+\norm{E}^2\le q
+\]
+を得る。$G\succeq s^2I$ であるため、二次形式として
+\eqref{eq:metric-stability} が従う。各曲線に沿って平方根の評価を積分し、
+その下限をとることで \eqref{eq:distance-stability} が得られる。
+また、$\sigma_{\min}(\widehat J)\ge s-\varepsilon_1>0$ である。
+
+$P$ と $\widehat P$ をそれぞれの接空間への射影とする。
+一方の列空間に属する単位ベクトルから他方の列空間までの距離を評価することで、
+基本的な部分空間摂動評価
+\[
+ \norm{\widehat P-P}
+ \le \frac{\varepsilon_1}{s-\varepsilon_1}=p
+\]
+を得る。$H_{ij}=\partial_i\partial_jF$ と書けば、
+\[
+ \widehat B_{ij}-B_{ij}
+ =(I-\widehat P)(\widehat H_{ij}-H_{ij})
+ +(P-\widehat P)H_{ij}
+\]
+であり、これより $\beta$ による評価が従う。
+
+$N=\langle B_{11},B_{22}\rangle-\norm{B_{12}}^2$ とする。
+射影はノルムを増加させないので、$\norm{B_{ij}}\le M_2$ であり、
+\[
+ \abs{\widehat N-N}\le r_N,
+ \qquad \abs{N}\le2M_2^2
+\]
+を得る。さらに、$\det G\ge s^4$、
+$\det\widehat G\ge(s-\varepsilon_1)^4$ であり、2次元の行列式恒等式から
+\[
+ \abs{\det\widehat G-\det G}\le r_D
+\]
+が従う。これらの不等式を
+$\widehat N/\det\widehat G-N/\det G$ に適用すると、
+\eqref{eq:curvature-stability} が得られる。
+\end{proof}
+
+\subsection{正則性階層の必要性}
+
+関数値の誤差が小さいだけでは微分を制御できず、1階微分を制御するだけでは
+曲率を制御できない。次の命題は、Gaussianデコーダーのクラスを離れることなく、
+これら二つの隔たりを明示する。
+
+\begin{proposition}[正則性階層の鋭さ]
+\label{prop:counterexamples}
+$\cZ=(-1,1)^2$ 上に、以下の性質をもつ滑らかな、はめ込みとなる
+対角Gaussianデコーダーが存在する。
+\begin{enumerate}[label=(\alph*)]
+  \item $F_k\to F_0$ は一様収束するが、誘導される計量は一様収束しない。
+  \item $H_k\to H_0$ は $C^1$ 収束するが、そのGaussian曲率は原点で
+  各点収束しない。
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+$\R^3$ 内の平均のはめ込みを指定し、正の定数からなる標準偏差ベクトルを
+付加すれば十分である。(a)について、
+\begin{align*}
+ F_k(x,y)&=(x,y,k^{-1}\sin(kx)),\\
+ F_0(x,y)&=(x,y,0)
+\end{align*}
+とする。関数値の誤差は高々 $k^{-1}$ であるが、$x=0$ における計量の
+$(1,1)$ 成分は $1+\cos^2(kx)=2$ であり、極限値 $1$ とは一致しない。
+
+(b)について、
+\begin{align*}
+ H_k(x,y)&=\left(x,y,k^{-2}[\cos(kx)+\cos(ky)]\right),\\
+ H_0(x,y)&=(x,y,0)
+\end{align*}
+とする。関数値の誤差は高々 $2k^{-2}$ であり、Jacobianの誤差は高々
+$\sqrt2/k$ である。したがって、$H_k\to H_0$ は $C^1$ 収束する。
+グラフ $(x,y,f(x,y))$ に対して、
+\[
+ \mathcal K=\frac{f_{xx}f_{yy}-f_{xy}^2}
+ {(1+f_x^2+f_y^2)^2}
+\]
+である。原点では $f_x=f_y=f_{xy}=0$ かつ
+$f_{xx}=f_{yy}=-1$ であるため、すべての $k$ に対して
+$\mathcal K_{H_k}(0,0)=1$ となる一方、
+$\mathcal K_{H_0}(0,0)=0$ である。
+\end{proof}
+
+\begin{corollary}[区分アフィンデコーダーはほとんど至る所で平坦である]
+\label{cor:relu-flat}
+パラメータ写像 $F=(m,\sigma)$ が区分アフィンなはめ込みであるならば、
+その引き戻し曲率は各線形領域の内部で0であり、したがってほとんど至る所で
+0である。この結果は、関数値の近似誤差によらず、アフィンなパラメータ出力を
+もつReLUネットワークに適用できる。
+\end{corollary}
+
+$\sigma=\exp(\ell)$ のような非線形出力変換は、それ自体が曲率を生成しうる。
+したがって、系~\ref{cor:relu-flat} が対象とするのは、活性化前の出力だけ
+ではなく、実際のパラメータ写像 $F$ である。本研究のReLUベースラインは
+$\sigma$ を直接出力し、区分アフィンなクランプによって正値性を保証する。
+
+\subsection{Wasserstein弦と内在的輸送}
+
+安定性定理が制御するのは経路距離である。この定理は、端点間の
+Wasserstein距離が経路距離に等しいことを意味しない。両者の局所的な差は、
+外在的な曲がりによって制御される。
+
+\begin{theorem}[弦と内在距離の3次誤差]
+\label{thm:chord-gap}
+$\gamma:[0,L]\to\cZ$ を、単位速度で距離を最小化する $G$-測地線とする。
+\[
+ \norm{B(\dot\gamma(t),\dot\gamma(t))}\le\Lambda,
+ \qquad \Lambda L\le\pi
+\]
+を仮定する。このとき、
+\begin{equation}
+ \frac{2}{\Lambda}\sin\frac{\Lambda L}{2}
+ \le \W(K_{\gamma(0)},K_{\gamma(L)})\le L
+ \label{eq:sine-bound}
+\end{equation}
+が成り立つ。ただし、$\Lambda=0$ の場合にはその極限として解釈する。
+したがって、
+\begin{equation}
+ 0\le L-\W(K_{\gamma(0)},K_{\gamma(L)})
+ \le\frac{\Lambda^2L^3}{24}
+ \label{eq:cubic-gap}
+\end{equation}
+が成り立つ。
+\end{theorem}
+
+上側評価は \eqref{eq:chord-intrinsic} そのものである。
+完全性のため、下側評価も示す。$c=F\circ\gamma$ は単位速度であり、
+$\norm{\ddot c}=\norm{B(\dot\gamma,\dot\gamma)}\le\Lambda$ である。
+したがって、$\dot c(s)$ と $\dot c(t)$ のなす角は
+高々 $\Lambda\abs{s-t}$ である。
+$\norm{\int_0^L\dot c(t)\dd t}^2$ を二重積分として展開し、内積を
+$\cos(\Lambda\abs{s-t})$ で下から評価すると、
+\eqref{eq:sine-bound} が得られる。不等式
+$\sin x\ge x-x^3/6$ を用いると \eqref{eq:cubic-gap} が従う。
+半径 $1/\Lambda$ の円は、正弦関数による下側評価を等号で達成する。

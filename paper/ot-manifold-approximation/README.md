@@ -67,12 +67,18 @@ Build the PDF:
 make paper
 ```
 
+Build the Japanese edition:
+
+```sh
+make paper-ja
+```
+
 Regenerate everything:
 
 ```sh
 make paper-all
 ```
 
-The paper is written to `out/main.pdf`. Raw and aggregated measurements are
-stored in `experiments/cartography_results.csv` and
-`experiments/cartography_summary.csv`.
+The English and Japanese editions are written to `out/main.pdf` and
+`out/main-ja.pdf`, respectively. Raw and aggregated measurements are stored in
+`experiments/cartography_results.csv` and `experiments/cartography_summary.csv`.

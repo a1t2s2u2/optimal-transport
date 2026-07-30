@@ -1,0 +1,45 @@
+% Japanese two-column preamble. Build main-ja.tex with LuaLaTeX.
+\usepackage[letterpaper,margin=0.72in,columnsep=0.25in]{geometry}
+\usepackage[haranoaji]{luatexja-preset}
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{graphicx,booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+
+\definecolor{linkblue}{RGB}{25,83,135}
+\hypersetup{colorlinks=true,linkcolor=linkblue,citecolor=linkblue,urlcolor=linkblue}
+\setlist{nosep,leftmargin=*}
+\setlength{\parindent}{1\zw}
+\setlength{\parskip}{0pt}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{定理}[section]
+\newtheorem{proposition}[theorem]{命題}
+\newtheorem{lemma}[theorem]{補題}
+\newtheorem{corollary}[theorem]{系}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{定義}
+\newtheorem{example}[theorem]{例}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{注意}
+\renewcommand{\proofname}{証明}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\W}{W_2}
+\newcommand{\cP}{\mathcal{P}}
+\newcommand{\cZ}{\mathcal{Z}}
+\newcommand{\norm}[1]{\lVert #1\rVert}
+\newcommand{\abs}[1]{\lvert #1\rvert}
+\newcommand{\op}{\mathrm{op}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\sech}{\operatorname{sech}}
+\newcommand{\rank}{\operatorname{rank}}
+\newcommand{\dist}{\operatorname{dist}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\dd}{\,\mathrm{d}}
+\newcommand{\trans}{\mathsf{T}}

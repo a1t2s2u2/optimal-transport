@@ -30,12 +30,12 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from matplotlib import font_manager
 from matplotlib.colors import Normalize
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import dijkstra
 from torch import Tensor, nn
 from torch.func import jacrev, vmap
-
 
 plt.switch_backend("Agg")
 
@@ -76,6 +76,31 @@ MODEL_SPECS = (
     ModelSpec("softplus", "Softplus (smooth)", "softplus"),
     ModelSpec("relu", "ReLU (piecewise affine)", "relu"),
 )
+
+MODEL_LABELS_JA = {
+    "tanh": "Tanh（滑らか）",
+    "softplus": "Softplus（滑らか）",
+    "relu": "ReLU（区分アフィン）",
+}
+
+
+def japanese_font_family() -> str:
+    """Return an installed Japanese font without hard-coding a platform."""
+    installed = {font.name for font in font_manager.fontManager.ttflist}
+    for candidate in (
+        "Hiragino Sans",
+        "Yu Gothic",
+        "Noto Sans CJK JP",
+        "IPAexGothic",
+        "IPAGothic",
+    ):
+        if candidate in installed:
+            return candidate
+    print(
+        "warning: no Japanese font found; Japanese plot glyphs may be missing",
+        flush=True,
+    )
+    return "sans-serif"
 
 
 def seed_everything(seed: int) -> None:
@@ -214,9 +239,7 @@ def train_decoder(
             )
         ]
         raw = model.raw_parameters(coordinates[chosen])
-        predicted = torch.cat(
-            [raw[:, :3], torch.clamp(raw[:, 3:], min=MIN_STD)], dim=1
-        )
+        predicted = torch.cat([raw[:, :3], torch.clamp(raw[:, 3:], min=MIN_STD)], dim=1)
         loss = gaussian_nll(
             predicted, empirical_mean[chosen], empirical_variance[chosen]
         )
@@ -261,9 +284,7 @@ def metric_and_curvature(
     metric = np.einsum("noi,noj->nij", jacobian, jacobian)
     curvature = np.empty(len(metric), dtype=np.float64)
     identity = np.eye(jacobian.shape[1])
-    for index, (j_value, h_value, g_value) in enumerate(
-        zip(jacobian, hessian, metric)
-    ):
+    for index, (j_value, h_value, g_value) in enumerate(zip(jacobian, hessian, metric)):
         inverse = np.linalg.inv(g_value)
         projection = j_value @ inverse @ j_value.T
         normal = identity - projection
@@ -353,7 +374,9 @@ def pairwise_metrics(
     }
 
 
-def surface_error(parameters: np.ndarray, sphere: np.ndarray) -> tuple[float, np.ndarray]:
+def surface_error(
+    parameters: np.ndarray, sphere: np.ndarray
+) -> tuple[float, np.ndarray]:
     centered = parameters - parameters.mean(axis=0, keepdims=True)
     left, singular, _ = np.linalg.svd(centered, full_matrices=False)
     embedded = left[:, :3] * singular[:3]
@@ -381,7 +404,7 @@ def evaluate(
     geometry_indices = np.flatnonzero(np.abs(coordinates[:, 1]) <= EVALUATION_LIMIT)
     coordinate_tensor = torch.as_tensor(coordinates, dtype=torch.float64)
     geometry_tensor = coordinate_tensor[geometry_indices]
-    predicted_parameters, jacobian, hessian = derivatives(model, geometry_tensor)
+    _, jacobian, hessian = derivatives(model, geometry_tensor)
     predicted_metric, predicted_curvature = metric_and_curvature(jacobian, hessian)
     target_metric = true_metric(coordinates[geometry_indices])
     relative_metric_error = np.linalg.norm(
@@ -470,7 +493,9 @@ def oracle_evaluation(
     return metrics, diagnostics
 
 
-def gaussian_projection_image(mean: np.ndarray, standard_deviation: np.ndarray) -> np.ndarray:
+def gaussian_projection_image(
+    mean: np.ndarray, standard_deviation: np.ndarray
+) -> np.ndarray:
     grid = np.linspace(-3.0, 3.0, 64)
     first, second = np.meshgrid(grid, grid, indexing="xy")
     pairs = ((0, 1), (1, 2), (2, 0))
@@ -491,7 +516,10 @@ def save_pipeline_figure(
     sphere: np.ndarray,
     true_parameters_value: np.ndarray,
     diagnostics: dict[str, np.ndarray],
+    language: str = "en",
 ) -> None:
+    japanese = language == "ja"
+    suffix = "_ja" if japanese else ""
     selected = [
         N_LONGITUDE * 8 + 8,
         N_LONGITUDE * 15 + 26,
@@ -523,14 +551,17 @@ def save_pipeline_figure(
         image_axis.imshow(image, origin="lower", interpolation="bilinear")
         image_axis.set_xticks([])
         image_axis.set_yticks([])
-        image_axis.set_title(f"distribution {number}", color=colour, fontsize=9)
+        distribution_label = "分布" if japanese else "distribution"
+        image_axis.set_title(f"{distribution_label} {number}", color=colour, fontsize=9)
         for spine in image_axis.spines.values():
             spine.set_color(colour)
             spine.set_linewidth(1.8)
 
-    map_axis.set_xlabel(r"longitude $\lambda$")
-    map_axis.set_ylabel(r"Mercator coordinate $y$")
-    map_axis.set_title("distorted latent chart")
+    map_axis.set_xlabel(r"経度 $\lambda$" if japanese else r"longitude $\lambda$")
+    map_axis.set_ylabel(
+        r"メルカトル座標 $y$" if japanese else r"Mercator coordinate $y$"
+    )
+    map_axis.set_title("歪んだ潜在座標" if japanese else "distorted latent chart")
     map_axis.set_xlim(-math.pi, math.pi)
     map_axis.set_ylim(-MERCATOR_LIMIT, MERCATOR_LIMIT)
 
@@ -546,27 +577,40 @@ def save_pipeline_figure(
     )
     for number, (index, colour) in enumerate(zip(selected, colours), start=1):
         sphere_axis.scatter(*embedded[index], s=50, color=colour, edgecolor="black")
-        sphere_axis.text(*(1.08 * embedded[index]), str(number), color=colour, weight="bold")
+        sphere_axis.text(
+            *(1.08 * embedded[index]), str(number), color=colour, weight="bold"
+        )
     sphere_axis.set_axis_off()
     sphere_axis.set_box_aspect((1, 1, 1))
     sphere_axis.view_init(elev=20, azim=-58)
-    sphere_axis.set_title("learned decoder surface (PCA)", pad=0)
+    sphere_axis.set_title(
+        "学習されたデコーダー曲面（PCA）"
+        if japanese
+        else "learned decoder surface (PCA)",
+        pad=0,
+    )
     figure.text(0.205, 0.49, r"$\longrightarrow$", fontsize=20)
     figure.text(0.665, 0.49, r"$\longrightarrow$", fontsize=20)
-    figure.suptitle(
-        "Wasserstein cartography: distributions reveal the sphere hidden by a flat chart",
-        fontsize=12,
-        y=0.99,
+    title = (
+        "Wasserstein地図学：平面座標の背後にある球面を分布から復元"
+        if japanese
+        else "Wasserstein cartography: distributions reveal the sphere hidden by a flat chart"
     )
+    figure.suptitle(title, fontsize=12, y=0.99)
     figure.tight_layout()
-    figure.savefig(HERE / "cartography_pipeline.png", dpi=220, bbox_inches="tight")
+    figure.savefig(
+        HERE / f"cartography_pipeline{suffix}.png", dpi=220, bbox_inches="tight"
+    )
     plt.close(figure)
 
 
 def save_geometry_figure(
     coordinates: np.ndarray,
     diagnostics_by_model: dict[str, dict[str, np.ndarray]],
+    language: str = "en",
 ) -> None:
+    japanese = language == "ja"
+    suffix = "_ja" if japanese else ""
     geometry_indices = diagnostics_by_model["tanh"]["geometry_indices"].astype(int)
     geometry_coordinates = coordinates[geometry_indices]
     longitude_values = np.unique(geometry_coordinates[:, 0])
@@ -597,53 +641,84 @@ def save_geometry_figure(
             cmap="coolwarm",
             norm=Normalize(vmin=-0.5, vmax=2.5),
         )
-        axes[0, column].set_title(MODEL_SPECS[column].label)
-        axes[1, column].set_xlabel(r"longitude $\lambda$")
-    axes[0, 0].set_ylabel("$y$\nmetric scale")
-    axes[1, 0].set_ylabel("$y$\nGaussian curvature")
+        model_label = MODEL_LABELS_JA[key] if japanese else MODEL_SPECS[column].label
+        axes[0, column].set_title(model_label)
+        axes[1, column].set_xlabel(
+            r"経度 $\lambda$" if japanese else r"longitude $\lambda$"
+        )
+    axes[0, 0].set_ylabel("$y$\n局所長さ尺度" if japanese else "$y$\nmetric scale")
+    axes[1, 0].set_ylabel("$y$\nガウス曲率" if japanese else "$y$\nGaussian curvature")
     figure.colorbar(first, ax=axes[0, :], shrink=0.72, label=r"$(\det G)^{1/4}$")
     figure.colorbar(second, ax=axes[1, :], shrink=0.72, label=r"$K$")
-    figure.suptitle(
-        "Comparable likelihood does not imply comparable differential geometry",
-        fontsize=12,
+    title = (
+        "同程度の尤度でも微分幾何は一致しない"
+        if japanese
+        else "Comparable likelihood does not imply comparable differential geometry"
     )
-    figure.subplots_adjust(left=0.08, right=0.91, bottom=0.10, top=0.90, wspace=0.08, hspace=0.18)
-    figure.savefig(HERE / "cartography_geometry.png", dpi=220, bbox_inches="tight")
+    figure.suptitle(title, fontsize=12)
+    figure.subplots_adjust(
+        left=0.08, right=0.91, bottom=0.10, top=0.90, wspace=0.08, hspace=0.18
+    )
+    figure.savefig(
+        HERE / f"cartography_geometry{suffix}.png", dpi=220, bbox_inches="tight"
+    )
     plt.close(figure)
 
 
 def save_distance_figure(
     diagnostics_by_model: dict[str, dict[str, np.ndarray]],
+    language: str = "en",
 ) -> None:
+    japanese = language == "ja"
+    suffix = "_ja" if japanese else ""
     proposed = diagnostics_by_model["tanh"]
     truth = proposed["truth"]
     figure, axes = plt.subplots(1, 2, figsize=(9.8, 3.8))
-    axes[0].scatter(truth, proposed["flat"], s=9, alpha=0.25, label="flat chart")
     axes[0].scatter(
-        truth, proposed["global_w2"], s=9, alpha=0.25, label=r"global $W_2$ chord"
+        truth,
+        proposed["flat"],
+        s=9,
+        alpha=0.25,
+        label="平面座標" if japanese else "flat chart",
+    )
+    axes[0].scatter(
+        truth,
+        proposed["global_w2"],
+        s=9,
+        alpha=0.25,
+        label=r"大域 $W_2$ 弦" if japanese else r"global $W_2$ chord",
     )
     axes[0].scatter(
         truth,
         proposed["local_chain"],
         s=9,
         alpha=0.25,
-        label=r"local $W_2$ chain",
+        label=r"局所 $W_2$ 鎖" if japanese else r"local $W_2$ chain",
     )
     limit = float(max(truth.max(), proposed["flat"].max()))
     axes[0].plot([0, limit], [0, limit], "k--", linewidth=1)
     axes[0].set_xlim(0, math.pi)
     axes[0].set_ylim(0, min(limit, 5.0))
-    axes[0].set_xlabel("great-circle distance")
-    axes[0].set_ylabel("estimated distance")
+    axes[0].set_xlabel("大円距離" if japanese else "great-circle distance")
+    axes[0].set_ylabel("推定距離" if japanese else "estimated distance")
     axes[0].legend(frameon=False, fontsize=8)
-    axes[0].set_title("Local transport recovers intrinsic travel")
+    axes[0].set_title(
+        "局所輸送は内在距離を復元する"
+        if japanese
+        else "Local transport recovers intrinsic travel"
+    )
 
     oracle = diagnostics_by_model["oracle"]
     gap = oracle["truth"] - oracle["global_w2"]
     order = np.argsort(oracle["truth"])
     distance_grid = np.linspace(0.0, math.pi, 200)
     axes[1].scatter(
-        oracle["truth"], gap, s=9, alpha=0.25, color="#2779ad", label="observed gap"
+        oracle["truth"],
+        gap,
+        s=9,
+        alpha=0.25,
+        color="#2779ad",
+        label="観測された差" if japanese else "observed gap",
     )
     axes[1].plot(
         distance_grid,
@@ -660,18 +735,28 @@ def save_distance_figure(
         "--",
         color="#ca3b33",
         linewidth=1.4,
-        label=r"local law $d^3/24$",
+        label=r"局所則 $d^3/24$" if japanese else r"local law $d^3/24$",
     )
-    axes[1].set_xlabel(r"intrinsic distance $d$")
+    axes[1].set_xlabel(r"内在距離 $d$" if japanese else r"intrinsic distance $d$")
     axes[1].set_ylabel(r"$d-W_2$")
-    axes[1].set_title("The chord shortcut is cubic locally")
+    axes[1].set_title(
+        "弦の近道誤差は局所的に3次"
+        if japanese
+        else "The chord shortcut is cubic locally"
+    )
     axes[1].legend(frameon=False, fontsize=8)
     figure.tight_layout()
-    figure.savefig(HERE / "cartography_distances.png", dpi=220, bbox_inches="tight")
+    figure.savefig(
+        HERE / f"cartography_distances{suffix}.png", dpi=220, bbox_inches="tight"
+    )
     plt.close(figure)
 
 
-def save_training_figure(histories: dict[str, list[dict[str, float]]]) -> None:
+def save_training_figure(
+    histories: dict[str, list[dict[str, float]]], language: str = "en"
+) -> None:
+    japanese = language == "ja"
+    suffix = "_ja" if japanese else ""
     figure, axis = plt.subplots(figsize=(5.5, 3.5))
     colours = {"tanh": "#2779ad", "softplus": "#4f9c45", "relu": "#ca3b33"}
     for spec in MODEL_SPECS:
@@ -679,16 +764,26 @@ def save_training_figure(histories: dict[str, list[dict[str, float]]]) -> None:
         axis.plot(
             [row["step"] for row in rows],
             [row["nll"] for row in rows],
-            label=spec.label,
+            label=MODEL_LABELS_JA[spec.key] if japanese else spec.label,
             color=colours[spec.key],
         )
-    axis.set_xlabel("optimization step")
-    axis.set_ylabel("training Gaussian NLL")
-    axis.set_title("All decoders fit the observed distributions")
+    axis.set_xlabel("最適化ステップ" if japanese else "optimization step")
+    axis.set_ylabel("学習時ガウスNLL" if japanese else "training Gaussian NLL")
+    axis.set_title(
+        "すべてのデコーダーが観測分布に適合"
+        if japanese
+        else "All decoders fit the observed distributions"
+    )
     axis.legend(frameon=False, fontsize=8)
     figure.tight_layout()
-    figure.savefig(HERE / "cartography_training.png", dpi=220, bbox_inches="tight")
+    figure.savefig(
+        HERE / f"cartography_training{suffix}.png", dpi=220, bbox_inches="tight"
+    )
     plt.close(figure)
+
+
+def formatted_summary_metric(row: dict[str, str | float], metric: str) -> str:
+    return f"${row[metric]:.4f}\\pm{row[f'{metric}_std']:.4f}$"
 
 
 def write_outputs(
@@ -734,15 +829,39 @@ def write_outputs(
                 "softplus": "Softplus",
                 "relu": "ReLU",
             }[key]
-            def formatted(metric: str) -> str:
-                return (
-                    f"${row[metric]:.4f}\\pm"
-                    f"{row[f'{metric}_std']:.4f}$"
-                )
             handle.write(
-                f"{label} & {formatted('parameter_rmse')} & "
-                f"{formatted('metric_relative_error')} & {formatted('curvature_mae')} & "
-                f"{formatted('geodesic_rmse')} & {formatted('surface_rmse')} \\\\\n"
+                f"{label} & {formatted_summary_metric(row, 'parameter_rmse')} & "
+                f"{formatted_summary_metric(row, 'metric_relative_error')} & "
+                f"{formatted_summary_metric(row, 'curvature_mae')} & "
+                f"{formatted_summary_metric(row, 'geodesic_rmse')} & "
+                f"{formatted_summary_metric(row, 'surface_rmse')} \\\\\n"
+            )
+        handle.write("\\bottomrule\n")
+        handle.write("\\end{tabular}\n")
+
+    with (HERE / "cartography_table_ja.tex").open("w") as handle:
+        handle.write("\\begin{tabular}{lrrrrr}\n")
+        handle.write("\\toprule\n")
+        handle.write(
+            "デコーダー & パラメータRMSE & 計量相対誤差 & 曲率MAE & "
+            "測地RMSE & 曲面RMSE \\\\\n"
+        )
+        handle.write("\\midrule\n")
+        for key in ("oracle", "tanh", "softplus", "relu"):
+            row = by_key[key]
+            label = {
+                "oracle": "真の写像 $F_*$",
+                "tanh": "Tanh",
+                "softplus": "Softplus",
+                "relu": "ReLU",
+            }[key]
+
+            handle.write(
+                f"{label} & {formatted_summary_metric(row, 'parameter_rmse')} & "
+                f"{formatted_summary_metric(row, 'metric_relative_error')} & "
+                f"{formatted_summary_metric(row, 'curvature_mae')} & "
+                f"{formatted_summary_metric(row, 'geodesic_rmse')} & "
+                f"{formatted_summary_metric(row, 'surface_rmse')} \\\\\n"
             )
         handle.write("\\bottomrule\n")
         handle.write("\\end{tabular}\n")
@@ -854,12 +973,21 @@ def main() -> None:
 
     summary = summarize_results(results)
     write_outputs(results, summary, histories)
-    save_pipeline_figure(
-        coordinates, sphere, parameters, diagnostics_by_model["tanh"]
-    )
+    save_pipeline_figure(coordinates, sphere, parameters, diagnostics_by_model["tanh"])
     save_geometry_figure(coordinates, diagnostics_by_model)
     save_distance_figure(diagnostics_by_model)
     save_training_figure(histories)
+    with plt.rc_context({"font.family": japanese_font_family()}):
+        save_pipeline_figure(
+            coordinates,
+            sphere,
+            parameters,
+            diagnostics_by_model["tanh"],
+            language="ja",
+        )
+        save_geometry_figure(coordinates, diagnostics_by_model, language="ja")
+        save_distance_figure(diagnostics_by_model, language="ja")
+        save_training_figure(histories, language="ja")
     print("wrote Wasserstein cartography results", flush=True)
 
 
