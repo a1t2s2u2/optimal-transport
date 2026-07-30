@@ -1,0 +1,51 @@
+% ============================================================
+%  preamble.tex — 論文「観測画像から潜在多様体を選べるか」
+%  ML 会議（NeurIPS 型・単段組）に準じた体裁
+% ============================================================
+
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{graphicx,booktabs}
+\usepackage[dvipdfmx,hidelinks]{hyperref}
+\usepackage{pxjahyper}
+\usepackage{geometry}
+\geometry{a4paper,margin=25mm}
+
+% --- 定理環境（論文体裁：装飾なし・節ごとの通し番号）---
+\theoremstyle{plain}
+\newtheorem{theorem}{定理}[section]
+\newtheorem{proposition}[theorem]{命題}
+\newtheorem{lemma}[theorem]{補題}
+\newtheorem{corollary}[theorem]{系}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{定義}
+\newtheorem{fact}[theorem]{事実}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{注意}
+
+\renewcommand{\proofname}{証明}
+
+% --- 記法 ---
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\St}{\operatorname{St}}
+\newcommand{\Gr}{\operatorname{Gr}}
+\newcommand{\dist}{\operatorname{dist}}
+\newcommand{\supp}{\operatorname{supp}}
+\newcommand{\sym}{\operatorname{sym}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\rank}{\operatorname{rank}}
+\newcommand{\reach}{\operatorname{reach}}
+\newcommand{\Wass}{\mathrm{W}}
+\newcommand{\Haar}{\operatorname{Haar}}
+\newcommand{\abs}[1]{\lvert #1 \rvert}
+\newcommand{\norm}[1]{\lVert #1 \rVert}
+\newcommand{\Pp}[1]{\mathcal{P}_{#1}}
+\newcommand{\vol}{\operatorname{vol}}
+\renewcommand{\d}{\mathrm{d}}
+
+% --- 体裁 ---
+\setlength{\parindent}{1zw}
+\renewcommand{\abstractname}{要旨}

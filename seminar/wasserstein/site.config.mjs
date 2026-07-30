@@ -53,6 +53,15 @@ export default {
       title: "Gaussian decoder が作る潜在空間の曲率",
     },
     {
+      tex: "main/04_transport_cost.tex",
+      md: "04-transport-cost.md",
+      id: "transport-cost",
+      group: "main",
+      nav: "曲率の存在条件と輸送コスト",
+      eyebrow: "4. Transport Cost",
+      title: "潜在曲率の存在条件と輸送コスト",
+    },
+    {
       tex: "foundations/00_preliminaries.tex",
       md: "A0-preliminaries.md",
       id: "found-preliminaries",

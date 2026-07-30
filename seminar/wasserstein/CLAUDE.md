@@ -4,6 +4,8 @@ Wasserstein 距離の理論と性質。Villani (2009) を主たる文献とし�
 前半の中心目標は、最適 coupling の存在定理を経た $W_p$ の距離性。
 後半では $W_2$ と対角 Gaussian decoder に限定し、閉形式から潜在空間の
 引き戻し Riemann 計量を導いて曲率を実際に計算する。
+最終章では、その曲率が存在する条件と、引き戻し幾何が decoder について
+決めないことを確定させ、二点間の輸送コストとして弦長を採る根拠を与える。
 
 ## 参考文献
 
@@ -37,6 +39,9 @@ Villani の該当ページのスキャンは `reference/old_and_new/pNNN.jpg` �
 - 距離性の後は $p=2$、Euclid データ空間、対角 Gaussian decoder に限定する。対角 Gaussian 間の閉形式は任意の coupling に対する Cauchy--Schwarz の下界と、共通標準 Gaussian を用いる coupling により自己完結に証明する
 - 潜在空間の曲率は、平均と標準偏差をまとめた写像 $F=(m,\sigma)$ による Euclid 計量の引き戻し $G=J_F^\top J_F$ として扱う。距離 $W_2(K_z,K_{z'})$（弦長）と $G$ の内在距離は区別する
 - Riemann 幾何については、計量、Christoffel 記号、Riemann 曲率、断面曲率を本文中で定義する。一般の decoder に必要な Benamou--Brenier / Otto calculus は発展として位置づけ、本編の証明には用いない
+- 曲率の存在条件は、Gauss 方程式を一般の $\R^N$ 値 immersion へ読み替えて扱う（第3章の証明は周囲次元に依存していない）。全次元 immersion とアフィン写像で $B\equiv0$ ゆえ平坦になることを示し、$d<N$ かつ非アフィンが必要条件であることを述べる
+- 引き戻し計量が decoder を決定しないことは、$G\equiv I_2$ を与える二つの decoder の反例で示す。不定性が第二基本形式で解消することは Bonnet の基本定理として証明なしで引用する
+- 弦長と内在距離の比較は自己完結に証明する（測地線の像の二階微分＝第二基本形式 → 単位球面上の速度曲線 → 二重積分）。Schur の定理は引用せず、同じ下界 $\frac{2}{\Lambda}\sin\frac{\Lambda L}{2}$ を初等的に導く
 - 証明なしで認める標準定理はステートメントを明示して文献を挙げる
 
 ## サイト
