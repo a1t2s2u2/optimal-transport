@@ -256,9 +256,11 @@ $SO(3)$については再構成だけで学習したablationも用意し，全�
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\linewidth]{experiments/rotation_reconstructions.png}
-  \caption{検証画像の再構成．各入力は前・上・横の3視点を一枚に並べたもの．
-  $\R^3$は姿勢ごとの差をぼかし，$S^3$は形を復元するが距離構造に余分な二重性を残す．
-  $SO(3)$潜在は同じparameter規模で三視点の姿勢変化を最も安定して再構成する．}
+  \caption{同一入力に対する再構成の横比較．各行は同じ姿勢であり，左から入力，
+  $\R^3$+MGW，$S^3$+MGW，$SO(3)$再構成のみ，$SO(3)$+MGWを並べる．
+  各画像内には前・上・横の3視点が配置されている．$\R^3$は姿勢ごとの差をぼかし，
+  $S^3$は形を復元するが距離構造に余分な二重性を残す．$SO(3)$潜在は同じparameter規模で
+  三視点の姿勢変化を最も安定して再構成する．}
   \label{fig:rotation-reconstruction}
 \end{figure}
 

@@ -477,24 +477,25 @@ def save_reconstruction_figure(
     originals: np.ndarray,
     reconstructions: dict[str, np.ndarray],
 ) -> None:
-    chosen = np.array([3, 47, 91, 136, 208, 277])
-    rows = [("Input", originals)] + [
+    chosen = np.array([3, 91, 208, 277])
+    columns = [("Input", originals)] + [
         (next(s.label for s in SPECS if s.key == key), reconstructions[key])
         for key in ["r3_gw", "s3_gw", "so3_recon", "so3_gw"]
     ]
-    fig, axes = plt.subplots(len(rows), len(chosen), figsize=(8.4, 6.7))
-    for row_index, (label, images) in enumerate(rows):
-        for col_index, idx in enumerate(chosen):
+    fig, axes = plt.subplots(len(chosen), len(columns), figsize=(8.4, 6.8))
+    for row_index, idx in enumerate(chosen):
+        for col_index, (label, images) in enumerate(columns):
             axes[row_index, col_index].imshow(
                 np.moveaxis(images[idx], 0, -1), interpolation="nearest"
             )
             axes[row_index, col_index].set_xticks([])
             axes[row_index, col_index].set_yticks([])
-            if col_index == 0:
-                axes[row_index, col_index].set_ylabel(
-                    label, rotation=0, ha="right", va="center"
-                )
-    fig.tight_layout(pad=0.25)
+            if row_index == 0:
+                axes[row_index, col_index].set_title(label, fontsize=10, pad=7)
+        axes[row_index, 0].set_ylabel(
+            f"view {row_index + 1}", rotation=0, ha="right", va="center", fontsize=9
+        )
+    fig.tight_layout(pad=0.45, w_pad=0.35, h_pad=0.45)
     fig.savefig(HERE / "rotation_reconstructions.png", dpi=180, bbox_inches="tight")
     plt.close(fig)
 
