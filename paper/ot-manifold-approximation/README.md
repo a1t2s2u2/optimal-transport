@@ -1,7 +1,7 @@
-# 観測画像から潜在多様体を選べるか
+# 画像からロボットの関節空間を見抜けるか
 
-高次元観測を生成した潜在多様体を、有限個の候補から
-Monge--Gromov--Wasserstein (MGW) 基準で選ぶ理論・実験論文。
+2関節robot armの画像だけから、背後のconfiguration space
+$S^1\times S^1=\mathbb T^2$を有限候補中から選ぶ理論・実験論文。
 
 ## 一つの主張
 
@@ -14,23 +14,23 @@ $$
 \right]
 $$
 
-は、観測空間と潜在空間の Gromov--Wasserstein 距離の上界になる。
-独立な検証標本で有限個の潜在構造を比較すれば、選択誤差は
-$O(\sqrt{\log m/n})$ で制御できる。
+はGromov--Wasserstein距離の上界になる。観測metricの誤差を
+$\varepsilon_{\mathrm{obs}}$とすれば、真の多様体距離に対する潜在距離の誤差は
+$\mathcal D_2(E)+\varepsilon_{\mathrm{obs}}$以下である。独立検証標本による有限候補の
+選択誤差は $O(\sqrt{\log m/n})$ で制御できる。
 
 ## 実験
 
-未知の回転 $R\in SO(3)$ から、RGB 3軸markerを3台のcameraで観測した
-$32\times32$画像を生成する。モデルに姿勢labelは与えない。
-
-- 観測次元: 3,072
+- 観測: 色分けした2関節armの $32\times32$ RGB画像
 - 学習画像: 900枚
 - 独立検証画像: 300枚
-- 潜在候補: $\mathbb R^3$, $S^3$, $SO(3)$
+- 潜在候補: $\mathbb R^2$, $S^2$, $\mathbb T^2$
 - 深層モデル: 同一規模のconvolutional autoencoder
+- 学習には画像とpixel 4近傍graphだけを使用
+- 関節角は診断評価にだけ使用
 
-共通の検証scoreは $SO(3)$+MGW で最小になり、評価時だけ使った真の回転距離でも
-最小stressを得る。
+共通のlabelなし検証scoreは $\mathbb T^2$+MGW で最小になる。ただし次点との差は小さく、
+真の関節metricでは $S^2$ が勝つため、観測metric精度が未解決のボトルネックである。
 
 ## 再現
 
@@ -46,5 +46,5 @@ make paper-experiments
 make paper-all
 ~~~
 
-`uv` が PEP 723 metadata から Python 3.12 と依存関係を構築する。
-PDF は `out/main.pdf` に生成される。
+`uv` がPEP 723 metadataからPython 3.12と依存関係を構築する。
+PDFは `out/main.pdf` に生成される。

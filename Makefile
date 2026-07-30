@@ -15,7 +15,7 @@ help:
 	@echo "make cuturi-site       計算最適輸送のサイトを生成"
 	@echo "make cuturi-pdf        計算最適輸送の PDF を生成"
 	@echo "make wasserstein-site  Wasserstein 距離のサイトを生成（PDF は生成しない）"
-	@echo "make paper-experiments 多視点画像の潜在多様体選択実験を再実行"
+	@echo "make paper-experiments ロボット画像の潜在多様体選択実験を再実行"
 	@echo "make paper             論文の PDF を生成"
 	@echo "make paper-all         数値実験を再実行して論文の PDF を生成"
 	@echo "make clean-sites       生成したサイトを削除"
@@ -41,7 +41,7 @@ wasserstein-site:
 # --- 論文 ---
 # セミナー資料とは独立。既知の内容は引用で済ませ、新規の主張だけを書く。
 paper-experiments:
-	uv run --python 3.12 paper/ot-manifold-approximation/experiments/rotation_image_manifold.py
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/articulated_arm_manifold.py
 
 paper:
 	cd paper/ot-manifold-approximation && latexmk
