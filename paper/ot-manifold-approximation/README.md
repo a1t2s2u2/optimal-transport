@@ -1,66 +1,50 @@
-# 局所線形 decoder は何個必要か
+# 観測画像から潜在多様体を選べるか
 
-多様体上の分布を、$K$ 個の局所線形 decoder でどこまで生成できるかを扱う理論論文。
+高次元観測を生成した潜在多様体を、有限個の候補から
+Monge--Gromov--Wasserstein (MGW) 基準で選ぶ理論・実験論文。
 
-## モデル
+## 一つの主張
 
-$$
-J\sim\operatorname{Categorical}(\pi),\qquad
-Z\mid J=j\sim\lambda_j,\qquad
-X=x_J+U_JZ,
-$$
+encoder $E:X\to Z$ が定める距離歪み
 
 $$
-\operatorname{ran}U_j=T_{x_j}M.
+\mathcal D_2(E)^2
+=\mathbb E\left[
+  |d_X(X,X')-d_Z(E(X),E(X'))|^2
+\right]
 $$
 
-各枝の潜在分布 $\lambda_j$ は任意とし、decoder 数 $K$ だけを表現予算として測る。
-このモデルの最良 $W_p$ 生成誤差を $\mathfrak T_{K,p}$ とする。
+は、観測空間と潜在空間の Gromov--Wasserstein 距離の上界になる。
+独立な検証標本で有限個の潜在構造を比較すれば、選択誤差は
+$O(\sqrt{\log m/n})$ で制御できる。
 
-## 一つの主結果
+## 実験
 
-positive reach、Ahlfors 正則性、quadratic tangent separation のもとで
+未知の回転 $R\in SO(3)$ から、RGB 3軸markerを3台のcameraで観測した
+$32\times32$画像を生成する。モデルに姿勢labelは与えない。
 
-$$
-cK^{-2/q}
-\le \mathfrak T_{K,p}(\mu;M)
-\le CK^{-2/q}.
-$$
+- 観測次元: 3,072
+- 学習画像: 900枚
+- 独立検証画像: 300枚
+- 潜在候補: $\mathbb R^3$, $S^3$, $SO(3)$
+- 深層モデル: 同一規模のconvolutional autoencoder
 
-したがって、誤差 $\varepsilon$ に必要な局所 decoder 数は
+共通の検証scoreは $SO(3)$+MGW で最小になり、評価時だけ使った真の回転距離でも
+最小stressを得る。
 
-$$
-K\asymp\varepsilon^{-q/2}.
-$$
+## 再現
 
-Stiefel、Grassmann、積 torus で仮定を検証し、$S^1$ では最適値を厳密に計算する。
-これは任意の深層ネットに対する下界ではなく、真の接空間を使う局所線形 decoder の
-oracle 表現限界である。
-
-multi-branch VAE は枝 $J$ と潜在変数 $Z$ を学習する実装、Flow Matching は各 $\lambda_j$ を
-学習する実装として解釈できる。ただし両者は主定理の仮定ではない。
-
-## 数値検証
-
-円周、球面、積 torus、Stiefel、Grassmann の5例で、有限 $K$ の log--log 傾きを
-確認する。主図では $S^2$ を $K=4,16,64$ 個の接平面decoderで生成し、点群と
-$W_2$–$K$ 曲線を表示する。
-
-学習実験では、6個の局所decoderに各3 modeを持たせた18峰性球面合成分布を使う。
-chart-conditional Flow Matchingのloss、生成点群、局所Sliced-$W_2$を比較する。
-単純な $S^1$ 実験は実装較正として残す。
+実験のみ:
 
 ~~~sh
 make paper-experiments
 ~~~
 
-詳細は experiments/README.md を参照。
-
-## ビルド
+実験からPDFまで:
 
 ~~~sh
-make paper
+make paper-all
 ~~~
 
-実験を再実行してから PDF を生成する場合は make paper-all。
-出力は paper/ot-manifold-approximation/out/main.pdf。
+`uv` が PEP 723 metadata から Python 3.12 と依存関係を構築する。
+PDF は `out/main.pdf` に生成される。

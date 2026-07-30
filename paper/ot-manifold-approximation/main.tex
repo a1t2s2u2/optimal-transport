@@ -2,8 +2,8 @@
 
 \input{preamble}
 
-\title{\textbf{局所線形 decoder は何個必要か}\\
-{\large ---最適輸送による多様体生成の近似限界---}}
+\title{\textbf{観測画像から潜在多様体を選べるか}\\
+{\large ---Monge--Gromov--Wasserstein autoencoderによる$SO(3)$同定---}}
 \author{}
 \date{}
 
@@ -11,1155 +11,386 @@
 \maketitle
 
 \begin{abstract}
-\noindent
-多様体上のデータを，$K$ 個の局所線形decoderでどこまで生成できるかを考える．
-モデルはまずbranch $J\in\{1,\dots,K\}$ を選び，局所潜在変数 $Z\in\R^q$ を
-\[
-  X=x_J+U_JZ,\qquad \operatorname{ran}U_J=T_{x_J}M
-\]
-で出力する．各branch内の潜在分布には任意の表現力を許し，decoder数 $K$ だけを
-表現予算として固定する．このモデルの最良 $p$-Wasserstein生成誤差を
-$\mathfrak T_{K,p}(\mu;M)$ とする．
+高次元データが低次元多様体から生成されるとしても，通常のautoencoderの再構成誤差だけでは
+潜在空間の距離や位相を同定できない．本稿はこの問題を，候補となる潜在多様体を
+\emph{選ぶ}問題として定式化する．encoderが定める決定論的結合の下で，観測空間と潜在空間の
+距離歪みを測るMonge--Gromov--Wasserstein（MGW）stressを定義する．これは通常の
+Gromov--Wasserstein距離の計算可能な上界であり，連続encoderに対してstressが0なら
+観測データと潜在表現はmetric-measure空間として同型になる．また，学習とは独立な検証標本を
+用いれば，有限個の候補からの選択誤差が$O(\sqrt{\log m/n})$で制御されることを示す．
 
-主結果は単純である．positive reach，小球正則性，および接平面の二次分離条件のもとで，
-$q$ 次元多様体上の分布に対して
-\[
-  cK^{-2/q}
-  \leq \mathfrak T_{K,p}(\mu;M)
-  \leq CK^{-2/q}
-\]
-が成り立つ．したがって誤差 $\varepsilon$ に必要な局所decoder数は
-$K\asymp\varepsilon^{-q/2}$ である．Stiefel，Grassmann，積torusで条件を検証し，
-$S^1$ では最適値を厳密に求める．$S^2$ の生成点群と18峰性合成分布のFlow Matchingを含む
-数値実験でも，有限 $K$ で同じrateとdecoder由来の誤差を確認する．
-multi-branch VAEはbranchと潜在変数を学習する方法，Flow Matchingは各branch内の潜在分布を
-学習する方法として解釈できるが，本結果は一般のVAEや任意の深層decoderに対する
-下界ではない．
+実験では，未知の3次元回転から生成した$32\times32$ RGB多視点画像だけを学習に与え，
+$\R^3$，$S^3$，$SO(3)$の潜在構造を比較する．900枚で学習し，独立な300枚で選択した結果，
+$SO(3)$+MGWが最小の検証score $0.0434$を達成した．真の回転ラベルは評価時にだけ用い，
+回転距離stressも$0.2249$で最小になった．本結果は任意の多様体を無仮定に発見するものではなく，
+観測の識別可能性と候補集合を明示した上で，データに適した深層潜在構造をOT原理で選ぶ
+実践的な第一段階である．
 \end{abstract}
 
 \medskip
-\noindent\textbf{キーワード}：局所decoder，生成モデル，最適輸送，Wasserstein 距離，
-多様体仮説，接空間，Stiefel 多様体，近似幅
+\noindent\textbf{キーワード}：潜在多様体，autoencoder，Gromov--Wasserstein距離，
+最適輸送，$SO(3)$，多視点画像，モデル選択
 
-\section{はじめに}
-\label{sec:intro}
+\section{問題は何か}
+\label{sec:introduction}
 
-VAEなどの生成モデルが多様体上のデータを学習するとき，decoderは潜在空間を
-データ空間へ写す \cite{kingma2014}．その近似精度は，最適化法の前に，decoderがどのような
-幾何を表現できるかに制約される．本稿はこの表現限界を次の一問に絞る．
+姿勢，照明，関節角度などの少数の連続変数から画像が生成されるとき，観測画像は
+高次元Euclid空間内の低次元多様体付近に分布する．典型的な生成過程を
+\[
+  Z\sim\mu_M,\qquad X=F(Z)+\xi\in\R^D
+  \tag{1.1}
+\]
+と書く．ここで$M$は未知の潜在多様体，$F$はrendererや未知decoder，$\xi$は観測noiseである．
+VAEやautoencoderは$X$を低次元codeへ圧縮できるが，再構成誤差が小さいことだけでは
+codeの距離構造が$M$と一致するとは限らない\cite{kingma2014,batson2021}．特に$M$の位相が
+非自明なら，一枚のEuclid座標へ連続かつ大域的に展開することには障害がある．
+
+本稿の問いは単純である．
 \begin{quote}
-  $q$ 次元多様体上の分布を $W_p$ 誤差 $\varepsilon$ で生成するには，
-  局所affine decoderを何個用意すべきか
+  複数の潜在多様体候補のうち，観測データの再構成と距離構造を最もよく説明するものを，
+  ラベルなし画像から選べるか．
 \end{quote}
-そのため，$K$ 個の基準点 $x_j$ と接空間 $T_{x_j}M$ を用意し，選ばれた枝 $J$ に対して
-$X=x_J+U_JZ$ を出力する有限混合decoderを考える．各枝の潜在分布は任意とし，
-表現予算は枝数 $K$ のみで測る．接平面は「深層ネットワークが自動的に線形になる」
-という仮定ではない．多様体の局所幾何を最も単純に表す一次モデルを，明示的に選んでいる．
+候補ごとに深層encoder--decoderを学習し，再構成誤差に加えて，観測空間と潜在空間の
+metric-measure構造をGromov--Wasserstein原理で比較する．通常のWasserstein距離は二つの
+測度が同じ基礎空間上にあることを要求するが，Gromov--Wasserstein距離は異なる空間の
+内部距離を比較できる\cite{memoli2011}．画像空間と$SO(3)$の比較には後者が自然である．
 
-点による通常の量子化では，$q$ 次元分布に対する $W_p$ 誤差は典型的に
-$K^{-1/q}$ で減衰する \cite{graf2000,aydin2026}．接平面は一次の接触をもつため，
-曲率が有限なら二次の $K^{-2/q}$ が期待される．この上界に相当する再構成誤差は
-$k$-flats や geometric multiresolution analysis で研究されている
-\cite{canas2012,liao2019}．しかし上界だけでは，その指数が対象多様体に固有の限界か，
-より巧い接平面配置で改善できるかは分からない．本稿は matching lower bound が
-成立する幾何学的条件を分離し，Stiefel，Grassmann，積 torus の一様分布がその条件を
-満たすことを示す．
-
-\subsection{本稿の貢献}
-
-本稿の貢献は次の三点である．
+\paragraph{本稿の貢献．}
 \begin{enumerate}
-  \item $K$ 個の局所線形decoderで達成できる最良 $W_p$ 生成誤差
-    $\mathfrak T_{K,p}$ を定義し，閉集合へのOT射影として書き直す．
-  \item reach による $K^{-2/q}$ 上界と，Ahlfors 小球正則性および
-    quadratic tangent separation による
-    $K^{-2/q}$ の一般 lower bound を証明する．Stiefel，Grassmann，積 torus では
-    tangent distance と chord 距離の二乗の大域的な二側評価を明示する．
-  \item $S^1$ で最適値を厳密に求め，Stiefelを含む五種類の多様体で
-    有限 $K$ の数値傾きを確認する．$S^2$ ではdecoder出力を直接可視化し，
-    18峰性球面合成分布のFlow Matchingによって，密度学習の改善と
-    decoderの幾何誤差を分けて観測する．
+  \item encoderが定める決定論的couplingに基づくMGW stressを定義し，通常のGW距離の
+    上界になることと，0 stressがmetric-measure同型を与える条件を明示する．
+  \item 学習用標本と選択用標本を分離し，候補数$m$，検証標本数$n$に対して
+    $O(\sqrt{\log m/n})$の有限標本選択保証を与える．この結果は誤差逆伝播法を仮定しない．
+  \item 3台の同期cameraで観測した回転物体画像を用い，真の姿勢ラベルを学習に使わずに
+    $\R^3,S^3,SO(3)$を比較する再現可能なCNN実験を行う．
 \end{enumerate}
 
-結論を先に言えば，一つのdecoderが担う領域の直径は $K^{-1/q}$，接平面への
-法方向誤差はその二乗なので，最良誤差は $K^{-2/q}$ となる．本稿はこの直観を
-上下界の一致する定理にする．
+\section{何を復元できるか}
+\label{sec:identifiability}
 
-\section{局所線形生成モデル}
-\label{sec:definition}
-
-\subsection{Wasserstein 距離}
-
-$1\leq p<\infty$ とし，$\mathcal P_p(\R^m)$ を有限な $p$ 次 moment をもつ
-Borel 確率測度全体とする．$\mu,\nu\in\mathcal P_p(\R^m)$ に対して
+多様体の座標そのものは一意に復元できない．任意の微分同相写像
+$\phi:M\to M'$に対して，$F$と$F\circ\phi^{-1}$は同じ観測を生成できるからである．
+そこで復元対象を，距離と確率測度を備えた空間
 \[
-  \Wass_p(\mu,\nu)^p
-  :=\inf_{\pi\in\Pi(\mu,\nu)}
-    \int_{\R^m\times\R^m}\norm{x-y}^p\,\pi(\d x,\d y)
+  \mathcal M=(M,d_M,\mu_M)
 \]
-を $p$-Wasserstein 距離という \cite{villani2009}．また
-\[
-  \Wass_\infty(\mu,\nu)
-  :=\inf_{\pi\in\Pi(\mu,\nu)}
-    \pi\text{-}\mathop{\mathrm{ess\,sup}}\norm{x-y}
-\]
-とする．
+の\emph{metric-measure同型類}とする．すなわち座標名の違いではなく，点間距離と質量を
+保存するかを問う．
 
-次の事実が，局所線形近似を OT 上に置く基礎になる．
-
-\begin{proposition}[閉集合への Wasserstein 射影]
-\label{prop:closed-projection}
-非空閉集合 $A\subset\R^m$ と $\mu\in\mathcal P_p(\R^m)$ に対し，
+さらに$F$が単射でなければ，$F(z)=F(z')$となる潜在状態は観測だけから区別できない．
+この場合に同定可能なのは$M$ではなく商空間
 \[
-  \inf_{\substack{\nu\in\mathcal P_p(\R^m)\\\supp\nu\subset A}}
-  \Wass_p(\mu,\nu)^p
-  =\int_{\R^m}\dist(x,A)^p\,\mu(\d x).
+  M/{\sim_F},\qquad z\sim_F z'\iff F(z)=F(z')
   \tag{2.1}
 \]
-$p=\infty$ では右辺を $\mu$-本質的上限に置き換えた等式が成り立つ．
-\end{proposition}
+である．例えば対称物体の姿勢では$SO(3)/G$が現れる．したがって「元の多様体を推測する」
+ためには，観測写像の単射性または対称性を仮定として明示する必要がある．
 
-\begin{proof}
-任意の $\nu$ with $\supp\nu\subset A$ と $\pi\in\Pi(\mu,\nu)$ に対し，
-$\norm{x-y}\geq\dist(x,A)$ であるから，左辺は右辺以上である．逆向きには，
-$x$ の $A$ 上への最近点を一つ選ぶ Borel 可測写像 $P_A$ をとる．有限次元 Euclid
-空間では閉集合への最近点対応は可測選択をもつ．$\nu=(P_A)_\#\mu$ と
-$\pi=(\mathrm{id},P_A)_\#\mu$ を選べば
+本稿の実験では，RGBの3軸markerを前・上・横の3方向から同時観測する．単眼投影は奥行きを
+失うが，多視点観測は姿勢をほぼ識別する．観測metricにはpixel距離の$k$近傍graph上の
+最短路距離を使う．これはIsomapと同じく，局所的な観測距離から多様体の内在距離を近似する
+考え方である\cite{tenenbaum2000}．
+
+\section{Monge--Gromov--Wasserstein基準}
+\label{sec:mgw}
+
+$\mathcal X=(X,d_X,\mu)$を観測metric-measure空間，
+$\mathcal Z=(Z,d_Z)$を候補潜在空間とする．簡単のため両metricの直径を1以下へ正規化する．
+encoder $E:X\to Z$が定める距離歪みを次で測る．
+
+\begin{definition}[MGW stress]
+\label{def:mgw}
 \[
-  \int\norm{x-y}^p\,\d\pi
-  =\int\dist(x,A)^p\,\d\mu
-\]
-となる．$p=\infty$ も同じ coupling で従う．
-\end{proof}
-
-\subsection{\texorpdfstring{$K$}{K} 個の局所線形decoder}
-
-$M\subset\R^m$ を $q$ 次元の滑らかな埋め込み部分多様体とする．
-$x_j\in M$ を基準点，$U_j:\R^q\to\R^m$ を
-$\operatorname{ran}U_j=T_{x_j}M$ を満たす線形等長埋め込みとする．第 $j$ 枝のdecoderを
-\[
-  D_j(z):=x_j+U_jz
-  \tag{2.2}
-\]
-と定める．この像は affine tangent plane
-$L_{x_j}:=x_j+T_{x_j}M$ である．生成モデルは
-\[
-  J\sim\operatorname{Categorical}(\pi_1,\dots,\pi_K),
-  \qquad Z\mid J=j\sim\lambda_j,
-  \qquad X=D_J(Z)
-  \tag{2.3}
-\]
-である．ここで $\lambda_j\in\mathcal P_p(\R^q)$ は任意とする．つまり本稿は
-各枝の密度を学ぶ難しさを理想化し，$K$ 個の線形decoderが課す幾何誤差だけを測る．
-
-\begin{definition}[局所線形生成誤差]
-\label{def:tangent-width}
-$\mu\in\mathcal P_p(M)$ と $1\leq p<\infty$ に対して
-\[
-  \boxed{
-  \mathfrak T_{K,p}(\mu;M)
-  :=\inf_{\boldsymbol{x}\in M^K}
-    \inf_{\substack{\pi\in\Delta_{K-1}\\
-                     \lambda_1,\dots,\lambda_K\in\mathcal P_p(\R^q)}}
-      \Wass_p\left(
-        \mu,\sum_{j=1}^K\pi_j(D_j)_\#\lambda_j
-      \right)
-  }
- \tag{2.4}
-\]
-と定める．ここで $\Delta_{K-1}$ は $K$ 成分の確率simplexである．
-$p=\infty$ も同様に定義する．
-\end{definition}
-
-\begin{proposition}[OTによる誤差の表示]
-\label{prop:model-projection}
-\[
-  \mathfrak T_{K,p}(\mu;M)
-  =\inf_{\boldsymbol{x}\in M^K}
-    \left(
-      \int_M\min_{1\leq j\leq K}\dist(y,L_{x_j})^p\,\mu(\d y)
-    \right)^{1/p}
-  \tag{2.5}
-\]
-が成り立つ．$p=\infty$ では積分を $\mu$-本質的上限に置き換える．
-\end{proposition}
-
-\begin{proof}
-固定した $\boldsymbol{x}$ に対し，モデルが生成できる測度全体は
-$A_{\boldsymbol{x}}:=\bigcup_{j=1}^K L_{x_j}$ 上の確率測度全体に等しい．
-実際，一方向は明らかである．逆方向は $A_{\boldsymbol{x}}$ を各 $L_{x_j}$ の可測部分へ
-分割し，各部分の質量を $\pi_j$，$D_j$ で引き戻した条件付き分布を $\lambda_j$ とすればよい．
-命題~\ref{prop:closed-projection} を $A_{\boldsymbol{x}}$ に適用し，
-$\boldsymbol{x}$ について下限を取れば式~(2.5)を得る．
-\end{proof}
-
-\begin{remark}[VAEとFlow Matchingとの関係]
-離散潜在変数 $J$ はdecoderの枝，$Z$ は各枝の連続潜在変数である．mixture VAEはencoderを用いて
-$(J,Z)$ を学習でき，Flow Matchingは各 $\lambda_j$ を基準分布から生成できる
-\cite{kingma2014,lipman2023}．ただし定義~\ref{def:tangent-width} は
-$\lambda_j$ を初めから任意としている．したがって以後の定理は学習法の性能ではなく，
-局所線形decoderそのものの限界を述べる．単一の一般的な非線形VAE decoderは対象外である．
-\end{remark}
-
-\begin{remark}[Stiefel と Grassmann の役割]
-各 $T_{x_j}M$ の直交基底を行列 $U_j\in\St(m,q)$ で表せば
-$L_{x_j}=x_j+\operatorname{ran}U_j$ である．しかし $U_j$ と
-$U_jR$（$R\in O(q)$）は同じ接空間を表す．よって基底を保持する計算上の変数は
-Stiefel 多様体に，座標不変な部分空間は商
-$\Gr(m,q)=\St(m,q)/O(q)$ に属する．定義~\ref{def:tangent-width} は後者だけに依存し，
-局所座標の gauge に依存しない．
-\end{remark}
-
-\section{reach と被覆半径による一般上界}
-\label{sec:general-upper}
-
-\begin{definition}[reach]
-閉集合 $M\subset\R^m$ の reach $\reach(M)$ とは，$M$ からの距離が
-$\tau$ 未満のすべての点が $M$ 上に一意な最近点をもつような $\tau$ の上限である
-\cite{federer1959}．
-\end{definition}
-
-reach は自己接近と外在曲率を同時に制御する．次の二次評価が重要である．
-
-\begin{lemma}[接平面からの二次偏差]
-\label{lem:reach-tangent}
-$M\subset\R^m$ を $C^2$ 埋め込み部分多様体とし，$\reach(M)\geq\tau>0$ とする．
-任意の $x,y\in M$ に対して
-\[
-  \dist(y,L_x)
-  \leq\frac{\norm{x-y}^2}{2\tau}.
+  \mathcal D_2(E;\mathcal X,\mathcal Z)^2
+  :=\iint_{X\times X}
+  \abs{d_X(x,x')-d_Z(E(x),E(x'))}^2
+  \,\mu(\d x)\mu(\d x').
   \tag{3.1}
 \]
-\end{lemma}
+\end{definition}
 
-\begin{proof}
-$n\in N_xM$ を単位法ベクトルとする．$0<s<\tau$ なら，reach の定義と法方向の
-最近点性から，中心 $x+sn$，半径 $s$ の開球は $M$ と交わらない．したがって
-\[
-  \norm{y-(x+sn)}^2\geq s^2,
-\]
-すなわち $\langle n,y-x\rangle\leq\norm{x-y}^2/(2s)$ である．$-n$ にも適用して
-絶対値を取り，$s\uparrow\tau$ とする．単位法ベクトル上の上限を取れば
-\[
-  \norm{\operatorname{proj}_{N_xM}(y-x)}
-  \leq\frac{\norm{x-y}^2}{2\tau}.
-\]
-左辺は $\dist(y,x+T_xM)$ に等しい．
-\end{proof}
+これは対応をencoderに制限したGromov--Monge型の目的である．完全なGW最適化より計算が軽く，
+autoencoderのmini-batch内の全pairから直接学習できる．
 
-$M$ の $K$ 点 chordal covering radius を
+\begin{proposition}[決定論的couplingによるGW上界]
+\label{prop:gw-upper}
+$\nu=E_\#\mu$とする．二乗costのGromov--Wasserstein距離を
 \[
-  \rho_K(M)
-  :=\inf_{x_1,\dots,x_K\in M}
-    \sup_{y\in M}\min_j\norm{y-x_j}
+  \operatorname{GW}_2(\mathcal X,(Z,d_Z,\nu))^2
+  :=\inf_{\pi\in\Pi(\mu,\nu)}
+  \iint\abs{d_X(x,x')-d_Z(z,z')}^2
+  \,\pi(\d x,\d z)\pi(\d x',\d z')
+\]
+で定めると，
+\[
+  \operatorname{GW}_2(\mathcal X,(Z,d_Z,\nu))
+  \leq \mathcal D_2(E;\mathcal X,\mathcal Z)
   \tag{3.2}
 \]
-とする．
+が成り立つ．さらに$X,Z$がcompact，$E$が連続，$\mu$が$X$にfull supportをもち，
+$\mathcal D_2(E)=0$なら，$E:X\to\supp(E_\#\mu)$は全射等長写像であり，測度も保存する．
+\end{proposition}
 
-\begin{theorem}[被覆半径からの幅上界]
-\label{thm:general-upper}
-$M$ はコンパクトで $\reach(M)\geq\tau>0$ とする．$M$ 上の任意の確率測度
-$\mu$ と任意の $1\leq p\leq\infty$ に対し，
+\begin{proof}
+$\pi_E=(\operatorname{id},E)_\#\mu$は$\Pi(\mu,E_\#\mu)$に属する．GWのinfimumへ
+$\pi_E$を代入したcostが式~(3.1)なので式~(3.2)を得る．stressが0なら
+$d_X(x,x')=d_Z(E(x),E(x'))$が$\mu\otimes\mu$ほとんど至る所で成り立つ．full supportと
+連続性により等式は全点へ延長され，$E$は等長である．compact性から$E(X)$は閉であり，
+$E(X)=\supp(E_\#\mu)$となる．pushforwardの定義から測度保存も従う．
+\end{proof}
+
+decoder $G:Z\to X$を加え，候補$(E_j,G_j,Z_j)$のpopulation scoreを
 \[
-  \boxed{
-  \mathfrak T_{K,p}(\mu;M)
-  \leq\frac{\rho_K(M)^2}{2\tau}
-  }
+  \mathcal R_j
+  :=\E\!\left[\ell\bigl(X,G_j(E_j(X))\bigr)\right]
+    +\lambda\mathcal D_2(E_j)^2
   \tag{3.3}
 \]
-が成り立つ．
-\end{theorem}
+とする．第一項は画像内容，第二項は潜在幾何を評価する．再構成だけを最小化したモデルも，
+選択時には同じ式~(3.3)で比較する．この区別により「画像が似ている」と
+「潜在状態間の距離が正しい」を混同しない．
 
-\begin{proof}
-$\varepsilon>0$ に対し，被覆半径が $\rho_K(M)+\varepsilon$ 以下となる中心を選ぶ．
-各 $y\in M$ に対して $\norm{y-x_j}\leq\rho_K(M)+\varepsilon$ となる $j$ があり，
-補題~\ref{lem:reach-tangent} より
+\section{有限標本で正しく選べる条件}
+\label{sec:selection}
+
+networkの学習標本と，潜在構造を選ぶ検証標本を分ける．学習後の$m$個の候補を固定し，
+独立な$X_1,\dots,X_n\sim\mu$上で
 \[
-  \min_j\dist(y,L_{x_j})
-  \leq\frac{(\rho_K(M)+\varepsilon)^2}{2\tau}.
-\]
-式~(2.5) に代入し，$\varepsilon\downarrow0$ とする．
-\end{proof}
-
-\begin{corollary}[内在次元による上界]
-\label{cor:dimension-upper}
-$M$ は $q$ 次元コンパクト $C^2$ 多様体で $\reach(M)>0$ とする．このとき
-$M$ のみに依存する $C_M<\infty$ と $K_0$ が存在し，任意の $K\geq K_0$，
-$1\leq p\leq\infty$，$\mu\in\mathcal P_p(M)$ に対して
-\[
-  \mathfrak T_{K,p}(\mu;M)
-  \leq C_MK^{-2/q}
-  \tag{3.4}
-\]
-が成り立つ．
-\end{corollary}
-
-\begin{proof}
-コンパクトな滑らかな多様体では，十分小さい $s$ に対して
-$q$ 次元体積が $\operatorname{vol}_M(B(x,s))\geq a_Ms^q$ を一様に満たす．
-極大 $s$-separated set の $s/2$ 球は互いに交わらないため，その点数は
-$C_M's^{-q}$ 以下であり，同じ点集合は $M$ の $s$-net になる．したがって
-$\rho_K(M)\leq C_M''K^{-1/q}$．定理~\ref{thm:general-upper} を適用する．
-\end{proof}
-
-\begin{definition}[Ahlfors 正則性]
-\label{def:ahlfors}
-$\mu$ が $M$ 上で局所 $q$-Ahlfors 正則であるとは，ある
-$a,b,s_0>0$ が存在して，任意の $x\in M$ と $0<s\leq s_0$ に対して
-\[
-  as^q\leq\mu(B(x,s))\leq bs^q
-  \tag{3.5}
-\]
-が成り立つことをいう．球は ambient Euclid 距離で定める．
-\end{definition}
-
-上界には有限な外在曲率を表す positive reach だけで十分である．一方，一致する
-下界には，異なる場所の接平面が多様体へ偶然近づくことを排除する条件が必要になる．
-
-\begin{definition}[quadratic tangent separation]
-\label{def:qts}
-$M$ が quadratic tangent separation（QTS）を満たすとは，ある
-$\alpha,r_0>0$ が存在し，任意の $x,y\in M$ に対して
-\[
-  \dist(y,L_x)
-  \geq
-  \alpha\min\{\norm{x-y}^2,r_0^2\}
-  \tag{3.6}
-\]
-が成り立つことをいう．
-\end{definition}
-
-QTS は reach からは従わない．局所的には第二基本形式が全方向で十分に曲がることを，
-大域的には一つの接平面が離れた場所で $M$ と再交差しないことを要求する．
-
-\begin{theorem}[主定理：必要な局所decoder数]
-\label{thm:general-sharp}
-$M\subset\R^m$ を $q$ 次元コンパクト $C^2$ 埋め込み多様体，
-$\mu$ を $M$ 上の局所 $q$-Ahlfors 正則な確率測度とする．さらに
-$\reach(M)>0$ かつ $M$ が QTS を満たすと仮定する．このとき任意の
-$1\leq p\leq\infty$ に対して正定数 $c,C$ と $K_0$ が存在し，
-\[
-  \boxed{
-  cK^{-2/q}
-  \leq\mathfrak T_{K,p}(\mu;M)
-  \leq CK^{-2/q}
-  }
-  \qquad(K\geq K_0)
-  \tag{3.7}
-\]
-が成り立つ．
-\end{theorem}
-
-\begin{proof}
-上界は Ahlfors 下側評価による covering number bound と
-定理~\ref{thm:general-upper} から従う．
-
-下界を示す．任意の中心 $x_1,\dots,x_K$ に対して
-\[
-  Z(y):=\min_j\dist(y,L_{x_j})
-\]
-とおく．$0<t<\alpha r_0^2$ なら QTS により
-\[
-  \{y:\dist(y,L_{x_j})\leq t\}
-  \subset
-  B\left(x_j,\sqrt{t/\alpha}\right).
-\]
-$t$ を十分小さく取れば Ahlfors 上側評価が使え，union bound から
-\[
-  \mu\{Z\leq t\}
-  \leq Kb\alpha^{-q/2}t^{q/2}.
-  \tag{3.8}
-\]
-$t_K=(\alpha^{q/2}/(2bK))^{2/q}$ と選ぶと，十分大きい $K$ に対して
-$\mu\{Z>t_K\}\geq1/2$ である．したがって $p<\infty$ なら
-\[
-  \left(\int Z^p\,\d\mu\right)^{1/p}
-  \geq2^{-1/p}t_K,
-\]
-$p=\infty$ なら $\mu$-本質的上限が $t_K$ 以上である．中心について infimum を
-取れば下界を得る．
-\end{proof}
-
-したがって $W_p$ 誤差を $\varepsilon$ 以下にするために必要な局所decoder数は，
-定数を除いて
-\[
-  K(\varepsilon)\asymp\varepsilon^{-q/2}
-  \tag{3.9}
-\]
-である．
-
-指数 $2/q$ は「一つのdecoderが担う領域の直径が $K^{-1/q}$，接平面への法方向偏差が
-その二乗」という二つの幾何学的事実から生じる．QTS が破れる多様体では
-より速い rate が生じる可能性があり，その場合は曲率の退化方向や接平面の
-再交差集合の次元を別に解析する必要がある．以下では一般定理を適用できる
-三つの非自明な多様体族を調べる．
-
-\section{Stiefel 多様体に対する一致した上下界}
-\label{sec:stiefel}
-
-$1\leq r\leq D$ とし，
-\[
-  M=\St(D,r)
-  :=\{X\in\R^{D\times r}:X^{\mathsf T}X=I_r\}
-\]
-を Frobenius 内積 $\langle A,B\rangle=\tr(A^{\mathsf T}B)$ により
-$\R^{D r}$ の部分多様体とみなす．その次元は
-\[
-  q=Dr-\frac{r(r+1)}2
+  \widehat{\mathcal R}_j
+  =\frac1n\sum_{i=1}^n
+    \ell\bigl(X_i,G_j(E_j(X_i))\bigr)
+  +\lambda\frac{2}{n(n-1)}\sum_{i<k}
+    \abs{d_X(X_i,X_k)-d_{Z_j}(E_jX_i,E_jX_k)}^2
   \tag{4.1}
 \]
-である \cite{edelman1998,absil2008}．$\sigma_{D,r}$ を $M$ 上の正規化 Haar 測度とする．
+を計算する．第二項は2次のU統計量である．
 
-\subsection{接空間と二次接触の厳密評価}
-
-\begin{proposition}[Stiefel の接空間と第二基本形式]
-\label{prop:stiefel-geometry}
-$X\in\St(D,r)$ に対して
+\begin{theorem}[split-sample潜在構造選択]
+\label{thm:selection}
+$0\leq\ell\leq B_{\rm rec}$，pairwise distortionの二乗を
+$B_{\rm geo}$以下とする．$\widehat j\in\arg\min_j\widehat{\mathcal R}_j$とおき，
 \[
-  T_XM=\{H:X^{\mathsf T}H+H^{\mathsf T}X=0\},
-  \qquad
-  N_XM=\{XS:S^{\mathsf T}=S\}.
+  r_n(\delta)
+  :=B_{\rm rec}\sqrt{\frac{\log(4m/\delta)}{2n}}
+   +\lambda B_{\rm geo}
+    \sqrt{\frac{\log(4m/\delta)}{2\lfloor n/2\rfloor}}.
   \tag{4.2}
 \]
-Euclid 埋め込みの第二基本形式は
+このとき，学習標本を条件付けた上で，確率$1-\delta$以上で
 \[
-  B_X(H,K)=-X\sym(H^{\mathsf T}K),
+  \max_{1\leq j\leq m}
+  \abs{\widehat{\mathcal R}_j-\mathcal R_j}
+  \leq r_n(\delta),
   \qquad
-  \sym(A):=\frac{A+A^{\mathsf T}}2,
+  \mathcal R_{\widehat j}
+  \leq\min_j\mathcal R_j+2r_n(\delta)
   \tag{4.3}
 \]
-であり，$\norm{B_X(H,K)}_F\leq\norm{H}_F\norm{K}_F$ を満たす．
-\end{proposition}
-
-\begin{proof}
-制約 $X^{\mathsf T}X=I_r$ を微分すれば接空間の式を得る．
-$\R^{D\times r}$ の任意の $A$ の法方向射影は
-$X\sym(X^{\mathsf T}A)$ であるから法空間の式も従う．二変数曲面を制約式に代入して
-混合微分すれば，法方向成分は $-X\sym(H^{\mathsf T}K)$ となる．最後に
+が成り立つ．さらにpopulation最良候補$j^\star$が一意で，gap
 \[
-  \norm{X\sym(H^{\mathsf T}K)}_F
-  =\norm{\sym(H^{\mathsf T}K)}_F
-  \leq\norm{H}_F\norm{K}_F
-\]
-である．
-\end{proof}
-
-次の命題は本稿の Stiefel 解析の核心である．局所 Taylor 展開ではなく，
-全ての二点に対する大域的な二側評価になっている．
-
-\begin{proposition}[chord の二乗と接平面距離]
-\label{prop:stiefel-quadratic}
-任意の $X,Y\in\St(D,r)$ に対して
-\[
-  \dist(Y,L_X)
-  =\norm{I_r-\sym(X^{\mathsf T}Y)}_F
+  \Delta:=\min_{j\neq j^\star}(\mathcal R_j-\mathcal R_{j^\star})
+  >2r_n(\delta)
   \tag{4.4}
 \]
-であり，
-\[
-  \boxed{
-  \frac{1}{2\sqrt r}\norm{X-Y}_F^2
-  \leq\dist(Y,L_X)
-  \leq\frac12\norm{X-Y}_F^2
-  }
-  \tag{4.5}
-\]
-が成り立つ．
-\end{proposition}
-
-\begin{proof}
-$Y-X$ の $N_XM$ への直交射影は
-\[
-  X\sym(X^{\mathsf T}(Y-X))
-  =X\bigl(\sym(X^{\mathsf T}Y)-I_r\bigr)
-\]
-である．$X^{\mathsf T}X=I_r$ より左から $X$ を掛けても Frobenius norm は変わらず，
-式~(4.4) を得る．
-
-$A:=I_r-\sym(X^{\mathsf T}Y)$ とおく．任意の $v\in\R^r$ に対し
-\[
-  v^{\mathsf T}\sym(X^{\mathsf T}Y)v
-  =\langle Xv,Yv\rangle
-  \leq\norm{Xv}\norm{Yv}=\norm v^2
-\]
-なので $A$ は半正定値である．さらに
-\[
-  \tr A
-  =r-\tr(X^{\mathsf T}Y)
-  =\frac12\norm{X-Y}_F^2.
-\]
-半正定値 $r\times r$ 行列について
-$\tr A/\sqrt r\leq\norm A_F\leq\tr A$ であるから，式~(4.5) が従う．
-\end{proof}
-
-\subsection{主定理}
-
-コンパクトな $q$ 次元 Riemann 多様体の体積測度は小球上で $s^q$ と同程度である．
-Stiefel 多様体はコンパクトかつ等質なので，ある $a,b,s_0>0$ が存在し，任意の
-$X\in M$ と $0<s\leq s_0$ に対して
-\[
-  as^q\leq\sigma_{D,r}\bigl(B_F(X,s)\bigr)\leq bs^q
-  \tag{4.6}
-\]
-が成り立つ．ここで $B_F$ は Frobenius chord ball である．
-
-\begin{theorem}[Stiefel--Haar分布の局所線形生成誤差]
-\label{thm:stiefel-main}
-$M=\St(D,r)$，$q=Dr-r(r+1)/2$，$\sigma=\sigma_{D,r}$ とする．
-任意の $1\leq p\leq\infty$ に対し，$D,r,p$ のみに依存する正定数
-$c_{D,r,p},C_{D,r,p}$ と $K_0$ が存在して，任意の $K\geq K_0$ で
-\[
-  \boxed{
-  c_{D,r,p}K^{-2/q}
-  \leq\mathfrak T_{K,p}(\sigma;M)
-  \leq C_{D,r,p}K^{-2/q}
-  }
-  \tag{4.7}
-\]
-が成り立つ．特に
-\[
-  \mathfrak T_{K,2}(\sigma;M)^2\asymp K^{-4/q}.
-  \tag{4.8}
-\]
+なら$\widehat j=j^\star$である．
 \end{theorem}
 
 \begin{proof}
-Stiefel 多様体はコンパクトな滑らかな埋め込み多様体なので positive reach をもつ．
-式~(4.6) は Haar 測度の局所 $q$-Ahlfors 正則性である．さらに
-命題~\ref{prop:stiefel-quadratic} の下側評価は，定義~\ref{def:qts} の QTS を
-$\alpha=1/(2\sqrt r)$ で与える．したがって
-定理~\ref{thm:general-sharp} を適用すれば式~(4.7) を得る．
+学習標本を条件付ければ，各候補は固定される．再構成項へ通常のHoeffding不等式，
+pair項へ有界な2次U統計量のHoeffding不等式を適用し，$m$候補と二項についてunion boundを
+取れば式~(4.2)の一様偏差を得る．最小化の定義から
+$\mathcal R_{\widehat j}\leq\widehat{\mathcal R}_{\widehat j}+r_n
+\leq\widehat{\mathcal R}_{j^\star}+r_n\leq\mathcal R_{j^\star}+2r_n$である．
+gapが$2r_n$を超えれば経験scoreの順位は逆転しない．
 \end{proof}
 
-定理~\ref{thm:stiefel-main} は，目標誤差を $\varepsilon$ としたときStiefel分布を
-生成するために必要十分な局所decoder数が
+この定理はnetworkの最適化法を仮定しない．何を学習できたかはpopulation gap
+$\Delta$に集約し，独立検証集合がその順位を保存するための標本数だけを述べる．
+候補数への依存が$\log m$であるため，少数の解釈可能な多様体候補を比較する用途に向く．
+
+\section{画像から\texorpdfstring{$SO(3)$}{SO(3)}を選ぶ実験}
+\label{sec:experiment}
+
+\subsection{データ：回転状態から多視点画像へ}
+
+Haar一様な回転$R\in SO(3)$を標本化し，赤・緑・青の直交3軸markerを回転させる．
+前面$(x,y)$，上面$(x,z)$，側面$(z,y)$の三つのcamera画像を一枚の
+$32\times32$ RGB mosaicへ配置し，小さなpixel noiseを加えた．観測次元は$D=3072$，
+内在次元は3である．図~\ref{fig:rotation-reconstruction}の最上段が入力例である．
+
+学習集合900枚と検証集合300枚を独立生成した．姿勢quaternionは学習器へ渡さない．
+学習集合だけで正規化pixel距離の14近傍graphを構成し，最短路距離を95 percentileで
+正規化した．検証画像は各々を固定済み学習graphの14近傍へ接続するout-of-sample extension
+により，$\widehat d_X\in[0,1]$を得た．検証点同士は直接接続しないため，学習集合を
+条件付ければ$\widehat d_X(x,x')$は固定された二標本kernelになり，定理~\ref{thm:selection}の
+独立検証設定と一致する．検証集合に限り，診断目的で真の
 \[
-  K\asymp\varepsilon^{-q/2},
-  \qquad q=Dr-\frac{r(r+1)}2
-  \tag{4.9}
-\]
-であることを意味する．これは ambient dimension $Dr$ そのものではなく，Stiefel
-多様体の内在次元で決まる．一方，指数に現れる $q$ は依然として次元の呪いを表す．
-
-\section{Grassmann 多様体と積 torus}
-\label{sec:other-manifolds}
-
-一般定理の対象は Stiefel 多様体に限られない．本節では座標表示の異なる二つの族で
-QTS を直接確認する．
-
-\subsection{Grassmann 多様体}
-
-$r$ 次元部分空間をその直交射影行列で表し，
-\[
-  \mathcal G_{D,r}
-  :=\{P\in\R^{D\times D}:P^{\mathsf T}=P,\ P^2=P,\ \tr P=r\}
-\]
-とおく．これは $\Gr(D,r)$ の Euclid 埋め込みであり，内在次元は
-\[
-  q_G=r(D-r)
+  d_{SO(3)}(q,q')=\frac{2}{\pi}\arccos\abs{\langle q,q'\rangle}
   \tag{5.1}
 \]
-である．
+と比較したところ，$\widehat d_X$とのpairwise相関は$0.678$であった．
 
-\begin{proposition}[Grassmann の quadratic tangent separation]
-\label{prop:grassmann-qts}
-$P,Q\in\mathcal G_{D,r}$ の主角を $\theta_1,\dots,\theta_r$ とする．このとき
+\subsection{比較する深層潜在構造}
+
+全候補に同じ二層convolutional encoder--decoderと約41万parameterを用い，潜在部分だけを
+変えた．候補は次の三つである．
+\begin{enumerate}
+  \item $\R^3$：3次元の有界code．定数codeへの自明なcollapseを避けるためbatch正規化する．
+  \item $S^3$：正規化した4次元quaternionを球面上の異なる点として扱う．
+  \item $SO(3)$：$q$と$-q$を同一視し，decoderには符号不変な回転行列$R(q)$を渡す．
+\end{enumerate}
+$S^3$は$SO(3)$の二重被覆であり，回転の同一状態$q\sim-q$を表現上は別点として持つ．
+この差を含めることで，単なる潜在次元ではなく商構造が必要かを調べる．回転表現の連続性と
+位相がnetwork学習へ影響することは既存研究でも指摘されている\cite{zhou2019}．
+
+AdamWで1500 step学習し，mini-batchは96，$\lambda=0.35$とした．
+$SO(3)$については再構成だけで学習したablationも用意し，全モデルを検証時には共通score
 \[
-  \dist(Q,L_P)^2
-  =2\sum_{i=1}^r\sin^4\theta_i,
-  \qquad
-  \norm{P-Q}_F^2
-  =2\sum_{i=1}^r\sin^2\theta_i.
+  \widehat{\mathcal R}
+  =\text{weighted reconstruction MSE}
+   +0.35\times(\text{MGW stress})^2
   \tag{5.2}
 \]
-したがって
-\[
-  \boxed{
-  \frac{1}{\sqrt{2r}}\norm{P-Q}_F^2
-  \leq\dist(Q,L_P)
-  \leq\frac{1}{\sqrt2}\norm{P-Q}_F^2
-  }.
-  \tag{5.3}
-\]
-\end{proposition}
-
-\begin{proof}
-$P$ が定める分解 $\R^D=\operatorname{ran}P\oplus\ker P$ に関して，
-$T_P\mathcal G_{D,r}$ は対角 block が零の対称行列全体である．したがって
-$Q-P$ の法方向成分は
-\[
-  P(Q-P)P+(I-P)Q(I-P)
-\]
-である．二項は直交し，主角表示ではそれぞれの非零特異値が
-$\sin^2\theta_i$ になるので第一式を得る．第二式は射影行列間の標準的な chord
-距離である．$a_i=\sin^2\theta_i$ とおき，
-\[
-  \frac1{\sqrt r}\sum_i a_i
-  \leq\left(\sum_i a_i^2\right)^{1/2}
-  \leq\sum_i a_i
-\]
-を使えば式~(5.3) が従う．
-\end{proof}
-
-射影埋め込みされた Grassmann 多様体はコンパクトかつ等質であり，正規化 Haar 測度は
-局所 $q_G$-Ahlfors 正則である．命題~\ref{prop:grassmann-qts} と
-定理~\ref{thm:general-sharp} から次を得る．
-
-\begin{corollary}[Grassmann--Haar測度の局所線形生成誤差]
-\label{cor:grassmann-width}
-$\sigma_G$ を $\mathcal G_{D,r}$ 上の正規化 Haar 測度とする．任意の
-$1\leq p\leq\infty$ に対して
-\[
-  \mathfrak T_{K,p}(\sigma_G;\mathcal G_{D,r})
-  \asymp K^{-2/[r(D-r)]}.
-  \tag{5.4}
-\]
-\end{corollary}
-
-\subsection{積 torus}
-
-単位円の $\ell$ 個の直積を標準的に
-\[
-  \mathbb T^\ell=(S^1)^\ell\subset\R^{2\ell}
-\]
-へ埋め込む．$x=x(\theta_1,\dots,\theta_\ell)$ と
-$y=x(\phi_1,\dots,\phi_\ell)$ に対し
-$a_i=1-\cos(\theta_i-\phi_i)\geq0$ とおく．各円因子の法方向成分は $a_i$ なので
-\[
-  \dist(y,L_x)^2=\sum_{i=1}^{\ell}a_i^2,
-  \qquad
-  \norm{x-y}^2=2\sum_{i=1}^{\ell}a_i.
-  \tag{5.5}
-\]
-ゆえに
-\[
-  \frac1{2\sqrt\ell}\norm{x-y}^2
-  \leq\dist(y,L_x)
-  \leq\frac12\norm{x-y}^2.
-  \tag{5.6}
-\]
-積 Haar 測度 $\sigma_{\mathbb T}$ は局所 $\ell$-Ahlfors 正則なので，
-\[
-  \mathfrak T_{K,p}(\sigma_{\mathbb T};\mathbb T^\ell)
-  \asymp K^{-2/\ell}
-  \qquad(1\leq p\leq\infty).
-  \tag{5.7}
-\]
-\begin{remark}[さらに含まれる多様体]
-球面は $\St(D,1)$ である．また，主曲率が正の上下界をもち，接超平面が一点でのみ
-接するコンパクト狭義凸超曲面も QTS を満たす．特に楕円体にも
-定理~\ref{thm:general-sharp} が適用できる．一方，平坦方向をもつ cylinder，
-developable surface，接平面が離れた場所で再交差する埋め込みでは QTS が破れ得る．
-この区別により「内在次元だけで rate が決まる」という過剰な主張を避けられる．
-\end{remark}
-
-\section{厳密に解ける例：\texorpdfstring{$\St(2,1)=S^1$}{St(2,1)=S1}}
-\label{sec:circle}
-
-$S^1$ の点を $x(\theta)=(\cos\theta,\sin\theta)$ と書く．$x(\theta)$ における接線は
-\[
-  L_\theta=\{z\in\R^2:\langle z,x(\theta)\rangle=1\}
-\]
-である．角度差の絶対値を $0\leq t\leq\pi$ に取ると
-\[
-  \dist(x(\theta+t),L_\theta)=1-\cos t.
-  \tag{6.1}
-\]
-
-\begin{theorem}[円周上の厳密最適配置]
-\label{thm:circle-exact}
-$\sigma$ を $S^1$ 上の一様確率測度とする．任意の $K\geq1$ に対して，
-$\mathfrak T_{K,2}(\sigma;S^1)$ は等間隔な $K$ 本の接線によって達成され，
-\[
-  \boxed{
-  \mathfrak T_{K,2}(\sigma;S^1)^2
-  =\frac{K}{\pi}
-    \left(
-      \frac{3\pi}{2K}
-      -2\sin\frac{\pi}{K}
-      +\frac14\sin\frac{2\pi}{K}
-    \right)
-  }
-  \tag{6.2}
-\]
-が成り立つ．特に
-\[
-  \mathfrak T_{K,2}(\sigma;S^1)^2
-  =\frac{\pi^4}{20K^4}+O(K^{-6}),
-  \qquad
-  \mathfrak T_{K,2}(\sigma;S^1)
-  \sim\frac{\pi^2}{\sqrt{20}}K^{-2}.
-  \tag{6.3}
-\]
-また
-\[
-  \mathfrak T_{K,\infty}(\sigma;S^1)
-  =1-\cos\frac{\pi}{K}
-  \sim\frac{\pi^2}{2K^2}.
-  \tag{6.4}
-\]
-\end{theorem}
-
-\begin{proof}
-接点を円周順に並べ，隣接接点間の角度を
-$\Delta_1,\dots,\Delta_K\geq0$ とする．$\sum_j\Delta_j=2\pi$ である．
-$1-\cos t$ は $[0,\pi]$ で単調増加するため，隣接する二接線への最近領域の境界は
-角度の中点である．よって式~(2.5) と式~(6.1) から
-\[
-  \mathfrak T_{K,2}^2
-  =\inf_{\substack{\Delta_j\geq0\\\sum_j\Delta_j=2\pi}}
-    \frac1\pi\sum_{j=1}^K
-      \int_0^{\Delta_j/2}(1-\cos t)^2\,\d t.
-  \tag{6.5}
-\]
-$H(s)=\int_0^{s/2}(1-\cos t)^2\,\d t$ とおくと
-$H''(s)=\tfrac12(1-\cos(s/2))\sin(s/2)\geq0$ なので $H$ は凸である．
-Jensen の不等式より最小値は $\Delta_j=2\pi/K$ で達成される．
-\[
-  \int_0^a(1-\cos t)^2\,\d t
-  =\frac{3a}{2}-2\sin a+\frac14\sin2a
-\]
-に $a=\pi/K$ を代入して式~(6.2) を得る．Taylor 展開から式~(6.3) が従う．
-$p=\infty$ では最大角度 gap を最小化すればよく，等間隔配置と式~(6.4) を得る．
-\end{proof}
-
-この例は，$K^{-2/q}$ の指数だけでなく定数も曲率と cell geometry から決まることを
-示している．一般の Stiefel 多様体で sharp leading constant を求めるには，第二基本形式が
-定める四次局所 distortion に対する最適 cell shape を解く必要がある．
-
-\section{有限標本誤差との分離}
-\label{sec:stability}
-
-本稿の近似幅は population quantity であり，どのように中心を計算するかを指定しない．
-それでも経験測度への置換による誤差は，Wasserstein 空間の三角不等式だけで分離できる．
-
-\begin{proposition}[測度に関する安定性]
-\label{prop:stability}
-$M\subset\R^m$ を固定し，$\mu,\mu'\in\mathcal P_p(M)$ とする．任意の
-$K\geq1$ と $1\leq p\leq\infty$ に対して
-\[
-  \boxed{
-  \abs{
-    \mathfrak T_{K,p}(\mu;M)-\mathfrak T_{K,p}(\mu';M)
-  }
-  \leq\Wass_p(\mu,\mu')
-  }
-  \tag{7.1}
-\]
-が成り立つ．
-\end{proposition}
-
-\begin{proof}
-$\mathcal C_K(M)$ を，ある $K$ 個の接平面の合併に支えをもつ確率測度全体とする．
-定義より
-\[
-  \mathfrak T_{K,p}(\mu;M)
-  =\inf_{\nu\in\mathcal C_K(M)}\Wass_p(\mu,\nu).
-\]
-任意の距離空間で，集合までの距離は $1$-Lipschitz である．実際，三角不等式から
-$\Wass_p(\mu,\nu)\leq\Wass_p(\mu,\mu')+\Wass_p(\mu',\nu)$ であり，
-$\nu$ について infimum を取った後に $\mu,\mu'$ を交換する．
-\end{proof}
-
-$X_1,\dots,X_n\sim\mu$ と $\widehat\mu_n=n^{-1}\sum_i\delta_{X_i}$ に対し，
-\[
-  \abs{
-    \mathfrak T_{K,p}(\widehat\mu_n;M)
-    -\mathfrak T_{K,p}(\mu;M)
-  }
-  \leq\Wass_p(\widehat\mu_n,\mu)
-  \tag{7.2}
-\]
-である．したがって任意の empirical Wasserstein bound をそのまま近似幅推定へ
-移せる．多様体上の測度推定では，ambient dimension ではなく内在次元と密度の
-正則性に依存する minimax rate が知られている \cite{divol2022,block2022}．
-
-式~(7.2) は，モデル自体の近似誤差と有限標本による推定誤差を分離する．
-anchorと接空間を実際に推定するアルゴリズムの誤差は，本稿の定理には含めない．
-
-\section{数値実験}
-\label{sec:experiments}
-
-主定理の指数が有限 $K$ でも現れるかを確認するため，五例を計算した．
-これは深層学習の実務性能を示す実験ではなく，定理の数値的な整合性確認である．
-
-\subsection{五多様体での近似率}
-
-中心配置 $\boldsymbol{x}=(x_1,\dots,x_K)$ に対する population cost を
-\[
-  U_K(\boldsymbol{x})
-  :=\left(
-      \int_M\min_{1\leq j\leq K}
-      \dist(y,L_{x_j})^2\,\mu(\d y)
-    \right)^{1/2}
-  \geq\mathfrak T_{K,2}(\mu;M)
-  \tag{8.1}
-\]
-とし，標本 $Y_1,\dots,Y_N$ による直接積分
-\[
-  \widehat U_K(\boldsymbol{x})
-  :=\left(
-      \frac1N\sum_{i=1}^N\min_{1\leq j\leq K}
-      \dist(Y_i,L_{x_j})^2
-    \right)^{1/2}
-  \tag{8.2}
-\]
-を報告する．したがって，数値値を未知の最適配置が達成する
-$\mathfrak T_{K,2}$ そのものとは同一視しない．式~(8.1) は固定した配置が与える
-構成的上界であり，式~(8.2) はその積分の近似である．
-
-\paragraph{配置と積分．}
-$S^1$ には定理~\ref{thm:circle-exact} の等間隔配置，$S^2$ には Fibonacci 配置，
-$\mathbb T^2$ には $m\times m$ 直積格子を用いた．$\St(3,2)$ と $\Gr(4,2)$ では，
-固定 seed の Haar 標本 $6000$ 点を候補集合とし，ambient chord 距離に関する
-greedy farthest-point sampling (FPS) で最大 $256$ 中心の nested 配置を作った．
-積分点数は順に $131072,16387,32771,24000,24000$ である．円周，球面，torus には
-決定論的な等分点，Fibonacci 点，rank-one lattice rule を使い，二つの行列多様体には
-中心候補とは独立な Haar 標本を使った．ニューラルネット，誤差逆伝播法，連続最適化は
-用いていない．
-
-\paragraph{評価式．}
-球面では $\dist(y,L_x)=1-\langle x,y\rangle$，積 torus では式~(5.5)，
-Stiefel では式~(4.4) を直接使う．Grassmann では主角を $\theta_i$ として
-\[
-  \dist(Q,L_P)^2=2\sum_i\sin^4\theta_i
-\]
-を cross-Gram 行列の二次・四次 trace から評価した．これにより接平面を数値的に
-構成して projection を解く工程を避け，理論式とコードを一対一に対応させた．
-
-各多様体について最後の四つの $K$ に最小二乗直線
-$\log\widehat U_K=a+b\log K$ を当てた結果を表~\ref{tab:numerical-rates} に示す．
-\begin{table}[htbp]
-  \centering
-  \small
-  \caption{有限 $K$ における局所線形生成誤差の log--log 傾き．理論傾きは
-  $-2/q$，観測傾きは各系列の最後の四点による．}
-  \label{tab:numerical-rates}
-  \input{experiments/results_table.tex}
-\end{table}
-
-全例で観測傾きは理論値に近く，特に明示的な準一様配置を使った
-$S^2$ と $\mathbb T^2$ では差がそれぞれ $0.010$ と $0.004$ である．FPS を使った
-$\St(3,2)$ と $\Gr(4,2)$ の差は $0.012$ と $0.024$ であり，候補集合が有限であることと
-greedy 配置の optimization gap を含む．$S^1$ では式~(6.2) の厳密値に対する全 $K$
-での最大相対誤差が $6.4\times10^{-6}$ であり，積分と接距離の実装を較正できている．
-
-この実験が支持するのは，具体的な準一様decoder配置が有限 $K$ で既に幾何上界rateを
-実現するという主張である．matching lower boundやFPSの最適性は実験から主張しない．
-
-\subsection{\texorpdfstring{$S^2$}{S2}で見るdecoder数の効果}
-
-数値の傾きだけでなく，局所decoderが何を生成しているかを可視化する．
-$S^2\subset\R^3$ 上の各点を，最も近いFibonacci anchorの接平面へ直交射影した．
-したがって図~\ref{fig:sphere-decoder-geometry} 上段の点群は，$K$ 個の局所線形decoderが
-一様球面分布に対して実現する生成出力そのものである．下段は同じ配置の
-$\widehat U_K$ と，$K=64$ で定数を合わせた $K^{-1}$ 基準線を示す．
+で順位付けした．固定seedの一回のrunであり，有意差検定は行わない．
 
 \begin{figure}[htbp]
   \centering
-  \input{experiments/sphere_geometry_diagnostics.tex}
-  \caption{$S^2$ の局所線形生成．上段は $K=4,16,64$ 個の接平面decoderへの
-  射影出力であり，全図で同じ表示範囲を使う．下段はdecoder数と $W_2$ 誤差の関係である．
-  $q=2$ なので主定理の予測は $K^{-2/q}=K^{-1}$ となる．}
-  \label{fig:sphere-decoder-geometry}
+  \includegraphics[width=\linewidth]{experiments/rotation_reconstructions.png}
+  \caption{検証画像の再構成．各入力は前・上・横の3視点を一枚に並べたもの．
+  $\R^3$は姿勢ごとの差をぼかし，$S^3$は形を復元するが距離構造に余分な二重性を残す．
+  $SO(3)$潜在は同じparameter規模で三視点の姿勢変化を最も安定して再構成する．}
+  \label{fig:rotation-reconstruction}
 \end{figure}
 
-$K=4,16,64$ の誤差はそれぞれ $0.3139,0.0787,0.0193$ であった．
-$K$ を4倍にするごとに誤差がほぼ $1/4$ となり，点群も粗い平面patchの合併から
-球面へ近づく．この図が本稿の中心的な実験結果である．
-
-\subsection{学習実験：18峰性球面合成分布}
-
-単純な一次元分布では小さなnetworkでも十分なため，network幅の差が出にくい．
-そこで合成stress testとして，$S^2$ 上に6個の接平面decoderを
-$\{\pm e_1,\pm e_2,\pm e_3\}$ へ置き，
-各decoderの二次元局所座標に3個のGaussian modeを配置した．全体では18峰性の
-球面分布になる．各標本は局所座標 $\widetilde z\in\R^2$ から
-\[
-  Y=\frac{x_J+U_J\widetilde z}
-          {\norm{x_J+U_J\widetilde z}}
-\]
-で球面へ写し，Flow Matchingの目標には接平面へ射影した座標
-$Z_1=U_J^{\mathsf T}(Y-x_J)$ を用いた．
-
-速度場は $(t,z,J)$ を入力する一層tanh MLPとし，$J$ はone-hotで与えた．
-hidden幅を $4,16,64$，学習をAdamで6000 step，生成ODEを40 stepのHeun法とした．
-二次元では厳密な $W_2$ の計算自体が別の最適輸送問題になるため，生成座標の評価には
-48方向へ射影した一次元 $W_2$ の平均である局所Sliced-$W_2$（局所SW$_2$）を用いる．
+\subsection{結果}
 
 \begin{table}[htbp]
   \centering
   \small
-  \caption{18峰性 $S^2$ 分布に対するchart-conditional Flow Matching．
-  全幅でtargetから対応接平面までの幾何RMSは $0.1537$ である．半径RMSEは
-  生成点の単位球面からのずれを表す．}
-  \label{tab:sphere-multimodal-flow}
-  \input{experiments/sphere_flow_table.tex}
+  \setlength{\tabcolsep}{4pt}
+  \caption{独立な300枚に対する潜在構造選択．MGW stressとscoreは姿勢labelを使わない．
+  true stressと10-NN recallだけが，学習から隠した真の$SO(3)$ labelを使う診断値である．}
+  \label{tab:rotation-manifold}
+  \input{experiments/rotation_manifold_table.tex}
 \end{table}
 
 \begin{figure}[htbp]
   \centering
-  \input{experiments/sphere_flow_diagnostics.tex}
-  \caption{18峰性 $S^2$ 分布の目標標本，幅4と幅64の生成出力，および固定検証集合上の
-  Flow Matching loss．幅4ではmode間を埋める点が多いが，幅64では目標の局所clusterが
-  より明確に再現される．表示される生成点は球面へ再射影せず，接平面decoderの出力を
-  そのまま描いている．}
-  \label{fig:sphere-multimodal-flow}
+  \includegraphics[width=\linewidth]{experiments/rotation_diagnostics.png}
+  \caption{左：再構成学習曲線．中央：真の回転距離と学習された潜在距離の標本pair．
+  右：labelなしMGW stressと，評価時だけ計算した真の$SO(3)$ stress．破線は理想的な等距離対応．}
+  \label{fig:rotation-diagnostics}
 \end{figure}
 
-未学習の局所SW$_2$は $0.6880$ であり，幅4，16，64ではそれぞれ
-$0.1745,0.1787,0.1061$ となった．小さい二幅の順位は固定seedの揺らぎの範囲だが，
-幅64はlossと生成分布の両方で明確に改善した．一方，decoderを6個に固定した
-幾何RMS $0.1537$ はnetwork幅では変わらない．これにより，密度学習が改善する量と
-decoder数が決める量を分けて観測できる．結果は固定seedの一回のrunであり，
-model rankingの統計的有意性は主張しない．
+共通scoreは$\R^3$で$0.0743$，$S^3$で$0.0661$，再構成だけで学習した$SO(3)$で
+$0.0462$，$SO(3)$+MGWで$0.0434$となり，正しい潜在構造が選ばれた．
+$SO(3)$+MGWのlabelなしstress $0.2249$は$S^3$の$0.3348$より33\%小さい．
+さらに真の回転metricで測ったstressも$0.2249$で最小であり，10近傍recallも$0.292$で
+最大だった．無作為な10近傍recallの期待値は$10/299\simeq0.033$である．
+正しい多様体をarchitectureへ入れるだけでなく，MGW項を加えることで
+再構成のみの$SO(3)$からlabelなしstressが$0.2416$から$0.2249$へ改善した．
 
-\subsection{較正実験：一次元 \texorpdfstring{$S^1$}{S1}}
+この実験の意味は「画像が$SO(3)$であると証明した」ことではない．候補集合に真の構造を含め，
+観測が姿勢を識別できる制御環境において，ラベルを使わない検証scoreが正しい候補を選び，
+隠していた姿勢metricによる事後評価とも整合した，という結果である．
 
-潜在分布の学習を加えた場合も見るため，$S^1$ の $K=8$ 等間隔decoder上で
-小型neural flowを実際に学習した．一つのcell内で角度差
-$\Delta\sim\operatorname{Unif}[-\pi/K,\pi/K]$ とすると，接線座標の目標分布は
-\[
-  Z_1=\sin\Delta,\qquad Z_0\sim\mathcal N(0,1)
-\]
-である．linear conditional path $Z_t=(1-t)Z_0+tZ_1$ と
-$\dot Z_t=Z_1-Z_0$ を使い，一層tanh MLP $v_\theta(t,z)$ を
-\[
-  \mathcal L_{\mathrm{FM}}(\theta)
-  =\mathbb E\left[
-    \abs{v_\theta(t,Z_t)-(Z_1-Z_0)}^2
-  \right]
-  \tag{8.3}
-\]
-で学習した．hidden幅を $4,16,64$ とし，各モデルをAdamで $6000$ step，
-batch size $96$ 学習した．生成時には $40$ stepのHeun法でneural ODEを積分した．
-結果は固定seedによる一回のrunであり，model rankingの統計的有意性は主張しない．
-
-目標局所座標分布を $\lambda$，生成終端分布を $\widehat\lambda$ とする．同じ枝の中で
-一次元単調couplingを取り，法方向と接方向の直交性を使うと
-\[
-  \Wass_2(\mu,\widehat\nu)^2
-  \leq
-  \mathfrak T_{K,2}(\mu;S^1)^2
-  +
-  \Wass_2(\lambda,\widehat\lambda)^2
-  \tag{8.4}
-\]
-という具体的なcoupling上界を得る．表~\ref{tab:neural-flow-circle} の「結合上界」は
-式~(8.4) の右辺の平方根であり，真の $W_2$ の等号値とは限らない．
-
-\begin{table}[htbp]
-  \centering
-  \small
-  \caption{$S^1$, $K=8$ における局所Flow Matching．幾何floorは全行で
-  $\mathfrak T_{8,2}=0.0342$．未学習は $Z_0$ をそのままdecoderへ入れるbaseline．}
-  \label{tab:neural-flow-circle}
-  \input{experiments/neural_flow_table.tex}
-\end{table}
-
-hidden幅を $4$ から $64$ へ増やすと，終端分布の潜在 $W_2$ は
-$0.0634$ から $0.0441$ へ，式~(8.4) の上界は $0.0721$ から $0.0558$ へ減った．
-一方，network幅に依存しない幾何floor $0.0342$ は残る．この実験は大規模実データでの
-実務性能を示すものではないが，「flowの学習が減らす項」と「decoder構造だけが減らす項」
-を実際の勾配学習で分けて観測している．FM loss自体にはconditional regressionの
-既約分散が含まれるため，lossだけでは生成品質を順位付けできない．そのため生成分布の
-比較には終端 $W_2$ も用いた．この単純例は実装の較正として残し，主たる可視化には
-図~\ref{fig:sphere-multimodal-flow} の多峰性球面分布を用いる．
-
-全コードはPython標準ライブラリだけで再実行でき，各 $K$ の幾何値，回帰結果，
-neural flowの学習履歴と生成点をCSVとして保存している．
-
-\section{関連研究と新規性の境界}
+\section{関連研究との違い}
 \label{sec:related}
 
-\paragraph{VAE，Flow Matching，manifold flow．}
-VAEはneural encoder--decoderをもつ潜在変数モデルを変分推論で学習する
-\cite{kingma2014}．Flow Matchingは指定した確率pathを生成するCNFの速度場を
-simulation-freeに回帰する \cite{lipman2023}．既知多様体上でneural ODEを動かす
-manifold CNFも提案されている \cite{lou2020}．本稿は新しい学習損失を提案しない．
-各枝の潜在分布を任意とすることで密度学習を理想化し，局所線形decoderの個数だけが
-決める表現誤差を解析する．
+Gromov--Wasserstein距離はmetric-measure空間を対応付け，空間の同型類上の距離を与える
+\cite{memoli2011}．GW autoencoderはlatent分布とdata分布の距離構造をGW目的で直接比較する
+\cite{nakagawa2023}．本稿の目的は新しい一般的GW solverではない．encoderが与える
+決定論的couplingへ制限した計算可能なstressを，\emph{潜在多様体候補の選択score}として使い，
+独立検証標本による有限候補選択保証を分離した点にある．
 
-\paragraph{multi-chart neural generator．}
-AtlasNetは複数のlearned parametric surface patchで3次元形状を生成し，patch数を増やす
-実験を行った \cite{groueix2018}．Chart Auto-Encoderは複雑な位相をもつデータに対して
-複数chartを導入し，普遍近似と近接性保存を扱う \cite{schonsheck2020}．後続研究には
-generalization boundもある \cite{liu2023}．これらは非線形decoderを実際に学習する一方，
-本稿は接平面に沿うaffine decoderへクラスを狭め，最良 $W_p$ 誤差について
-一致する上下界と必要decoder数を与える．したがって
-一般のChart Auto-EncoderやAtlasNetに対する下界ではない．
+Topological Autoencoderはpersistent homologyにより入力と潜在表現の位相を保存する損失を
+導入した\cite{moor2020}．一方，autoencoderにはデータ位相に起因する大域的な再構成障害が
+存在する\cite{batson2021}．本稿はhomologyを直接推定せず，$\R^3,S^3,SO(3)$という
+解釈可能な候補の内部距離を比較する．したがって，候補外の未知位相を自動発見する方法とは
+相補的である．
 
-\paragraph{多様体推定．}
-Hausdorff 距離による多様体推定では reach や smoothness を仮定した minimax rate が
-研究され，rate が ambient dimension ではなく内在次元に依存することが知られている
-\cite{genovese2012}．本稿は未知 support の推定量を構成せず，固定した表現予算 $K$ に
-対する population approximation width を扱う．したがって統計的 manifold recovery
-とは相補的である．
-
-\paragraph{$k$-flats と GMRA．}
-Canas, Poggio, Rosasco \cite{canas2012} は $k$ 個の affine $d$-flats による
-expected squared reconstruction error を解析し，第二基本形式を含む $k^{-4/d}$ 上界と
-経験最小化の rate を与えた．GMRA は局所 affine approximation を多重解像度化し，
-未知の正則性へ適応する \cite{liao2019}．命題~\ref{prop:closed-projection} により，
-これらの reconstruction objective は適切な support class までの $W_2^2$ と読める．
-したがって $K^{-4/q}$ という二乗誤差の上界そのものは新規ではない．本稿の差分は，
-接点に anchored された座標不変な model class を Wasserstein 近似幅として定義し，
-matching lower bound のための QTS 条件を分離し，Stiefel，Grassmann，積 torus
-について全ての $p$ でその条件を検証し，$S^1$ では厳密最適値まで求める点にある．
-
-\paragraph{Wasserstein 量子化と測度推定．}
-点を $K$ 個用いる古典的量子化の $K^{-1/q}$ rate は Zador 理論により特徴づけられ，
-Riemann 多様体や rectifiable metric measure space に拡張されている
-\cite{graf2000,aydin2026}．Divol \cite{divol2022} は未知多様体上の滑らかな測度を
-Wasserstein loss で推定し，内在次元に依存する minimax rate を与えた．本稿では
-support atom の代わりに一次接触をもつ局所 $q$-plane を approximation unit とするため，
-rate が $K^{-1/q}$ から $K^{-2/q}$ へ変わる．
-
-\paragraph{Wasserstein 空間内の多様体．}
-Hamm et al. \cite{hamm2025} は確率測度の族そのものが $W_2$ 空間内でなす多様体を学習する
-理論を構築した．本稿はEuclid空間内の埋め込み多様体に支えられた一つの確率測度を，
-複数の局所生成器からなるモデルで近似するものであり，対象が異なる．
-
-\section{限界と次の問題}
+\section{限界と次の実験}
 \label{sec:limitations}
 
-本稿の結果には明確な限界がある．
 \begin{enumerate}
-  \item decoderは真のanchor $x_j$ と接空間 $T_{x_j}M$ を利用するoracle modelである．
-    未知多様体からencoder，anchor，接空間を同時学習する問題は式~(7.2) だけでは解けない．
-  \item 下界はtangent-constrained affine decoderに対するもので，任意のMLP decoder，
-    Transformer，拡散モデルに対する下界ではない．非線形decoderは曲率を内部表現できる．
-  \item 各枝の潜在分布を任意としているため，有限networkによる密度近似，標本誤差，
-    Flow Matchingの最適化誤差は解析していない．
-  \item $W_p$ は質量で重み付けされた誤差であり，低密度領域の support defect を弱くしか
-    罰しない．$W_\infty$ は $M$ からアトラスへの一方向の最大偏差を制御するが，無限に
-    延びる接平面側の余分な support までは制御しない．二方向 Hausdorff recovery には
-    bounded chart domain を導入する必要がある．
-  \item matching lower bound は Ahlfors 正則性と QTS を使う．密度が消える測度，
-    特異測度，低次元 strata の混合，曲率の退化方向をもつ多様体では指数が変わり得る．
-  \item 一般多様体では指数のみがsharpであり，leading constantは未決定である．
-    これは第二基本形式が定める局所四次 distortion に対する Zador 型問題になる．
+  \item データは物理的に解釈しやすいrendered multi-view画像だが，実撮影画像ではない．
+    次はcamera画像の背景，遮蔽，照明を変え，最後に姿勢付き実データで評価する必要がある．
+  \item 真の$SO(3)$を候補集合に含めている．本稿が行うのは有限候補からのstructure selectionであり，
+    任意の未知多様体の位相発見ではない．
+  \item graph距離と真の回転距離の相関は$0.678$であり完全ではない．観測写像$F$の歪みは
+    そのまま回復可能性の限界になる．単眼画像ではさらに非単射性が生じる．
+  \item MGW stressはencoder couplingに制限したGW上界であり，全couplingを最適化した
+    GW距離そのものではない．この制限が計算容易性とamortized inferenceを与えている．
+  \item 実験は固定seedの一回である．候補間gapの信頼区間，noise量と標本数への依存，
+    rendererを変えた外部妥当性を追加すべきである．
 \end{enumerate}
 
-次に狙うべき理論結果は，総parameter budget $P$ のもとで「decoder数」と「各decoderの
-非線形性」へどう予算を配るかを決めることである．$s$ 次 Taylor decoderまで
-表現クラスを拡張し，$C^{s+1}$ 多様体に対して
-\[
-  \mathfrak T^{(s)}_{K,p}\asymp K^{-(s+1)/q}
-\]
-となる条件を特徴づけ，局所networkの近似誤差と合わせて $K$ を最適化する必要がある．
-同時に，bounded chart domainによって $W_p$ と二方向Hausdorff誤差を制御し，学習された
-anchorと接空間の統計誤差を解析することが，oracle定理から実用モデルへの次の段階である．
+次の実践的な段階は，$SO(3)$に照明方向$S^2$を加えた$SO(3)\times S^2$，または関節角を
+もつtorus $\mathbb T^k$を候補にすることである．潜在構造を選んだ後は，その多様体上で
+Flow Matchingやdiffusionを学習すればよい．この順序なら，生成器の学習失敗と
+潜在空間の構造不一致を分けて評価できる．
 
 \section{結論}
 \label{sec:conclusion}
 
-本稿は，$K$ 個の局所線形decoderからなる生成モデルを定義し，その最良
-Wasserstein誤差を解析した．各枝の潜在分布を任意としても，decoderが一次である限り
-曲率由来の幾何誤差は残る．
+高次元画像の背後にある多様体を推測する問題を，有限個の深層潜在構造候補からの選択として
+定義した．再構成誤差だけでなく，観測と潜在のpairwise距離を比較するMGW stressを使うと，
+異なる次元・位相の空間を同じ基準で比較できる．stressはGW距離の上界であり，0なら適切な
+条件下でmetric-measure同型を与える．独立検証標本を使えば，候補選択は
+$O(\sqrt{\log m/n})$の一様偏差で保証される．
 
-positive reach，Ahlfors正則性，QTSのもとで，この誤差は $K^{-2/q}$ と上下から一致する．
-Stiefel，Grassmann，積torusは条件を満たし，精度 $\varepsilon$ に必要な局所decoder数は
-$K\asymp\varepsilon^{-q/2}$ である．これは一般の深層学習モデルに対する下界ではない．
-明示したdecoderクラスについて，必要な構造予算をOTで厳密に決めた結果である．
-次の課題は，非線形decoderの次数とparameter数まで含めた最適な予算配分を求めることである．
+3,072次元の多視点回転画像では，姿勢labelを使わないscoreが$SO(3)$潜在を選び，隠していた
+真の回転距離による診断とも一致した．主張は「万能に多様体を発見できる」ではない．
+\emph{観測の識別可能性，候補構造，評価metricを明示すれば，データに適した生成モデルの
+潜在構造をOTで選べる}という，検証可能で実践的な結果である．
+
+\section*{再現方法}
+
+実験からPDFまでを次で再現できる．
+\begin{verbatim}
+make paper-all
+\end{verbatim}
+実験scriptは依存関係をPEP 723 metadataに固定し，\texttt{uv}がPython 3.12環境を自動構築する．
+seed，学習・検証標本，optimizer，学習stepはすべてscript内に固定した．
 
 \begin{thebibliography}{99}
 
-\bibitem{absil2008}
-P.-A.~Absil, R.~Mahony, and R.~Sepulchre.
-\newblock \emph{Optimization Algorithms on Matrix Manifolds}.
-\newblock Princeton University Press, 2008.
-
-\bibitem{aydin2026}
-A.~D.~Aydin.
-\newblock Asymptotics of the quantization problem on metric measure spaces.
-\newblock \emph{Mathematische Annalen}, 2026.
-
-\bibitem{block2022}
-A.~Block, Z.~Jia, Y.~Polyanskiy, and A.~Rakhlin.
-\newblock Intrinsic dimension estimation using Wasserstein distances.
-\newblock \emph{Journal of Machine Learning Research}, 23(313):1--37, 2022.
-
-\bibitem{canas2012}
-G.~D.~Canas, T.~Poggio, and L.~Rosasco.
-\newblock Learning manifolds with $k$-means and $k$-flats.
-\newblock In \emph{Advances in Neural Information Processing Systems}, 2012.
-
-\bibitem{divol2022}
-V.~Divol.
-\newblock Measure estimation on manifolds: an optimal transport approach.
-\newblock \emph{Probability Theory and Related Fields}, 183:581--647, 2022.
-
-\bibitem{edelman1998}
-A.~Edelman, T.~A.~Arias, and S.~T.~Smith.
-\newblock The geometry of algorithms with orthogonality constraints.
-\newblock \emph{SIAM Journal on Matrix Analysis and Applications},
-20(2):303--353, 1998.
-
-\bibitem{federer1959}
-H.~Federer.
-\newblock Curvature measures.
-\newblock \emph{Transactions of the American Mathematical Society},
-93(3):418--491, 1959.
-
-\bibitem{genovese2012}
-C.~R.~Genovese, M.~Perone-Pacifico, I.~Verdinelli, and L.~Wasserman.
-\newblock Minimax manifold estimation.
-\newblock \emph{Journal of Machine Learning Research}, 13:1263--1291, 2012.
-
-\bibitem{graf2000}
-S.~Graf and H.~Luschgy.
-\newblock \emph{Foundations of Quantization for Probability Distributions}.
-\newblock Springer, 2000.
-
-\bibitem{groueix2018}
-T.~Groueix, M.~Fisher, V.~G.~Kim, B.~C.~Russell, and M.~Aubry.
-\newblock AtlasNet: A papier-m\^ach\'e approach to learning 3D surface generation.
-\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
-Pattern Recognition}, 2018.
-
-\bibitem{hamm2025}
-K.~Hamm, C.~Moosm\"uller, B.~Schmitzer, and M.~Thorpe.
-\newblock Manifold learning in Wasserstein space.
-\newblock \emph{SIAM Journal on Mathematical Analysis}, 57(3):2983--3029, 2025.
+\bibitem{batson2021}
+J.~Batson, C.~G.~Haaf, Y.~Kahn, and D.~A.~Roberts.
+\newblock Topological obstructions to autoencoding.
+\newblock \emph{Journal of High Energy Physics}, 2021(4):280, 2021.
 
 \bibitem{kingma2014}
 D.~P.~Kingma and M.~Welling.
 \newblock Auto-encoding variational Bayes.
 \newblock In \emph{International Conference on Learning Representations}, 2014.
 
-\bibitem{liao2019}
-W.~Liao and M.~Maggioni.
-\newblock Adaptive geometric multiscale approximations for intrinsically
-low-dimensional data.
-\newblock \emph{Journal of Machine Learning Research}, 20(98):1--63, 2019.
+\bibitem{memoli2011}
+F.~M\'emoli.
+\newblock Gromov--Wasserstein distances and the metric approach to object matching.
+\newblock \emph{Foundations of Computational Mathematics}, 11(4):417--487, 2011.
 
-\bibitem{liu2023}
-H.~Liu, A.~Havrilla, R.~Lai, and W.~Liao.
-\newblock Deep nonparametric estimation of intrinsic data structures by chart
-autoencoders: generalization error and robustness.
-\newblock arXiv:2303.09863, 2023.
+\bibitem{moor2020}
+M.~Moor, M.~Horn, B.~Rieck, and K.~Borgwardt.
+\newblock Topological autoencoders.
+\newblock In \emph{Proceedings of the 37th International Conference on Machine Learning},
+pages 7045--7054, 2020.
 
-\bibitem{lipman2023}
-Y.~Lipman, R.~T.~Q.~Chen, H.~Ben-Hamu, M.~Nickel, and M.~Le.
-\newblock Flow matching for generative modeling.
+\bibitem{nakagawa2023}
+N.~Nakagawa, R.~Togo, T.~Ogawa, and M.~Haseyama.
+\newblock Gromov--Wasserstein autoencoders.
 \newblock In \emph{International Conference on Learning Representations}, 2023.
 
-\bibitem{lou2020}
-A.~Lou, D.~Lim, I.~Katsman, L.~Huang, Q.~Jiang, S.-N.~Lim, and C.~De~Sa.
-\newblock Neural manifold ordinary differential equations.
-\newblock In \emph{Advances in Neural Information Processing Systems}, 2020.
+\bibitem{tenenbaum2000}
+J.~B.~Tenenbaum, V.~de~Silva, and J.~C.~Langford.
+\newblock A global geometric framework for nonlinear dimensionality reduction.
+\newblock \emph{Science}, 290(5500):2319--2323, 2000.
 
-\bibitem{schonsheck2020}
-S.~Schonsheck, J.~Chen, and R.~Lai.
-\newblock Chart auto-encoders for manifold structured data.
-\newblock arXiv:1912.10094, 2020.
-
-\bibitem{villani2009}
-C.~Villani.
-\newblock \emph{Optimal Transport: Old and New}.
-\newblock Springer, 2009.
+\bibitem{zhou2019}
+Y.~Zhou, C.~Barnes, J.~Lu, J.~Yang, and H.~Li.
+\newblock On the continuity of rotation representations in neural networks.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision and
+Pattern Recognition}, pages 5745--5753, 2019.
 
 \end{thebibliography}
 
