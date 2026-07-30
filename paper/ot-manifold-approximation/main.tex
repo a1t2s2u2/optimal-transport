@@ -2,8 +2,8 @@
 
 \input{preamble}
 
-\title{\textbf{画像からロボットの関節空間を見抜けるか}\\
-{\large ---Monge--Gromov--Wasserstein autoencoderによる$\mathbb T^2$同定---}}
+\title{\textbf{高次元sensor画像から潜在多様体をどこまで復元できるか}\\
+{\large ---有限sensor誤差とMonge--Gromov--Wasserstein構造選択---}}
 \author{}
 \date{}
 
@@ -11,376 +11,405 @@
 \maketitle
 
 \begin{abstract}
-2関節robot armの一枚の画像は3,072次元のpixel vectorである．しかし各関節は一回転すると
-同じ状態へ戻るため，背後のconfiguration spaceは平面$\R^2$ではなく
-$S^1\times S^1=\mathbb T^2$である．本稿は，画像からこの「二つの閉じた周期」を選べるかを問う．
-候補潜在空間ごとにconvolutional autoencoderを学習し，画像の再構成誤差と，観測空間・
-潜在空間間の距離歪みを測るMonge--Gromov--Wasserstein（MGW）stressで比較する．
+多数の高次元観測が低次元多様体上の状態から生成されるとしても，有限dataからその幾何を
+どの精度まで復元できるかは，通常のautoencoderの再構成lossからは分からない．本稿は
+潜在状態，観測装置，深層modelの三つを分離する．具体例として，未知source
+$z\in S^2$を1,024個のsensorで観測し，一標本を$32\times32\times3=3{,}072$次元の
+response画像へ変換する．networkにはsource座標を与えない．
 
-理論面では，encoderが定めるMGW stressが通常のGromov--Wasserstein距離の上界であり，
-stress 0が適切な条件下でmetric-measure同型を与えることを示す．さらに，観測metric自体の
-近似誤差と学習された潜在metricの誤差を分離する評価式，および独立検証標本による有限候補の
-$O(\sqrt{\log m/n})$選択保証を与える．
+校正channelを$r_z(a)=1/2+\alpha\langle a,z\rangle$とすると，無限sensor極限の
+$L^2$距離は$S^2$の正規化chordal距離に厳密に一致する．有限sensorによる二乗距離誤差が
+sensor方向の二次moment行列$Q_D$を用いて
+$3\norm{Q_D-I/3}_{\rm op}$以下になることを示す．緯度経度midpoint配置ではこの上界は
+$O(D^{-1})$で減少する．さらにsensor noise，MGW stress，独立検証標本の一様偏差を組み合わせ，
+候補多様体間のgapが総誤差を上回るとき正しい構造を選べる条件を与える．この結果は
+optimizerを仮定しない．
 
-実験では関節角を学習に与えず，900枚の$32\times32$ RGB画像とpixel近傍graphだけを用いる．
-独立な300枚で$\R^2,S^2,\mathbb T^2$を比較した結果，$\mathbb T^2$+MGWの検証score
-$0.01324$が$S^2$+MGWの$0.01356$を下回り，正しい位相候補を選んだ．ただし差は2.4\%と小さく，
-真の関節距離のstressでは$S^2$が勝つ．したがって本実験は「真の幾何を完全に復元した」という
-結果ではない．画像から二周期構造を選べるcontrolled proof-of-conceptと，観測metric精度が
-次の理論課題であることを同時に示す．
+実験では900枚でCNN autoencoderを学習し，独立な300枚で$\R^2,\mathbb T^2,S^2$を比較した．
+labelなしscoreは$S^2$+MGWで$0.00079$，$\mathbb T^2$+MGWで$0.00620$，$\R^2$+MGWで
+$0.06190$となり，正しい候補を選んだ．選択modelの真の距離stressは$0.00112$，10近傍recallは
+$0.994$である．sensor数16から4,096の範囲でmetric RMSEはほぼ$D^{-1}$に従い，noiseに対して
+ほぼ線形に増加した．本稿の主張は無仮定な多様体発見ではなく，候補構造と観測機構を明示すれば，
+高次元dataから回復できる幾何精度をsensor数・noise・標本数・model stressへ分解できることである．
 \end{abstract}
 
 \medskip
-\noindent\textbf{キーワード}：robot configuration space，潜在多様体，autoencoder，
-Gromov--Wasserstein距離，最適輸送，torus，モデル選択
+\noindent\textbf{キーワード}：多様体学習，sensor画像，autoencoder，
+Gromov--Wasserstein距離，最適輸送，有限標本，model選択
 
-\section{目で見える問いにする}
+\section{何を学習するmodelなのか}
 \label{sec:introduction}
 
-図~\ref{fig:torus-explainer}の赤い列では肩だけを一回転させ，青い列では肘だけを一回転させる．
-どちらも最初と最後の画像は同じである．一つの関節状態は円$S^1$，二つの関節状態は
-\[
-  (\theta_1,\theta_2)\in S^1\times S^1=\mathbb T^2
-  \tag{1.1}
-\]
-となる．torus上の赤・青のloopは，画像列の二つの独立な周期に対応する．これが本稿で
-networkに見抜かせたい幾何構造のすべてである．
+図~\ref{fig:source-to-image}の左にある一点$z$が低次元の真の状態である．球面上でsourceが動くたび，
+1,024個のsensorが三種類の応答を返し，右の$32\times32\times3$画像$X(z)$が一枚生成される．
+MNISTの一枚が784個のpixel値からなるのと同様に，modelが見るのは3,072個の数値だけである．
+球面，source座標，画像の色枠は学習器へ渡さない．
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{experiments/arm_torus_explainer.png}
-  \caption{本稿の主題．肩の一回転（赤）と肘の一回転（青）は，それぞれ始点へ戻る閉loopである．
-  二つの独立なloopを同時に持つconfiguration spaceがtorus $\mathbb T^2$である．}
-  \label{fig:torus-explainer}
+  \includegraphics[width=\linewidth]{experiments/sensor_source_to_image.png}
+  \caption{本稿の観測model．低次元状態$z\in S^2$が高次元sensor画像$X(z)\in\R^{3072}$を
+  一枚生成する．番号と色は対応を説明するためだけに表示し，networkは右側の画像集合だけを使う．}
+  \label{fig:source-to-image}
 \end{figure}
 
-一般には，少数の関節角，姿勢，照明などから画像が生成される過程を
+一般の生成過程を
 \[
-  Z\sim\mu_M,\qquad X=F(Z)+\xi\in\R^D
+  Z\sim\mu_{M_\star},\qquad X=F_D(Z)+\xi\in\R^P
+  \tag{1.1}
+\]
+と書く．$M_\star$は未知の真の多様体，$F_D$は$D$個のsensorが定める観測写像，$\xi$はnoiseである．
+目標は単なる次元圧縮ではなく，encoder $E:X\to M$が真の点間距離を保存することである．
+本稿では完全に無仮定な$M_\star$を推定しない．真の構造が候補族
+\[
+  M_\star\in\{\R^2,\mathbb T^2,S^2\}
   \tag{1.2}
 \]
-と書ける．$M$は潜在多様体，$F$はrendererまたは未知の観測写像，$\xi$はnoiseである．
-VAEやautoencoderは$X$を低次元codeへ圧縮できるが，再構成誤差が小さいだけでは，codeの
-距離や位相が$M$と一致するとは限らない\cite{kingma2014,batson2021}．例えば角度$-\pi$と
-$\pi$は同じ姿勢なのに，$\R$上では両端へ引き離される．これはrobot planningで補間経路を
-不必要に一回転させる原因になり得る．
+のどれかだと仮定し，同程度の深層modelを比較する．
 
-本稿は万能な多様体発見を狙わず，問いを次の有限候補選択へ限定する．
-\begin{quote}
-  同じ画像を説明する$\R^2,S^2,\mathbb T^2$のうち，画像内容と状態間距離を最もよく
-  保存する深層潜在構造はどれか．
-\end{quote}
-異なる基礎空間の内部距離を比較できるGromov--Wasserstein（GW）原理
-\cite{memoli2011}を用い，encoderを通した計算可能なstressへ落とす．
+この制限は理論上必要である．有限点集合は無数の曲面上へ配置でき，reach，曲率，観測写像，
+候補族に仮定がなければ多様体は同定できない．一方，答えとなる座標をnetworkへ渡す必要はない．
+事前に与えるのは「どの数学的構造が候補になり得るか」とsensor校正だけである．
 
 \paragraph{本稿の貢献．}
 \begin{enumerate}
-  \item MGW stressを定義し，GW上界，0 stressの同定結果，観測metric誤差と潜在metric誤差の
-    分解を与える．これにより「どこまで近似できたか」を距離の単位で解釈できる．
-  \item 学習と選択を分け，候補数$m$，検証数$n$に対して
-    $O(\sqrt{\log m/n})$の有限標本選択保証を与える．誤差逆伝播法は仮定しない．
-  \item 2関節arm画像だけを入力するCNN実験を実施し，torusの二つのloop，入力・再構成，
-    選択scoreを同じ物理的意味の下で可視化する．
+  \item 球面sourceの校正sensor写像が，無限sensor極限で真のchordal metricの等長埋め込みになる
+    ことを示し，有限sensor誤差を二次moment行列だけで明示する．
+  \item 観測metric誤差，networkのMGW stress，独立検証標本誤差を分離し，候補間gapによる
+    正しい潜在構造選択条件を与える．学習法や誤差逆伝播法は仮定しない．
+  \item source位置，実際の入力画像，再構成，sensor数・noise依存，model選択を同じ生成過程の下で
+    可視化する再現可能なCNN実験を行う．
 \end{enumerate}
 
-\section{観測から何を同定できるか}
-\label{sec:identifiability}
+\section{有限sensorは真の距離をどこまで保存するか}
+\label{sec:sensor-theory}
 
-多様体の座標名は一意に復元できない．任意の微分同相写像$\phi:M\to M'$に対して，
-$F$と$F\circ\phi^{-1}$は同じ観測を生成できるからである．そこで復元対象を
-\[
-  \mathcal M=(M,d_M,\mu_M)
-\]
-の\emph{metric-measure同型類}とする．座標値そのものではなく，点間距離と確率質量を
-保存するかを問う．
+\subsection{無限sensorでは厳密に等長である}
 
-さらに$F$が単射でなければ，$F(z)=F(z')$となる状態は画像だけから区別できない．この場合に
-同定可能なのは
+$S^2=\{z\in\R^3:\norm{z}_2=1\}$に一様確率測度$\omega$を入れる．sensor方向
+$a\in S^2$に対する校正応答を
 \[
-  M/{\sim_F},\qquad z\sim_F z'\iff F(z)=F(z')
+  r_z(a):=\frac12+\alpha\langle a,z\rangle,
+  \qquad 0<\alpha<\frac12
   \tag{2.1}
 \]
-という商空間である．遮蔽で二姿勢が同じ画像になる場合や，対称物体の姿勢がその例である．
-本実験では二linkを赤と青に塗り分け，base，elbow，gripperも異なる色で表示する．これにより
-ほとんどすべての姿勢で二つの関節状態を画像から区別できるようにする．
-
-観測metricには，pixel距離の$k$近傍graph上の最短路距離を用いる．これは局所的な観測距離から
-多様体上の距離を近似するIsomap型の構成である\cite{tenenbaum2000}．重要なのは，このmetricも
-推定量であり真の距離ではない点である．次節ではこの誤差を明示的に分ける．
-
-\section{OTで距離構造を比較する}
-\label{sec:mgw}
-
-$\mathcal X=(X,d_X,\mu)$を観測metric-measure空間，$\mathcal Z=(Z,d_Z)$を候補潜在空間とし，
-両metricの直径を1以下へ正規化する．encoder $E:X\to Z$の距離歪みを次で測る．
-
-\begin{definition}[MGW stress]
-\label{def:mgw}
+とする．真のmetricには直径を1へ正規化したchordal距離
 \[
-  \mathcal D_2(E;\mathcal X,\mathcal Z)^2
-  :=\iint\abs{d_X(x,x')-d_Z(E(x),E(x'))}^2
-  \,\mu(\d x)\mu(\d x').
-  \tag{3.1}
+  d_\star(z,z'):=\frac12\norm{z-z'}_2
+  \tag{2.2}
 \]
-\end{definition}
+を用いる．球面の測地距離とは単調変換で結ばれ，同じ位相を定める．
 
-これは対応をencoderが定める決定論的couplingへ制限したGromov--Monge目的である．
-mini-batch内の全pairから計算できる．
-
-\begin{proposition}[GW上界と0 stress]
-\label{prop:gw-upper}
-$\nu=E_\#\mu$とする．二乗costのGW距離を
+\begin{theorem}[連続sensor写像の等長性]
+\label{thm:continuum-isometry}
 \[
-  \operatorname{GW}_2(\mathcal X,(Z,d_Z,\nu))^2
-  :=\inf_{\pi\in\Pi(\mu,\nu)}
-  \iint\abs{d_X(x,x')-d_Z(z,z')}^2
-  \,\pi(\d x,\d z)\pi(\d x',\d z')
+  d_\infty(z,z')^2
+  :=\frac{3}{4\alpha^2}
+    \int_{S^2}\abs{r_z(a)-r_{z'}(a)}^2\,\omega(\d a)
 \]
-で定めると，
+と定めると，すべての$z,z'\in S^2$について
 \[
-  \operatorname{GW}_2(\mathcal X,(Z,d_Z,\nu))
-  \leq\mathcal D_2(E;\mathcal X,\mathcal Z)
-  \tag{3.2}
+  d_\infty(z,z')=d_\star(z,z')
+  \tag{2.3}
 \]
-である．さらに$X,Z$がcompact，$E$が連続，$\mu$が$X$にfull supportをもち，
-$\mathcal D_2(E)=0$なら，$E:X\to\supp(E_\#\mu)$は測度保存全射等長写像である．
-\end{proposition}
-
-\begin{proof}
-$\pi_E=(\operatorname{id},E)_\#\mu$をGWのinfimumへ代入すると式~(3.2)を得る．
-stressが0なら距離等式は$\mu\otimes\mu$ほとんど至る所で成り立つ．full supportと連続性により
-全点へ延長される．compact性から像は閉でsupportに一致し，pushforwardの定義から測度も保存する．
-\end{proof}
-
-実際には真の観測metric$d_X$ではなく推定値$\widehat d_X$を使う．次の系が，学習可能な精度の
-意味を最も直接に表す．
-
-\begin{corollary}[真の多様体距離への近似誤差]
-\label{cor:error-decomposition}
-$Z_1,Z_2\sim\mu_M$，$X_i=F(Z_i)$とし，
-\[
- \varepsilon_{\rm obs}
- :=\norm{\widehat d_X(X_1,X_2)-d_M(Z_1,Z_2)}_{L^2},\qquad
- \widehat{\mathcal D}_2(E)
- :=\norm{\widehat d_X(X_1,X_2)-d_Z(EX_1,EX_2)}_{L^2}
-\]
-とおく．このとき
-\[
- \norm{d_Z(EX_1,EX_2)-d_M(Z_1,Z_2)}_{L^2}
- \leq \widehat{\mathcal D}_2(E)+\varepsilon_{\rm obs}.
- \tag{3.3}
-\]
-\end{corollary}
-
-\begin{proof}
-$L^2$三角不等式を適用すればよい．
-\end{proof}
-
-したがって，networkを大きくしてMGW stressを下げても，観測metric誤差
-$\varepsilon_{\rm obs}$より先は保証できない．逆に，観測metricが精密ならstressそのものが
-多様体距離の近似保証になる．本稿の「どこまで近似できるか」は，network幅だけの経験則ではなく，
-この二項へ分けて評価する．
-
-decoder $G:Z\to X$も含む候補$j$のpopulation scoreを
-\[
-  \mathcal R_j
-  :=\E\!\left[\ell(X,G_j(E_jX))\right]
-    +\lambda\mathcal D_2(E_j)^2
-  \tag{3.4}
-\]
-とする．第一項は画像内容，第二項は状態間距離を評価する．
-
-\section{有限標本で候補を選ぶ保証}
-\label{sec:selection}
-
-networkを学習する標本と，潜在構造を選ぶ標本を分ける．学習後の$m$候補を固定し，独立な
-$X_1,\dots,X_n\sim\mu$上で
-\[
-  \widehat{\mathcal R}_j
-  =\frac1n\sum_{i=1}^n\ell(X_i,G_j(E_jX_i))
-  +\lambda\frac{2}{n(n-1)}\sum_{i<k}
-  \abs{d_X(X_i,X_k)-d_{Z_j}(E_jX_i,E_jX_k)}^2
-  \tag{4.1}
-\]
-を計算する．pair項は2次のU統計量である．
-
-\begin{theorem}[split-sample潜在構造選択]
-\label{thm:selection}
-$0\leq\ell\leq B_{\rm rec}$，pairwise distortionの二乗を$B_{\rm geo}$以下とする．
-$\widehat j\in\arg\min_j\widehat{\mathcal R}_j$とし，
-\[
-  r_n(\delta)
-  :=B_{\rm rec}\sqrt{\frac{\log(4m/\delta)}{2n}}
-   +\lambda B_{\rm geo}
-    \sqrt{\frac{\log(4m/\delta)}{2\lfloor n/2\rfloor}}.
-  \tag{4.2}
-\]
-このとき，学習標本を条件付けた上で確率$1-\delta$以上で
-\[
-  \max_j\abs{\widehat{\mathcal R}_j-\mathcal R_j}\leq r_n(\delta),
-  \qquad
-  \mathcal R_{\widehat j}\leq\min_j\mathcal R_j+2r_n(\delta).
-  \tag{4.3}
-\]
-さらに一意なpopulation最良候補$j^\star$のgap
-$\Delta:=\min_{j\neq j^\star}(\mathcal R_j-\mathcal R_{j^\star})$が
-$2r_n(\delta)$を超えれば，$\widehat j=j^\star$である．
+である．したがって$z\mapsto r_z(\cdot)\in L^2(S^2,\omega)$は定数倍を除き等長であり，
+高次元response全体の内在次元は2である．
 \end{theorem}
 
 \begin{proof}
-学習標本を条件付けると候補は固定される．再構成項へHoeffding不等式，pair項へ有界な2次
-U統計量のHoeffding不等式を適用し，$m$候補と二項についてunion boundを取ると一様偏差を得る．
-経験scoreの最小性を一様偏差で挟めばoracle不等式が従う．gapが$2r_n$より大きければ順位は
-逆転しない．
+球面一様測度の回転不変性から
+$\int aa^\top\omega(\d a)=I_3/3$である．$u=z-z'$とおくと
+\[
+ \frac{3}{4\alpha^2}\int\alpha^2\langle a,u\rangle^2\omega(\d a)
+ =\frac34u^\top\frac{I_3}{3}u
+ =\frac14\norm{u}_2^2=d_\star(z,z')^2.
+\]
 \end{proof}
 
-この定理はoptimizerを仮定しない．異なる初期値も別候補として数えられる．本実験では
-4モデルを2初期値で学習するため$m=8$であり，検証集合で各構造の初期値と構造自体を選ぶ．
+\subsection{有限sensor誤差は二次momentだけで決まる}
 
-\section{2関節arm画像からtorusを選ぶ}
+方向$a_1,\dots,a_D\in S^2$と非負weight $\sum_\ell w_\ell=1$を用い，
+\[
+ Q_D:=\sum_{\ell=1}^D w_\ell a_\ell a_\ell^\top,
+ \qquad
+ \widehat d_D(z,z')^2
+ :=\frac{3}{4\alpha^2}\sum_{\ell=1}^D
+ w_\ell\abs{r_z(a_\ell)-r_{z'}(a_\ell)}^2
+ \tag{2.4}
+\]
+とする．
+
+\begin{proposition}[有限sensorの一様歪み]
+\label{prop:finite-sensor}
+任意のsensor配置について
+\[
+ \sup_{z,z'\in S^2}
+ \abs{\widehat d_D(z,z')^2-d_\star(z,z')^2}
+ \leq 3\norm{Q_D-I_3/3}_{\rm op}.
+ \tag{2.5}
+\]
+特に$Q_D=I_3/3$なら，有限sensorでも全pairの距離を厳密に保存する．
+\end{proposition}
+
+\begin{proof}
+$u=z-z'$とすると左辺の絶対値は
+$\frac34\abs{u^\top(Q_D-I_3/3)u}$である．$\norm{u}_2\leq2$とoperator normの定義から従う．
+\end{proof}
+
+実験では$q\times q$の緯度経度midpointと球面積weightを使い$D=q^2$とする．経度方向の対称性から
+$Q_D$は対角で，緯度方向のmidpoint quadratureを適用すると
+\[
+  \norm{Q_D-I_3/3}_{\rm op}=O(q^{-2})=O(D^{-1}).
+  \tag{2.6}
+\]
+式~(2.5)はnetworkと無関係な観測装置だけの誤差保証である．
+
+\subsection{noiseを入れた距離推定}
+
+観測を$\widetilde r_{i\ell}=r_{z_i}(a_\ell)+\xi_{i\ell}$とし，$\xi_{i\ell}$は独立，平均0，
+variance proxy $\sigma^2$のsub-Gaussian noiseとする．二画像のnoiseが加える$2\sigma^2$を引き，
+\[
+ \widehat d_{D,\sigma}(i,j)^2
+ :=\frac{3}{4\alpha^2}
+ \left[\sum_\ell w_\ell
+   (\widetilde r_{i\ell}-\widetilde r_{j\ell})^2-2\sigma^2\right]_+
+ \tag{2.7}
+\]
+と定める．
+
+\begin{proposition}[有限集合上のnoise誤差]
+\label{prop:noise}
+$n$個のsourceに対し，確率$1-\delta$以上で全pairについて
+\[
+ \abs{\widehat d_{D,\sigma}^2-\widehat d_D^2}
+ \leq C\left(\frac{\sigma}{\alpha}+\frac{\sigma^2}{\alpha^2}\right)
+ \norm{w}_2\sqrt{\log\frac{2n^2}{\delta}}
+ +C\frac{\sigma^2}{\alpha^2}\norm{w}_\infty
+ \log\frac{2n^2}{\delta}
+ \tag{2.8}
+\]
+となる普遍定数$C>0$が存在する．等weightなら$\norm{w}_2=D^{-1/2}$，
+$\norm{w}_\infty=D^{-1}$である．
+\end{proposition}
+
+\begin{proof}
+二乗差を展開すると，signalとnoiseの交差項，およびcentered noise二乗項のweighted sumになる．
+前者はsub-Gaussian，後者はsub-exponentialである．weighted Bernstein不等式を各pairへ適用し，
+$n(n-1)/2$ pairについてunion boundを取る．正部分写像$[\cdot]_+$は1-Lipschitzなので同じ上界を保つ．
+\end{proof}
+
+\section{MGWで候補多様体を選ぶ}
+\label{sec:mgw}
+
+$\mathcal X=(X,d_X,\mu)$を観測metric-measure空間，$\mathcal M_j=(M_j,d_j)$を候補とする．
+encoder $E_j:X\to M_j$の距離歪みを
+\[
+ \mathcal D_j(E_j)^2
+ :=\iint\abs{d_X(x,x')-d_j(E_jx,E_jx')}^2\mu(\d x)\mu(\d x')
+ \tag{3.1}
+\]
+で測る．これはencoderが定める決定論的couplingへ制限したMonge--Gromov--Wasserstein
+（MGW）stressである．
+
+\begin{proposition}[GW上界と0 stress]
+\label{prop:gw-upper}
+$\nu_j=(E_j)_\#\mu$とすると
+\[
+ \operatorname{GW}_2(\mathcal X,(M_j,d_j,\nu_j))
+ \leq\mathcal D_j(E_j).
+ \tag{3.2}
+\]
+さらに$X,M_j$がcompact，$E_j$が連続，$\mu$がfull supportをもち，$\mathcal D_j(E_j)=0$なら，
+$E_j:X\to\supp\nu_j$は測度保存全射等長写像である．
+\end{proposition}
+
+\begin{proof}
+$\pi_E=(\operatorname{id},E_j)_\#\mu$をGWのinfimumへ代入すれば上界を得る．stress 0なら
+距離等式はほとんど至る所で成立し，full supportと連続性により全点へ延長される．compact性と
+pushforwardの定義から全射性と測度保存が従う．
+\end{proof}
+
+真の距離$d_\star$とsensor推定距離$\widehat d_X$の$L^2$誤差を
+$\varepsilon_{\rm sensor}:=\norm{\widehat d_X-d_\star}_{L^2}$とおく．三角不等式から
+\[
+ \norm{d_j(E_jX,E_jX')-d_\star(Z,Z')}_{L^2}
+ \leq\mathcal D_j(E_j)+\varepsilon_{\rm sensor}.
+ \tag{3.3}
+\]
+左辺が最終的に知りたい多様体近似精度である．式~(2.5)，(2.8)がsensor数とnoiseを，
+$\mathcal D_j$がnetwork classと学習結果を受け持つ．
+
+decoder $G_j:M_j\to X$を加え，真のmetricを使うideal scoreを
+\[
+ \mathcal R_j^\circ
+ :=\E\ell(X,G_jE_jX)
+ +\lambda\E\abs{d_\star(Z,Z')-d_j(E_jX,E_jX')}^2
+ \tag{3.4}
+\]
+とする．実際には$d_\star$をsensor距離$\widehat d_X$へ置き換える．すべての距離を$[0,1]$へ
+正規化すると，$\abs{(a-c)^2-(b-c)^2}\leq2\abs{a-b}$より，観測metricを置き換えたpopulation
+score $\mathcal R_j$について
+\[
+ \abs{\mathcal R_j-\mathcal R_j^\circ}
+ \leq2\lambda\varepsilon_{\rm sensor}.
+ \tag{3.5}
+\]
+
+\section{有限検証標本で正しく選べる条件}
+\label{sec:selection}
+
+学習後の$m$候補を固定し，独立検証標本$X_1,\dots,X_n$で再構成平均とpairwise stressの
+U統計量を計算したscoreを$\widehat{\mathcal R}_j$とする．
+
+\begin{theorem}[sensor誤差を含む構造選択]
+\label{thm:selection}
+$0\leq\ell\leq B_{\rm rec}$，二乗距離歪みを$B_{\rm geo}$以下とし，
+\[
+ r_n(\delta)
+ :=B_{\rm rec}\sqrt{\frac{\log(4m/\delta)}{2n}}
+ +\lambda B_{\rm geo}
+ \sqrt{\frac{\log(4m/\delta)}{2\lfloor n/2\rfloor}}.
+ \tag{4.1}
+\]
+ideal scoreの一意な最良候補を$j^\star$，gapを
+$\Gamma:=\min_{j\neq j^\star}(\mathcal R_j^\circ-\mathcal R_{j^\star}^\circ)$とする．
+\[
+ \Gamma>4\lambda\varepsilon_{\rm sensor}+2r_n(\delta)
+ \tag{4.2}
+\]
+なら，学習標本を条件付けた上で，確率$1-\delta$以上で
+$\arg\min_j\widehat{\mathcal R}_j=j^\star$である．
+\end{theorem}
+
+\begin{proof}
+再構成項へHoeffding不等式，pair項へ有界な2次U統計量のHoeffding不等式を適用し，union boundを
+取ると$\max_j\abs{\widehat{\mathcal R}_j-\mathcal R_j}\leq r_n$を得る．式~(3.5)によりideal score
+から各候補へのずれは$2\lambda\varepsilon_{\rm sensor}$以下である．二候補の順位に対する最大の
+縮小量$4\lambda\varepsilon_{\rm sensor}$と経験誤差$2r_n$をgapが上回れば順位は逆転しない．
+\end{proof}
+
+この定理はnetworkの幅やoptimizerを直接仮定しない．network表現力と学習失敗はideal gap
+$\Gamma$へ入り，観測装置と標本選択の誤差は右辺へ分離される．異なる初期値も別候補として数えられる．
+
+\section{3,072次元sensor画像の実験}
 \label{sec:experiment}
 
-\subsection{画像と観測metric}
+\subsection{dataとmodel}
 
-$\theta_1,\theta_2$を独立に$[-\pi,\pi)$から一様標本化し，固定baseから赤い第一link，青い
-第二link，黄色いelbow，緑のgripperを描画する．微小なpixel noiseを加えた
-$32\times32\times3$画像を用いる．図~\ref{fig:arm-examples}がnetworkへ渡す全情報であり，
-関節角は隠す．
+source $z$を$S^2$上一様に標本化する．$D=32^2=1{,}024$方向にsensorを置き，第一channelを
+式~(2.1)，第二channelをsource付近の局所応答，第三channelを波面状応答として描く．三channelに
+標準偏差$\sigma=0.006$のnoiseを加える．図~\ref{fig:source-to-image}と
+図~\ref{fig:reconstruction}のInput列が実際のdataである．metric計算には校正済み第一channelだけを
+使い，source labelは使わない．検証集合でsensor metricと真の距離の相関は$0.999997$，RMSEは
+$0.000620$だった．
 
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.92\linewidth]{experiments/arm_examples.png}
-  \caption{labelなし観測画像の例．色はlinkを識別可能にするが，角度値やtorus座標は与えない．}
-  \label{fig:arm-examples}
-\end{figure}
-
-学習900枚，検証300枚を独立生成する．学習画像の正規化pixel距離から4近傍graphを作り，
-最短路距離を95 percentileで$[0,1]$へ正規化する．検証点は固定済み学習graphの4近傍へだけ
-接続し，検証点同士を直接結ばないout-of-sample extensionを用いる．したがって学習集合を
-条件付ければ，検証時の$\widehat d_X(x,x')$は定理~\ref{thm:selection}で要求した固定kernelである．
-
-診断時に限り真のflat-torus距離
-\[
- d_{\mathbb T^2}(\theta,\theta')
- =\frac{1}{\pi\sqrt2}
- \sqrt{\operatorname{wrap}(\theta_1-\theta'_1)^2
-      +\operatorname{wrap}(\theta_2-\theta'_2)^2}
- \tag{5.1}
-\]
-を使う．観測graph距離とのpairwise相関は$0.732$，RMSEは$0.180$である．後者は
-系~\ref{cor:error-decomposition}の$\varepsilon_{\rm obs}$に対応し，現設定の主要な誤差源である．
-
-\subsection{同じCNNで潜在空間だけを変える}
-
-全候補に同じ二層convolutional encoder--decoderと約41万parameterを用いる．潜在候補は
-次の三構造である．
-\begin{enumerate}
-  \item $\R^2$：二次元の有界Euclid code．
-  \item $S^2$：三次元vectorを正規化した球面code．閉じているが独立な二loopは持たない．
-  \item $\mathbb T^2=S^1\times S^1$：二組の二次元vectorを各々正規化する．二組が肩と肘の
-    周期座標を表現できる．
-\end{enumerate}
-torus内の距離には二つの円周距離の積metricを使う．$\mathbb T^2$には再構成だけで学ぶ
-ablationも置く．AdamW，1500 step，batch size 96，$\lambda=0.35$とし，各候補を二初期値で
-学習する．独立検証score
-\[
-  \widehat{\mathcal R}
-  =\text{weighted reconstruction MSE}
-   +0.35\times(\text{MGW stress})^2
-  \tag{5.2}
-\]
-で初期値を選び，さらに四モデルを順位付けする．
+同じ二層convolutional encoder--decoder，約41万parameterで潜在部分だけを変える．候補は
+$\R^2$，$\mathbb T^2=S^1\times S^1$，$S^2$であり，すべてchordal metricを直径1へ正規化する．
+$S^2$には再構成だけで学ぶablationも置く．学習900枚，独立検証300枚，AdamW 1,500 step，
+batch size 96，$\lambda=0.55$とし，各modelを二初期値で学習する．したがって定理~\ref{thm:selection}
+では$m=8$である．source座標は最後の診断評価にしか使わない．
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{experiments/arm_reconstructions.png}
-  \caption{同じ入力姿勢の再構成を横に比較したもの．再構成だけを見ると四候補は似ており，
-  特に$\mathbb T^2$ recon-onlyのMSEが最小である．したがって画像の見た目だけでは潜在位相を
-  選べず，状態間距離を評価する必要がある．}
-  \label{fig:arm-reconstruction}
+  \includegraphics[width=\linewidth]{experiments/sensor_reconstructions.png}
+  \caption{同じsensor画像の再構成を横比較したもの．$\R^2$は球面を一枚の平面へ開く歪みのため
+  sourceごとの応答を平均化し，$\mathbb T^2$にも残差が見える．$S^2$候補は同じparameter規模で
+  response patternをほぼ完全に再構成する．ただし再構成だけでは距離保存を保証しない．}
+  \label{fig:reconstruction}
 \end{figure}
 
-\subsection{結果：位相候補は選べたが，metric回復は未完である}
+\subsection{有限sensor数とnoise}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.92\linewidth]{experiments/sensor_accuracy.png}
+  \caption{左：sensor数$D$と真の球面metricに対するRMSE．破線は$D^{-1}$ guide，赤線は学習に
+  用いた$D=1{,}024$である．右：同じ配置でnoiseを増やした結果．破線は本実験の$\sigma=0.006$．
+  各noise値は6回の平均，帯は標準偏差である．}
+  \label{fig:sensor-accuracy}
+\end{figure}
+
+図~\ref{fig:sensor-accuracy}左では$D=16$のRMSE $0.00944$が$D=4{,}096$で$0.0000319$まで減少し，
+ほぼ$D^{-1}$の傾きになった．これは式~(2.6)のmidpoint quadrature rateと一致する．右では
+$\sigma=0.0025$から$0.04$の範囲でRMSEがほぼ線形に増え，式~(2.8)の一次noise項と整合する．
+ここで理論式は上界であり，描画した破線をdata fitして「理論値」と呼んでいるわけではない．
+
+\subsection{潜在構造選択}
 
 \begin{table}[htbp]
   \centering
   \small
   \setlength{\tabcolsep}{4pt}
-  \caption{独立な300枚での選択結果．MGW stressとscoreは角度labelを使わない．true stressと
-  10-NN recallだけが，学習から隠した関節角を使う診断値である．}
-  \label{tab:arm-manifold}
-  \input{experiments/arm_manifold_table.tex}
+  \caption{独立な300枚によるmodel選択．MGW stressとscoreはsource labelを使わない．true stressと
+  10-NN recallだけが隠していた$z\in S^2$を使う診断値である．}
+  \label{tab:results}
+  \input{experiments/sensor_manifold_table.tex}
 \end{table}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{experiments/arm_diagnostics.png}
-  \caption{左：選択された各初期値の再構成loss．中央：選ばれた$\mathbb T^2$+MGWの真の関節距離と
-  潜在距離（破線は等距離）．右：labelなし検証score．黒枠の$\mathbb T^2$+MGWが最小である．}
-  \label{fig:arm-diagnostics}
+  \includegraphics[width=\linewidth]{experiments/sensor_diagnostics.png}
+  \caption{左：選択された初期値の再構成loss．中央：$S^2$+MGWの真の距離と潜在距離．
+  破線は等距離対応である．右：labelなし検証score（対数軸）．黒枠が選択modelである．}
+  \label{fig:diagnostics}
 \end{figure}
 
-labelなしscoreは$\R^2$+MGWで$0.02136$，$S^2$+MGWで$0.01356$，
-$\mathbb T^2$ recon-onlyで$0.01843$，$\mathbb T^2$+MGWで$0.01324$となった．したがって
-正しいtorus候補が選ばれたが，次点$S^2$との差は$0.00032$（2.4\%）に留まる．またMGWを
-入れるとtorusのlabelなしstressは$0.176$から$0.121$へ31\%下がる一方，真のtorus距離に対する
-stressは$S^2$の$0.182$がtorusの$0.192$より小さい．10-NN recallも同様に$S^2$が高い．
+表~\ref{tab:results}のlabelなしscoreは$\R^2$+MGWで$0.06190$，$\mathbb T^2$+MGWで$0.00620$，
+$S^2$ recon-onlyで$0.00089$，$S^2$+MGWで$0.00079$となり，正しい候補が選ばれた．
+$S^2$+MGWのMGW stressは$0.00125$で，torusの$0.0788$より約63倍小さい．真のmetricに対する
+stress $0.00112$，10-NN recall $0.994$も同じ結論を与える．再構成だけの$S^2$も画像MSEは近いが，
+真のstressは$0.0119$でMGW modelの約11倍である．したがって正しいarchitectureを置くだけでなく，
+距離lossが等長性を一桁改善している．
 
-この一見逆向きの結果は，本稿の理論分解と整合する．networkが最小化するのはpixel graphの
-$\widehat d_X$であり，真の$d_{\mathbb T^2}$ではない．$\widehat d_X$のRMSE $0.180$が残る以上，
-score順位が正しい位相を指しても，細かなgeodesic metricまで正確とは結論できない．さらに
-単一data splitのgapは小さく，定理~\ref{thm:selection}のgap条件を数値的に証明したわけではない．
-本実験が示すのは，画像再構成では区別できない候補から二周期構造を選べたことと，次に改善すべき
-対象がdecoderではなく観測metricであることの二点である．
+\section{関連研究，応用，限界}
+\label{sec:discussion}
 
-\section{何に応用できるか}
-\label{sec:applications}
+高次元Euclid空間内の滑らかな多様体を少数のrandom projectionで距離保存する条件は
+Baraniuk--Wakin\cite{baraniuk2009}が与えている．Niyogi--Smale--Weinberger\cite{niyogi2008}は
+reachにより制御された部分多様体のhomologyを有限random sampleから回復する標本複雑度を示した．
+本稿は一般random embeddingやhomology推定を置き換えるものではない．観測を校正sensor応答として
+具体化することでsensor離散化誤差を閉形式にし，それを深層潜在候補のMGW選択誤差へ接続する．
 
-直接の応用先は，画像からrobotの状態表現を作るvisual controlとplanningである
-\cite{lavalle2006}．$\R^2$ codeでは$-\pi$と$\pi$の境界に人工的な切れ目が生じるが，torus codeは
-一回転後を同一点として扱う．そのため潜在空間上の近傍探索，補間，軌道生成を実際の関節周期と
-一致させられる．潜在構造を選んだ後に，$\mathbb T^2$上でFlow Matchingやdiffusionを学習すれば，
-「生成器の失敗」と「潜在空間を平面にしたことによる失敗」を分離できる．
+GW距離は異なるmetric-measure空間の内部距離を比較する\cite{memoli2011}．GW autoencoderは
+data分布とlatent分布をGW目的で直接整合する\cite{nakagawa2023}．本稿ではencoder couplingに
+制限した計算可能な上界を用い，観測機構の誤差とsplit-sample model selectionを分離する．
 
-同じ構図は，複数の回転関節を持つrobotの$\mathbb T^k$，分子のtorsion angle，周期運動を含む
-human poseへ拡張できる．ただし関節制限や障害物があればconfiguration spaceはtorus全体ではなく
-その部分集合となり，三次元回転関節には$SO(3)$も必要になる．候補集合は物理機構から作り，
-OT scoreがどの構造を支持するかを検証するのが実践的である．
+想定応用は，多数のsensor readingから低次元のsource状態を推定するlocalization，inverse problem，
+neural population codeである．$S^2$を選んだ後はその上で近傍探索，補間，Flow Matchingを行える．
+より一般に既知埋め込み$\psi:M\to\R^p$を持つ多様体へ
+$r_z(a)=1/2+\alpha\langle a,\psi(z)\rangle$を適用すれば，同じ議論は埋め込みのchordal metricを回復する．
+Stiefel多様体にはorthonormal frame，Grassmann多様体にはprojection matrix埋め込みを使える．
 
-\section{関連研究と限界}
-\label{sec:related-limitations}
+限界も明確である．第一に，校正channelは意図的に解析可能な線形応答で，実sensorの未知非線形性を
+扱っていない．第二に，真の$S^2$を候補へ含めており，候補外の位相を自動発見しない．第三に，
+画像は解析的rendererによる合成dataで，MNISTや実測場のようなmodel misspecificationはない．第四に，
+定理~\ref{thm:selection}は学習後の有限候補を固定しており，network class全体のoptimization誤差を
+解いていない．第五に，実験は一data split・二初期値であり，gapの信頼区間は今後必要である．
 
-GW距離はmetric-measure空間の同型類を比較する\cite{memoli2011}．GW autoencoderはlatent分布と
-data分布の距離構造をGW目的で直接比較する\cite{nakagawa2023}．本稿は新しい一般GW solverでは
-なく，encoder couplingへ制限したstressを\emph{物理的な潜在多様体候補の選択score}として使い，
-有限標本選択保証と誤差分解を明示した点に焦点を置く．Topological Autoencoderはpersistent
-homologyで入力と潜在の位相を保存する\cite{moor2020}．候補外の未知位相を発見する同手法に対し，
-本稿は意味の分かる有限候補を直接比較する相補的な立場である．
-
-限界は明確である．第一に，rendered armは実写robotより単純で，色分けによって識別可能性を
-確保している．第二に，真の$\mathbb T^2$を候補へ入れており，無仮定な位相発見ではない．第三に，
-観測graph metricのRMSEが大きく，真のmetric評価ではtorusが最良でない．第四に，MGW stressは
-全couplingを最適化するGWそのものではなく上界である．第五に，二初期値・単一splitの結果であり，
-noise，標本数，renderer，候補間gapを変えた信頼区間が必要である．
-
-次の理論課題は，(i) graph metricの$\varepsilon_{\rm obs}$をreach，標本数，noiseで上から抑える，
-(ii) 候補多様体間のGW separationを位相的不変量から下から抑える，(iii) network classが達成する
-stressを幅・深さの関数で評価する，の三点である．これらを組み合わせれば，「torusを学習するとき
-何枚・どのnetworkで・どの精度まで可能か」を定理として述べられる．
+次の理論課題は，未知のbi-Lipschitz sensor非線形性を同時推定した場合の同定可能性，reachと曲率を
+持つ多様体族に対するminimax rate，候補間GW separationの明示的下界である．MNISTはこの理論を
+構築した後，仮定外の実dataでも単一多様体・混合多様体のどちらが支持されるかを見る外部検証に使う．
 
 \section{結論}
 \label{sec:conclusion}
 
-本稿の主題は単純である．2関節arm画像には，肩と肘という二つの閉じた周期があり，その状態空間は
-$\mathbb T^2$である．再構成画像は$\R^2,S^2,\mathbb T^2$でほぼ同様に見えるため，見た目のloss
-だけではこの構造を選べない．MGW stressで観測と潜在の状態間距離を比較し，独立検証scoreで
-順位付けすると，controlled experimentでは正しいtorus候補が選ばれた．
+高次元dataから低次元構造を見抜くには，観測画像を圧縮できたという事実だけでは足りない．
+本稿はsource多様体，有限sensor，深層encoderを分離し，選ばれたmodelの距離近似誤差を
+\[
+ \text{latent metric error}
+ \ \leq\
+ \text{MGW stress}
+ +\text{finite-sensor/noise error}
+\]
+として追跡した．独立検証標本の誤差はこのmetric上界へ加算する量ではなく，どのmodelを選べるかの
+gap条件として別に評価した．球面の校正sensorでは無限極限の等長性と有限$D$の明示的歪み上界を得て，
+候補間gapが総誤差を上回るときの構造選択条件を示した．
 
-同時に，真の関節metricの評価では$S^2$が勝ち，観測metric誤差が限界になることも確認した．
-したがって中心的な理論結果は「torusを完全復元した」ことではなく，潜在近似誤差を
-\emph{観測metric誤差＋MGW stress}へ分解でき，有限候補選択には
-$O(\sqrt{\log m/n})$の保証があることである．この形なら，画像生成の見栄えではなく，
-多様体をどこまで学習できたかを測定可能な研究問題として扱える．
+3,072次元response画像の実験では，labelを使わず$S^2$を選択し，真の距離もstress $0.00112$まで
+回復した．同時にsensor数とnoiseを変え，観測metric精度が理論で分離した方向に変化することを
+確認した．主張は「任意のdataから多様体を発見できる」ことではない．事前に多様体族と観測機構を
+定義すれば，何個のsensor，どのnoise，どのmodel stressで，どこまで幾何を学べるかを定理と実験の
+同じ量で議論できる，ということである．
 
 \section*{再現方法}
 
@@ -388,46 +417,30 @@ $O(\sqrt{\log m/n})$の保証があることである．この形なら，画像
 \begin{verbatim}
 make paper-all
 \end{verbatim}
-実験scriptはPEP 723 metadataに依存関係を固定する．seed，data split，optimizer，学習step，
-二つの初期値はscript内で固定した．
+実験scriptはPEP 723 metadataに依存関係を固定する．seed，data split，sensor配置，noise，optimizer，
+学習step，二初期値はscript内で固定した．
 
 \begin{thebibliography}{99}
 
-\bibitem{batson2021}
-J.~Batson, C.~G.~Haaf, Y.~Kahn, and D.~A.~Roberts.
-\newblock Topological obstructions to autoencoding.
-\newblock \emph{Journal of High Energy Physics}, 2021(4):280, 2021.
-
-\bibitem{kingma2014}
-D.~P.~Kingma and M.~Welling.
-\newblock Auto-encoding variational Bayes.
-\newblock In \emph{International Conference on Learning Representations}, 2014.
-
-\bibitem{lavalle2006}
-S.~M.~LaValle.
-\newblock \emph{Planning Algorithms}.
-\newblock Cambridge University Press, 2006.
+\bibitem{baraniuk2009}
+R.~G.~Baraniuk and M.~B.~Wakin.
+\newblock Random projections of smooth manifolds.
+\newblock \emph{Foundations of Computational Mathematics}, 9(1):51--77, 2009.
 
 \bibitem{memoli2011}
 F.~M\'emoli.
 \newblock Gromov--Wasserstein distances and the metric approach to object matching.
 \newblock \emph{Foundations of Computational Mathematics}, 11(4):417--487, 2011.
 
-\bibitem{moor2020}
-M.~Moor, M.~Horn, B.~Rieck, and K.~Borgwardt.
-\newblock Topological autoencoders.
-\newblock In \emph{Proceedings of the 37th International Conference on Machine Learning},
-pages 7045--7054, 2020.
-
 \bibitem{nakagawa2023}
 N.~Nakagawa, R.~Togo, T.~Ogawa, and M.~Haseyama.
 \newblock Gromov--Wasserstein autoencoders.
 \newblock In \emph{International Conference on Learning Representations}, 2023.
 
-\bibitem{tenenbaum2000}
-J.~B.~Tenenbaum, V.~de~Silva, and J.~C.~Langford.
-\newblock A global geometric framework for nonlinear dimensionality reduction.
-\newblock \emph{Science}, 290(5500):2319--2323, 2000.
+\bibitem{niyogi2008}
+P.~Niyogi, S.~Smale, and S.~Weinberger.
+\newblock Finding the homology of submanifolds with high confidence from random samples.
+\newblock \emph{Discrete \& Computational Geometry}, 39(1--3):419--441, 2008.
 
 \end{thebibliography}
 
