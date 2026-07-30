@@ -1,0 +1,290 @@
+\section{Experiments}
+\label{sec:experiments}
+
+Every experiment asks the same operational question: does a student satisfy a
+threshold fixed before its capacity is inspected?  The three settings have
+different roles.  The image torus has a mathematical ground truth and proves a
+minimum rank; the warped Gaussian torus tests neural optimization with
+nonconstant variances; MNIST tests whether the same compression rule remains
+useful for a learned decoder.
+
+\subsection{An Exact Shared-Trunk Minimum}
+\label{sec:controlled-experiment}
+
+\paragraph{Setup.}
+We instantiate Section~\ref{sec:exact-task} with $T=128$, $a_j=1/j$, and $Q$
+equal to the first 512 two-dimensional DCT atoms in zig-zag order.  The dense
+$784\times512$ teacher head, including its bias, uses $402{,}192$ stored
+scalars.  A factorized rank-$r$ head uses $r(784+512)+784$.  This count treats
+the head as a dense deployed matrix; the analytic DCT construction itself is
+of course more compact.
+
+We predeclare two simultaneous requirements,
+\begin{equation}
+ E_0\le\eta=5\%,
+ \qquad
+ D_{\rm pair}\le\tau=5\%.
+ \label{eq:exact-requirements}
+\end{equation}
+The exact identity $D_{\rm loc}=D_{\rm pair}$ makes the second condition
+computable without a path solver.  Displayed images receive the same
+contrast multiplier solely for visualization; it is not part of $F$ or the
+reported errors.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.98\textwidth]{experiments/lowrank_torus.png}
+  \caption{Exact output--geometry frontier.  Both curves are analytic.  Rank
+  20 violates the predeclared 5\% output and distance requirements; rank 24
+  satisfies both.  Raw images are visually similar, so the insets show
+  absolute residuals on a common scale.}
+  \label{fig:exact-frontier}
+\end{figure*}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Exact simultaneous thresholds.  The two tolerances are equal in
+  each row; compression is the dense-teacher to factorized-student head
+  storage ratio.}
+  \label{tab:exact-thresholds}
+  \resizebox{\columnwidth}{!}{\input{experiments/lowrank_torus_table.tex}}
+\end{table}
+
+\paragraph{A sharp five-percent result.}
+For five retained frequency blocks (rank 20), Proposition
+\ref{prop:exact-rank-law} gives
+\begin{equation}
+ E_{0,5}=6.2788\%,
+ \qquad
+ D_5=5.4485\%.
+\end{equation}
+It fails both requirements.  Six blocks (rank 24) give
+\begin{equation}
+ E_{0,6}=4.8980\%,
+ \qquad
+ D_6=4.5555\%,
+\end{equation}
+so the prefix head is feasible.  More importantly, this is not merely the
+first point on a chosen truncation curve.  Equation
+\eqref{eq:output-rank-lower-bound} gives every shared-trunk rank-23 head the
+root-mean-square output lower bound
+\begin{equation}
+ \inf_{\rank(U)\le23}
+ \left(\E_z\norm{(U-W)h(z)}^2\right)^{1/2}
+ =5.2772\%>\eta.
+\end{equation}
+Because the uniform error $E_0$ is at least the RMS error, no rank at most 23
+can satisfy \eqref{eq:exact-requirements}.  Rank 24 is therefore the true
+minimum over all linear heads sharing this trunk and bias.  It uses $31{,}888$
+head scalars, a $12.61\times$ reduction.
+
+Table~\ref{tab:exact-thresholds} shows the joint rate--distortion tradeoff.  At
+10\%, output fidelity raises the minimum from the geometry-only rank 12 to
+rank 16.  At 1\%, rank 100 is required and compression falls to
+$3.08\times$.  This illustrates why output and geometry must both appear in
+the definition: geometry alone permits output-different isometries.
+
+The rank-24 result uses the exact Fourier Gram identity, not the more general
+Jacobian-error bound in Theorem~\ref{thm:stability}; the latter is a convenient
+sufficient condition and can be conservative.  The controlled task therefore
+verifies the definition and a sharp structured result, while the next task
+tests the generic certificate on learned neural students.
+
+\subsection{Neural Stress Test with Nonconstant Variance}
+\label{sec:neural-stress}
+
+The latent region is the two-torus and
+\begin{align}
+ e(\phi)&=(\cos\phi_1,\sin\phi_1,
+             \cos\phi_2,\sin\phi_2),\notag\\
+ \phi(z)&=\bigl(z_1+0.05\sin(4z_2),
+                 z_2+0.05\sin(4z_1)\bigr),\notag\\
+ F_T(z)&=\left(0.9e(\phi(z)),
+ 0.75+\sqrt{1-0.9^2}\,e(\phi(z))\right).
+ \label{eq:warped-teacher}
+\end{align}
+The last four channels are strictly positive standard deviations, so this
+experiment uses the full diagonal-Gaussian $W_2$ formula rather than its
+fixed-covariance special case.  The warp has analytic conditioning bounds
+$s=0.8$ and $M_1=1.2$.
+
+Students are two-hidden-layer Tanh networks with seven widths, doubling from
+4 to 256, and periodic inputs
+$(\cos z_1,\sin z_1,\cos z_2,\sin z_2)$.  We train three deterministic seeds
+for 2,500 steps.  The baseline minimizes output MSE; the first-order objective
+adds five times the mean squared Jacobian error.  We predeclare output
+RMSE at most 2\% and distance distortion at most 5\%.
+
+Evaluation uses a fixed $48\times48$ torus grid.  We insert its maximum
+Jacobian error into Theorem~\ref{thm:stability}, and compare the resulting
+plug-in upper bound with graph distances and 3,072 triplets.  This is a
+finite-grid diagnostic: a formal continuum certificate would additionally
+require a validated covering/Lipschitz remainder.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.94\textwidth]{experiments/distillation_tradeoff.png}
+  \caption{Neural capacity sweep (three seeds; curves show their means).
+  Solid lines are observed values and dashed lines are finite-grid theorem
+  bounds.  On the frequency-4 warped teacher (bottom row), first-order
+  distillation crosses the 5\% distance boundary, whereas output-only training
+  does not within the tested range.  The plain torus (top row) is included as
+  a lower-frequency reference.}
+  \label{fig:neural-sweep}
+\end{figure*}
+
+On the warped teacher, the largest output-only student has $69{,}128$
+parameters and meets the 2\% output requirement (1.308\% RMSE), but its
+plug-in distance bound is 61.62\%, its observed maximum pair distortion is
+15.41\%, and its triplet agreement is 95.27\%.  It therefore fails for a
+specifically geometric reason.  Output--Jacobian training passes for all
+three seeds at width 128 ($18{,}184$ parameters): output RMSE is 0.083\%,
+$\widehat\varepsilon_1=0.0210$, the theorem bound is 4.06\%, observed maximum
+pair distortion is 2.72\%, and triplet agreement is 99.12\%.  Across all 84
+runs, observed local metric distortion never exceeds the corresponding
+plug-in $\delta$.  These results do not prove an optimizer-independent lower
+bound; they show that the quantity used by the theorem is learnable and that
+output fitting alone need not learn it.
+
+\subsection{MNIST VAE Head Compression}
+\label{sec:mnist}
+
+\paragraph{Setup.}
+We train a two-dimensional Gaussian VAE \cite{kingma2014} on a seeded subset
+of 30,000 MNIST training images \cite{lecun1998} for 12 epochs.  Its smooth
+decoder has a two-layer width-64 Tanh trunk
+$h:\R^2\to\R^{64}$ and a $784\times64$ affine mean head with fixed observation
+covariance.  We freeze the encoder, trunk, and bias, and replace only $W$ by a
+rank-$r$ head.  This experiment therefore measures decoder-head compression,
+not compression of the complete VAE.
+
+We compare ordinary SVD ($C=I$), value-weighted SVD
+($C=\E[hh^{\trans}]+\rho I$), and value--Jacobian SVD using
+\eqref{eq:jet-covariance}.  The covariance is fitted on 4,096 posterior means
+from the training split.  For the third method, the Jacobian covariance is
+rescaled to four times the trace of the value covariance; this fixed weight is
+not tuned on test ranks.
+
+All 64 ranks are evaluated on 4,000 official-test posterior means.  We report
+$\widehat D_{\rm loc}$, the maximum generalized-eigenvalue length error on a
+fixed 1,536-point subset, and 6,000 local teacher-$W_2$ chord triplets.  The
+5\% crossing is selected and reported on this same finite subset, so it is a
+sampled threshold, not a held-out continuum certificate or a claim about the
+unknown true MNIST manifold.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.94\textwidth]{experiments/mnist_low_rank_compression.png}
+  \caption{MNIST head-compression frontier.  Covariance-aware SVD reaches the
+  sampled 5\% local-length threshold at rank 12; ordinary SVD requires rank 60,
+  where factorized storage is no smaller than the dense head.  Output error,
+  local teacher-$W_2$ chord agreement, and reconstruction PSNR show that value
+  fidelity and geometry are related but not interchangeable.}
+  \label{fig:mnist-frontier}
+\end{figure*}
+
+\begin{table*}[t]
+  \centering
+  \small
+  \caption{MNIST results immediately around each sampled 5\% crossing, plus a
+  common aggressive rank-8 budget.  ``Triplet'' is local teacher-$W_2$ chord
+  agreement, not label accuracy or intrinsic geodesic accuracy.}
+  \label{tab:mnist}
+  \resizebox{0.98\textwidth}{!}{\input{experiments/mnist_low_rank_table.tex}}
+\end{table*}
+
+Ordinary SVD first crosses 5\% at rank 60
+($\widehat D_{\rm loc}=4.944\%$; rank 59 gives 6.794\%).  Its dense fallback
+uses 50,960 head parameters, so there is effectively no head compression.
+Both covariance-aware methods cross at rank 12: 4.196\% for value weighting
+and 4.173\% for value--Jacobian weighting.  Rank 12 reduces the head from
+50,960 to 10,960 parameters ($4.65\times$) and the full decoder from 55,312
+to 15,312 ($3.61\times$).  The value--Jacobian student has teacher-output
+RMSE 0.00386 and 99.95\% local chord-triplet agreement.
+
+The Jacobian term does not move this particular 5\% crossing below rank 12;
+the main rank reduction there comes from data covariance.  Its distinct effect
+appears at the aggressive rank-8 budget.  Adding the Jacobian term reduces
+$\widehat D_{\rm loc}$ from 57.64\% to 26.24\% and increases chord-triplet
+agreement from 91.92\% to 94.23\%, even though output RMSE worsens from 0.0245
+to 0.0346.  This is direct evidence that optimizing reconstruction fidelity
+alone allocates rank differently from optimizing latent geometry.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.93\textwidth]{experiments/mnist_low_rank_images.png}
+  \caption{Official-test inputs, frozen-teacher reconstructions, and
+  value--Jacobian students immediately below and above the sampled 5\%
+  threshold.  Rank 11 and rank 12 look almost identical, despite lying on
+  opposite sides of the geometric criterion.}
+  \label{fig:mnist-images}
+\end{figure*}
+
+\clearpage
+
+\section{Discussion and Limitations}
+
+\paragraph{What is genuinely minimal?}
+The exact task proves rank 24 minimal over every linear head sharing the stated
+trunk and bias because it combines a universal rank-output lower bound with a
+feasible distance-preserving head.  Theorem~\ref{thm:rank-distillation}
+separately gives the exact optimum of the declared first-order distillation
+loss at every rank.  Neither statement excludes a different nonlinear trunk
+from representing the same teacher behavior with fewer parameters.
+
+\paragraph{Certificates versus sampled tests.}
+Theorem~\ref{thm:stability} is a continuum statement when valid global bounds
+on $s$, $M_1$, and $\varepsilon_1$ are available.  The analytic image task has
+exact global quantities.  The neural sweep and MNIST replace suprema by finite
+sets and are labeled accordingly.  A covering argument, interval bounds, or a
+verified Lipschitz remainder is required before calling those curves global
+certificates.
+
+\paragraph{Parameters, bits, and deployment.}
+An unrestricted real number can encode unbounded information, so universal
+parameter-count lower bounds require encodable or quantized weights.  For
+deployment, \eqref{eq:min-safe-size} should minimize stored bits and include
+rank-factor indices and precision.  Quantization contributes an additional
+Jacobian perturbation to Theorem~\ref{thm:stability}.
+
+\paragraph{Teacher-relative geometry.}
+On real data, compression can preserve a frozen teacher; it cannot certify
+that the teacher recovered the true data manifold.  The MNIST VAE has one
+teacher seed, a deliberately restrictive two-dimensional code, and 13.19 dB
+teacher PSNR, so it is a transparent application rather than a state-of-the-art
+image benchmark.  Its fixed covariance makes $W_2$ the Euclidean mean-image
+special case; the warped-torus experiment covers learned, nonconstant standard
+deviations.  Full covariance would require Bures--Wasserstein geometry.
+
+\paragraph{Scope.}
+We study distance and retrieval.  Curvature stability would require
+second-order control, and nonlinear variance heads would require constrained
+or nonlinear compression.  Stronger empirical claims need multiple teachers,
+an independent validation/test split for rank selection, a Jacobian-weight
+ablation, and datasets beyond MNIST.
+
+\section{Conclusion}
+
+The capacity of a compressed decoder should be defined by the behavior it must
+preserve.  For Gaussian decoders, optimal transport turns that behavior into
+a pullback metric.  We derived a sufficient scaling from simultaneous value
+and derivative approximation, converted metric distortion into triplet
+accuracy, and solved fixed-trunk rank-constrained first-order distillation by
+covariance-whitened SVD.  The exact image task gives a proof-level answer:
+with 5\% output and distance tolerances, rank 23 and below are impossible,
+rank 24 is feasible, and the head is $12.61\times$ smaller.  A nonconstant-
+variance neural stress test and a sampled MNIST frontier then show how the same
+criterion can guide training and deployment.  The result is not a universal
+minimum neural network; it is a reproducible way to turn ``how small?'' into a
+mathematical constraint and an auditable accuracy boundary.
+
+\section*{Reproducibility}
+
+The scripts, fixed seeds, CSV results, tables, figures, and both language
+editions are regenerated with
+\begin{verbatim}
+make paper-all
+\end{verbatim}
+MNIST downloads and its learned teacher checkpoint are cached locally and are
+excluded from version control.

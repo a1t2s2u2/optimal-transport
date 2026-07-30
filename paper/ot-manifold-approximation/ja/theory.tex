@@ -1,476 +1,501 @@
 \begin{abstract}
-確率的デコーダーは観測分布を高精度に適合させながら、その潜在空間に
-誤った幾何を誘導しうる。本研究では、2-Wasserstein距離を備えた
-対角Gaussianデコーダーを対象として、この乖離を定量化する。
-Gaussian分布間の閉形式により、デコーダーは
-$F=(m,\sigma)$ で与えられるユークリッド・パラメータはめ込みとなり、
-その引き戻し計量は $G=J_F^{\trans}J_F$ となる。本研究の主要結果は、
-次の正則性階層を与える。一様な1階微分誤差は計量とすべての内在距離を
-乗法的に制御する一方、曲率の制御には一様な2階微分誤差が必要である。
-さらに、これらの要件はいずれも必要である。
-また、ノイズを含む局所的な $W_2^2$ の観測から、計量を
-$O(h^2+\eta/h^2)$ のバイアス・ノイズ間のトレードオフのもとで復元でき、
-最適なプローブスケールでは $O(\sqrt\eta)$ の精度が得られることを示す。
-一様収束しても計量が収束しないGaussianデコーダー、および $C^1$ 収束しても
-Gaussian曲率が収束しないデコーダーを構成する。特に、区分アフィンな
-ReLUパラメータデコーダーは、分布適合の精度によらず、ほとんど至る所で
-平坦である。
+生成デコーダーを、潜在幾何を壊さずにどこまで圧縮できるだろうか。
+復元誤差だけではこの問いに答えられない。学生が標本点上で教師出力を
+近似しても、補間・検索・測地距離を定める微分は変わりうるからである。
+本研究では、2-Wasserstein距離を備えた教師・学生の対角Gaussian
+デコーダーを考える。Gaussian間の閉形式により、パラメータ写像
+$F=(\mu,\sigma)$ はEuclid空間へのはめ込みとなり、引き戻し計量は
+$G=J_F^{\trans}J_F$ である。一様Jacobian誤差から、すべての内在距離を保証し、
+教師marginを介してtriplet検索精度へ変換する。値と微分のニューラル近似率を
+組み合わせると、固定した出力許容誤差のもとで
+$P=O(\tau^{-d/(\nu-1)})$ という十分な幾何--容量則を得る。
 
-さらに、Mercator座標により歪められた単位球面を、学習される
-Gaussian分布族の背後に隠した、制御可能な
-「Wasserstein地図学（Wasserstein cartography）」ベンチマークを導入する。
-この問題の厳密解は、計量 $\sech^2(y)I$ と曲率1をもち、大域的な
-Wasserstein弦と内在的な輸送経路の違いを解析的に記述できる。
-5回の独立試行において、滑らかなTanhデコーダーは計量相対誤差
-$0.075\pm0.008$、曲率MAE $0.140\pm0.016$、測地距離RMSE
-$0.021\pm0.003$ を達成した。ReLUデコーダーは、ほぼ同一の
-検証尤度を達成する一方、その曲率MAEは $1.000\pm0.000$ となった。
-これらの結果は、再構成、距離、曲率が互いに異なる統計的推定対象である
-ことを示すとともに、それぞれの復元に必要な微分精度を明らかにする。
+滑らかな固定trunkでは、rank制約付き出力--Jacobian蒸留が、共分散白色化した
+教師headの打ち切りSVDで大域的に解ける。解析的な $28\times28$ Gaussian画像
+多様体に出力・距離とも5\%という条件を課すと、rank 23以下はすべて不可能であり、
+rank 24は出力誤差4.898\%、距離歪み4.555\%で合格する。headは
+$12.61\times$ 圧縮される。さらに非定数分散をもつ変形Gaussian torusでは、
+出力だけの蒸留は69,128パラメータでも5\%格子テストに不合格だが、
+出力--Jacobian蒸留は18,184パラメータで合格する。2次元MNIST VAEでは、
+共分散重み付きhead圧縮が通常SVDのrank 60に対してrank 12で標本5\%閾値を満たし、
+headを $4.65\times$ 圧縮して教師triplet一致率99.95\%を得る。
 \end{abstract}
 
 \section{はじめに}
 
-潜在変数は座標であって、幾何そのものではない。潜在空間を再パラメータ化
-すると、生成分布を変えないままユークリッド距離を大きく変化させることが
-できる。引き戻しRiemann幾何（pullback Riemannian geometry）は、
-潜在空間内の変位をデコーダーを通して測定することで、この問題に対処する
-\cite{arvanitidis2018,chen2018}。これにより得られる測地線は、補間、
-クラスタリング、動作生成、および幾何を考慮した生成に利用されてきた。
+知識蒸留、枝刈り、低rank分解、量子化は、通常のテスト損失を保ちながら
+ニューラルネットワークを小さくできる。しかし生成デコーダーにとって、
+個々の出力を合わせることは0階の要件にすぎない。潜在変位はデコーダーの
+微分を通して測られ、2点間の最短路は曲線全体に沿う微分に依存する。
+したがって、復元損失がほぼ等しい2モデルが異なる補間や近傍関係をもちうる。
 
-しかし、根本的な問題が残されている。デコーダーは分布または標本に適合する
-ように学習される一方、その計量は1階微分に、曲率は2階微分に依存する。
-したがって、再構成誤差または尤度誤差が小さいことは、幾何誤差が小さい
-ことを必ずしも意味しない。この不整合は、現代的な区分線形ネットワーク
-において特に重要である。そのようなネットワークは、滑らかなデコーダーの
-値を高精度に近似できる一方、2階の幾何については質的に異なる構造を
-もつ可能性がある。
+本論文の問いは一つである。
 
-本研究では、この問題を、最も単純でありながら非自明な最適輸送の設定で
-解析する。対角Gaussianデコーダーを
-\[
- K_z=\mathcal N\!\left(m(z),\diag(\sigma(z)^2)\right),
- \qquad z\in\cZ\subset\R^d
-\]
-とする。Gaussian分布間の厳密な公式から、
-\[
- \W(K_z,K_{z'})^2
- =\norm{m(z)-m(z')}^2+\norm{\sigma(z)-\sigma(z')}^2
-\]
-を得る。したがって、$F=(m,\sigma)$ はデコーダーが表す分布族を
-ユークリッド空間に埋め込み、局所的な最適輸送コストは引き戻し計量
-$G=J_F^{\trans}J_F$ を誘導する。この設定により、母空間におけるWasserstein
-距離を近似する必要なく、幾何の学習という問題そのものを分離して解析できる。
+\begin{quote}
+教師が誘導するすべての潜在距離を相対誤差 $\tau$ 以内で保存する最小学生は
+どれだけ小さいか。
+\end{quote}
 
-\paragraph{本研究の貢献}
+学生のクラスと数値精度を固定しなければ、「最小」は定義できない。本研究では
+二つの答えを与える。第一に、一般の滑らかな学生族に対する十分な
+parameter--accuracy率を導き、有限bit仮定が必要な箇所を明示する。第二に、
+実務で一般的なdense出力headのrank-$r$分解に限定し、厳密な最適解と安全rankを
+与える。後者はarchitecture searchや最適化の成否に依存せず、1回のSVDで求まる。
+
+対角Gaussianデコーダーを
+\begin{equation}
+ K_z=\mathcal N\!\left(\mu(z),
+ \diag(\sigma(z)^2)\right),
+ \qquad z\in\Omega\subset\R^d
+ \label{eq:decoder}
+\end{equation}
+とする。2コード間の厳密なGaussian公式は
+\begin{equation}
+ W_2(K_z,K_{z'})^2
+ =\norm{\mu(z)-\mu(z')}^2
+ +\norm{\sigma(z)-\sigma(z')}^2
+ \label{eq:gaussian-w2}
+\end{equation}
+である。したがって $F=(\mu,\sigma)$ はデコーダー分布をEuclidパラメータ空間へ
+埋め込み、潜在計量は $G=J_F^{\trans}J_F$ となる。
+
+本研究の貢献は次の通りである。
 \begin{enumerate}
-  \item デコーダーの微分誤差から、引き戻し計量、すべての内在距離、
-  第二基本形式、およびGaussian曲率への明示的な安定性評価を証明する。
-  要約すれば、$C^1$ 精度は距離を制御し、$C^2$ 精度は曲率を制御する。
-  \item 計量テンソル全体を復元する中心差分型の局所輸送推定量を与える。
-  距離二乗の誤差が $\eta$ であるとき、その誤差は
-  $O(h^2+\eta/h^2)$ であり、空間スケール $h\asymp\eta^{1/4}$ において
-  最小化される。
-  \item Gaussianデコーダーのクラス内で二つの滑らかな反例を構成し、
-  この正則性階層が必要であることを示す。また、区分アフィンな
-  パラメータデコーダーがほとんど至る所で平坦になることを定式化する。
-  \item 曲率で制御される3次の評価を通して、大域的なWasserstein弦と
-  内在的な輸送を結び付ける。これにより、端点分布間の直接輸送と、
-  デコーダーが表す分布族上に制約された経路とを区別する。
-  \item 計量、曲率、測地線、および曲面の真値がすべて既知である、
-  完全に再現可能なベンチマークを提供する。一般的な合成点群とは異なり、
-  可視化される各対象には、明示的な統計的入力と一意な評価対象が存在する。
+  \item 出力誤差と内在距離誤差を同時に課して最小安全学生を定義し、
+  一様Jacobian誤差から全潜在点対の乗法的距離保証を導く。
+  \item triplet marginを用い、幾何歪みを直接解釈できる検索精度下限へ変換する。
+  さらに微分近似率をparameter--accuracy則へ接続する。
+  \item 固定trunkとrank制約付きheadに対し、出力・Jacobian同時蒸留を
+  共分散白色化SVDで大域的に解く。特異値tailは定義した問題の厳密下限となる。
+  \item 同じ事前指定5\%基準を、厳密Gaussian画像多様体、学習する変形Gaussian
+  torus、MNIST VAEの三段階で評価し、定理検証・最適化挙動・実データ適用を分ける。
 \end{enumerate}
 
 \section{関連研究}
 
-深層生成モデルの引き戻し幾何は、Arvanitidisら
-\cite{arvanitidis2018} およびChenら \cite{chen2018} により、
-決定論的デコーダーと確率的デコーダーの双方に対して構築された。
-Gaussianデコーダーについて、彼らの期待確率計量は、本研究が $W_2$ から
-直接導出する
-$J_m^{\trans}J_m+J_\sigma^{\trans}J_\sigma$
-と同じ表式をもつ。その後の研究では、この計量を平坦性へ向けて正則化する
-方法 \cite{chen2020}、母空間の計量に領域知識を導入する方法
-\cite{arvanitidis2021}、潜在事前分布を用いて計量を近似する方法
-\cite{arvanitidis2022prior}、および、より一般の分布を扱うために
-母空間の幾何をFisher--Rao幾何で置き換える方法
-\cite{arvanitidis2022fisher} が提案されている。近年では、
-デコーダーアンサンブル \cite{syrota2024}、Riemannデータ空間
-\cite{rozo2025}、およびスコアモデル \cite{diepeveen2025} を用いる
-手法も提案されている。これらの研究は潜在計量を構成または利用するのに
-対し、本研究は、学習された計量と曲率そのものを収束させるために、
-どの収束様式が十分であるかを問う。
+通常の知識蒸留は教師のsoft出力を転送する\cite{hinton2015}。Sobolev trainingと
+Jacobian matchingは微分も教師信号にする\cite{czarnecki2017,srinivas2018}。
+Relational KDとsimilarity-preserving KDは有限のtransfer集合上で点対関係を
+合わせる\cite{park2019,tung2019}。本研究の新規性はJacobian損失そのものではなく、
+一次蒸留を連続なWasserstein引き戻し計量、すべての内在距離、容量閾値、保証付き
+検索精度へ接続する点にある。
 
-最も直接的な先行研究であるRoyとHaubergの
-\emph{Optimal Latent Transport} \cite{roy2022} は、離散デコーダー
-分布間のWasserstein距離をVAEの潜在空間へ引き戻し、離散化した曲線長を
-最適化して測地線を計算する。同研究の問いは、学習済みデコーダーを固定した
-とき、そのWasserstein幾何がどの経路を誘導するかという計算上の問題である。
-これに対し本研究は、推定されたデコーダーが真のデコーダーを近似するとき、
-誘導される計量、内在距離、曲率をどの階数の微分精度から信頼できるかという、
-相補的な近似理論上の問題を扱う。対角Gaussianの $W_2$ 設定に限定することで、
-明示的な計量テンソル、定量的安定性評価、必要性を示す反例、および
-ノイズを含む有限スケールでの復元保証を得る。本研究は同研究の離散
-$W_1$ 構成を包含する直接の一般化ではない。異なるデコーダークラスにおいて、
-その幾何の信頼性と高階構造を扱う、相補的な理論的発展である。
+重み付き低rank分解は、重み行列へ通常SVDを直接適用する代わりに、taskや活性の
+情報を既に利用している\cite{hsu2022}。本研究の白色化SVDもこの広い考え方に属する。
+新規性は、デコーダーJacobianを共分散へ入れ、その誤差をWasserstein潜在計量と
+経路距離の保証へ変換する点にある。
 
-Isomap \cite{tenenbaum2000} に代表されるように、グラフ上の最短経路は、
-局所的な外在距離から多様体上の測地距離を推定する。本研究の局所辺コストは、
-一般的なユークリッド距離の近似ではなく、デコーダー分布間の厳密な $W_2$
-距離である。本研究では、この大域的な弦距離と、それがデコーダー分布族上に
-誘導する経路距離との区別を維持する。Riemann拡散モデル
-\cite{debortoli2022} は、正しい内在幾何の復元が実際の生成操作において
-重要となる下流タスクの一例である。
+生成モデルの引き戻しRiemann幾何はArvanitidisら\cite{arvanitidis2018}および
+Chenら\cite{chen2018}により発展した。Optimal Latent Transportはデコーダー分布間の
+輸送費用から経路を計算する\cite{roy2022}。これらは学習済みデコーダーの幾何を
+解析・利用する。本研究は圧縮時にその幾何がいつ壊れるかを扱う。Gaussian輸送の
+公式は古典的である\cite{givensshortt1984,takatsu2011}。
 
-Gaussian分布間の $W_2$ の公式はGivensとShortt
-\cite{givensshortt1984} に遡り、完全なGaussian分布族の幾何は
-Takatsu \cite{takatsu2011} によって研究されている。本研究では
-Villani \cite{villani2009} のWasserstein記法に従い、主要結果を
-対角共分散に限定する。この場合、パラメータはめ込みとすべての定数を
-明示的に記述できる。
+実データ実験にはVAE\cite{kingma2014}とMNIST\cite{lecun1998}を用いる。対象は
+凍結教師の幾何であり、2次元VAEが手書き数字の未知の真の多様体を回復したとは
+主張しない。
 
-\section{Wasserstein引き戻し幾何}
-\label{sec:setup}
+高階Sobolevノルムにおけるニューラル近似理論は、滑らかな関数族に対する
+上界と下界を与える。符号化可能な重みではほぼ最適な微分近似率が得られ
+\cite{guhring2021}、Tanhネットワークにも高階の明示的評価がある
+\cite{deryck2021}。本研究はこれらを潜在距離とタスク精度へ転送する。
 
-$\cZ\subset\R^d$ を連結集合とし、
-$m:\cZ\to\R^n$ および $\sigma:\cZ\to(0,\infty)^n$ とする。次を定義する。
-\[
- F(z):=(m(z),\sigma(z))\in\R^{2n}.
-\]
-対角Gaussian分布に対し、共通ノイズを用いた最適カップリングから
-次の恒等式が得られる。
+\section{Wasserstein幾何蒸留}
+\label{sec:problem}
 
-\begin{proposition}[Gaussian Wassersteinはめ込み]
-\label{prop:w2-immersion}
-任意の $z,z'\in\cZ$ に対して、
+$F_T,F_S:\Omega\to\R^N$ を教師・学生のGaussianパラメータ写像とする。
+式~\eqref{eq:decoder} では $N=2n$、観測共分散を固定する場合は $N=n$ である。
+$\Omega$ はcompactかつpath-connectedな $C^1$ 領域または多様体で、任意の2点を
+rectifiable曲線で結べるとし、$F_T$ は $C^1$ 級はめ込みと仮定する。計量を
 \begin{equation}
- \W(K_z,K_{z'})=\norm{F(z)-F(z')}
- \label{eq:w2-chord}
+ G_T=J_{F_T}^{\trans}J_{F_T},
+ \qquad
+ G_S=J_{F_S}^{\trans}J_{F_S}
+ \label{eq:metrics}
 \end{equation}
-が成り立つ。$F$ が $C^1$ 級であり、$\rank J_F(z)=d$ ならば、
-\eqref{eq:w2-chord} が誘導する無限小計量は
+とする。区分的 $C^1$ 曲線 $c:[0,1]\to\Omega$ に対し、教師の長さと距離は
+\begin{align}
+ L_T(c)&=\int_0^1
+ \sqrt{\dot c(t)^{\trans}G_T(c(t))\dot c(t)}\dd t,\notag\\
+ d_T(z,z')&=\inf_{c(0)=z,\,c(1)=z'}L_T(c)
+ \label{eq:path-distance}
+\end{align}
+である。学生も同様に定義する。
+
+出力忠実度と幾何忠実度を分離して
+\begin{align}
+ E_0(S,T)&=\sup_{z\in\Omega}W_2(K_z^S,K_z^T),\notag\\
+ D_{\mathrm{pair}}(S,T)&=
+ \sup_{z\ne z'}
+ \left|\frac{d_S(z,z')}{d_T(z,z')}-1\right|
+ \label{eq:two-errors}
+\end{align}
+とする。$E_0$ がなければ、無関係な等長デコーダーまで成功と判定される。
+$P$ 個以下の符号化可能なパラメータをもつ学生クラス $\mathcal A_P$ に対し、
 \begin{equation}
  \begin{aligned}
- G(z)&=J_F(z)^{\trans}J_F(z)\\
- &=J_m(z)^{\trans}J_m(z)
-   +J_\sigma(z)^{\trans}J_\sigma(z)
+ P^\star(\eta,\tau)
+ =\min\{P:\;&\exists S\in\mathcal A_P,\\
+ &E_0(S,T)\le\eta,\\
+ &D_{\mathrm{pair}}(S,T)\le\tau\}
  \end{aligned}
- \label{eq:pullback}
+ \label{eq:min-safe-size}
 \end{equation}
-である。特に、
-\[
- \W(K_z,K_{z+h})^2=h^{\trans}G(z)h+o(\norm{h}^2)
-\]
-が成り立つ。
-\end{proposition}
+と定義する。学生クラスとbit精度は定義の一部である。
 
-この恒等式は、1次元Gaussian分布の輸送写像を各座標に適用することで
-得られる。また、展開式は $F$ を微分することで得られる。
-ここでは幾何を明確に定めるために命題を記載した。自己完結した導出は、
-対応するセミナーノートに与えている。
-
-\subsection{ノイズ下での局所計量復元}
-
-命題~\ref{prop:w2-immersion} は $G$ を無限小の極限として定義する。
-次の結果は、その近似スケールを明示し、局所的な端点間距離のみを用いて
-計量を復元する。また、輸送距離の観測にノイズが含まれる場合には、
-辺を任意に短くすることがかえって有害になる理由も示す。
-
-\begin{proposition}[中心差分型Wasserstein計量プローブ]
-\label{prop:local-probe}
-$F$ を $C^3$ 級、$v\in\R^d$ を単位ベクトルとし、
-$z\pm hv\in\cZ$ とする。この線分上で
-\[
- \norm{J_F}\le M_1,
- \qquad \norm{D^3F[v,v,v]}\le M_3
-\]
-を仮定する。
-$\widetilde D^2(z+hv,z-hv)$ は
-$\W(K_{z+hv},K_{z-hv})^2$ の推定量であり、その絶対誤差は
-高々 $\eta$ であるとする。次を定義する。
-\[
- \widetilde Q_h(z;v)
- :=\frac{\widetilde D^2(z+hv,z-hv)}{4h^2}.
-\]
-このとき、
+実験では、経路探索を必要としない、より強い局所量
 \begin{equation}
- \begin{aligned}
- \abs{\widetilde Q_h(z;v)-v^{\trans}G(z)v}
- &\le \frac{M_1M_3}{3}h^2+\frac{M_3^2}{36}h^4\\
- &\quad+\frac{\eta}{4h^2}
- \end{aligned}
- \label{eq:local-probe}
+ D_{\mathrm{loc}}(S,T)=
+ \sup_{z\in\Omega,\,v\ne0}
+ \left|
+ \sqrt{\frac{v^{\trans}G_S(z)v}{v^{\trans}G_T(z)v}}-1
+ \right|
+ \label{eq:local-distortion}
 \end{equation}
-が成り立つ。特に、主要誤差は $O(h^2+\eta/h^2)$ であり、
-$h\asymp\eta^{1/4}$ を選ぶと $O(\sqrt\eta)$ の誤差が得られる。
-2次元の場合、$e_1,e_2$ および
-$e_\pm=(e_1\pm e_2)/\sqrt2$ において $\widetilde Q_h$ を評価すれば、
-次式により計量のすべての成分を復元できる。
-\begin{gather*}
- \widehat G_{11}=\widetilde Q_h(e_1),\qquad
- \widehat G_{22}=\widetilde Q_h(e_2),\\
- \widehat G_{12}=
- \frac{\widetilde Q_h(e_+)-\widetilde Q_h(e_-)}{2}.
-\end{gather*}
-\end{proposition}
-
-\begin{proof}
-対称Taylor展開により、
-\begin{align*}
- F(z+hv)-F(z-hv)&=2hJ_F(z)v+r_h,\\
- \norm{r_h}&\le M_3h^3/3
-\end{align*}
-を得る。$2h$ で除した後の剰余項のノルムは高々 $M_3h^2/6$ である。
-ノルム二乗を展開し、\eqref{eq:w2-chord} を用いると、
-\eqref{eq:local-probe} の右辺の最初の二項が得られる。観測誤差からは
-$\eta/(4h^2)$ が生じる。計量成分の復元式は、
-$Q(v)=v^{\trans}Gv$ に対する極化恒等式から従う。
-\end{proof}
-
-区分的に $C^1$ 級の曲線 $c:[0,1]\to\cZ$ に対し、次を定義する。
-\begin{align*}
- L_G(c)&=\int_0^1
- \sqrt{\dot c(t)^{\trans}G(c(t))\dot c(t)}\dd t,\\
- d_G(z,z')&=\inf_{c(0)=z,\,c(1)=z'}L_G(c).
-\end{align*}
-連鎖律から、$L_G(c)$ は $F\circ c$ のユークリッド長に厳密に一致する。
-したがって、
+を用いる。$(G_S,G_T)$ の一般化固有値から計算でき、曲線長を積分すれば
 \begin{equation}
- \W(K_z,K_{z'})\le d_G(z,z')
- \label{eq:chord-intrinsic}
+ D_{\mathrm{loc}}(S,T)\le\tau
+ \quad\Longrightarrow\quad
+ D_{\mathrm{pair}}(S,T)\le\tau
+ \label{eq:local-implies-global}
 \end{equation}
-が成り立つ。左辺ではデコーダー分布族の外部を通る直線的な弦が許されるが、
-右辺では経路全体が $F(\cZ)$ 上に制約される。
+が従う。
 
-$d=2$ かつ $F$ が $C^2$ 級であるとき、
-\[
- P=J_FG^{-1}J_F^{\trans},\qquad
- B_{ij}=(I-P)\partial_i\partial_jF
-\]
-とする。ここで、$P$ は接空間への射影であり、$B$ は第二基本形式
-（second fundamental form）である。Gauss方程式から、
-\begin{equation}
- \mathcal K_F
- =\frac{\langle B_{11},B_{22}\rangle-\norm{B_{12}}^2}{\det G}
- \label{eq:gauss}
-\end{equation}
-を得る。\eqref{eq:pullback} と \eqref{eq:gauss} は、本研究が扱う
-中心的な学習上の問題を明確にする。すなわち、関数値は適合された分布を、
-1階微分は距離を、2階微分は曲率を決定する。
+\subsection{Jacobian誤差から得られる保証}
 
-\section{潜在幾何に必要な近似精度}
-\label{sec:theory}
-
-ここでは、上述の微分階層を定量化する。添字をもたない行列ノルムは
-ユークリッド作用素ノルムとする。2階微分テンソルについては、
-二つの座標添字に関する最大値をとる。
-
-\begin{theorem}[学習された幾何の安定性]
+\begin{theorem}[一様幾何保証]
 \label{thm:stability}
-$d=2$ とし、$F,\widehat F:\cZ\to\R^N$ を $C^2$ 級写像とする。
-$F$ ははめ込みであり、$\cZ$ 上で一様に
-\[
- \begin{aligned}
- \sigma_{\min}(J_F)&\ge s>0,
- &\norm{J_F}&\le M_1,\\
- \max_{i,j}\norm{\partial_i\partial_jF}&\le M_2
- \end{aligned}
-\]
-が成り立つと仮定する。次をおく。
-\begin{align*}
- \varepsilon_1&:=\sup_z\norm{J_{\widehat F}(z)-J_F(z)},\\
- \varepsilon_2&:=\max_{i,j}\sup_z
- \norm{\partial_i\partial_j\widehat F(z)-\partial_i\partial_jF(z)}.
-\end{align*}
-$\varepsilon_1<s$ を仮定し、次を定義する。
-\begin{align*}
- q&:=2M_1\varepsilon_1+\varepsilon_1^2,
- &\delta&:=q/s^2<1,\\
- p&:=\frac{\varepsilon_1}{s-\varepsilon_1},
- &\beta&:=\varepsilon_2+pM_2.
-\end{align*}
-曲率評価のために、
-\[
- r_N:=4M_2\beta+2\beta^2,
- \qquad r_D:=2M_1^2q+q^2
-\]
-と略記する。このとき、$\widehat F$ ははめ込みであり、以下が成り立つ。
-\begin{enumerate}[label=(\roman*)]
-  \item 計量について、
-  \begin{equation}
-   \begin{aligned}
-   \norm{\widehat G-G}&\le q,\\
-   (1-\delta)G&\preceq\widehat G\preceq(1+\delta)G
-   \end{aligned}
-   \label{eq:metric-stability}
-  \end{equation}
-  が成り立つ。したがって、同じ連結成分に属する任意の $z,z'$ に対して、
-  \begin{equation}
-   \begin{aligned}
-   \sqrt{1-\delta}\,d_G(z,z')
-   &\le d_{\widehat G}(z,z')\\
-   &\le\sqrt{1+\delta}\,d_G(z,z')
-   \end{aligned}
-   \label{eq:distance-stability}
-  \end{equation}
-  が成り立つ。
-  \item 第二基本形式について、
-  \[
-   \max_{i,j}\norm{\widehat B_{ij}-B_{ij}}\le\beta
-  \]
-  が成り立つ。さらに、
-  \begin{equation}
-  \abs{\mathcal K_{\widehat F}-\mathcal K_F}
-  \le
-  \frac{r_N+2M_2^2r_D/s^4}{(s-\varepsilon_1)^4}
-  \label{eq:curvature-stability}
-  \end{equation}
-  が成り立つ。
-\end{enumerate}
+$\Omega$ 上で一様に
+\begin{equation}
+ \sigma_{\min}(J_{F_T})\ge s>0,
+ \qquad
+ \norm{J_{F_T}}_2\le M_1
+ \label{eq:teacher-conditioning}
+\end{equation}
+が成り立つとする。
+\begin{equation}
+ \varepsilon_1
+ =\sup_{z\in\Omega}
+ \norm{J_{F_S}(z)-J_{F_T}(z)}_2
+ \label{eq:jacobian-error}
+\end{equation}
+とし、
+\begin{equation}
+ q=2M_1\varepsilon_1+\varepsilon_1^2,
+ \qquad
+ \delta=\frac{q}{s^2}
+ \label{eq:delta}
+\end{equation}
+と定める。$\varepsilon_1<s$ かつ $\delta<1$ なら、$F_S$ ははめ込みであり、
+\begin{equation}
+ (1-\delta)G_T\preceq G_S\preceq(1+\delta)G_T
+ \label{eq:metric-certificate}
+\end{equation}
+が成り立つ。さらに、すべての潜在点対に対して
+\begin{equation}
+ \sqrt{1-\delta}\,d_T(z,z')
+ \le d_S(z,z')
+ \le\sqrt{1+\delta}\,d_T(z,z')
+ \label{eq:distance-certificate}
+\end{equation}
+が成り立つ。
 \end{theorem}
 
-この定理は、最適化手法およびネットワーク構造に依存しない。
-これは一種の転送結果であり、デコーダーの微分に対する任意の統計的保証または
-近似保証を、直ちに幾何に対する保証へ変換できる。また、評価式の分母は、
-デコーダーJacobianが階数落ちに近づくと幾何が不安定になることを示している。
-
 \begin{proof}
-$J=J_F$、$\widehat J=J+E$ と書く。
-$\widehat J^{\trans}\widehat J-J^{\trans}J$ を展開すると、
+$J_S=J_T+E$ と書く。展開すると
 \[
- \norm{\widehat G-G}\le2\norm{J}\norm{E}+\norm{E}^2\le q
+ \norm{G_S-G_T}_2
+ \le2\norm{J_T}_2\norm{E}_2+\norm{E}_2^2\le q
 \]
-を得る。$G\succeq s^2I$ であるため、二次形式として
-\eqref{eq:metric-stability} が従う。各曲線に沿って平方根の評価を積分し、
-その下限をとることで \eqref{eq:distance-stability} が得られる。
-また、$\sigma_{\min}(\widehat J)\ge s-\varepsilon_1>0$ である。
-
-$P$ と $\widehat P$ をそれぞれの接空間への射影とする。
-一方の列空間に属する単位ベクトルから他方の列空間までの距離を評価することで、
-基本的な部分空間摂動評価
-\[
- \norm{\widehat P-P}
- \le \frac{\varepsilon_1}{s-\varepsilon_1}=p
-\]
-を得る。$H_{ij}=\partial_i\partial_jF$ と書けば、
-\[
- \widehat B_{ij}-B_{ij}
- =(I-\widehat P)(\widehat H_{ij}-H_{ij})
- +(P-\widehat P)H_{ij}
-\]
-であり、これより $\beta$ による評価が従う。
-
-$N=\langle B_{11},B_{22}\rangle-\norm{B_{12}}^2$ とする。
-射影はノルムを増加させないので、$\norm{B_{ij}}\le M_2$ であり、
-\[
- \abs{\widehat N-N}\le r_N,
- \qquad \abs{N}\le2M_2^2
-\]
-を得る。さらに、$\det G\ge s^4$、
-$\det\widehat G\ge(s-\varepsilon_1)^4$ であり、2次元の行列式恒等式から
-\[
- \abs{\det\widehat G-\det G}\le r_D
-\]
-が従う。これらの不等式を
-$\widehat N/\det\widehat G-N/\det G$ に適用すると、
-\eqref{eq:curvature-stability} が得られる。
+である。$G_T\succeq s^2I$ より式~\eqref{eq:metric-certificate} が得られる。
+平方根を取り、すべての曲線に沿って積分し、下限を取れば
+式~\eqref{eq:distance-certificate} が従う。また
+$\sigma_{\min}(J_S)\ge s-\varepsilon_1>0$ である。
 \end{proof}
 
-\subsection{正則性階層の必要性}
+$\tau\in(0,1)$ を要求誤差とする。直接計算できる十分なJacobian閾値は
+\begin{equation}
+ \varepsilon_\tau
+ =\sqrt{M_1^2+s^2(2\tau-\tau^2)}-M_1
+ \label{eq:epsilon-tau}
+\end{equation}
+である。実際、$\varepsilon_1\le\varepsilon_\tau$ は
+$\delta\le2\tau-\tau^2$ と同値であり、$D_{\mathrm{pair}}\le\tau$ を導く。
 
-関数値の誤差が小さいだけでは微分を制御できず、1階微分を制御するだけでは
-曲率を制御できない。次の命題は、Gaussianデコーダーのクラスを離れることなく、
-これら二つの隔たりを明示する。
+\subsection{幾何歪みから検索精度へ}
 
-\begin{proposition}[正則性階層の鋭さ]
-\label{prop:counterexamples}
-$\cZ=(-1,1)^2$ 上に、以下の性質をもつ滑らかな、はめ込みとなる
-対角Gaussianデコーダーが存在する。
-\begin{enumerate}[label=(\alph*)]
-  \item $F_k\to F_0$ は一様収束するが、誘導される計量は一様収束しない。
-  \item $H_k\to H_0$ は $C^1$ 収束するが、そのGaussian曲率は原点で
-  各点収束しない。
-\end{enumerate}
+triplet $(q,a,b)$ に対して $d_T(q,a)<d_T(q,b)$ とし、教師marginを
+\begin{equation}
+ \gamma(q,a,b)=
+ \frac{d_T(q,b)^2-d_T(q,a)^2}
+ {d_T(q,b)^2+d_T(q,a)^2}
+ \label{eq:triplet-margin}
+\end{equation}
+と定義する。
+
+\begin{proposition}[保証付きtriplet精度]
+\label{prop:triplet}
+定理~\ref{thm:stability} のもとで、$\gamma(q,a,b)>\delta$ を満たすtripletは、
+学生でも教師の順序を保つ。したがってテスト集合 $\mathcal T$ に対する一致精度は
+\begin{equation}
+ A_{\mathrm{cert}}(\delta)
+ =\frac{1}{\abs{\mathcal T}}
+ \sum_{t\in\mathcal T}
+ \mathbf 1\{\gamma(t)>\delta\}
+ \label{eq:certified-accuracy}
+\end{equation}
+以上である。
 \end{proposition}
 
 \begin{proof}
-$\R^3$ 内の平均のはめ込みを指定し、正の定数からなる標準偏差ベクトルを
-付加すれば十分である。(a)について、
-\begin{align*}
- F_k(x,y)&=(x,y,k^{-1}\sin(kx)),\\
- F_0(x,y)&=(x,y,0)
-\end{align*}
-とする。関数値の誤差は高々 $k^{-1}$ であるが、$x=0$ における計量の
-$(1,1)$ 成分は $1+\cos^2(kx)=2$ であり、極限値 $1$ とは一致しない。
-
-(b)について、
-\begin{align*}
- H_k(x,y)&=\left(x,y,k^{-2}[\cos(kx)+\cos(ky)]\right),\\
- H_0(x,y)&=(x,y,0)
-\end{align*}
-とする。関数値の誤差は高々 $2k^{-2}$ であり、Jacobianの誤差は高々
-$\sqrt2/k$ である。したがって、$H_k\to H_0$ は $C^1$ 収束する。
-グラフ $(x,y,f(x,y))$ に対して、
-\[
- \mathcal K=\frac{f_{xx}f_{yy}-f_{xy}^2}
- {(1+f_x^2+f_y^2)^2}
-\]
-である。原点では $f_x=f_y=f_{xy}=0$ かつ
-$f_{xx}=f_{yy}=-1$ であるため、すべての $k$ に対して
-$\mathcal K_{H_k}(0,0)=1$ となる一方、
-$\mathcal K_{H_0}(0,0)=0$ である。
+$A=d_T(q,a)^2$、$B=d_T(q,b)^2$ とする。
+$(1+\delta)A<(1-\delta)B$ なら順序が保存される。これを整理すると
+$(B-A)/(B+A)>\delta$、すなわち式~\eqref{eq:triplet-margin} となる。
 \end{proof}
 
-\begin{corollary}[区分アフィンデコーダーはほとんど至る所で平坦である]
-\label{cor:relu-flat}
-パラメータ写像 $F=(m,\sigma)$ が区分アフィンなはめ込みであるならば、
-その引き戻し曲率は各線形領域の内部で0であり、したがってほとんど至る所で
-0である。この結果は、関数値の近似誤差によらず、アフィンなパラメータ出力を
-もつReLUネットワークに適用できる。
+$\nu>1$ 階滑らかな教師に対し、ある $P$ parameter学生族が同時に
+\begin{equation}
+ \begin{aligned}
+ \sup_z\norm{F_S(z)-F_T(z)}
+ &\le C_0P^{-\nu/d},\\
+ \varepsilon_1(P)&\le C_1P^{-(\nu-1)/d}.
+ \end{aligned}
+ \label{eq:simultaneous-rate}
+\end{equation}
+を満たすとする。式~\eqref{eq:epsilon-tau} と合わせると
+\begin{equation}
+ P^\star(\eta,\tau)
+ \lesssim
+ \max\left\{
+ \left(\frac{C_0}{\eta}\right)^{d/\nu},
+ \left(\frac{C_1}{\varepsilon_\tau}\right)^{d/(\nu-1)}
+ \right\}
+ \label{eq:joint-capacity-law}
+\end{equation}
+を得る。出力許容誤差を固定し、$\tau$ を小さくすると
+\begin{equation}
+ P^\star(\eta,\tau)
+ =O\!\left(\tau^{-d/(\nu-1)}\right)
+ \label{eq:capacity-law}
+\end{equation}
+となる。定数、領域、activation、深さ、対数因子は選択した近似定理
+\cite{guhring2021,deryck2021}に依存し、式~\eqref{eq:joint-capacity-law} は
+その条件付き転送であって、architecture非依存の主張ではない。
+
+margin分布が $\Pr(\gamma\le t)\le C_\gamma t^\beta$ を満たすなら、微分近似率から
+\begin{equation}
+ 1-A_{\mathrm{cert}}(P)
+ \le C_\gamma\delta(P)^\beta
+ =O\!\left(P^{-(\nu-1)\beta/d}\right)
+ \label{eq:parameter-accuracy}
+\end{equation}
+も従う。符号化可能な重みでは、微分近似指数に対して対数因子を除き対応する
+下界がある\cite{guhring2021}。ただし、異なるはめ込みが同じ計量を誘導しうるため、
+これは幾何だけの下界ではない。
+
+\section{閉形式による低rank蒸留}
+\label{sec:low-rank}
+
+滑らかなtrunk $h:\Omega\to\R^p$ を固定し、affineなEuclidパラメータheadだけを
+\begin{equation}
+ F_W(z)=Wh(z)+b,
+ \qquad
+ F_U(z)=Uh(z)+b
+ \label{eq:linear-heads}
+\end{equation}
+と圧縮する。$W,U\in\R^{N\times p}$ である。rank-$r$学生は $U$ を二因子で
+保存でき、biasを含むhead parameter数は $r(N+p)+N$ であり、教師の $Np+N$ より
+小さい。
+
+この設定は固定共分散Gaussianの平均headへ直接適用できる。$F$ が学習された
+標準偏差も含む場合、圧縮後channelの $\Omega$ 上での正値性が別の許容条件となり、
+制約なしSVDだけでは保証されない。非線形softplus分散headはこの閉形式の範囲外である。
+
+calibration code $z_1,\ldots,z_m$ に対し、$h_i=h(z_i)$、$J_i=J_h(z_i)$ と書く。
+$\lambda\ge0$、$\rho>0$ に対して
+\begin{equation}
+ C=\frac1m\sum_{i=1}^m
+ \left(h_ih_i^{\trans}+\lambda J_iJ_i^{\trans}\right)
+ +\rho I_p
+ \label{eq:jet-covariance}
+\end{equation}
+とする。一次蒸留損失は
+\begin{equation}
+ \mathcal L_C(U)=\norm{(U-W)C^{1/2}}_F^2
+ \label{eq:distillation-loss}
+\end{equation}
+である。これは教師出力誤差、$\lambda$ 倍のJacobian誤差、ridge項の和である。
+
+\begin{theorem}[rank制約付き蒸留の厳密frontier]
+\label{thm:rank-distillation}
+$B=WC^{1/2}$ とし、$B_r$ を $B$ のrank-$r$打ち切りSVDとする。このとき
+\begin{equation}
+ U_r=B_rC^{-1/2}
+ \label{eq:optimal-head}
+\end{equation}
+は、rankが $r$ 以下の全headの中で式~\eqref{eq:distillation-loss} を大域的に
+最小化し、
+\begin{equation}
+ \min_{\rank(U)\le r}\mathcal L_C(U)
+ =\sum_{j>r}\sigma_j(B)^2
+ \label{eq:exact-tail}
+\end{equation}
+が成り立つ。
+\end{theorem}
+
+\begin{proof}
+$V=UC^{1/2}$ とおく。$C$ は正定値なので $\rank(V)=\rank(U)$ かつ
+$\mathcal L_C(U)=\norm{V-B}_F^2$ である。Eckart--Young--Mirsky定理
+\cite{eckart1936,mirsky1960}を適用し、変数を戻せばよい。
+\end{proof}
+
+式~\eqref{eq:exact-tail} は、固定trunk・rank-$r$・一次蒸留という限定した問題に
+おける厳密な不可能性下限である。同じ内在計量だけをもつ任意のデコーダー全体の
+下限ではない。
+
+同じSVDから距離保証も得られる。
+\begin{equation}
+ \ell_1=\sup_{z\in\Omega}
+ \norm{C^{-1/2}J_h(z)}_2,
+ \qquad
+ \overline\varepsilon_r=\sigma_{r+1}(B)\ell_1
+ \label{eq:spectral-jacobian-bound}
+\end{equation}
+とする。$U_r-W=(B_r-B)C^{-1/2}$ および
+$\norm{B_r-B}_2=\sigma_{r+1}(B)$ より
+\begin{equation}
+ \sup_z\norm{J_{F_{U_r}}(z)-J_{F_W}(z)}_2
+ \le\overline\varepsilon_r
+ \label{eq:spectral-to-uniform}
+\end{equation}
+である。
+
+\begin{corollary}[保証付き安全rank]
+\label{cor:safe-rank}
+教師写像 $F_W$ が式~\eqref{eq:teacher-conditioning} を満たすとする。
+$\overline\varepsilon_r\le\varepsilon_\tau$ なら、式~\eqref{eq:optimal-head} の
+rank-$r$ headはすべての教師内在距離を相対誤差 $\tau$ 以内で保存する。したがって
+\begin{equation}
+ r_{\mathrm{cert}}(\tau)
+ =\min\left\{r:
+ \sigma_{r+1}(B)\ell_1\le\varepsilon_\tau
+ \right\}
+ \label{eq:certified-rank}
+\end{equation}
+はSVD最適frontier上の安全rankである。ただし $s,M_1,\ell_1$ の大域的な保証付き
+評価が必要である。supremumを標本最大値で置き換えた場合は、連続領域の保証ではなく
+経験的テストとなる。
 \end{corollary}
 
-$\sigma=\exp(\ell)$ のような非線形出力変換は、それ自体が曲率を生成しうる。
-したがって、系~\ref{cor:relu-flat} が対象とするのは、活性化前の出力だけ
-ではなく、実際のパラメータ写像 $F$ である。本研究のReLUベースラインは
-$\sigma$ を直接出力し、区分アフィンなクランプによって正値性を保証する。
+$J_h$ を $h$ に置き換えれば出力誤差も評価できる。量子化については、量子化した
+二因子による一様Jacobian摂動を $\overline\varepsilon_r$ に加えればよく、同じ
+不等式のもとでrankとbit数を同時に選べる。
 
-\subsection{Wasserstein弦と内在的輸送}
+\section{解析解をもつGaussian画像タスク}
+\label{sec:exact-task}
 
-安定性定理が制御するのは経路距離である。この定理は、端点間の
-Wasserstein距離が経路距離に等しいことを意味しない。両者の局所的な差は、
-外在的な曲がりによって制御される。
+実データだけでは真のデコーダー幾何が不明であり、容量定理を検証できない。
+そこで、出力誤差、rank下界、全距離が解析的に求まる高次元画像デコーダーを
+構成する。$z=(x,y)$ を平坦2-torus $(\R/2\pi\mathbb Z)^2$ 上の点とし、
+$4T$ 次元trunk特徴を
+\begin{equation}
+ h_T(x,y)=
+ \bigl(\cos(jx),\sin(jx),\cos(jy),\sin(jy)\bigr)_{j=1}^T
+ \label{eq:fourier-trunk}
+\end{equation}
+とする。$Q\in\R^{784\times4T}$ は直交画像atomを列にもつとし、
+$a_1\ge\cdots\ge a_T>0$ とする。
+教師の $28\times28$ 平均画像を
+\begin{equation}
+ \mu_T(z)=\mu_0+QD_T h_T(z)
+ \label{eq:image-teacher}
+\end{equation}
+と定義する。$D_T$ は各 $j$ について $a_j/j$ を4回並べた対角行列である。
+観測分散を固定して $K_z^T=\mathcal N(\mu_T(z),\sigma_0^2I)$ とするため、
+厳密な $W_2$ 費用は平均画像間のEuclid距離となる。rank-$4K$ prefix学生は
+教師係数を変えずに最初の $K$ 周波数blockを保持する。
 
-\begin{theorem}[弦と内在距離の3次誤差]
-\label{thm:chord-gap}
-$\gamma:[0,L]\to\cZ$ を、単位速度で距離を最小化する $G$-測地線とする。
+\begin{proposition}[厳密な出力--距離則]
+\label{prop:exact-rank-law}
+\begin{equation}
+ S_K=\sum_{j=1}^K a_j^2
+ \label{eq:spectral-energy}
+\end{equation}
+とする。教師・学生計量は
+\begin{equation}
+ G_T=S_TI_2,
+ \qquad
+ G_K=S_KI_2
+ \label{eq:torus-metrics}
+\end{equation}
+であり、すべての相異なる潜在点対について
+\begin{equation}
+ \frac{d_K(z,z')}{d_T(z,z')}
+ =\sqrt{\frac{S_K}{S_T}}
+ \label{eq:exact-distance-ratio}
+\end{equation}
+が成り立つ。したがって
+\begin{equation}
+ D_{\mathrm{loc}}=D_{\mathrm{pair}}
+ =1-\sqrt{\frac{S_K}{S_T}}
+ \label{eq:exact-distortion}
+\end{equation}
+である。また一様な教師出力誤差は
+\begin{equation}
+ E_{0,K}
+ =\left(2\sum_{j>K}\left(\frac{a_j}{j}\right)^2\right)^{1/2}
+ \label{eq:exact-output-error}
+\end{equation}
+となる。したがって両方の許容誤差を満たす最初のprefixは
+\begin{equation}
+ \begin{aligned}
+ r_{\mathrm{prefix}}^\star(\eta,\tau)
+ =4\min\{K:\;&E_{0,K}\le\eta,\\
+                 &S_K\ge(1-\tau)^2S_T\}
+ \end{aligned}
+ \label{eq:exact-min-rank}
+\end{equation}
+である。さらに一様潜在分布のもとで、trunkを共有する任意のrank-$r$ headは
+\begin{equation}
+ E_0\ge
+ \left(\frac12\sum_{\ell>r}\sigma_\ell(W)^2\right)^{1/2}
+ \label{eq:output-rank-lower-bound}
+\end{equation}
+を満たす。ここで $W=QD_T$ の特異値は各 $j$ について $a_j/j$ が4重に現れる。
+純粋なJacobian蒸留では別に $C_J=\E[J_hJ_h^{\trans}]$ と定義する。
+$WC_J^{1/2}$ の特異値は $a_j/\sqrt2$ が4重に現れ、rank $4K$ の厳密最適
+tail損失は $2\sum_{j>K}a_j^2$ である。
+\end{proposition}
+
+\begin{proof}
+各 $x$ blockについて
 \[
- \norm{B(\dot\gamma(t),\dot\gamma(t))}\le\Lambda,
- \qquad \Lambda L\le\pi
+ \left\|\partial_x
+ \left[\frac{a_j}{j}(\cos(jx),\sin(jx))\right]\right\|^2
+ =a_j^2
 \]
-を仮定する。このとき、
-\begin{equation}
- \frac{2}{\Lambda}\sin\frac{\Lambda L}{2}
- \le \W(K_{\gamma(0)},K_{\gamma(L)})\le L
- \label{eq:sine-bound}
-\end{equation}
-が成り立つ。ただし、$\Lambda=0$ の場合にはその極限として解釈する。
-したがって、
-\begin{equation}
- 0\le L-\W(K_{\gamma(0)},K_{\gamma(L)})
- \le\frac{\Lambda^2L^3}{24}
- \label{eq:cubic-gap}
-\end{equation}
-が成り立つ。
-\end{theorem}
+である。$x$ と $y$ の画像atomは直交するため交差項は消える。和を取れば
+式~\eqref{eq:torus-metrics} を得る。すべての曲線長が
+$\sqrt{S_K/S_T}$ 倍されるので、式~\eqref{eq:exact-distance-ratio} と
+式~\eqref{eq:exact-distortion} が従う。$Q$ の直交性と
+$\cos^2+\sin^2=1$ から式~\eqref{eq:exact-output-error} を得る。正規化一様測度では
+$\E[h_Th_T^{\trans}]=I/2$ なので、Eckart--Young--Mirsky定理から
+式~\eqref{eq:output-rank-lower-bound} の最小RMS出力誤差を得る。$E_0$ はRMS以上である。
+純Jacobianの主張は微分の二乗を積分すれば得られる。
+\end{proof}
 
-上側評価は \eqref{eq:chord-intrinsic} そのものである。
-完全性のため、下側評価も示す。$c=F\circ\gamma$ は単位速度であり、
-$\norm{\ddot c}=\norm{B(\dot\gamma,\dot\gamma)}\le\Lambda$ である。
-したがって、$\dot c(s)$ と $\dot c(t)$ のなす角は
-高々 $\Lambda\abs{s-t}$ である。
-$\norm{\int_0^L\dot c(t)\dd t}^2$ を二重積分として展開し、内積を
-$\cos(\Lambda\abs{s-t})$ で下から評価すると、
-\eqref{eq:sine-bound} が得られる。不等式
-$\sin x\ge x-x^3/6$ を用いると \eqref{eq:cubic-gap} が従う。
-半径 $1/\Lambda$ の円は、正弦関数による下側評価を等号で達成する。
+許容誤差 $\tau$ に対し、
+\begin{equation}
+ \mathrm{PairAcc}@\tau
+ =\frac1{\abs{\mathcal P}}
+ \sum_{(z,z')\in\mathcal P}
+ \mathbf1\left\{
+ \left|\frac{d_K(z,z')}{d_T(z,z')}-1\right|\le\tau
+ \right\}
+ \label{eq:pair-accuracy}
+\end{equation}
+と定義する。式~\eqref{eq:exact-distance-ratio} は全点対に成り立つため、精度は
+prefix距離閾値未満で0、それ以上で1となる。式~\eqref{eq:output-rank-lower-bound} と
+合わせると、第~\ref{sec:controlled-experiment}節の数値設定では、出力と距離を同時に
+満たす最小rankをtrunk共有線形head全体で証明できる。実データ多様体の計量が一様で
+あるという主張ではない。

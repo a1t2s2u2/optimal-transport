@@ -1,226 +1,239 @@
-\section{厳密解をもつ球面ベンチマーク}
-\label{sec:benchmark}
-
-観測が確率分布として与えられ、可視座標が歪んでいる一方で、幾何構造の
-全体を解析的に求められるベンチマークを構成する。これは、平面地図上で等しい
-座標変位が、必ずしも等しい移動距離を表さないという地図の比喩を文字どおり
-実現したものである。
-
-$u=(\lambda,y)\in[-\pi,\pi)\times[-2.5,2.5]$ をMercator座標とし、
-単位球面への逆写像を
-\begin{equation}
- s(\lambda,y)=
- \bigl(\sech(y)\cos\lambda,\ \sech(y)\sin\lambda,\ \tanh y\bigr)
- \label{eq:mercator}
-\end{equation}
-と定義する。各座標点において、3次元対角Gaussian分布
-\begin{equation}
- K_u=\mathcal N\!\left(a s(u),
- \diag\bigl((\sigma_0\mathbf 1+b s(u))^2\bigr)\right)
- \label{eq:benchmark-decoder}
-\end{equation}
-を生成する。ここで $a=0.8$、$b=0.6$、$\sigma_0=0.75$ とする。
-$\sigma_0>b$ より標準偏差の正値性が保証され、さらに
-$a^2+b^2=1$ が成り立つ。したがって、真のパラメータ写像 $F_*$ は
-\begin{equation}
- \begin{aligned}
- \W(K_u,K_v)&=\norm{F_*(u)-F_*(v)}\\
- &=\norm{s(u)-s(v)}
- \end{aligned}
- \label{eq:exact-sphere-chord}
-\end{equation}
-を満たす。このベンチマークでは、真値が
-\begin{equation}
- \begin{aligned}
- G_*(\lambda,y)&=\sech^2(y)I_2,\\
- \mathcal K_*&=1,\\
- d_{G_*}(u,v)&=\arccos\langle s(u),s(v)\rangle
- \end{aligned}
- \label{eq:benchmark-truth}
-\end{equation}
-と厳密に求められる。$d=d_{G_*}(u,v)$ とおけば、
-\begin{align}
- \W(K_u,K_v)&=2\sin(d/2),\notag\\
- d-\W(K_u,K_v)&=d^3/24+O(d^5)
- \label{eq:sphere-gap}
-\end{align}
-である。したがって、この球面は $\Lambda=1$ に対して
-定理~\ref{thm:chord-gap} の評価を達成する。
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.98\textwidth]{experiments/cartography_pipeline_ja.png}
-  \caption{ベンチマークとその学習結果。入力は、歪んだ座標と、その座標に
-  対応するGaussian分布から得た標本で構成される。RGB画像は3つの二変量
-  周辺密度を可視化したものであり、追加の教師情報ではない。Tanhデコーダー
-  には球面座標を一切与えていないが、学習された6次元パラメータ曲面の
-  3次元主成分部分空間から球面が復元される。同じ番号は同一の状態を表す。}
-  \label{fig:pipeline}
-\end{figure*}
-
-パラメータ曲面は $\R^6$ 内に存在するが、その中心化像の階数は3である。
-したがって、PCAによる3次元表示は、計量のみから任意に再構成した曲面ではなく、
-元の曲面を忠実に可視化したものとなる。この点は、識別可能性に関する誤解を
-避けるうえで重要である。一般に、内在計量だけから外在的なデコーダーを
-一意に定めることはできず、そのためには第二基本形式も必要となる。
-
 \section{実験}
 \label{sec:experiments}
 
-\paragraph{データ}
-式~\eqref{eq:mercator} を経度方向に72点、Mercator座標の縦方向に41点で
-離散化し、合計 $2{,}952$ 状態を構成する。各状態について、
-式~\eqref{eq:benchmark-decoder} から64標本を生成する。状態の70\%を学習に、
-30\%をテストに使用する。モデルに与えるのは座標と標本の十分統計量だけであり、
-$s(u)$、$G_*$、$\mathcal K_*$ は与えない。独立に生成した5つのデータ集合、
-データ分割、および初期値について、平均と標本標準偏差を報告する。
+全実験で同じ問いを用いる。すなわち、学生の容量を見る前に固定した閾値を
+満たすかを判定する。画像torusでは数学的正解により最小rankを証明し、
+変形Gaussian torusでは非定数分散をもつニューラル学習を検証し、MNISTでは
+学習済みデコーダーへの適用可能性を調べる。
 
-\paragraph{モデルと学習}
-すべてのデコーダーを、幅96の3層MLPとし、
-$(m_\theta,\sigma_\theta)\in\R^6$ を出力させる。モデル間で異なるのは
-隠れ層の活性化関数だけであり、Tanh、Softplus、ReLUを比較する。標本平均と
-標本分散から計算される厳密なGaussian負の対数尤度を、AdamWを用いて
-$2{,}400$ ステップ最小化する。標準偏差には正値クランプを施して直接出力する
-ことで、ReLUのパラメータ写像を区分アフィンに保つ。その後、Jacobianと
-Hessianを自動微分により計算する。局所的な内在距離は、周期境界をもつ
-格子グラフ上で、厳密な $W_2$ 距離を辺重みとして最短路を求めることで推定する。
+\subsection{固定trunkにおける厳密な最小値}
+\label{sec:controlled-experiment}
 
-\paragraph{評価指標}
-テスト状態におけるパラメータRMSE、計量テンソルの相対Frobenius誤差の平均、
-$\abs{y}\le2$ における曲率MAE、テスト用の800組に対する測地距離RMSE、
-および直交整合後のPCA曲面RMSEを評価する。オラクル測地距離誤差は、
-格子離散化だけに由来する誤差を表す。
+\paragraph{設定}
+第~\ref{sec:exact-task}節を $T=128$、$a_j=1/j$ とし、$Q$ にはzig-zag順の
+最初の512個の2次元DCT atomを用いる。biasを含むdense教師headは
+$402{,}192$ scalar、rank-$r$二因子headは $r(784+512)+784$ scalarを保存する。
+これはheadをdense行列として配備する際の計数であり、解析的DCT生成規則そのものは
+より小さく保存できる。
+
+次の二条件を事前に固定する。
+\begin{equation}
+ E_0\le\eta=5\%,
+ \qquad
+ D_{\mathrm{pair}}\le\tau=5\%.
+ \label{eq:exact-requirements}
+\end{equation}
+厳密な恒等式 $D_{\mathrm{loc}}=D_{\mathrm{pair}}$ により経路探索は不要である。表示画像に
+のみ同一のcontrast倍率を掛けるが、これは $F$ と報告誤差には含めない。
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.98\textwidth]{experiments/lowrank_torus_ja.png}
+  \caption{厳密な出力--幾何frontier。両曲線とも解析値である。rank 20は事前指定した
+  出力・距離5\%条件をともに破り、rank 24は両方を満たす。生画像の差は小さいため、
+  小窓に共通尺度の絶対残差を示す。}
+  \label{fig:exact-frontier}
+\end{figure*}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{同時条件に対する厳密閾値。各行で出力・距離許容誤差を等しくし、
+  圧縮率はdense教師headとfactorized学生headの保存scalar数の比とする。}
+  \label{tab:exact-thresholds}
+  \resizebox{\columnwidth}{!}{\input{experiments/lowrank_torus_table_ja.tex}}
+\end{table}
+
+\paragraph{明確な5\%結果}
+5周波数block、すなわちrank 20では、命題~\ref{prop:exact-rank-law} より
+\begin{equation}
+ E_{0,5}=6.2788\%,
+ \qquad
+ D_5=5.4485\%
+\end{equation}
+となり、両条件に不合格である。6 block、rank 24では
+\begin{equation}
+ E_{0,6}=4.8980\%,
+ \qquad
+ D_6=4.5555\%
+\end{equation}
+となり実行可能である。これは、選んだ打ち切り列で最初に合格するというだけではない。
+式~\eqref{eq:output-rank-lower-bound} は、trunkを共有する任意のrank-23 headに対し、
+\begin{equation}
+ \inf_{\rank(U)\le23}
+ \left(\E_z\norm{(U-W)h(z)}^2\right)^{1/2}
+ =5.2772\%>\eta
+\end{equation}
+というRMS出力下界を与える。一様誤差 $E_0$ はRMS以上なので、rank 23以下は
+式~\eqref{eq:exact-requirements} を満たせない。したがってrank 24は、このtrunkと
+biasを共有する全線形head中の真の最小rankである。headは $31{,}888$ scalarで、
+$12.61\times$ 圧縮となる。
+
+表~\ref{tab:exact-thresholds} は同時rate--distortionを示す。10\%では、出力忠実度の
+条件により幾何だけのrank 12からrank 16へ上がる。1\%ではrank 100が必要となり、
+圧縮率は $3.08\times$ まで下がる。出力条件がなければ、教師と異なる等長写像も
+成功となるため、両条件が必要である。
+
+rank 24はFourier Gramの厳密な恒等式から導かれ、一般のJacobian誤差上界が
+rank 24を予測したわけではない。定理~\ref{thm:stability} は便利な十分条件だが
+保守的になりうる。次の実験では、この一般保証を学習済み学生上で検証する。
+
+\subsection{非定数分散をもつニューラルstress test}
+\label{sec:neural-stress}
+
+潜在領域を2-torusとし、
+\begin{align}
+ e(\phi)&=(\cos\phi_1,\sin\phi_1,
+             \cos\phi_2,\sin\phi_2),\notag\\
+ \phi(z)&=\bigl(z_1+0.05\sin(4z_2),
+                 z_2+0.05\sin(4z_1)\bigr),\notag\\
+ F_T(z)&=\left(0.9e(\phi(z)),
+ 0.75+\sqrt{1-0.9^2}\,e(\phi(z))\right)
+ \label{eq:warped-teacher}
+\end{align}
+とする。後半4 channelは正の標準偏差なので、固定共分散への退化ではなく、
+対角Gaussianの完全な $W_2$ 公式を使う。warpには解析的評価 $s=0.8$、$M_1=1.2$ がある。
+
+学生は周期入力 $(\cos z_1,\sin z_1,\cos z_2,\sin z_2)$ をもつ2層Tanh networkで、
+4から256まで2倍ずつ増やす7幅を3 seed、各2,500 step学習する。baselineは出力MSE、
+一次手法はその損失に5倍の平均Jacobian二乗誤差を加える。出力RMSE 2\%以下、
+距離歪み5\%以下を事前条件とする。
+
+評価は固定 $48\times48$ torus格子で行う。格子上の最大Jacobian誤差を
+定理~\ref{thm:stability} に代入し、得たplug-in上界をgraph距離と3,072 tripletに
+比較する。これは有限格子診断であり、連続領域の形式保証にはcoveringまたは
+Lipschitz剰余項の検証が別途必要である。
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.94\textwidth]{experiments/distillation_tradeoff_ja.png}
+  \caption{ニューラル容量sweep（3 seedの平均）。実線は実測、破線は有限格子上の
+  定理下限・上限である。周波数4の変形教師（下段）では、一次蒸留だけが5\%距離境界を
+  越える。上段の単純torusは低周波数の参照である。}
+  \label{fig:neural-sweep}
+\end{figure*}
+
+変形教師で最大の出力のみ学生は69,128 parameterをもち、出力条件は満たす
+（RMSE 1.308\%）が、plug-in距離上界61.62\%、実測最大点対歪み15.41\%、
+triplet一致率95.27\%であり、幾何条件に不合格である。出力--Jacobian学習は
+幅128、18,184 parameterで全3 seedが合格する。出力RMSE 0.083\%、
+$\widehat\varepsilon_1=0.0210$、定理上界4.06\%、実測最大点対歪み2.72\%、
+triplet一致率99.12\%である。全84 runで、実測局所計量歪みは対応するplug-in
+$\delta$ 以下だった。これはoptimizer非依存の下界ではないが、定理が使う量を
+学習でき、出力fitだけではその量を学べない場合があることを示す。
+
+\subsection{MNIST VAE head圧縮}
+\label{sec:mnist}
+
+\paragraph{設定}
+30,000枚のseed固定MNIST訓練subset\cite{lecun1998}で、2次元Gaussian VAE
+\cite{kingma2014}を12 epoch学習する。滑らかなdecoderは幅64の2層Tanh trunk
+$h:\R^2\to\R^{64}$ と、固定観測共分散をもつ $784\times64$ affine平均headからなる。
+encoder、trunk、biasを凍結し、$W$ だけをrank-$r$ headで置換する。したがって
+VAE全体ではなくdecoder headの圧縮を測る。
+
+通常SVD（$C=I$）、出力重み付きSVD（$C=\E[hh^{\trans}]+\rho I$）、
+式~\eqref{eq:jet-covariance} の出力--Jacobian SVDを比較する。共分散は訓練splitの
+posterior mean 4,096点で推定する。第三手法ではJacobian共分散のtraceを出力共分散の
+4倍に固定し、test rankでは調整しない。
+
+全64 rankをofficial testのposterior mean 4,000点で評価する。
+$\widehat D_{\mathrm{loc}}$ は固定1,536点上の一般化固有値長さ誤差の最大値であり、
+6,000個の局所teacher-$W_2$ chord tripletも用いる。5\% crossingの選択と報告に
+同じ有限subsetを使うため、これは標本閾値であり、連続領域の保証でもMNISTの未知の
+真の多様体に対する主張でもない。
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.94\textwidth]{experiments/mnist_low_rank_compression_ja.png}
+  \caption{MNIST head圧縮frontier。共分散重み付きSVDはrank 12で標本5\%局所長さ閾値を
+  満たす。通常SVDはrank 60を必要とし、二因子保存はdense headより小さくならない。
+  出力誤差、局所teacher-$W_2$ chord一致率、復元PSNRは、出力と幾何が関連するが
+  同一ではないことを示す。}
+  \label{fig:mnist-frontier}
+\end{figure*}
 
 \begin{table*}[t]
   \centering
   \small
-  \setlength{\tabcolsep}{5pt}
-  \caption{独立な5試行における幾何復元性能（平均 $\pm$ 標本標準偏差）。
-  滑らかなデコーダーは1階および2階の幾何をともに復元する。ReLUは
-  パラメータを適合できる一方、系~\ref{cor:relu-flat} の予測どおり、
-  ほとんど至る所で平坦となる。}
-  \label{tab:main-results}
-  \resizebox{0.98\textwidth}{!}{\input{experiments/cartography_table_ja.tex}}
+  \caption{各手法の標本5\% crossing直前・直後と共通rank-8予算。tripletは局所
+  teacher-$W_2$ chord一致率であり、label精度や内在測地精度ではない。}
+  \label{tab:mnist}
+  \resizebox{0.98\textwidth}{!}{\input{experiments/mnist_low_rank_table_ja.tex}}
 \end{table*}
 
-\subsection{尤度だけでは曲率は定まらない}
+通常SVDはrank 60で初めて5\%を下回る
+（$\widehat D_{\mathrm{loc}}=4.944\%$、rank 59は6.794\%）。dense fallbackは50,960
+head parameterで、実質的な圧縮はない。二つの共分散重み付き手法はrank 12で
+閾値を越え、出力重み付きは4.196\%、出力--Jacobianは4.173\%である。
+rank 12はheadを50,960から10,960（$4.65\times$）、decoder全体を55,312から
+15,312（$3.61\times$）へ圧縮する。出力--Jacobian学生の教師出力RMSEは0.00386、
+局所chord-triplet一致率は99.95\%である。
 
-テストNLLは、Tanhで \mbox{$0.0708\pm0.0028$}、Softplusで
-\mbox{$0.0709\pm0.0028$}、ReLUで \mbox{$0.0715\pm0.0030$} である。これらの値は
-ほぼ区別できず、パラメータRMSEもすべてのモデルで $0.020$ 未満である。
-それにもかかわらず、表~\ref{tab:main-results} は、復元された幾何に
-質的な差が存在することを示している。Tanhの曲率MAEは
-\mbox{$0.140\pm0.016$} である。一方、ReLUがすべての評価点で返す曲率はゼロであり、
-5試行すべてにおいてMAEは厳密に1となる。これは最適化の偶発的な失敗ではなく、
-系~\ref{cor:relu-flat} が予測するアーキテクチャ由来の現象である。
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{experiments/cartography_training_ja.png}
-  \caption{第1試行における学習NLL。すべてのアーキテクチャが観測分布に
-  適合しているため、曲率復元の失敗を学習目的から検出することはできない。}
-  \label{fig:training}
-\end{figure}
+このMNIST設定ではJacobian項は5\% crossingをrank 12未満へ動かさず、rank減少の
+主因はdata共分散である。Jacobian固有の効果はrank 8で現れる。出力だけの重み付けに
+Jacobian項を加えると、$\widehat D_{\mathrm{loc}}$ は57.64\%から26.24\%へ低下し、
+chord-triplet一致率は91.92\%から94.23\%へ上がる。一方、出力RMSEは0.0245から
+0.0346へ悪化する。復元忠実度と潜在幾何が異なるrank配分を要求する証拠である。
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=0.98\textwidth]{experiments/cartography_geometry_ja.png}
-  \caption{歪んだ座標チャート上で学習された局所長さ尺度
-  $(\det G)^{1/4}$（上段）とGaussian曲率（下段）。真の長さ尺度は
-  $\sech y$、真の曲率は1である。滑らかなモデルは両方の場を復元する。
-  ReLUの計量は距離計算に利用できるもののノイズが大きく、その曲率は
-  恒等的にゼロとなる。}
-  \label{fig:geometry}
+  \includegraphics[width=0.93\textwidth]{experiments/mnist_low_rank_images_ja.png}
+  \caption{official-test入力、凍結教師復元、出力--Jacobian学生の標本5\%閾値直前・直後。
+  rank 11と12は見た目がほぼ同一だが、幾何条件の反対側に位置する。}
+  \label{fig:mnist-images}
 \end{figure*}
 
-1階の幾何量は、2階の幾何量ほど脆弱ではない。ReLUの計量誤差はTanhより
-大きいものの、その測地距離RMSEは依然として \mbox{$0.042\pm0.008$} である。
-これは定理~\ref{thm:stability} と整合する。すなわち、区分アフィン写像は、
-距離の復元に十分な精度で滑らかな写像とその1階微分を近似できる一方、
-各線形領域の内部では古典的Hessianがゼロのままだからである。
+\clearpage
 
-\subsection{局所輸送は弦距離のバイアスを補正する}
+\section{議論と限界}
 
-図~\ref{fig:distance} は、しばしば混同される3つの距離を区別している。
-平面座標距離の大円距離に対するRMSEは \mbox{$0.854\pm0.035$} である。
-両端点間の直接的な $W_2$ は正しい球面の弦距離を与えるが、内在距離の
-推定量としては依然として \mbox{$0.362\pm0.013$} のRMSEをもつ。これに対し、
-学習済みTanhデコーダーから得た局所 $W_2$ 辺だけを加算すると、
-RMSEは \mbox{$0.021\pm0.003$} まで減少し、オラクルグラフの離散化誤差
-\mbox{$0.0148\pm0.0008$} に近づく。
+\paragraph{何が本当に最小か}
+厳密タスクでは、全rank headに対する出力下界と実行可能な距離保存headを組み合わせ、
+trunkとbiasを共有する全線形head中でrank 24が最小だと証明する。
+定理~\ref{thm:rank-distillation} は別に、各rankで定義した一次蒸留損失の厳密最適値を
+与える。異なる非線形trunkがさらに少ないparameterで同じ教師挙動を表せないとは
+主張しない。
 
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.88\textwidth]{experiments/cartography_distances_ja.png}
-  \caption{左：平面地図上の距離は座標系に依存し、両端点間の大域的な
-  $W_2$ は球面内部を系統的に近道する。局所 $W_2$ 辺からなる最短鎖は、
-  内在的な移動距離を復元する。右：厳密な球面では
-  $d-W_2=d-2\sin(d/2)$ が成立し、定理~\ref{thm:chord-gap} の局所的な
-  3次則が実現される。}
-  \label{fig:distance}
-\end{figure*}
+\paragraph{保証と標本テスト}
+定理~\ref{thm:stability} は $s,M_1,\varepsilon_1$ の正しい大域評価があれば連続領域の
+主張である。解析画像タスクでは全量が厳密である。ニューラルsweepとMNISTでは
+supremumを有限集合で置き換えており、その通りに標本結果と呼ぶ。大域保証には
+covering、interval bound、または検証済みLipschitz剰余項が必要である。
 
-最後に、学習されたTanhパラメータ曲面は、剛体整合後に
-\mbox{$0.021\pm0.002$} のPCA再構成RMSEを達成する。これは
-図~\ref{fig:pipeline} に示した視覚的な「地図から球面へ」という結果を
-与える。一方、計量、曲率、距離による評価は、ここでいう幾何復元が何を
-意味するのかを定量的に規定している。
+\paragraph{parameter、bit、配備}
+制約のない実数一個は無限情報を符号化するため、普遍的parameter数下界には
+符号化可能または量子化重みが必要である。配備時は式~\eqref{eq:min-safe-size} で
+rank factorと精度を含む保存bit数を最小化すべきである。量子化誤差は
+定理~\ref{thm:stability} へ追加Jacobian摂動として入る。
 
-\section{考察と限界}
+\paragraph{教師相対幾何}
+実データで保存できるのは凍結教師であり、教師が真のdata manifoldを回復したことは
+保証できない。MNISTは教師1 seed、制限の強い2次元code、教師PSNR 13.19 dBであり、
+SOTA画像benchmarkではなく透明な適用例である。固定共分散では $W_2$ は平均画像の
+Euclid距離へ帰着するが、変形torus実験は非定数標準偏差を扱う。完全共分散では
+Bures--Wasserstein幾何が必要となる。
 
-\paragraph{生成モデルへの含意}
-本論文の定理は、デコーダー精度の解釈を変える。尤度または再構成精度は
-0階の学習目標である。幾何を考慮した補間には1階の汎化が必要であり、
-曲率に依存するモデリングには2階の汎化が必要となる。したがって、
-古典的な曲率場を得るには滑らかな活性化関数が必要である。しかし、それだけで
-十分ではなく、学習手続きも微分誤差を制御しなければならない。
-Sobolev正則化、微分観測、あるいはアーキテクチャ固有の微分評価は、
-定理~\ref{thm:stability} の仮定を具体化する自然な方法である。
-
-\paragraph{座標チャートからVAEへ}
-本ベンチマークでは、デコーダー幾何だけを切り分けて検証するため、
-潜在座標チャートをあらかじめ与えている。VAEでは、符号化後に同じ解析を
-適用できる。このとき、$z$ は学習された潜在表現であり、
-$F=(m,\sigma)$ は確率的デコーダーである。MNISTの数字のような離散クラスを
-含むデータに対して、単一の滑らかな多様体を仮定することが適切とは限らない。
-自然な拡張は、クラス条件付き、または層状の族
-$\bigcup_k\cZ_k$ を考え、デコーダーの各分岐に1つの引き戻し幾何を割り当てる
-ことである。本論文の理論は各滑らかな層の内部には適用できるが、
-それらのトポロジーを同定するものではない。
-
-\paragraph{適用範囲}
-本論文における厳密な $W_2$ 等長はめ込みは、対角Gaussian分布を用いる。
-完全共分散の場合にはBures--Wasserstein幾何が現れ、非Gaussian
-デコーダーの場合には、異なる母空間の計量、または数値的OTが必要となる。
-実験は意図的に統制された設定で行っている。実データには曲率の真値が存在しない
-ため、それだけでは曲率の整合性定理を検証できないからである。また、計量から
-外在的なデコーダーが決定されるとは主張しない。一般に、はめ込みを剛体運動の
-不定性を除いて復元するには、整合的な第一基本形式と第二基本形式の両方が
-必要となる。最後に、本論文の定理は微分近似精度を幾何近似精度へ移すもので
-あるが、それ自体がニューラルネットワークによる微分推定の収束率を証明する
-ものではない。
+\paragraph{範囲}
+本論文は距離と検索に集中する。曲率安定性には二階制御が必要であり、非線形分散head
+には制約付きまたは非線形圧縮が必要である。強い経験的主張には複数教師、rank選択と
+最終評価を分けたsplit、Jacobian weight ablation、MNIST以外のdatasetが必要である。
 
 \section{結論}
 
-最適輸送は、局所的なデコーダー幾何に座標不変な定義を与える。しかし、
-良好な再構成が得られたからといって、その幾何が自動的に学習可能になるわけ
-ではない。対角Gaussianデコーダーについて、本論文は正則性の階層を
-厳密に示した。すなわち、デコーダーを $C^1$ で制御すれば計量と内在距離が
-安定し、曲率を安定させるには $C^2$ 制御が必要となる。滑らかな反例と
-ReLUに関する結果は、これらの階層を統合できないことを示している。
-
-Wasserstein地図学ベンチマークは、この違いを視覚化する。局所輸送は
-歪んだ地図を補正して球面上の移動距離を復元する一方、ほぼ同一の尤度をもつ
-モデルでも曲率を完全に消失させうる。したがって、幾何を考慮する生成モデルの
-適切な「構造」は、潜在次元だけでは規定されない。必要な構造には、
-デコーダーの微分正則性と、下流タスクが要求する幾何の階数も含まれる。
+圧縮デコーダーの容量は、保存すべき挙動で定義すべきである。Gaussianデコーダーでは
+最適輸送によりその挙動が引き戻し計量となる。本研究は値と微分の同時近似から十分な
+容量則を導き、計量歪みをtriplet精度へ変換し、固定trunkのrank制約付き一次蒸留を
+共分散白色化SVDで解いた。厳密画像タスクでは、出力・距離とも5\%という条件のもとで
+rank 23以下が不可能、rank 24が実行可能で、headは $12.61\times$ 小さくなる。
+非定数分散のニューラルstress testとMNIST標本frontierは、同じ基準が学習と配備を
+導けることを示す。これは全ニューラルnetwork中の普遍的最小ではないが、
+「どこまで小さくできるか」を数学的制約と監査可能な精度境界へ変える枠組みである。
 
 \section*{再現性}
 
-実験、独立な5試行、すべての図表、および英語版・日本語版PDFは、
-次のコマンドで再生成できる。
+固定seedのscript、CSV、表、図、英日両版は次で再生成できる。
 \begin{verbatim}
 make paper-all
 \end{verbatim}
-実験スクリプトはPEP~723形式で依存関係を固定しており、報告した各試行の
-全結果をCSV形式で記録する。
+MNISTのdownloadと学習済み教師checkpointはlocal cacheに保存し、version管理しない。

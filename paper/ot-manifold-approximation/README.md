@@ -1,84 +1,77 @@
-# Wasserstein Cartography of Gaussian Decoders
+# How Small Can a Decoder Be?
 
-This directory contains the paper and reproducible experiment for studying
-which decoder accuracy is needed to recover latent geometry.
+This directory contains the English and Japanese editions of
+**Certified Geometry--Capacity Thresholds for Wasserstein Latent
+Distillation** and its reproducible experiments.
 
-## Main statement
+## Question
 
-For a diagonal Gaussian decoder
+For a diagonal-Gaussian teacher decoder and a compressed student, how many
+parameters are needed to preserve both teacher outputs and teacher intrinsic
+latent distances to prescribed tolerances?
 
-\[
-K_z=\mathcal N\!\left(m(z),\operatorname{diag}(\sigma(z)^2)\right),
-\qquad F(z)=(m(z),\sigma(z)),
-\]
+The Gaussian 2-Wasserstein identity turns the decoder parameter map
 
-the exact 2-Wasserstein distance is
+```text
+F(z) = (mu(z), sigma(z))
+```
 
-\[
-W_2(K_z,K_{z'})=\lVert F(z)-F(z')\rVert,
-\]
+into a Euclidean immersion with pullback metric
 
-and the latent pullback metric is
+```text
+G(z) = J_F(z)^T J_F(z).
+```
 
-\[
-G(z)=J_F(z)^\top J_F(z).
-\]
+The paper converts uniform student--teacher Jacobian error into all-distance
+and triplet-accuracy guarantees, gives a conditional geometry--capacity rate,
+and solves fixed-trunk rank-constrained first-order distillation by a
+covariance-whitened SVD.
 
-The paper proves the regularity hierarchy
+## Main result
 
-\[
-C^0\not\Rightarrow G,
-\qquad
-C^1\Rightarrow G\text{ and }d_G,
-\qquad
-C^2\Rightarrow B\text{ and }\mathcal K.
-\]
+The controlled task uses a `28 x 28` Gaussian image decoder with a
+512-dimensional Fourier trunk. At predeclared output and distance tolerances
+`eta = tau = 5%`:
 
-The positive implications have explicit finite-error bounds. The negative
-implications are witnessed by smooth Gaussian decoders. A piecewise-affine
-ReLU parameter decoder is flat almost everywhere.
+| Student | Output error | Distance distortion | Decision |
+|---|---:|---:|---|
+| rank 20 | 6.2788% | 5.4485% | fail |
+| rank 24 | 4.8980% | 4.5555% | pass |
 
-## Controlled benchmark
+Every shared-trunk head of rank at most 23 has output RMS at least 5.2772%, so
+rank 24 is a proved minimum over the stated head family. Its factorized head
+has 31,888 parameters instead of 402,192, a 12.61x reduction.
 
-The visible latent coordinates are a Mercator chart, while each coordinate
-generates a diagonal Gaussian distribution. The hidden geometric answer is a
-unit sphere:
+Two further experiments use the same threshold logic:
 
-\[
-G_*(\lambda,y)=\operatorname{sech}^2(y)I_2,
-\qquad \mathcal K_*=1.
-\]
-
-Training never uses the sphere coordinates, metric, curvature, or geodesic
-distance. The experiment evaluates all four quantities against their exact
-answers over five independent trials.
+- a diagonal-Gaussian warped torus with nonconstant variance compares
+  output-only and output--Jacobian neural distillation;
+- an MNIST VAE compares ordinary, value-weighted, and value--Jacobian SVD of a
+  frozen decoder head. The covariance-aware methods cross the sampled 5%
+  boundary at rank 12; ordinary SVD requires rank 60.
 
 ## Reproduction
 
-Run the experiment:
+Run all experiments:
 
 ```sh
 make paper-experiments
 ```
 
-Build the PDF:
+Build the English and Japanese PDFs:
 
 ```sh
 make paper
-```
-
-Build the Japanese edition:
-
-```sh
 make paper-ja
 ```
 
-Regenerate everything:
+Regenerate experiments and both editions:
 
 ```sh
 make paper-all
 ```
 
-The English and Japanese editions are written to `out/main.pdf` and
-`out/main-ja.pdf`, respectively. Raw and aggregated measurements are stored in
-`experiments/cartography_results.csv` and `experiments/cartography_summary.csv`.
+The PDFs are written to `out/main.pdf` and `out/main-ja.pdf`. Raw frontiers
+are stored in `experiments/lowrank_torus_results.csv`,
+`experiments/distillation_results.csv`, and
+`experiments/mnist_low_rank_results.csv`.

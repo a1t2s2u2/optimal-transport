@@ -1,0 +1,563 @@
+\begin{abstract}
+How far can a generative decoder be compressed before its latent geometry
+breaks?  Reconstruction error does not answer this question: a student can
+match a teacher at sampled latent codes while changing the derivatives that
+determine interpolation, retrieval, and geodesic distance.  We study
+teacher--student diagonal-Gaussian decoders under the 2-Wasserstein metric.
+The Gaussian closed form identifies the parameter map
+$F=(\mu,\sigma)$ as a Euclidean immersion with pullback metric
+$G=J_F^{\trans}J_F$.  A uniform student--teacher Jacobian error then certifies
+every intrinsic distance and, through teacher margins, triplet-retrieval
+accuracy.  Neural derivative-approximation rates yield the sufficient
+geometry--capacity law $P=O(\tau^{-d/(\nu-1)})$ for a $\nu$-smooth teacher on
+a $d$-dimensional latent region.
+
+For a fixed smooth decoder trunk, we further prove that rank-constrained joint
+output--Jacobian distillation has a closed-form global solution: a truncated
+SVD of the covariance-whitened teacher head.  An analytic $28\times28$
+Gaussian image manifold gives an exact simultaneous output--distance
+threshold over every shared-trunk linear head: at 5\% tolerance, every rank at
+most 23 is infeasible, while rank 24 has 4.898\% output error and 4.555\%
+distance distortion, reducing head storage by $12.61\times$.  A neural width sweep shows why first-order
+supervision matters: on a frequency-warped Gaussian torus, output-only
+distillation fails the same 5\% grid test even at $69{,}128$ parameters,
+whereas output--Jacobian distillation passes at $18{,}184$.  Finally, on a
+trained two-dimensional MNIST VAE, covariance-aware head compression reaches
+the sampled 5\% threshold at rank 12 rather than rank 60 for ordinary SVD,
+with $4.65\times$ head compression and 99.95\% teacher-triplet agreement.
+\end{abstract}
+
+\section{Introduction}
+
+Knowledge distillation, pruning, low-rank factorization, and quantization can
+greatly reduce a neural network while retaining its usual test loss.  For a
+generative decoder, however, matching individual outputs is only a zeroth-order
+requirement.  A latent displacement is measured through the derivative of the
+decoder, and the shortest path between two codes depends on those derivatives
+along an entire curve.  Two decoders with almost identical reconstruction loss
+can therefore support different interpolations and nearest neighbours.
+
+This paper asks one deliberately concrete question:
+
+\begin{quote}
+What is the smallest student that preserves every teacher-induced latent
+distance to a prescribed relative tolerance $\tau$?
+\end{quote}
+
+The phrase ``smallest'' is meaningless without fixing the admissible student
+family and numerical precision.  We consequently give two complementary
+answers.  First, for a general smooth student family we derive a sufficient
+parameter--accuracy rate and state precisely where finite-bit assumptions are
+needed.  Second, for the common deployment operation of replacing a decoder's
+dense output head by a rank-$r$ factorization, we obtain an exact optimum and a
+computable safe rank.  The second result is not an optimizer-dependent neural
+architecture search: it follows from one singular value decomposition.
+
+The geometry is defined by optimal transport.  Let a diagonal-Gaussian decoder
+be
+\begin{equation}
+ K_z=\mathcal N\!\left(\mu(z),
+ \diag(\sigma(z)^2)\right),
+ \qquad z\in\Omega\subset\R^d.
+ \label{eq:decoder}
+\end{equation}
+For two codes, the exact Gaussian formula gives
+\begin{equation}
+ W_2(K_z,K_{z'})^2
+ =\norm{\mu(z)-\mu(z')}^2
+  +\norm{\sigma(z)-\sigma(z')}^2.
+ \label{eq:gaussian-w2}
+\end{equation}
+Thus $F=(\mu,\sigma)$ embeds decoder distributions into Euclidean parameter
+space.  The induced latent metric is $G=J_F^{\trans}J_F$, and its path distance
+is invariant to a change of latent coordinates.  This is the analytically
+tractable version of Wasserstein latent transport.
+
+Our contributions are as follows.
+\begin{enumerate}
+  \item We define the minimum safe student by simultaneous output and intrinsic
+  distance tolerances.  A finite-error theorem turns uniform Jacobian error
+  into a multiplicative guarantee for every latent pair.
+  \item We introduce a triplet-margin certificate.  It converts a geometric
+  distortion bound into a directly reportable accuracy lower bound.  With a
+  mild margin condition, neural derivative approximation rates become an
+  explicit parameter--accuracy law.
+  \item For a fixed decoder trunk and a rank-constrained head, we solve joint
+  output--Jacobian distillation globally by a covariance-whitened SVD.  The
+  singular-value tail is an exact lower bound for the stated distillation
+  problem, and its next singular value yields a safe rank for all distances.
+  \item We evaluate the same predeclared 5\% criterion at three levels: an
+  exact multi-resolution Gaussian image manifold, trained neural students on
+  a warped Gaussian torus, and the frozen decoder head of an MNIST VAE.  This
+  separates theorem verification, optimization behavior, and real-data use.
+\end{enumerate}
+
+\section{Related Work}
+
+Classical knowledge distillation transfers soft teacher outputs
+\cite{hinton2015}.  Sobolev training and Jacobian matching add derivative
+targets \cite{czarnecki2017,srinivas2018}.  Relational and
+similarity-preserving distillation match pairwise relations on a finite
+transfer set \cite{park2019,tung2019}.  Our use of a Jacobian loss is therefore
+not itself new.  The distinction is the guarantee: we connect first-order
+distillation to a continuous Wasserstein pullback metric, every intrinsic
+path distance, a capacity threshold, and certified retrieval accuracy.
+
+Weighted low-rank factorization already uses task or activation information
+instead of applying ordinary SVD directly to a weight matrix
+\cite{hsu2022}.  Our covariance-whitened algebra is an instance of this broad
+idea.  The new ingredient is to place decoder Jacobians in the covariance and
+translate the resulting approximation error into Wasserstein latent-metric
+and path-distance guarantees.
+
+Pullback Riemannian metrics for deterministic and stochastic generative models
+were developed by Arvanitidis et al.~\cite{arvanitidis2018} and Chen et
+al.~\cite{chen2018}.  Optimal Latent Transport computes paths using transport
+costs between decoder distributions \cite{roy2022}.  These works analyze or
+use the geometry of a trained decoder.  We instead study what happens to that
+geometry when the decoder is compressed.  The Gaussian transport identity is
+classical \cite{givensshortt1984,takatsu2011}.
+
+Our real-data study uses the variational-autoencoder construction
+\cite{kingma2014} and MNIST \cite{lecun1998}.  Its target is explicitly the
+geometry of a frozen teacher decoder, not a claim that a two-dimensional VAE
+recovers the unknown true manifold of handwritten digits.
+
+Neural approximation in higher-order Sobolev norms provides upper and lower
+complexity rates for smooth function classes.  In particular, encodable
+weights attain nearly optimal derivative approximation rates
+\cite{guhring2021}, and smooth Tanh networks admit explicit high-order bounds
+\cite{deryck2021}.  We transfer these function-space rates to latent distance
+and task accuracy.  The resulting lower bounds apply to decoder derivative
+fidelity; they do not automatically become geometry-only lower bounds because
+different immersions can induce the same metric.
+
+\section{Wasserstein Geometry Distillation}
+\label{sec:problem}
+
+Let $F_T,F_S:\Omega\to\R^N$ denote teacher and student Gaussian parameter
+maps, where $N=2n$ in \eqref{eq:decoder}, or $N=n$ when the observation
+covariance is fixed.  Assume throughout that $\Omega$ is a compact,
+path-connected $C^1$ domain or manifold on which every two points admit a
+rectifiable connecting curve, and that $F_T$ is a $C^1$ immersion.  Define
+\begin{equation}
+ G_T=J_{F_T}^{\trans}J_{F_T},
+ \qquad
+ G_S=J_{F_S}^{\trans}J_{F_S}.
+ \label{eq:metrics}
+\end{equation}
+For a piecewise $C^1$ curve $c:[0,1]\to\Omega$, its teacher length and
+distance are
+\begin{align}
+ L_T(c)&=\int_0^1
+ \sqrt{\dot c(t)^{\trans}G_T(c(t))\dot c(t)}\dd t,\notag\\
+ d_T(z,z')&=\inf_{c(0)=z,\,c(1)=z'}L_T(c),
+ \label{eq:path-distance}
+\end{align}
+with analogous definitions for $S$.
+
+We separate output fidelity from geometry.  Let
+\begin{align}
+ E_0(S,T)&=\sup_{z\in\Omega}W_2(K_z^S,K_z^T),\notag\\
+ D_{\rm pair}(S,T)&=
+ \sup_{z\ne z'}
+ \left|\frac{d_S(z,z')}{d_T(z,z')}-1\right|.
+ \label{eq:two-errors}
+\end{align}
+Output fidelity is necessary: without $E_0$, an unrelated isometric decoder
+would count as successful compression.  For a student class $\mathcal A_P$
+with at most $P$ encodable parameters, define
+\begin{equation}
+ \begin{aligned}
+ P^\star(\eta,\tau)
+ =\min\{P:\;&\exists S\in\mathcal A_P,\\
+ &E_0(S,T)\le\eta,\\
+ &D_{\rm pair}(S,T)\le\tau\}.
+ \end{aligned}
+ \label{eq:min-safe-size}
+\end{equation}
+The class and bit precision are part of this definition.
+
+For numerical evaluation, no path solver is needed for the stronger local
+quantity
+\begin{equation}
+ D_{\rm loc}(S,T)=
+ \sup_{z\in\Omega,\,v\ne0}
+ \left|
+ \sqrt{\frac{v^{\trans}G_S(z)v}{v^{\trans}G_T(z)v}}-1
+ \right|.
+ \label{eq:local-distortion}
+\end{equation}
+It is obtained from the extremal generalized eigenvalues of $(G_S,G_T)$.
+Integrating lengths shows immediately that
+\begin{equation}
+ D_{\rm loc}(S,T)\le\tau
+ \quad\Longrightarrow\quad
+ D_{\rm pair}(S,T)\le\tau.
+ \label{eq:local-implies-global}
+\end{equation}
+
+\subsection{A certificate from Jacobian error}
+
+The following result supplies the test used throughout the paper.
+
+\begin{theorem}[Uniform geometry certificate]
+\label{thm:stability}
+Suppose, uniformly on $\Omega$,
+\begin{equation}
+ \sigma_{\min}(J_{F_T})\ge s>0,
+ \qquad
+ \norm{J_{F_T}}_2\le M_1.
+ \label{eq:teacher-conditioning}
+\end{equation}
+Let
+\begin{equation}
+ \varepsilon_1
+ =\sup_{z\in\Omega}
+ \norm{J_{F_S}(z)-J_{F_T}(z)}_2
+ \label{eq:jacobian-error}
+\end{equation}
+and define
+\begin{equation}
+ q=2M_1\varepsilon_1+\varepsilon_1^2,
+ \qquad
+ \delta=\frac{q}{s^2}.
+ \label{eq:delta}
+\end{equation}
+If $\varepsilon_1<s$ and $\delta<1$, then $F_S$ is an immersion and
+\begin{equation}
+ (1-\delta)G_T\preceq G_S\preceq(1+\delta)G_T.
+ \label{eq:metric-certificate}
+\end{equation}
+Consequently, every latent pair satisfies
+\begin{equation}
+ \sqrt{1-\delta}\,d_T(z,z')
+ \le d_S(z,z')
+ \le\sqrt{1+\delta}\,d_T(z,z').
+ \label{eq:distance-certificate}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Write $J_S=J_T+E$.  Expansion gives
+\[
+ \norm{G_S-G_T}_2
+ \le2\norm{J_T}_2\norm{E}_2+\norm{E}_2^2
+ \le q.
+\]
+Since $G_T\succeq s^2I$, this yields
+\eqref{eq:metric-certificate}.  Taking square roots, integrating along every
+curve, and then taking infima proves \eqref{eq:distance-certificate}.
+Finally $\sigma_{\min}(J_S)\ge s-\varepsilon_1>0$.
+\end{proof}
+
+For a requested relative error $\tau\in(0,1)$, the lower inequality in
+\eqref{eq:distance-certificate} is the restrictive one.  Therefore a directly
+computable sufficient Jacobian tolerance is
+\begin{equation}
+ \varepsilon_\tau
+ =\sqrt{M_1^2+s^2(2\tau-\tau^2)}-M_1.
+ \label{eq:epsilon-tau}
+\end{equation}
+Indeed, $\varepsilon_1\le\varepsilon_\tau$ is equivalent to
+$\delta\le2\tau-\tau^2$, and hence $D_{\rm pair}\le\tau$.
+
+\subsection{From geometric distortion to accuracy}
+
+A percentage accuracy makes the consequence of the certificate easier to
+interpret.  For a triplet $(q,a,b)$, assume $d_T(q,a)<d_T(q,b)$ and define the
+teacher squared-distance margin
+\begin{equation}
+ \gamma(q,a,b)=
+ \frac{d_T(q,b)^2-d_T(q,a)^2}
+ {d_T(q,b)^2+d_T(q,a)^2}.
+ \label{eq:triplet-margin}
+\end{equation}
+
+\begin{proposition}[Certified triplet accuracy]
+\label{prop:triplet}
+Under Theorem~\ref{thm:stability}, every triplet satisfying
+$\gamma(q,a,b)>\delta$ retains its teacher ordering under the student.  Thus,
+for a test set $\mathcal T$, the student triplet agreement is at least
+\begin{equation}
+ A_{\rm cert}(\delta)
+ =\frac{1}{\abs{\mathcal T}}
+ \sum_{t\in\mathcal T}
+ \mathbf 1\{\gamma(t)>\delta\}.
+ \label{eq:certified-accuracy}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Let $A=d_T(q,a)^2$ and $B=d_T(q,b)^2$.  Equation
+\eqref{eq:distance-certificate} preserves the ordering whenever
+$(1+\delta)A<(1-\delta)B$.  Rearrangement gives
+$(B-A)/(B+A)>\delta$, which is exactly \eqref{eq:triplet-margin}.
+\end{proof}
+
+Suppose a family of $P$-parameter students simultaneously satisfies
+\begin{equation}
+ \begin{aligned}
+ \sup_z\norm{F_S(z)-F_T(z)}
+ &\le C_0P^{-\nu/d},\\
+ \varepsilon_1(P)&\le C_1P^{-(\nu-1)/d}.
+ \end{aligned}
+ \label{eq:simultaneous-rate}
+\end{equation}
+for a $\nu$-smooth teacher with $\nu>1$ and an architecture for which these
+uniform value and derivative rates hold.  Combining the value bound with
+\eqref{eq:epsilon-tau} gives
+\begin{equation}
+ P^\star(\eta,\tau)
+ \lesssim
+ \max\left\{
+ \left(\frac{C_0}{\eta}\right)^{d/\nu},
+ \left(\frac{C_1}{\varepsilon_\tau}\right)^{d/(\nu-1)}
+ \right\}.
+ \label{eq:joint-capacity-law}
+\end{equation}
+For fixed output tolerance and small $\tau$, this yields the
+geometry-dominated law
+\begin{equation}
+ P^\star(\eta,\tau)
+ =O\!\left(\tau^{-d/(\nu-1)}\right).
+ \label{eq:capacity-law}
+\end{equation}
+The constants, domain assumptions, activation, depth, and logarithmic factors
+are inherited from the selected approximation theorem
+\cite{guhring2021,deryck2021}; \eqref{eq:joint-capacity-law} is a conditional
+transfer of those rates, not a dimension-free architecture claim.
+
+If the empirical or population triplet-margin distribution obeys
+$\Pr(\gamma\le t)\le C_\gamma t^\beta$, the derivative rate also implies
+\begin{equation}
+ 1-A_{\rm cert}(P)
+ \le C_\gamma\delta(P)^\beta
+ =O\!\left(P^{-(\nu-1)\beta/d}\right).
+ \label{eq:parameter-accuracy}
+\end{equation}
+Encodable-weight approximation lower bounds match the derivative exponent up
+to logarithms \cite{guhring2021}.  They prove optimality of decoder derivative
+approximation, not of geometry alone: rigid motions and other isometries erase
+information when $F$ is replaced by $J_F^{\trans}J_F$.
+
+\section{Closed-Form Low-Rank Distillation}
+\label{sec:low-rank}
+
+We now fix a setting in which the compression frontier can be computed exactly.
+Let a smooth decoder trunk $h:\Omega\to\R^p$ be shared by teacher and student,
+and compress only an affine Euclidean parameter head:
+\begin{equation}
+ F_W(z)=Wh(z)+b,
+ \qquad
+ F_U(z)=Uh(z)+b,
+ \label{eq:linear-heads}
+\end{equation}
+where $W,U\in\R^{N\times p}$.  A rank-$r$ student can store $U$ as two
+factors using $r(N+p)+N$ head parameters including the bias, rather than
+$Np+N$.
+
+This setting applies directly to a fixed-covariance Gaussian mean head.  If
+$F$ also contains learned standard deviations, positivity of the compressed
+channels on $\Omega$ is an additional admissibility condition: unconstrained
+SVD does not guarantee it.  A nonlinear softplus variance head is not covered
+by the affine closed form.
+
+Given calibration codes $z_1,\ldots,z_m$, write $h_i=h(z_i)$ and
+$J_i=J_h(z_i)$.  For $\lambda\ge0$ and $\rho>0$, define
+\begin{equation}
+ C=\frac1m\sum_{i=1}^m
+ \left(h_ih_i^{\trans}+\lambda J_iJ_i^{\trans}\right)
+ +\rho I_p.
+ \label{eq:jet-covariance}
+\end{equation}
+The associated first-order distillation loss is
+\begin{equation}
+ \mathcal L_C(U)=\norm{(U-W)C^{1/2}}_F^2.
+ \label{eq:distillation-loss}
+\end{equation}
+Expanding \eqref{eq:jet-covariance} shows that this is the sum of teacher
+output error, $\lambda$ times Jacobian error, and a ridge term.
+
+\begin{theorem}[Exact rank--distillation frontier]
+\label{thm:rank-distillation}
+Let $B=WC^{1/2}$ and let $B_r$ be its rank-$r$ truncated SVD.  Then
+\begin{equation}
+ U_r=B_rC^{-1/2}
+ \label{eq:optimal-head}
+\end{equation}
+is a global minimizer of \eqref{eq:distillation-loss} over all heads of rank at
+most $r$, and
+\begin{equation}
+ \min_{\rank(U)\le r}\mathcal L_C(U)
+ =\sum_{j>r}\sigma_j(B)^2.
+ \label{eq:exact-tail}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Set $V=UC^{1/2}$.  Since $C$ is positive definite,
+$\rank(V)=\rank(U)$ and $\mathcal L_C(U)=\norm{V-B}_F^2$.  The result is the
+Eckart--Young--Mirsky theorem \cite{eckart1936,mirsky1960}, followed by the
+inverse change of variables.
+\end{proof}
+
+Equation \eqref{eq:exact-tail} is a genuine impossibility result within the
+fixed-trunk, rank-$r$, first-order distillation problem.  It is not a lower
+bound over arbitrary decoders that merely share the same intrinsic metric.
+
+The same SVD also produces a distance certificate.  Define
+\begin{equation}
+ \ell_1=\sup_{z\in\Omega}
+ \norm{C^{-1/2}J_h(z)}_2,
+ \qquad
+ \overline\varepsilon_r=\sigma_{r+1}(B)\ell_1.
+ \label{eq:spectral-jacobian-bound}
+\end{equation}
+Because $U_r-W=(B_r-B)C^{-1/2}$ and
+$\norm{B_r-B}_2=\sigma_{r+1}(B)$,
+\begin{equation}
+ \sup_z\norm{J_{F_{U_r}}(z)-J_{F_W}(z)}_2
+ \le\overline\varepsilon_r.
+ \label{eq:spectral-to-uniform}
+\end{equation}
+
+\begin{corollary}[Certified safe rank]
+\label{cor:safe-rank}
+Let the teacher map $F_W$ satisfy \eqref{eq:teacher-conditioning}.  If
+$\overline\varepsilon_r\le\varepsilon_\tau$, then the rank-$r$ head
+\eqref{eq:optimal-head} preserves every teacher intrinsic distance within
+relative error $\tau$.  Hence
+\begin{equation}
+ r_{\rm cert}(\tau)
+ =\min\left\{r:
+ \sigma_{r+1}(B)\ell_1\le\varepsilon_\tau
+ \right\}
+ \label{eq:certified-rank}
+\end{equation}
+is a safe rank along the SVD-optimal distillation frontier, provided certified
+global bounds on $s$, $M_1$, and $\ell_1$ are available.  Replacing the
+suprema by sample maxima yields an empirical test, not a continuum
+certificate.
+\end{corollary}
+
+An analogous value bound follows by replacing $J_h$ with $h$.  Quantization
+can also be included by adding the uniform Jacobian perturbation of the
+quantized factors to $\overline\varepsilon_r$; minimizing total storage then
+chooses rank and bits under the same inequality.
+
+\section{An Exact Gaussian Image Task}
+\label{sec:exact-task}
+
+To test a capacity theorem, a real dataset alone is insufficient because its
+true decoder geometry is unknown.  We therefore construct a high-dimensional
+image decoder for which output error, rank lower bounds, and every distance
+are analytic.  Let $z=(x,y)$ lie on the flat two-torus
+$(\R/2\pi\mathbb Z)^2$ and define the $4T$ trunk features
+\begin{equation}
+ h_T(x,y)=
+ \bigl(\cos(jx),\sin(jx),\cos(jy),\sin(jy)\bigr)_{j=1}^T.
+ \label{eq:fourier-trunk}
+\end{equation}
+Let $Q\in\R^{784\times4T}$ have orthonormal image atoms as columns and let
+$a_1\ge\cdots\ge a_T>0$.  The teacher's $28\times28$ mean image is
+\begin{equation}
+ \mu_T(z)=\mu_0+QD_T h_T(z),
+ \label{eq:image-teacher}
+\end{equation}
+where $D_T$ repeats $a_j/j$ four times for each $j$.  We use a fixed positive
+observation variance, so
+$K_z^T=\mathcal N(\mu_T(z),\sigma_0^2I)$ and the exact $W_2$ cost is Euclidean
+mean-image distance.  The rank-$4K$ prefix student retains the first $K$
+frequency blocks with their teacher coefficients.
+
+\begin{proposition}[Exact output--distance law]
+\label{prop:exact-rank-law}
+Set
+\begin{equation}
+ S_K=\sum_{j=1}^K a_j^2.
+ \label{eq:spectral-energy}
+\end{equation}
+Then the teacher and student metrics are
+\begin{equation}
+ G_T=S_TI_2,
+ \qquad
+ G_K=S_KI_2,
+ \label{eq:torus-metrics}
+\end{equation}
+and for every distinct latent pair,
+\begin{equation}
+ \frac{d_K(z,z')}{d_T(z,z')}
+ =\sqrt{\frac{S_K}{S_T}}.
+ \label{eq:exact-distance-ratio}
+\end{equation}
+Consequently,
+\begin{equation}
+ D_{\rm loc}=D_{\rm pair}
+ =1-\sqrt{\frac{S_K}{S_T}},
+ \label{eq:exact-distortion}
+\end{equation}
+and the uniform teacher-output error is
+\begin{equation}
+ E_{0,K}
+ =\left(2\sum_{j>K}\left(\frac{a_j}{j}\right)^2\right)^{1/2}.
+ \label{eq:exact-output-error}
+\end{equation}
+Thus the first prefix satisfying both tolerances is
+\begin{equation}
+ \begin{aligned}
+ r_{\rm prefix}^\star(\eta,\tau)
+ =4\min\{K:\;&E_{0,K}\le\eta,\\
+                 &S_K\ge(1-\tau)^2S_T\}.
+ \end{aligned}
+ \label{eq:exact-min-rank}
+\end{equation}
+Moreover, under the uniform latent distribution, every shared-trunk rank-$r$
+head satisfies
+\begin{equation}
+ E_0\ge
+ \left(\frac12\sum_{\ell>r}\sigma_\ell(W)^2\right)^{1/2},
+ \label{eq:output-rank-lower-bound}
+\end{equation}
+where $W=QD_T$ has singular values $a_j/j$, each repeated four times.  For
+pure Jacobian distillation, define separately
+$C_J=\E[J_hJ_h^{\trans}]$.  The singular values of $WC_J^{1/2}$ are
+$a_j/\sqrt2$, each repeated four times, and the exact optimal tail loss at
+rank $4K$ is $2\sum_{j>K}a_j^2$.
+\end{proposition}
+
+\begin{proof}
+For each $x$ block,
+\[
+ \left\|\partial_x
+ \left[\frac{a_j}{j}(\cos(jx),\sin(jx))\right]\right\|^2
+ =a_j^2.
+\]
+The $x$ and $y$ image atoms are orthogonal, so cross terms vanish.  Summing
+over blocks gives \eqref{eq:torus-metrics}.  All curve lengths are therefore
+scaled by $\sqrt{S_K/S_T}$, proving \eqref{eq:exact-distance-ratio} and
+\eqref{eq:exact-distortion}.  Orthonormality of $Q$ and
+$\cos^2+\sin^2=1$ give \eqref{eq:exact-output-error}.  Under normalized
+uniform measure, $\E[h_Th_T^{\trans}]=I/2$, so Eckart--Young--Mirsky gives the
+minimum root-mean-square output error in
+\eqref{eq:output-rank-lower-bound}; $E_0$ is at least this RMS value.  The
+pure-Jacobian statement follows by integrating the squared derivatives.
+\end{proof}
+
+The benchmark task is intentionally binary and auditable.  For a tolerance
+$\tau$, define
+\begin{equation}
+ \mathrm{PairAcc}@\tau
+ =\frac1{\abs{\mathcal P}}
+ \sum_{(z,z')\in\mathcal P}
+ \mathbf1\left\{
+ \left|\frac{d_K(z,z')}{d_T(z,z')}-1\right|\le\tau
+ \right\}.
+ \label{eq:pair-accuracy}
+\end{equation}
+Because \eqref{eq:exact-distance-ratio} holds for every pair, this accuracy is
+zero below the prefix distance threshold and one at or above it.  Together
+with \eqref{eq:output-rank-lower-bound}, the numerical choice in
+Section~\ref{sec:controlled-experiment} will establish a true minimum rank over
+all shared-trunk linear heads for simultaneous output and distance fidelity.
+This is not a claim that all real decoder manifolds have uniform scale.
