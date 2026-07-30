@@ -141,8 +141,11 @@ For every $z,z'\in\cZ$,
 If $F$ is $C^1$ and $\rank J_F(z)=d$, the infinitesimal metric induced by
 \eqref{eq:w2-chord} is
 \begin{equation}
- G(z)=J_F(z)^{\trans}J_F(z)
- =J_m(z)^{\trans}J_m(z)+J_\sigma(z)^{\trans}J_\sigma(z).
+ \begin{aligned}
+ G(z)&=J_F(z)^{\trans}J_F(z)\\
+ &=J_m(z)^{\trans}J_m(z)
+   +J_\sigma(z)^{\trans}J_\sigma(z).
+ \end{aligned}
  \label{eq:pullback}
 \end{equation}
 In particular,
@@ -156,7 +159,7 @@ transport map.  The expansion follows by differentiating $F$.  We include the
 statement to fix the geometry; a self-contained derivation appears in the
 companion seminar notes.
 
-\subsection{Recovering the metric from noisy local transport}
+\subsection{Noisy Local Metric Recovery}
 
 Proposition~\ref{prop:w2-immersion} defines $G$ infinitesimally.  The following
 result makes the approximation scale explicit and uses only local endpoint
@@ -179,21 +182,23 @@ $\W(K_{z+hv},K_{z-hv})^2$ with absolute error at most $\eta$.  Define
 \]
 Then
 \begin{equation}
+ \begin{aligned}
  \abs{\widetilde Q_h(z;v)-v^{\trans}G(z)v}
- \le \frac{M_1M_3}{3}h^2+\frac{M_3^2}{36}h^4
- +\frac{\eta}{4h^2}.
+ &\le \frac{M_1M_3}{3}h^2+\frac{M_3^2}{36}h^4\\
+ &\quad+\frac{\eta}{4h^2}.
+ \end{aligned}
  \label{eq:local-probe}
 \end{equation}
 In particular, the leading error is $O(h^2+\eta/h^2)$ and choosing
 $h\asymp\eta^{1/4}$ gives $O(\sqrt\eta)$ error.  In two dimensions, evaluating
 $\widetilde Q_h$ at $e_1,e_2$ and
 $e_\pm=(e_1\pm e_2)/\sqrt2$ recovers every metric entry via
-\begin{align*}
- \widehat G_{11}&=\widetilde Q_h(e_1),
- &\widehat G_{22}&=\widetilde Q_h(e_2),\\
- \widehat G_{12}&=
+\begin{gather*}
+ \widehat G_{11}=\widetilde Q_h(e_1),\qquad
+ \widehat G_{22}=\widetilde Q_h(e_2),\\
+ \widehat G_{12}=
  \frac{\widetilde Q_h(e_+)-\widetilde Q_h(e_-)}{2}.
-\end{align*}
+\end{gather*}
 \end{proposition}
 
 \begin{proof}
@@ -240,21 +245,23 @@ Equations \eqref{eq:pullback} and \eqref{eq:gauss} expose the central learning
 issue: values determine the fitted distributions, first derivatives determine
 distance, and second derivatives determine curvature.
 
-\section{Which Decoder Accuracy Controls Geometry?}
+\section{Accuracy for Latent Geometry}
 \label{sec:theory}
 
 We now quantify the derivative hierarchy.  Matrix norms without a subscript
 are Euclidean operator norms.  For a tensor of second derivatives, maxima are
 taken over the two coordinate indices.
 
-\begin{theorem}[Quantitative stability of learned geometry]
+\begin{theorem}[Stability of learned geometry]
 \label{thm:stability}
 Let $d=2$ and let $F,\widehat F:\cZ\to\R^N$ be $C^2$ maps.  Assume $F$ is an
 immersion and, uniformly on $\cZ$,
 \[
- \sigma_{\min}(J_F)\ge s>0,\quad
- \norm{J_F}\le M_1,\quad
- \max_{i,j}\norm{\partial_i\partial_jF}\le M_2.
+ \begin{aligned}
+ \sigma_{\min}(J_F)&\ge s>0,
+ &\norm{J_F}&\le M_1,\\
+ \max_{i,j}\norm{\partial_i\partial_jF}&\le M_2.
+ \end{aligned}
 \]
 Set
 \begin{align*}
@@ -269,6 +276,11 @@ Suppose $\varepsilon_1<s$ and define
  p&:=\frac{\varepsilon_1}{s-\varepsilon_1},
  &\beta&:=\varepsilon_2+pM_2.
 \end{align*}
+For the curvature bound, abbreviate
+\[
+ r_N:=4M_2\beta+2\beta^2,
+ \qquad r_D:=2M_1^2q+q^2.
+\]
 Then $\widehat F$ is an immersion and the following statements hold.
 \begin{enumerate}[label=(\roman*)]
   \item The metrics satisfy
@@ -281,20 +293,24 @@ Then $\widehat F$ is an immersion and the following statements hold.
   \end{equation}
   Consequently, for every $z,z'$ in the same component,
   \begin{equation}
+   \begin{aligned}
    \sqrt{1-\delta}\,d_G(z,z')
-   \le d_{\widehat G}(z,z')
-   \le\sqrt{1+\delta}\,d_G(z,z').
+   &\le d_{\widehat G}(z,z')\\
+   &\le\sqrt{1+\delta}\,d_G(z,z').
+   \end{aligned}
    \label{eq:distance-stability}
   \end{equation}
   \item The second fundamental forms obey
-  $\max_{i,j}\norm{\widehat B_{ij}-B_{ij}}\le\beta$.  Moreover,
-  \begin{align}
+  \[
+   \max_{i,j}\norm{\widehat B_{ij}-B_{ij}}\le\beta.
+  \]
+  Moreover,
+  \begin{equation}
   \abs{\mathcal K_{\widehat F}-\mathcal K_F}
-  &\le \frac{4M_2\beta+2\beta^2}{(s-\varepsilon_1)^4}\notag\\
-  &\quad+\frac{2M_2^2(2M_1^2q+q^2)}
-  {s^4(s-\varepsilon_1)^4}.
+  \le
+  \frac{r_N+2M_2^2r_D/s^4}{(s-\varepsilon_1)^4}.
   \label{eq:curvature-stability}
-  \end{align}
+  \end{equation}
 \end{enumerate}
 \end{theorem}
 
@@ -329,20 +345,20 @@ proves the $\beta$ bound.
 Let $N=\langle B_{11},B_{22}\rangle-\norm{B_{12}}^2$.  Projection does not
 increase norms, so $\norm{B_{ij}}\le M_2$ and
 \[
- \abs{\widehat N-N}\le4M_2\beta+2\beta^2,
+ \abs{\widehat N-N}\le r_N,
  \qquad \abs{N}\le2M_2^2.
 \]
 Furthermore, $\det G\ge s^4$, $\det\widehat G\ge(s-\varepsilon_1)^4$, and the
 two-dimensional determinant identity gives
 \[
- \abs{\det\widehat G-\det G}\le2M_1^2q+q^2.
+ \abs{\det\widehat G-\det G}\le r_D.
 \]
 Applying these inequalities to
 $\widehat N/\det\widehat G-N/\det G$ proves
 \eqref{eq:curvature-stability}.
 \end{proof}
 
-\subsection{The regularity requirements are necessary}
+\subsection{Necessity of the regularity hierarchy}
 
 Small value error alone cannot control derivatives, and first-derivative
 control alone cannot control curvature.  The next proposition makes both gaps
@@ -399,7 +415,7 @@ create curvature, so Corollary~\ref{cor:relu-flat} concerns the actual parameter
 map $F$, not merely its pre-activation.  Our ReLU baseline outputs $\sigma$
 directly and enforces positivity with a piecewise-affine clamp.
 
-\subsection{Global chords versus intrinsic transport}
+\subsection{Chord versus intrinsic transport}
 
 The stability theorem controls the path metric.  It does not make the endpoint
 Wasserstein distance equal to that path metric.  Their local discrepancy is
@@ -435,7 +451,7 @@ inner product by $\cos(\Lambda\abs{s-t})$ yields
 \eqref{eq:sine-bound}.  The inequality $\sin x\ge x-x^3/6$ gives
 \eqref{eq:cubic-gap}.  A circle of radius $1/\Lambda$ attains the sine bound.
 
-\section{A Benchmark with an Exact Geometric Answer}
+\section{Exact Spherical Benchmark}
 \label{sec:benchmark}
 
 We construct a benchmark whose observations are distributions, whose visible
@@ -459,16 +475,21 @@ At every coordinate, generate a three-dimensional diagonal Gaussian
 where $a=0.8$, $b=0.6$, and $\sigma_0=0.75$.  Positivity follows from
 $\sigma_0>b$, and $a^2+b^2=1$.  Therefore the true parameter map $F_*$ obeys
 \begin{equation}
- \W(K_u,K_v)=\norm{F_*(u)-F_*(v)}=\norm{s(u)-s(v)}.
+ \begin{aligned}
+ \W(K_u,K_v)&=\norm{F_*(u)-F_*(v)}\\
+ &=\norm{s(u)-s(v)}.
+ \end{aligned}
  \label{eq:exact-sphere-chord}
 \end{equation}
 The benchmark has the exact answers
-\begin{align}
- G_*(\lambda,y)&=\sech^2(y)I_2,
- &\mathcal K_*&=1,\notag\\
+\begin{equation}
+ \begin{aligned}
+ G_*(\lambda,y)&=\sech^2(y)I_2,\\
+ \mathcal K_*&=1,\\
  d_{G_*}(u,v)&=\arccos\langle s(u),s(v)\rangle.
+ \end{aligned}
  \label{eq:benchmark-truth}
-\end{align}
+\end{equation}
 If $d=d_{G_*}(u,v)$, then
 \begin{align}
  \W(K_u,K_v)&=2\sin(d/2),\notag\\
@@ -535,7 +556,7 @@ grid discretization alone.
   \resizebox{0.98\textwidth}{!}{\input{experiments/cartography_table.tex}}
 \end{table*}
 
-\subsection{Likelihood fit does not determine curvature}
+\subsection{Likelihood Does Not Fix Curvature}
 
 Held-out NLL is $0.0708\pm0.0028$ for Tanh,
 $0.0709\pm0.0028$ for Softplus, and $0.0715\pm0.0030$ for ReLU.  These values
@@ -572,7 +593,7 @@ with Theorem~\ref{thm:stability}: a piecewise-affine function can approximate a
 smooth map and its first derivatives sufficiently for distances, while its
 classical Hessian remains zero inside every linear region.
 
-\subsection{Local transport removes the chord shortcut}
+\subsection{Local Transport Corrects Chord Bias}
 
 Figure~\ref{fig:distance} separates three objects that are often conflated.
 Flat coordinate distance has RMSE $0.854\pm0.035$ against the great-circle
