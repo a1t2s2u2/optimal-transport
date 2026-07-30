@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Train a small neural Flow Matching model inside tangent charts of S^1.
+"""Train a small neural Flow Matching model for local decoders of S^1.
 
 The experiment is intentionally dependency-free.  A one-hidden-layer tanh MLP
 models the time-dependent velocity v(t, z), Adam minimizes the conditional Flow
 Matching objective, and Heun integration generates terminal latent samples.
-It isolates the two terms in Proposition 2.7:
+It records both optimization diagnostics and generated-distribution diagnostics:
 
-  * the exact geometric error of K tangent-line decoders; and
-  * the learned local-flow distribution error in one-dimensional coordinates.
+  * train/validation Flow Matching loss throughout optimization;
+  * terminal quantiles and latent W2 after learning; and
+  * the exact geometric error of K tangent-line decoders.
 """
 
 from __future__ import annotations
@@ -28,6 +29,9 @@ BATCH_SIZE = 96
 EVAL_SAMPLES = 2_048
 ODE_STEPS = 40
 WIDTHS = [4, 16, 64]
+HISTORY_INTERVAL = 100
+VALIDATION_SAMPLES = 2_048
+PLOT_QUANTILES = 129
 
 
 def circle_exact_error(k: int) -> float:
@@ -53,6 +57,14 @@ class Metrics:
     geometric_w2: float
     orthogonal_coupling_upper: float
     triangle_upper: float
+
+
+@dataclass
+class HistoryPoint:
+    width: int
+    step: int
+    training_loss_ema: float | None
+    validation_loss: float
 
 
 class VelocityMLP:
@@ -152,17 +164,63 @@ def flow_matching_example(k: int, rng: random.Random) -> tuple[float, float, flo
     return time, state, velocity
 
 
-def train_model(width: int) -> VelocityMLP:
+def fixed_validation_examples(
+    count: int = VALIDATION_SAMPLES,
+) -> list[tuple[float, float, float]]:
+    rng = random.Random(SEED + 999)
+    return [flow_matching_example(CHARTS, rng) for _ in range(count)]
+
+
+def validation_loss(
+    model: VelocityMLP,
+    examples: list[tuple[float, float, float]],
+) -> float:
+    total = 0.0
+    for time, state, target in examples:
+        error = model.predict(time, state) - target
+        total += error * error
+    return total / len(examples)
+
+
+def train_model(width: int) -> tuple[VelocityMLP, list[HistoryPoint]]:
     model = VelocityMLP(width, SEED + 100 * width)
     rng = random.Random(SEED + 100 * width + 1)
-    for step in range(TRAIN_STEPS):
+    validation_examples = fixed_validation_examples()
+    history = [
+        HistoryPoint(
+            width=width,
+            step=0,
+            training_loss_ema=None,
+            validation_loss=validation_loss(model, validation_examples),
+        )
+    ]
+    loss_ema: float | None = None
+    for step_index in range(TRAIN_STEPS):
         examples = [flow_matching_example(CHARTS, rng) for _ in range(BATCH_SIZE)]
         # A short warmup prevents large early Adam steps; cosine decay improves tails.
-        warmup = min(1.0, (step + 1) / 100.0)
-        decay = 0.5 * (1.0 + math.cos(math.pi * step / TRAIN_STEPS))
+        warmup = min(1.0, (step_index + 1) / 100.0)
+        decay = 0.5 * (1.0 + math.cos(math.pi * step_index / TRAIN_STEPS))
         learning_rate = 0.003 * warmup * (0.15 + 0.85 * decay)
-        model.train_batch(examples, learning_rate)
-    return model
+        batch_loss = model.train_batch(examples, learning_rate)
+        loss_ema = (
+            batch_loss if loss_ema is None else 0.98 * loss_ema + 0.02 * batch_loss
+        )
+
+        step = step_index + 1
+        if step % HISTORY_INTERVAL == 0 or step == TRAIN_STEPS:
+            point = HistoryPoint(
+                width=width,
+                step=step,
+                training_loss_ema=loss_ema,
+                validation_loss=validation_loss(model, validation_examples),
+            )
+            history.append(point)
+            if step % 1_000 == 0:
+                print(
+                    f"width={width:2d} step={step:4d} "
+                    f"train_ema={loss_ema:.5f} val={point.validation_loss:.5f}"
+                )
+    return model, history
 
 
 def integrate(model: VelocityMLP, source: float) -> float:
@@ -197,17 +255,7 @@ def empirical_w2(sorted_first: list[float], sorted_second: list[float]) -> float
     )
 
 
-def validation_loss(model: VelocityMLP, count: int = 4_096) -> float:
-    rng = random.Random(SEED + 999 + model.width)
-    total = 0.0
-    for _ in range(count):
-        time, state, target = flow_matching_example(CHARTS, rng)
-        error = model.predict(time, state) - target
-        total += error * error
-    return total / count
-
-
-def evaluate(model: VelocityMLP | None) -> Metrics:
+def evaluate(model: VelocityMLP | None) -> tuple[Metrics, list[float]]:
     source = gaussian_quantiles(EVAL_SAMPLES)
     target = target_quantiles(CHARTS, EVAL_SAMPLES)
     if model is None:
@@ -219,26 +267,80 @@ def evaluate(model: VelocityMLP | None) -> Metrics:
         generated = sorted(integrate(model, value) for value in source)
         width = model.width
         steps = TRAIN_STEPS
-        loss = validation_loss(model)
+        loss = validation_loss(model, fixed_validation_examples())
 
     latent_error = empirical_w2(target, generated)
     geometric_error = circle_exact_error(CHARTS)
-    return Metrics(
-        width=width,
-        training_steps=steps,
-        fm_validation_loss=loss,
-        latent_w2=latent_error,
-        geometric_w2=geometric_error,
-        orthogonal_coupling_upper=math.hypot(geometric_error, latent_error),
-        triangle_upper=geometric_error + latent_error,
+    return (
+        Metrics(
+            width=width,
+            training_steps=steps,
+            fm_validation_loss=loss,
+            latent_w2=latent_error,
+            geometric_w2=geometric_error,
+            orthogonal_coupling_upper=math.hypot(geometric_error, latent_error),
+            triangle_upper=geometric_error + latent_error,
+        ),
+        generated,
     )
 
 
-def write_outputs(rows: list[Metrics]) -> None:
+def write_history(history_by_width: dict[int, list[HistoryPoint]]) -> None:
+    for width, history in history_by_width.items():
+        with (OUT_DIR / f"neural_flow_history_width{width}.csv").open(
+            "w", newline="", encoding="utf-8"
+        ) as handle:
+            writer = csv.writer(handle, lineterminator="\n")
+            writer.writerow(["step", "training_loss_ema", "validation_loss"])
+            for point in history:
+                writer.writerow(
+                    [
+                        point.step,
+                        (
+                            ""
+                            if point.training_loss_ema is None
+                            else f"{point.training_loss_ema:.10g}"
+                        ),
+                        f"{point.validation_loss:.10g}",
+                    ]
+                )
+
+
+def write_quantiles(generated_by_width: dict[int, list[float]]) -> None:
+    target = target_quantiles(CHARTS, EVAL_SAMPLES)
+    indices = [
+        round(index * (EVAL_SAMPLES - 1) / (PLOT_QUANTILES - 1))
+        for index in range(PLOT_QUANTILES)
+    ]
+    with (OUT_DIR / "neural_flow_quantiles.csv").open(
+        "w", newline="", encoding="utf-8"
+    ) as handle:
+        writer = csv.writer(handle, lineterminator="\n")
+        writer.writerow(
+            ["quantile", "target", *[f"width_{width}" for width in WIDTHS]]
+        )
+        for sample_index in indices:
+            writer.writerow(
+                [
+                    f"{(sample_index + 0.5) / EVAL_SAMPLES:.10g}",
+                    f"{target[sample_index]:.10g}",
+                    *[
+                        f"{generated_by_width[width][sample_index]:.10g}"
+                        for width in WIDTHS
+                    ],
+                ]
+            )
+
+
+def write_outputs(
+    rows: list[Metrics],
+    history_by_width: dict[int, list[HistoryPoint]],
+    generated_by_width: dict[int, list[float]],
+) -> None:
     with (OUT_DIR / "neural_flow_results.csv").open(
         "w", newline="", encoding="utf-8"
     ) as handle:
-        writer = csv.writer(handle)
+        writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(
             [
                 "charts",
@@ -281,6 +383,9 @@ def write_outputs(rows: list[Metrics]) -> None:
         handle.write("\\hline\n")
         handle.write("\\end{tabular}\n")
 
+    write_history(history_by_width)
+    write_quantiles(generated_by_width)
+
     print(f"K={CHARTS}, exact geometric W2 floor={rows[0].geometric_w2:.6f}")
     print("width    FM loss  latent W2  coupled upper")
     for row in rows:
@@ -289,10 +394,17 @@ def write_outputs(rows: list[Metrics]) -> None:
 
 
 def main() -> None:
-    rows = [evaluate(None)]
+    baseline, baseline_generated = evaluate(None)
+    rows = [baseline]
+    generated_by_width = {0: baseline_generated}
+    history_by_width: dict[int, list[HistoryPoint]] = {}
     for width in WIDTHS:
-        rows.append(evaluate(train_model(width)))
-    write_outputs(rows)
+        model, history = train_model(width)
+        metrics, generated = evaluate(model)
+        rows.append(metrics)
+        history_by_width[width] = history
+        generated_by_width[width] = generated
+    write_outputs(rows, history_by_width, generated_by_width)
 
 
 if __name__ == "__main__":

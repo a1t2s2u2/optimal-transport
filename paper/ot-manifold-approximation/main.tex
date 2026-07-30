@@ -888,12 +888,22 @@ batch size $96$ 学習した．生成時には $40$ stepのHeun法でneural ODE�
   \input{experiments/neural_flow_table.tex}
 \end{table}
 
+\begin{figure}[htbp]
+  \centering
+  \input{experiments/neural_flow_diagnostics.tex}
+  \caption{局所Flow Matchingの学習過程と生成出力．左は固定検証集合上の
+  conditional Flow Matching loss，右は学習後の終端潜在分布の分位点関数である．
+  lossは全幅で近い値へ収束する一方，幅64の生成分位点が最も目標分布に近い．}
+  \label{fig:neural-flow-diagnostics}
+\end{figure}
+
 hidden幅を $4$ から $64$ へ増やすと，終端分布の潜在 $W_2$ は
 $0.0634$ から $0.0441$ へ，式~(8.4) の上界は $0.0721$ から $0.0558$ へ減った．
 一方，network幅に依存しない幾何floor $0.0342$ は残る．この実験は大規模実データでの
 実務性能を示すものではないが，「flowの学習が減らす項」と「decoder構造だけが減らす項」
 を実際の勾配学習で分けて観測している．FM loss自体にはconditional regressionの
-既約分散が含まれるため，生成分布の比較には終端 $W_2$ を用いた．
+既約分散が含まれるため，図~\ref{fig:neural-flow-diagnostics} のloss曲線だけでは
+生成品質を順位付けできない．そのため生成分布の比較には終端 $W_2$ も用いた．
 
 全コードはPython標準ライブラリだけで再実行でき，各 $K$ の幾何値，回帰結果，
 neural flowの学習結果をCSVとして保存している．

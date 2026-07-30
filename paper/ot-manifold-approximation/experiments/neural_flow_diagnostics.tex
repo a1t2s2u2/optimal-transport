@@ -1,0 +1,72 @@
+\begin{minipage}{0.49\linewidth}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      width=0.96\linewidth,
+      height=5.2cm,
+      xlabel={学習step},
+      ylabel={検証FM loss},
+      xmin=0,
+      xmax=6000,
+      grid=major,
+      legend style={
+        font=\scriptsize,
+        at={(0.98,0.98)},
+        anchor=north east,
+        draw=none,
+        fill=white
+      }
+    ]
+      \addplot[blue,thick,no marks]
+        table[x=step,y=validation_loss,col sep=comma]
+        {experiments/neural_flow_history_width4.csv};
+      \addlegendentry{幅4}
+      \addplot[red,thick,no marks]
+        table[x=step,y=validation_loss,col sep=comma]
+        {experiments/neural_flow_history_width16.csv};
+      \addlegendentry{幅16}
+      \addplot[teal!70!black,thick,no marks]
+        table[x=step,y=validation_loss,col sep=comma]
+        {experiments/neural_flow_history_width64.csv};
+      \addlegendentry{幅64}
+    \end{axis}
+  \end{tikzpicture}
+\end{minipage}\hfill
+\begin{minipage}{0.49\linewidth}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      width=0.96\linewidth,
+      height=5.2cm,
+      xlabel={分位点 $u$},
+      ylabel={終端潜在座標},
+      xmin=0,
+      xmax=1,
+      grid=major,
+      legend style={
+        font=\scriptsize,
+        at={(0.02,0.98)},
+        anchor=north west,
+        draw=none,
+        fill=white
+      }
+    ]
+      \addplot[black,very thick,dashed,no marks]
+        table[x=quantile,y=target,col sep=comma]
+        {experiments/neural_flow_quantiles.csv};
+      \addlegendentry{目標}
+      \addplot[blue,thick,no marks]
+        table[x=quantile,y=width_4,col sep=comma]
+        {experiments/neural_flow_quantiles.csv};
+      \addlegendentry{幅4}
+      \addplot[red,thick,no marks]
+        table[x=quantile,y=width_16,col sep=comma]
+        {experiments/neural_flow_quantiles.csv};
+      \addlegendentry{幅16}
+      \addplot[teal!70!black,thick,no marks]
+        table[x=quantile,y=width_64,col sep=comma]
+        {experiments/neural_flow_quantiles.csv};
+      \addlegendentry{幅64}
+    \end{axis}
+  \end{tikzpicture}
+\end{minipage}

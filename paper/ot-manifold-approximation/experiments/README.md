@@ -20,6 +20,12 @@ make paper-experiments
 - `results_table.tex`: 論文に取り込む表
 - `neural_flow_results.csv`: MLP 幅ごとの潜在 $W_2$ と生成誤差上界
 - `neural_flow_table.tex`: neural flow 実験の論文用表
+- `neural_flow_history_width*.csv`: 100 step ごとの学習 loss EMA と固定検証 loss
+- `neural_flow_quantiles.csv`: 目標分布と各 MLP が生成した終端分布の分位点
+
+論文中の診断図は、前者を loss 曲線、後者を生成分位点曲線として表示する。
+loss は conditional regression の既約分散を含むため、生成品質は
+`neural_flow_results.csv` の終端 $W_2$ と併せて読む。
 
 中心は、$S^1$ では厳密最適な等間隔配置、$S^2$ では Fibonacci 配置、
 $\mathbb T^2$ では直積格子を使う。$\operatorname{St}(3,2)$ と
