@@ -210,7 +210,7 @@ def sphere_tangent_sq(center: Vector, sample: Vector) -> float:
 
 
 def sphere_experiment() -> list[Result]:
-    checkpoints = [8, 16, 32, 64, 128, 256]
+    checkpoints = [4, 8, 16, 32, 64, 128, 256]
     samples = fibonacci_sphere(16_387, offset=0.137)
     rows = []
     for k in checkpoints:
@@ -218,6 +218,43 @@ def sphere_experiment() -> list[Result]:
         error = errors_at_checkpoints(samples, centers, [k], sphere_tangent_sq)[k]
         rows.append(Result("$S^2$", 2, "Fibonacci", k, error))
     return rows
+
+
+def sphere_tangent_projection(center: Vector, sample: Vector) -> Vector:
+    """Orthogonally project a sphere point onto the tangent plane at center."""
+    correction = 1.0 - dot(center, sample)
+    return tuple(value + correction * normal for value, normal in zip(sample, center))
+
+
+def write_sphere_diagnostics(rows: Sequence[Result]) -> None:
+    """Write rate and generated-support data used by the paper figures."""
+    reference_constant = next(row.error * row.k for row in rows if row.k == 64)
+    with (OUT_DIR / "sphere_rate.csv").open(
+        "w", newline="", encoding="utf-8"
+    ) as handle:
+        writer = csv.writer(handle, lineterminator="\n")
+        writer.writerow(["K", "W2_upper", "K_inverse_reference"])
+        for row in rows:
+            writer.writerow(
+                [
+                    row.k,
+                    f"{row.error:.12g}",
+                    f"{reference_constant / row.k:.12g}",
+                ]
+            )
+
+    samples = fibonacci_sphere(900, offset=0.271)
+    for k in (4, 16, 64):
+        centers = fibonacci_sphere(k)
+        with (OUT_DIR / f"sphere_generated_K{k}.csv").open(
+            "w", newline="", encoding="utf-8"
+        ) as handle:
+            writer = csv.writer(handle, lineterminator="\n")
+            writer.writerow(["x", "y", "z"])
+            for sample in samples:
+                center = max(centers, key=lambda candidate: dot(candidate, sample))
+                generated = sphere_tangent_projection(center, sample)
+                writer.writerow(f"{coordinate:.10g}" for coordinate in generated)
 
 
 def torus_tangent_sq(center: tuple[float, float], sample: tuple[float, float]) -> float:
@@ -291,7 +328,7 @@ def regression(rows: Sequence[Result], tail: int = 4) -> tuple[float, float]:
 def write_results(groups: Sequence[Sequence[Result]]) -> None:
     flat = [row for group in groups for row in group]
     with (OUT_DIR / "results.csv").open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
+        writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(["manifold", "intrinsic_dimension", "construction", "K", "W2_upper", "exact_W2"])
         for row in flat:
             writer.writerow(
@@ -318,7 +355,7 @@ def write_results(groups: Sequence[Sequence[Result]]) -> None:
         summaries.append((group[0], group[0].k, group[-1].k, slope, r_squared, circle_relative))
 
     with (OUT_DIR / "slopes.csv").open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
+        writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(
             ["manifold", "intrinsic_dimension", "construction", "K_min", "K_max", "predicted_slope", "observed_slope", "R_squared", "max_circle_relative_error"]
         )
@@ -365,6 +402,7 @@ def main() -> None:
         grassmann_experiment(),
     ]
     write_results(groups)
+    write_sphere_diagnostics(groups[1])
 
 
 if __name__ == "__main__":

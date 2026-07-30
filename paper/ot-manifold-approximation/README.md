@@ -43,9 +43,12 @@ multi-branch VAE は枝 $J$ と潜在変数 $Z$ を学習する実装、Flow Mat
 ## 数値検証
 
 円周、球面、積 torus、Stiefel、Grassmann の5例で、有限 $K$ の log--log 傾きを
-確認する。円周の小型 Flow Matching は、潜在分布を学習しても decoder の幾何誤差が
-残ることを見る補助実験である。学習loss、終端分布の分位点、潜在 $W_2$ を保存し、
-論文中にloss曲線と生成出力曲線を掲載する。
+確認する。主図では $S^2$ を $K=4,16,64$ 個の接平面decoderで生成し、点群と
+$W_2$–$K$ 曲線を表示する。
+
+学習実験では、6個の局所decoderに各3 modeを持たせた18峰性球面合成分布を使う。
+chart-conditional Flow Matchingのloss、生成点群、局所Sliced-$W_2$を比較する。
+単純な $S^1$ 実験は実装較正として残す。
 
 ~~~sh
 make paper-experiments

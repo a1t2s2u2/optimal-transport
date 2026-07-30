@@ -30,7 +30,8 @@ $q$ 次元多様体上の分布に対して
 \]
 が成り立つ．したがって誤差 $\varepsilon$ に必要な局所decoder数は
 $K\asymp\varepsilon^{-q/2}$ である．Stiefel，Grassmann，積torusで条件を検証し，
-$S^1$ では最適値を厳密に求める．数値実験でも有限 $K$ で同じrateを確認する．
+$S^1$ では最適値を厳密に求める．$S^2$ の生成点群と18峰性合成分布のFlow Matchingを含む
+数値実験でも，有限 $K$ で同じrateとdecoder由来の誤差を確認する．
 multi-branch VAEはbranchと潜在変数を学習する方法，Flow Matchingは各branch内の潜在分布を
 学習する方法として解釈できるが，本結果は一般のVAEや任意の深層decoderに対する
 下界ではない．
@@ -75,8 +76,9 @@ $k$-flats や geometric multiresolution analysis で研究されている
     $K^{-2/q}$ の一般 lower bound を証明する．Stiefel，Grassmann，積 torus では
     tangent distance と chord 距離の二乗の大域的な二側評価を明示する．
   \item $S^1$ で最適値を厳密に求め，Stiefelを含む五種類の多様体で
-    有限 $K$ の数値傾きを確認する．小型Flow Matching実験は，潜在分布を学習しても
-    decoderの幾何誤差が残ることを補助的に示す．
+    有限 $K$ の数値傾きを確認する．$S^2$ ではdecoder出力を直接可視化し，
+    18峰性球面合成分布のFlow Matchingによって，密度学習の改善と
+    decoderの幾何誤差を分けて観測する．
 \end{enumerate}
 
 結論を先に言えば，一つのdecoderが担う領域の直径は $K^{-1/q}$，接平面への
@@ -845,7 +847,74 @@ greedy 配置の optimization gap を含む．$S^1$ では式~(6.2) の厳密値
 この実験が支持するのは，具体的な準一様decoder配置が有限 $K$ で既に幾何上界rateを
 実現するという主張である．matching lower boundやFPSの最適性は実験から主張しない．
 
-\subsection{補助実験：局所Flow Matching}
+\subsection{\texorpdfstring{$S^2$}{S2}で見るdecoder数の効果}
+
+数値の傾きだけでなく，局所decoderが何を生成しているかを可視化する．
+$S^2\subset\R^3$ 上の各点を，最も近いFibonacci anchorの接平面へ直交射影した．
+したがって図~\ref{fig:sphere-decoder-geometry} 上段の点群は，$K$ 個の局所線形decoderが
+一様球面分布に対して実現する生成出力そのものである．下段は同じ配置の
+$\widehat U_K$ と，$K=64$ で定数を合わせた $K^{-1}$ 基準線を示す．
+
+\begin{figure}[htbp]
+  \centering
+  \input{experiments/sphere_geometry_diagnostics.tex}
+  \caption{$S^2$ の局所線形生成．上段は $K=4,16,64$ 個の接平面decoderへの
+  射影出力であり，全図で同じ表示範囲を使う．下段はdecoder数と $W_2$ 誤差の関係である．
+  $q=2$ なので主定理の予測は $K^{-2/q}=K^{-1}$ となる．}
+  \label{fig:sphere-decoder-geometry}
+\end{figure}
+
+$K=4,16,64$ の誤差はそれぞれ $0.3139,0.0787,0.0193$ であった．
+$K$ を4倍にするごとに誤差がほぼ $1/4$ となり，点群も粗い平面patchの合併から
+球面へ近づく．この図が本稿の中心的な実験結果である．
+
+\subsection{学習実験：18峰性球面合成分布}
+
+単純な一次元分布では小さなnetworkでも十分なため，network幅の差が出にくい．
+そこで合成stress testとして，$S^2$ 上に6個の接平面decoderを
+$\{\pm e_1,\pm e_2,\pm e_3\}$ へ置き，
+各decoderの二次元局所座標に3個のGaussian modeを配置した．全体では18峰性の
+球面分布になる．各標本は局所座標 $\widetilde z\in\R^2$ から
+\[
+  Y=\frac{x_J+U_J\widetilde z}
+          {\norm{x_J+U_J\widetilde z}}
+\]
+で球面へ写し，Flow Matchingの目標には接平面へ射影した座標
+$Z_1=U_J^{\mathsf T}(Y-x_J)$ を用いた．
+
+速度場は $(t,z,J)$ を入力する一層tanh MLPとし，$J$ はone-hotで与えた．
+hidden幅を $4,16,64$，学習をAdamで6000 step，生成ODEを40 stepのHeun法とした．
+二次元では厳密な $W_2$ の計算自体が別の最適輸送問題になるため，生成座標の評価には
+48方向へ射影した一次元 $W_2$ の平均である局所Sliced-$W_2$（局所SW$_2$）を用いる．
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \caption{18峰性 $S^2$ 分布に対するchart-conditional Flow Matching．
+  全幅でtargetから対応接平面までの幾何RMSは $0.1537$ である．半径RMSEは
+  生成点の単位球面からのずれを表す．}
+  \label{tab:sphere-multimodal-flow}
+  \input{experiments/sphere_flow_table.tex}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \input{experiments/sphere_flow_diagnostics.tex}
+  \caption{18峰性 $S^2$ 分布の目標標本，幅4と幅64の生成出力，および固定検証集合上の
+  Flow Matching loss．幅4ではmode間を埋める点が多いが，幅64では目標の局所clusterが
+  より明確に再現される．表示される生成点は球面へ再射影せず，接平面decoderの出力を
+  そのまま描いている．}
+  \label{fig:sphere-multimodal-flow}
+\end{figure}
+
+未学習の局所SW$_2$は $0.6880$ であり，幅4，16，64ではそれぞれ
+$0.1745,0.1787,0.1061$ となった．小さい二幅の順位は固定seedの揺らぎの範囲だが，
+幅64はlossと生成分布の両方で明確に改善した．一方，decoderを6個に固定した
+幾何RMS $0.1537$ はnetwork幅では変わらない．これにより，密度学習が改善する量と
+decoder数が決める量を分けて観測できる．結果は固定seedの一回のrunであり，
+model rankingの統計的有意性は主張しない．
+
+\subsection{較正実験：一次元 \texorpdfstring{$S^1$}{S1}}
 
 潜在分布の学習を加えた場合も見るため，$S^1$ の $K=8$ 等間隔decoder上で
 小型neural flowを実際に学習した．一つのcell内で角度差
@@ -888,25 +957,17 @@ batch size $96$ 学習した．生成時には $40$ stepのHeun法でneural ODE�
   \input{experiments/neural_flow_table.tex}
 \end{table}
 
-\begin{figure}[htbp]
-  \centering
-  \input{experiments/neural_flow_diagnostics.tex}
-  \caption{局所Flow Matchingの学習過程と生成出力．左は固定検証集合上の
-  conditional Flow Matching loss，右は学習後の終端潜在分布の分位点関数である．
-  lossは全幅で近い値へ収束する一方，幅64の生成分位点が最も目標分布に近い．}
-  \label{fig:neural-flow-diagnostics}
-\end{figure}
-
 hidden幅を $4$ から $64$ へ増やすと，終端分布の潜在 $W_2$ は
 $0.0634$ から $0.0441$ へ，式~(8.4) の上界は $0.0721$ から $0.0558$ へ減った．
 一方，network幅に依存しない幾何floor $0.0342$ は残る．この実験は大規模実データでの
 実務性能を示すものではないが，「flowの学習が減らす項」と「decoder構造だけが減らす項」
 を実際の勾配学習で分けて観測している．FM loss自体にはconditional regressionの
-既約分散が含まれるため，図~\ref{fig:neural-flow-diagnostics} のloss曲線だけでは
-生成品質を順位付けできない．そのため生成分布の比較には終端 $W_2$ も用いた．
+既約分散が含まれるため，lossだけでは生成品質を順位付けできない．そのため生成分布の
+比較には終端 $W_2$ も用いた．この単純例は実装の較正として残し，主たる可視化には
+図~\ref{fig:sphere-multimodal-flow} の多峰性球面分布を用いる．
 
 全コードはPython標準ライブラリだけで再実行でき，各 $K$ の幾何値，回帰結果，
-neural flowの学習結果をCSVとして保存している．
+neural flowの学習履歴と生成点をCSVとして保存している．
 
 \section{関連研究と新規性の境界}
 \label{sec:related}

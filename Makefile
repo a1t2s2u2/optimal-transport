@@ -42,6 +42,7 @@ wasserstein-site:
 # セミナー資料とは独立。既知の内容は引用で済ませ、新規の主張だけを書く。
 paper-experiments:
 	python3 paper/ot-manifold-approximation/experiments/run.py
+	python3 paper/ot-manifold-approximation/experiments/sphere_multimodal_flow.py
 	python3 paper/ot-manifold-approximation/experiments/neural_flow_circle.py
 
 paper:
