@@ -106,6 +106,20 @@ methods use decoder ensembles \cite{syrota2024}, Riemannian data spaces
 or exploit latent metrics.  We instead ask which mode of decoder convergence is
 sufficient for the learned metric and curvature themselves to converge.
 
+Most directly, Roy and Hauberg's \emph{Optimal Latent Transport}
+\cite{roy2022} pulls Wasserstein distances between discrete decoder
+distributions back to a VAE latent space and computes geodesics by optimizing
+discretized curve length.  Their question is computational: given a trained
+decoder, which path does its Wasserstein geometry induce?  Our question is
+complementary and statistical: when an estimated decoder approximates a true
+one, at which derivative order do the induced metric, intrinsic distances, and
+curvature become reliable?  In the diagonal-Gaussian $W_2$ setting, this leads
+to an explicit metric tensor, quantitative stability bounds, necessary
+counterexamples, and a finite-scale noisy recovery guarantee.
+This does not subsume their discrete $W_1$ construction; it supplies reliability
+guarantees and higher-order geometry in a different, analytically tractable
+decoder class.
+
 Graph shortest paths estimate manifold geodesics from local ambient distances,
 as in Isomap \cite{tenenbaum2000}.  Our local edge costs are not generic
 Euclidean proxies: they are exact $W_2$ distances between decoder distributions.
@@ -618,8 +632,6 @@ $0.021\pm0.002$ after rigid alignment.  This supplies the visual ``map to
 sphere'' result in Figure~\ref{fig:pipeline}, while the metric, curvature, and
 distance evaluations specify exactly what geometric recovery means.
 
-\clearpage
-
 \section{Discussion and Limitations}
 
 \paragraph{Implication for generative models.}
@@ -731,6 +743,12 @@ C.~R. Givens and R.~M. Shortt.
 L.~Rozo, M.~Gonz\'alez-Duque, N.~Jaquier, and S.~Hauberg.
 \newblock Riemann$^2$: Learning Riemannian submanifolds from Riemannian data.
 \newblock In \emph{AISTATS}, pages 3097--3105, 2025.
+
+\bibitem{roy2022}
+H.~Roy and S.~Hauberg.
+\newblock Optimal latent transport.
+\newblock In \emph{NeurIPS Workshop on Symmetry and Geometry in Neural
+Representations}, 2022.
 
 \bibitem{syrota2024}
 S.~Syrota, P.~Moreno-Mu\~noz, and S.~Hauberg.
