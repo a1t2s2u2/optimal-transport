@@ -76,6 +76,18 @@ space.  The induced latent metric is $G=J_F^{\trans}J_F$, and its path distance
 is invariant to a change of latent coordinates.  This is the analytically
 tractable version of Wasserstein latent transport.
 
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.98\textwidth]{experiments/certified_distillation_architecture.pdf}
+  \caption{Certified low-rank decoder compression.  A frozen trunk and bias are
+  shared by the dense teacher head $W$ and rank-$r$ student head $U_r$.
+  Calibration values and Jacobians define $C$; a rank-$r$ SVD of $WC^{1/2}$
+  gives $U_r=B_rC^{-1/2}$.  The spectral test certifies the all-pairs bound only
+  when global $s,M_1,\ell_1$ bounds are available; sampled $E_0$ and
+  $D_{\mathrm{loc}}$ in the real-data experiments are empirical tests.}
+  \label{fig:architecture}
+\end{figure*}
+
 Our contributions are as follows.
 \begin{enumerate}
   \item We define the minimum safe student by simultaneous output and intrinsic
@@ -95,18 +107,6 @@ Our contributions are as follows.
   Input--output panels and straight-versus-geodesic decoded sequences make the
   real-data criterion directly inspectable.
 \end{enumerate}
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.98\textwidth]{experiments/certified_distillation_architecture.pdf}
-  \caption{The complete architecture and one-shot compression procedure.  The
-  encoder supplies posterior codes; teacher and student share a frozen smooth
-  trunk.  Calibration codes produce a value--Jacobian covariance, one
-  covariance-whitened SVD produces the rank-$r$ head, and deployment accepts
-  it only when both output fidelity and local geometry pass their prespecified
-  tolerances.}
-  \label{fig:architecture}
-\end{figure*}
 
 \section{Related Work}
 
@@ -151,8 +151,6 @@ weights attain nearly optimal derivative approximation rates
 and task accuracy.  The resulting lower bounds apply to decoder derivative
 fidelity; they do not automatically become geometry-only lower bounds because
 different immersions can induce the same metric.
-
-\clearpage
 
 \section{Wasserstein Geometry Distillation}
 \label{sec:problem}

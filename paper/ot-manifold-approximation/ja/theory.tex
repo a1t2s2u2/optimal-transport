@@ -61,6 +61,17 @@ parameter--accuracy率を導き、有限bit仮定が必要な箇所を明示す�
 である。したがって $F=(\mu,\sigma)$ はデコーダー分布をEuclidパラメータ空間へ
 埋め込み、潜在計量は $G=J_F^{\trans}J_F$ となる。
 
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.98\textwidth]{experiments/certified_distillation_architecture_ja.pdf}
+  \caption{保証付き低rank decoder圧縮。固定trunkとbiasを密な教師head $W$ と
+  rank-$r$ 学生head $U_r$ で共有する。較正点での値とJacobianから $C$ を作り、
+  $WC^{1/2}$ のrank-$r$ SVDにより $U_r=B_rC^{-1/2}$ を得る。スペクトル判定が
+  全点対保証となるのは大域的な $s,M_1,\ell_1$ 境界がある場合に限る。実データで
+  報告する標本上の $E_0,D_{\mathrm{loc}}$ は経験的判定である。}
+  \label{fig:architecture}
+\end{figure*}
+
 本研究の貢献は次の通りである。
 \begin{enumerate}
   \item 出力誤差と内在距離誤差を同時に課して最小安全学生を定義し、
@@ -73,16 +84,6 @@ parameter--accuracy率を導き、有限bit仮定が必要な箇所を明示す�
   torus、MNIST/FashionMNIST VAEの三段階で評価する。入力--出力一覧と
   直線--測地線デコード列により、実データ上の判定を視覚的にも確認する。
 \end{enumerate}
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.98\textwidth]{experiments/certified_distillation_architecture_ja.pdf}
-  \caption{モデル構造と1回限りの圧縮手順。encoderがposterior codeを与え、
-  教師と学生は滑らかな固定trunkを共有する。較正codeから値--Jacobian共分散を作り、
-  共分散白色化SVDを1回行ってrank-$r$ headを得る。出力と局所幾何が事前指定した
-  許容値をともに満たすときだけ配備する。}
-  \label{fig:architecture}
-\end{figure*}
 
 \section{関連研究}
 
@@ -114,8 +115,6 @@ FashionMNIST\cite{xiao2017}を用いる。対象は凍結教師の幾何であ�
 上界と下界を与える。符号化可能な重みではほぼ最適な微分近似率が得られ
 \cite{guhring2021}、Tanhネットワークにも高階の明示的評価がある
 \cite{deryck2021}。本研究はこれらを潜在距離とタスク精度へ転送する。
-
-\clearpage
 
 \section{Wasserstein幾何蒸留}
 \label{sec:problem}
