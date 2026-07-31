@@ -8,7 +8,7 @@
 #   "torchvision>=0.19",
 # ]
 # ///
-"""Geometry-aware low-rank distillation of a smooth MNIST Gaussian VAE decoder.
+"""Geometry-aware low-rank distillation on MNIST or FashionMNIST.
 
 The teacher has a two-dimensional latent code, a smooth Tanh decoder trunk
 ``h(z)``, and a linear Gaussian-mean head ``W h(z) + b``.  Its observation
@@ -19,15 +19,19 @@ variance is fixed, so the diagonal-Gaussian W2 pullback metric is
 For a positive-definite feature covariance C, the optimal rank-r head for
 ``||(U-W) C^(1/2)||_F`` is available in closed form by truncating the SVD of
 ``W C^(1/2)``.  This script compares raw, value-weighted, and value+Jacobian
-covariances using the same held-out local length distortion as the theorem.
+covariances using a sampled test-set version of the theorem's local length
+distortion.
 
-Run from the repository root with
+Run either dataset from the repository root with
 
     uv run --python 3.12 \
-      paper/ot-manifold-approximation/experiments/mnist_low_rank_geometry.py
+      paper/ot-manifold-approximation/experiments/mnist_low_rank_geometry.py \
+      --dataset mnist
 
-MNIST downloads and the teacher checkpoint live under ``experiments/.cache``
-and are ignored by git.  Pass ``--force-train`` to replace the checkpoint.
+Use ``--dataset fashion-mnist`` for FashionMNIST.  Downloads and independent
+dataset-specific teacher checkpoints live under ``experiments/.cache`` and are
+ignored by git.  Pass ``--force-train`` to replace only the selected dataset's
+checkpoint.
 """
 
 from __future__ import annotations
@@ -54,7 +58,6 @@ plt.switch_backend("Agg")
 HERE = Path(__file__).resolve().parent
 CACHE = HERE / ".cache"
 DATA_CACHE = CACHE / "mnist"
-CHECKPOINT = CACHE / "mnist_gaussian_vae_v2.pt"
 SEED = 20260730
 IMAGE_SIDE = 28
 IMAGE_DIM = IMAGE_SIDE * IMAGE_SIDE
@@ -80,6 +83,65 @@ GEOMETRY_TRACE_WEIGHT = 4.0
 RIDGE_RELATIVE = 1.0e-6
 PRIMARY_TOLERANCE = 0.05
 RANKS = tuple(range(1, FEATURE_DIM + 1))
+
+
+@dataclass(frozen=True)
+class DatasetSpec:
+    cli_name: str
+    artifact_prefix: str
+    display_name: str
+    display_name_ja: str
+    class_names: tuple[str, ...]
+    class_names_ja: tuple[str, ...]
+
+    @property
+    def checkpoint(self) -> Path:
+        return CACHE / f"{self.artifact_prefix}_gaussian_vae_v2.pt"
+
+    def artifact(self, suffix: str) -> Path:
+        return HERE / f"{self.artifact_prefix}_{suffix}"
+
+
+DATASET_SPECS = {
+    "mnist": DatasetSpec(
+        cli_name="mnist",
+        artifact_prefix="mnist",
+        display_name="MNIST",
+        display_name_ja="MNIST",
+        class_names=tuple(str(index) for index in range(10)),
+        class_names_ja=tuple(str(index) for index in range(10)),
+    ),
+    "fashion-mnist": DatasetSpec(
+        cli_name="fashion-mnist",
+        artifact_prefix="fashion_mnist",
+        display_name="FashionMNIST",
+        display_name_ja="FashionMNIST",
+        class_names=(
+            "T-shirt",
+            "trouser",
+            "pullover",
+            "dress",
+            "coat",
+            "sandal",
+            "shirt",
+            "sneaker",
+            "bag",
+            "boot",
+        ),
+        class_names_ja=(
+            "Tシャツ",
+            "ズボン",
+            "プルオーバー",
+            "ドレス",
+            "コート",
+            "サンダル",
+            "シャツ",
+            "スニーカー",
+            "バッグ",
+            "ブーツ",
+        ),
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -123,11 +185,15 @@ class SVDCompression(NamedTuple):
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--dataset",
+        choices=tuple(DATASET_SPECS),
+        default="mnist",
+        help="dataset to train and evaluate (default: mnist)",
+    )
     parser.add_argument("--force-train", action="store_true")
     parser.add_argument("--epochs", type=int, default=DEFAULT_EPOCHS)
-    parser.add_argument(
-        "--train-examples", type=int, default=DEFAULT_TRAIN_EXAMPLES
-    )
+    parser.add_argument("--train-examples", type=int, default=DEFAULT_TRAIN_EXAMPLES)
     parser.add_argument(
         "--geometry-trace-weight", type=float, default=GEOMETRY_TRACE_WEIGHT
     )
@@ -196,18 +262,29 @@ class GaussianVAE(nn.Module):
         return self.decode(latent), mean, log_variance
 
 
-def load_datasets() -> tuple[datasets.MNIST, datasets.MNIST]:
+def load_datasets(
+    spec: DatasetSpec,
+) -> tuple[
+    datasets.MNIST | datasets.FashionMNIST,
+    datasets.MNIST | datasets.FashionMNIST,
+]:
     transform = transforms.ToTensor()
-    train = datasets.MNIST(DATA_CACHE, train=True, download=True, transform=transform)
-    test = datasets.MNIST(DATA_CACHE, train=False, download=True, transform=transform)
+    dataset_type = datasets.MNIST if spec.cli_name == "mnist" else datasets.FashionMNIST
+    train = dataset_type(DATA_CACHE, train=True, download=True, transform=transform)
+    test = dataset_type(DATA_CACHE, train=False, download=True, transform=transform)
     return train, test
 
 
 def selected_training_data(
-    dataset: datasets.MNIST, count: int, seed: int
+    dataset: datasets.MNIST | datasets.FashionMNIST,
+    count: int,
+    seed: int,
+    dataset_name: str,
 ) -> Subset:
     if count > len(dataset):
-        raise ValueError(f"requested {count} examples from {len(dataset)} MNIST images")
+        raise ValueError(
+            f"requested {count} examples from {len(dataset)} {dataset_name} images"
+        )
     generator = torch.Generator().manual_seed(seed)
     indices = torch.randperm(len(dataset), generator=generator)[:count].tolist()
     return Subset(dataset, indices)
@@ -222,9 +299,10 @@ def vae_loss(
 ) -> tuple[Tensor, Tensor, Tensor]:
     target = images.flatten(start_dim=1)
     reconstruction_loss = (reconstruction - target).square().mean()
-    kl = -0.5 * (
-        1.0 + log_variance - mean.square() - log_variance.exp()
-    ).sum(dim=1).mean()
+    kl = (
+        -0.5
+        * (1.0 + log_variance - mean.square() - log_variance.exp()).sum(dim=1).mean()
+    )
     return reconstruction_loss + kl_weight * kl, reconstruction_loss, kl
 
 
@@ -283,23 +361,29 @@ def train_teacher(
 
 
 def load_or_train_teacher(
-    train_dataset: datasets.MNIST,
+    train_dataset: datasets.MNIST | datasets.FashionMNIST,
     config: TrainingConfig,
     force_train: bool,
+    spec: DatasetSpec,
 ) -> tuple[GaussianVAE, list[dict[str, float]]]:
     CACHE.mkdir(parents=True, exist_ok=True)
     model = GaussianVAE()
     expected_config = asdict(config)
-    if CHECKPOINT.exists() and not force_train:
-        payload = torch.load(CHECKPOINT, map_location="cpu", weights_only=False)
+    if spec.checkpoint.exists() and not force_train:
+        payload = torch.load(spec.checkpoint, map_location="cpu", weights_only=False)
         if payload.get("config") == expected_config:
             model.load_state_dict(payload["state_dict"])
             model.eval()
-            print(f"loaded cached teacher: {CHECKPOINT}", flush=True)
+            print(f"loaded cached teacher: {spec.checkpoint}", flush=True)
             return model, payload["history"]
         print("cached teacher configuration differs; retraining", flush=True)
 
-    subset = selected_training_data(train_dataset, config.train_examples, config.seed)
+    subset = selected_training_data(
+        train_dataset,
+        config.train_examples,
+        config.seed,
+        spec.display_name,
+    )
     history = train_teacher(model, subset, config)
     torch.save(
         {
@@ -307,16 +391,16 @@ def load_or_train_teacher(
             "state_dict": model.state_dict(),
             "history": history,
         },
-        CHECKPOINT,
+        spec.checkpoint,
     )
-    print(f"saved teacher checkpoint: {CHECKPOINT}", flush=True)
+    print(f"saved teacher checkpoint: {spec.checkpoint}", flush=True)
     return model, history
 
 
 @torch.no_grad()
 def collect_images_and_codes(
     model: GaussianVAE,
-    dataset: datasets.MNIST | Subset,
+    dataset: datasets.MNIST | datasets.FashionMNIST | Subset,
     count: int,
     seed: int,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -354,7 +438,9 @@ def features_and_jacobians(
     all_features: list[np.ndarray] = []
     all_jacobians: list[np.ndarray] = []
     for start in range(0, len(latent), batch_size):
-        points = torch.as_tensor(latent[start : start + batch_size], dtype=torch.float32)
+        points = torch.as_tensor(
+            latent[start : start + batch_size], dtype=torch.float32
+        )
         with torch.no_grad():
             feature = model.decoder_features(points)
         jacobian = vmap(jacobian_function)(points)
@@ -395,9 +481,7 @@ def feature_covariances(
 ) -> tuple[dict[str, np.ndarray], float, float]:
     count = len(features)
     value = features.T @ features / count
-    jacobian = np.einsum(
-        "nqd,nrd->qr", jacobians, jacobians, optimize=True
-    ) / count
+    jacobian = np.einsum("nqd,nrd->qr", jacobians, jacobians, optimize=True) / count
     value_trace = float(np.trace(value))
     jacobian_trace = float(np.trace(jacobian))
     geometry_multiplier = (
@@ -414,9 +498,7 @@ def feature_covariances(
 
 
 def pullback_metrics(jacobians: np.ndarray, gram: np.ndarray) -> np.ndarray:
-    return np.einsum(
-        "nqi,qr,nrj->nij", jacobians, gram, jacobians, optimize=True
-    )
+    return np.einsum("nqi,qr,nrj->nij", jacobians, gram, jacobians, optimize=True)
 
 
 def local_length_distortion(
@@ -535,9 +617,7 @@ def triplet_agreement(
     teacher_order: np.ndarray,
 ) -> float:
     first = np.einsum("nq,qr,nr->n", first_delta, gram, first_delta, optimize=True)
-    second = np.einsum(
-        "nq,qr,nr->n", second_delta, gram, second_delta, optimize=True
-    )
+    second = np.einsum("nq,qr,nr->n", second_delta, gram, second_delta, optimize=True)
     return float(np.mean((first < second) == teacher_order))
 
 
@@ -559,18 +639,22 @@ def model_parameter_counts(model: GaussianVAE, rank: int) -> dict[str, int]:
     }
 
 
-def write_history(history: list[dict[str, float]]) -> None:
-    path = HERE / "mnist_teacher_history.csv"
+def write_history(history: list[dict[str, float]], spec: DatasetSpec) -> None:
+    path = spec.artifact("teacher_history.csv")
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(history[0]))
+        writer = csv.DictWriter(
+            handle, fieldnames=list(history[0]), lineterminator="\n"
+        )
         writer.writeheader()
         writer.writerows(history)
 
 
-def write_results(rows: list[dict[str, object]]) -> None:
-    path = HERE / "mnist_low_rank_results.csv"
+def write_results(rows: list[dict[str, object]], spec: DatasetSpec) -> None:
+    path = spec.artifact("low_rank_results.csv")
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+        writer = csv.DictWriter(
+            handle, fieldnames=list(rows[0]), lineterminator="\n"
+        )
         writer.writeheader()
         writer.writerows(rows)
 
@@ -589,7 +673,7 @@ def method_boundaries(
     return before, after
 
 
-def write_table(rows: list[dict[str, object]]) -> None:
+def write_table(rows: list[dict[str, object]], spec: DatasetSpec) -> None:
     english = [
         r"\begin{tabular}{llrrrrr}",
         r"\toprule",
@@ -602,10 +686,10 @@ def write_table(rows: list[dict[str, object]]) -> None:
         r"手法 & rank & head / decoder変数 & $\widehat D_{\mathrm{loc}}$ & 出力RMSE & chord triplet & PSNR \\",
         r"\midrule",
     ]
-    for spec in METHODS:
-        before, after = method_boundaries(rows, spec.key)
+    for method_spec in METHODS:
+        before, after = method_boundaries(rows, method_spec.key)
         selected = {
-            int(row["rank"]): row for row in rows if row["method"] == spec.key
+            int(row["rank"]): row for row in rows if row["method"] == method_spec.key
         }
         chosen = [selected[8]]
         for boundary in (before, after):
@@ -622,22 +706,82 @@ def write_table(rows: list[dict[str, object]]) -> None:
                 f"{100.0 * float(row['teacher_triplet_agreement']):.1f}\\% & "
                 f"{float(row['reconstruction_psnr']):.2f}"
             )
-            prefix_en = spec.label if index == 0 else ""
-            prefix_ja = spec.label_ja if index == 0 else ""
+            prefix_en = method_spec.label if index == 0 else ""
+            prefix_ja = method_spec.label_ja if index == 0 else ""
             english.append(f"{prefix_en} & {values}" + r" \\")
             japanese.append(f"{prefix_ja} & {values}" + r" \\")
         english.append(r"\addlinespace")
         japanese.append(r"\addlinespace")
     ending = [r"\bottomrule", r"\end{tabular}"]
-    (HERE / "mnist_low_rank_table.tex").write_text(
+    spec.artifact("low_rank_table.tex").write_text(
         "\n".join(english + ending) + "\n", encoding="utf-8"
     )
-    (HERE / "mnist_low_rank_table_ja.tex").write_text(
+    spec.artifact("low_rank_table_ja.tex").write_text(
         "\n".join(japanese + ending) + "\n", encoding="utf-8"
     )
 
 
-def save_training_plot(history: list[dict[str, float]]) -> None:
+def write_combined_realdata_table() -> None:
+    """Write a compact MNIST/FashionMNIST crossing table when both exist."""
+
+    dataset_rows: list[tuple[DatasetSpec, list[dict[str, str]]]] = []
+    for key in ("mnist", "fashion-mnist"):
+        spec = DATASET_SPECS[key]
+        path = spec.artifact("low_rank_results.csv")
+        if not path.exists():
+            return
+        with path.open(newline="", encoding="utf-8") as handle:
+            dataset_rows.append((spec, list(csv.DictReader(handle))))
+
+    english = [
+        r"\begin{tabular}{llrrrr}",
+        r"\toprule",
+        r"Dataset & Method & Rank fail $\to$ pass & $\widehat D_{\rm loc}$ fail $\to$ pass & Head reduction & Triplet \\",
+        r"\midrule",
+    ]
+    japanese = [
+        r"\begin{tabular}{llrrrr}",
+        r"\toprule",
+        r"データ & 手法 & rank 不合格 $\to$ 合格 & $\widehat D_{\mathrm{loc}}$ 不合格 $\to$ 合格 & head圧縮 & triplet \\",
+        r"\midrule",
+    ]
+    for dataset_index, (spec, rows) in enumerate(dataset_rows):
+        for method_index, method_spec in enumerate(METHODS):
+            selected = sorted(
+                [row for row in rows if row["method"] == method_spec.key],
+                key=lambda row: int(row["rank"]),
+            )
+            passing = [row for row in selected if row["pass_5_percent"] == "True"]
+            after = passing[0] if passing else selected[-1]
+            preceding = [
+                row for row in selected if int(row["rank"]) < int(after["rank"])
+            ]
+            before = preceding[-1] if preceding else after
+            dataset_label = spec.display_name if method_index == 0 else ""
+            values = (
+                f"{dataset_label} & {method_spec.label} & "
+                f"{before['rank']} $\\to$ {after['rank']} & "
+                f"{100 * float(before['worst_local_length_distortion']):.2f}\\% "
+                f"$\\to$ {100 * float(after['worst_local_length_distortion']):.2f}\\% & "
+                f"{float(after['head_compression']):.2f}$\\times$ & "
+                f"{100 * float(after['teacher_triplet_agreement']):.2f}\\%"
+            )
+            english.append(values + r" \\")
+            japanese_values = values.replace(method_spec.label, method_spec.label_ja)
+            japanese.append(japanese_values + r" \\")
+        if dataset_index + 1 < len(dataset_rows):
+            english.append(r"\addlinespace")
+            japanese.append(r"\addlinespace")
+    ending = [r"\bottomrule", r"\end{tabular}"]
+    (HERE / "realdata_low_rank_table.tex").write_text(
+        "\n".join(english + ending) + "\n", encoding="utf-8"
+    )
+    (HERE / "realdata_low_rank_table_ja.tex").write_text(
+        "\n".join(japanese + ending) + "\n", encoding="utf-8"
+    )
+
+
+def save_training_plot(history: list[dict[str, float]], spec: DatasetSpec) -> None:
     epochs = [row["epoch"] for row in history]
     figure, axis = plt.subplots(figsize=(5.2, 3.4))
     axis.plot(
@@ -650,22 +794,24 @@ def save_training_plot(history: list[dict[str, float]]) -> None:
     )
     axis.set_xlabel("epoch")
     axis.set_ylabel("MSE")
-    axis.set_title("MNIST Gaussian VAE teacher training")
+    axis.set_title(f"{spec.display_name} Gaussian VAE teacher training")
     axis.grid(alpha=0.2)
     figure.tight_layout()
-    figure.savefig(HERE / "mnist_teacher_training.png", dpi=210)
+    figure.savefig(spec.artifact("teacher_training.png"), dpi=210)
     plt.close(figure)
 
 
-def save_compression_plot(rows: list[dict[str, object]], language: str) -> None:
+def save_compression_plot(
+    rows: list[dict[str, object]], language: str, spec: DatasetSpec
+) -> None:
     japanese = language == "ja"
     suffix = "_ja" if japanese else ""
     if japanese:
         plt.rcParams["font.family"] = japanese_font_family()
     figure, axes = plt.subplots(2, 2, figsize=(10.6, 7.2))
-    for spec in METHODS:
+    for method_spec in METHODS:
         selected = sorted(
-            [row for row in rows if row["method"] == spec.key],
+            [row for row in rows if row["method"] == method_spec.key],
             key=lambda row: int(row["rank"]),
         )
         rank = np.asarray([int(row["rank"]) for row in selected])
@@ -678,8 +824,8 @@ def save_compression_plot(rows: list[dict[str, object]], language: str) -> None:
             marker="o",
             ms=2.8,
             lw=1.8,
-            color=spec.color,
-            label=spec.label_ja if japanese else spec.label,
+            color=method_spec.color,
+            label=method_spec.label_ja if japanese else method_spec.label,
         )
         axes[0, 1].plot(
             rank,
@@ -687,18 +833,16 @@ def save_compression_plot(rows: list[dict[str, object]], language: str) -> None:
             marker="o",
             ms=2.8,
             lw=1.8,
-            color=spec.color,
+            color=method_spec.color,
         )
         axes[1, 0].plot(
             rank,
             100.0
-            * np.asarray(
-                [float(row["teacher_triplet_agreement"]) for row in selected]
-            ),
+            * np.asarray([float(row["teacher_triplet_agreement"]) for row in selected]),
             marker="o",
             ms=2.8,
             lw=1.8,
-            color=spec.color,
+            color=method_spec.color,
         )
         axes[1, 1].plot(
             rank,
@@ -706,7 +850,7 @@ def save_compression_plot(rows: list[dict[str, object]], language: str) -> None:
             marker="o",
             ms=2.8,
             lw=1.8,
-            color=spec.color,
+            color=method_spec.color,
         )
     geometry_before, geometry_after = method_boundaries(rows, "geometry")
     axes[0, 0].scatter(
@@ -735,18 +879,23 @@ def save_compression_plot(rows: list[dict[str, object]], language: str) -> None:
         if japanese
         else "local teacher-W2 chord agreement (%)"
     )
-    axes[1, 1].set_ylabel("再構成PSNR（dB）" if japanese else "reconstruction PSNR (dB)")
+    axes[1, 1].set_ylabel(
+        "再構成PSNR（dB）" if japanese else "reconstruction PSNR (dB)"
+    )
     for axis in axes.ravel():
         axis.set_xlabel("head rank")
         axis.grid(alpha=0.18, which="both")
     figure.suptitle(
-        "MNIST：教師のWasserstein潜在幾何を保つ低rank蒸留"
+        f"{spec.display_name_ja}：教師のWasserstein潜在幾何を保つ低rank蒸留"
         if japanese
-        else "MNIST: low-rank preservation of teacher Wasserstein geometry",
+        else (
+            f"{spec.display_name}: low-rank preservation of teacher "
+            "Wasserstein geometry"
+        ),
         fontsize=12,
     )
     figure.tight_layout()
-    figure.savefig(HERE / f"mnist_low_rank_compression{suffix}.png", dpi=210)
+    figure.savefig(spec.artifact(f"low_rank_compression{suffix}.png"), dpi=210)
     plt.close(figure)
 
 
@@ -761,14 +910,15 @@ def save_reconstruction_figure(
     before_rank: int,
     after_rank: int,
     language: str,
+    spec: DatasetSpec,
 ) -> None:
     japanese = language == "ja"
     suffix = "_ja" if japanese else ""
     if japanese:
         plt.rcParams["font.family"] = japanese_font_family()
     chosen: list[int] = []
-    for digit in range(10):
-        matches = np.flatnonzero(labels == digit)
+    for class_index in range(len(spec.class_names)):
+        matches = np.flatnonzero(labels == class_index)
         if len(matches):
             chosen.append(int(matches[0]))
     chosen = chosen[:10]
@@ -779,42 +929,61 @@ def save_reconstruction_figure(
     after = h @ after_weight.T + bias
     rows = [original, teacher, before, after]
     row_labels = (
-        ["入力", "教師", f"rank {before_rank}（不合格）", f"rank {after_rank}（合格）"]
+        [
+            "入力",
+            "教師再構成",
+            f"rank {before_rank}（不合格）",
+            f"rank {after_rank}（合格）",
+        ]
         if japanese
-        else ["input", "teacher", f"rank {before_rank} (fail)", f"rank {after_rank} (pass)"]
+        else [
+            "input",
+            "teacher recon.",
+            f"rank {before_rank} (fail)",
+            f"rank {after_rank} (pass)",
+        ]
     )
-    figure, axes = plt.subplots(4, len(chosen), figsize=(11.3, 4.8))
+    figure_width = 13.2 if spec.cli_name == "fashion-mnist" else 11.3
+    figure, axes = plt.subplots(4, len(chosen), figsize=(figure_width, 4.8))
+    class_names = spec.class_names_ja if japanese else spec.class_names
     for row_index, values in enumerate(rows):
         for column_index, image in enumerate(values):
             axis = axes[row_index, column_index]
-            axis.imshow(image.reshape(IMAGE_SIDE, IMAGE_SIDE), cmap="gray", vmin=0, vmax=1)
+            axis.imshow(
+                image.reshape(IMAGE_SIDE, IMAGE_SIDE), cmap="gray", vmin=0, vmax=1
+            )
             axis.set_xticks([])
             axis.set_yticks([])
             if column_index == 0:
                 axis.set_ylabel(row_labels[row_index], fontsize=9)
             if row_index == 0:
-                axis.set_title(str(int(labels[chosen[column_index]])), fontsize=9)
+                class_index = int(labels[chosen[column_index]])
+                axis.set_title(class_names[class_index], fontsize=8)
     figure.suptitle(
-        "標本5%幾何閾値の直前と直後（Jacobian重み付きSVD）"
+        (f"{spec.display_name_ja}：標本5%幾何閾値の直前と直後（Jacobian重み付きSVD）")
         if japanese
-        else "Immediately below and above the sampled 5% geometry threshold",
+        else (
+            f"{spec.display_name}: immediately below and above the sampled "
+            "5% geometry threshold"
+        ),
         fontsize=11,
     )
     figure.tight_layout()
-    figure.savefig(HERE / f"mnist_low_rank_images{suffix}.png", dpi=220)
+    figure.savefig(spec.artifact(f"low_rank_images{suffix}.png"), dpi=220)
     plt.close(figure)
 
 
 def main() -> None:
     args = parse_args()
+    dataset_spec = DATASET_SPECS[args.dataset]
     config = TrainingConfig(SEED, args.epochs, args.train_examples)
     seed_everything(SEED)
-    train_dataset, test_dataset = load_datasets()
+    train_dataset, test_dataset = load_datasets(dataset_spec)
     teacher, history = load_or_train_teacher(
-        train_dataset, config, args.force_train
+        train_dataset, config, args.force_train, dataset_spec
     )
-    write_history(history)
-    save_training_plot(history)
+    write_history(history, dataset_spec)
+    save_training_plot(history, dataset_spec)
 
     covariance_images, covariance_codes, _ = collect_images_and_codes(
         teacher, train_dataset, COVARIANCE_SAMPLES, SEED + 11
@@ -845,12 +1014,12 @@ def main() -> None:
     teacher_bias = teacher.decoder_head.bias.detach().numpy().astype(np.float64)
     teacher_gram = teacher_weight.T @ teacher_weight
     teacher_metric = pullback_metrics(metric_jacobians, teacher_gram)
-    feature_second_moment = evaluation_features.T @ evaluation_features / len(
-        evaluation_features
+    feature_second_moment = (
+        evaluation_features.T @ evaluation_features / len(evaluation_features)
     )
     centered_targets = evaluation_images - teacher_bias
-    feature_target_moment = evaluation_features.T @ centered_targets / len(
-        evaluation_features
+    feature_target_moment = (
+        evaluation_features.T @ centered_targets / len(evaluation_features)
     )
     target_squared_mean = float(np.mean(np.sum(centered_targets**2, axis=1)))
 
@@ -905,9 +1074,7 @@ def main() -> None:
                 "reconstruction_psnr": 10.0 * math.log10(1.0 / reconstruction_mse),
                 "minimum_teacher_metric_eigenvalue": minimum_teacher_eigenvalue,
                 "weighted_svd_next_singular_value": float(
-                    compression.singular_values[rank]
-                    if rank < FEATURE_DIM
-                    else 0.0
+                    compression.singular_values[rank] if rank < FEATURE_DIM else 0.0
                 ),
                 "geometry_covariance_multiplier": geometry_multiplier,
                 "geometry_trace_weight": args.geometry_trace_weight,
@@ -922,15 +1089,16 @@ def main() -> None:
         before, after = method_boundaries(rows, spec.key)
         print(
             f"{spec.key:8s}: 5% boundary rank "
-            f"{int(before['rank'])} ({100*float(before['worst_local_length_distortion']):.2f}%) -> "
-            f"{int(after['rank'])} ({100*float(after['worst_local_length_distortion']):.2f}%)",
+            f"{int(before['rank'])} ({100 * float(before['worst_local_length_distortion']):.2f}%) -> "
+            f"{int(after['rank'])} ({100 * float(after['worst_local_length_distortion']):.2f}%)",
             flush=True,
         )
 
-    write_results(rows)
-    write_table(rows)
-    save_compression_plot(rows, "en")
-    save_compression_plot(rows, "ja")
+    write_results(rows, dataset_spec)
+    write_table(rows, dataset_spec)
+    write_combined_realdata_table()
+    save_compression_plot(rows, "en", dataset_spec)
+    save_compression_plot(rows, "ja", dataset_spec)
 
     geometry_before, geometry_after = method_boundaries(rows, "geometry")
     before_rank = int(geometry_before["rank"])
@@ -948,6 +1116,7 @@ def main() -> None:
         before_rank,
         after_rank,
         "en",
+        dataset_spec,
     )
     save_reconstruction_figure(
         evaluation_images,
@@ -960,8 +1129,12 @@ def main() -> None:
         before_rank,
         after_rank,
         "ja",
+        dataset_spec,
     )
-    print("wrote MNIST low-rank geometry artifacts", flush=True)
+    print(
+        f"wrote {dataset_spec.display_name} low-rank geometry artifacts",
+        flush=True,
+    )
 
 
 if __name__ == "__main__":

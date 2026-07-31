@@ -34,21 +34,46 @@ and pairwise distortion on the same scale. Its `delta_cert` column is a
 finite-grid plug-in certificate on the declared 48-by-48 grid; a continuum
 certificate additionally needs a validated covering/Lipschitz remainder.
 
+## MNIST and FashionMNIST VAE head compression
+
+`mnist_low_rank_geometry.py --dataset {mnist,fashion-mnist}` trains or reloads
+a dataset-specific two-dimensional smooth Gaussian VAE, freezes its decoder
+trunk, and compares ordinary SVD, value-weighted SVD, and value--Jacobian SVD.
+It generates dataset-prefixed CSVs, LaTeX tables, training plots, and
+English/Japanese input--teacher--student image grids. Downloads and checkpoints
+are stored in `.cache/` and ignored by git.
+
+The 5% frontier is a maximum over a declared finite test subset, not a
+continuum certificate. Ordinary SVD first passes at rank 60, while both
+covariance-aware MNIST methods pass at rank 12. On FashionMNIST the
+corresponding ranks are 63 and 13. Passing weighted heads are 4.65x and 4.32x
+smaller than their dense teachers.
+
+## Straight versus numerical intrinsic paths
+
+`geodesic_interpolation.py` compares three decoded sequences between the same
+test-image posterior means:
+
+- the straight latent route at affine latent time;
+- the same route reparameterized at constant teacher arc length;
+- a multistart numerical geodesic candidate under the frozen teacher's
+  Wasserstein pullback metric.
+
+It also decodes the same teacher-geodesic frames with the passing compressed
+student. The primary CSV uses 100 endpoint-disjoint pairs per dataset; the large
+figure is a diagnostic pair selected from straight-path statistics before its
+geodesic is computed. The path is constrained to a posterior-mean evaluation
+box and is not claimed to be a globally optimal geodesic, an ambient
+Wasserstein displacement geodesic, or a path on the unknown true data
+manifold.
+
+## Architecture figure
+
+`certified_distillation_architecture.py` regenerates the vector PDF and PNG
+architecture diagrams in English and Japanese.
+
 ## Legacy benchmark
 
 `wasserstein_cartography.py` and its outputs reproduce the earlier
 Wasserstein-cartography study. They are retained for comparison but are not
 used by the current paper or `make paper-experiments`.
-
-## MNIST VAE head compression
-
-`mnist_low_rank_geometry.py` trains or reloads a two-dimensional smooth MNIST
-Gaussian VAE, freezes its decoder trunk, and compares ordinary SVD,
-value-weighted SVD, and value--Jacobian SVD. It generates the
-`mnist_low_rank_*` CSV, LaTeX tables, and English/Japanese figures. Dataset
-files and the teacher checkpoint are stored in `.cache/` and ignored by git.
-
-The 5% frontier is a maximum over a declared finite test subset, not a
-continuum certificate. Ordinary SVD first passes at rank 60, while both
-covariance-aware methods pass at rank 12. At rank 8 the Jacobian term reduces
-sampled worst local distortion from 57.64% to 26.24%.

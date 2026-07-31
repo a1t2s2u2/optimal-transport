@@ -8,7 +8,7 @@
 
 SITE := node tools/site
 
-.PHONY: help sites cuturi-site cuturi-pdf wasserstein-site clean-sites paper paper-ja paper-experiments paper-cartography-experiment paper-distillation-experiment paper-mnist-experiment paper-all
+.PHONY: help sites cuturi-site cuturi-pdf wasserstein-site clean-sites paper paper-ja paper-experiments paper-cartography-experiment paper-distillation-experiment paper-mnist-experiment paper-geodesic-experiment paper-architecture-figure paper-all
 
 help:
 	@echo "make sites             すべてのセミナーのサイトを生成"
@@ -17,7 +17,8 @@ help:
 	@echo "make wasserstein-site  Wasserstein 距離のサイトを生成（PDF は生成しない）"
 	@echo "make paper-experiments 幾何保存付き蒸留実験を再実行"
 	@echo "make paper-distillation-experiment 幾何保存蒸留の容量実験を再実行"
-	@echo "make paper-mnist-experiment MNIST VAE head圧縮実験を再実行"
+	@echo "make paper-mnist-experiment MNIST/FashionMNIST VAE head圧縮実験を再実行"
+	@echo "make paper-geodesic-experiment 潜在直線・数値測地線比較を再実行"
 	@echo "make paper             英語論文の PDF を生成"
 	@echo "make paper-ja          日本語論文の PDF を生成"
 	@echo "make paper-all         数値実験を再実行して両言語の PDF を生成"
@@ -51,9 +52,17 @@ paper-distillation-experiment:
 	uv run --python 3.12 paper/ot-manifold-approximation/experiments/lowrank_torus.py
 
 paper-mnist-experiment:
-	uv run --python 3.12 paper/ot-manifold-approximation/experiments/mnist_low_rank_geometry.py
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/mnist_low_rank_geometry.py --dataset mnist
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/mnist_low_rank_geometry.py --dataset fashion-mnist
 
-paper-experiments: paper-distillation-experiment paper-mnist-experiment
+paper-geodesic-experiment:
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/geodesic_interpolation.py --dataset mnist --student-ranks 8 12
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/geodesic_interpolation.py --dataset fashion-mnist --student-ranks 8 13
+
+paper-architecture-figure:
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/certified_distillation_architecture.py
+
+paper-experiments: paper-distillation-experiment paper-mnist-experiment paper-geodesic-experiment paper-architecture-figure
 
 paper:
 	cd paper/ot-manifold-approximation && latexmk
