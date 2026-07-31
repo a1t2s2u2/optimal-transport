@@ -1,0 +1,1378 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11,<3.14"
+# dependencies = [
+#   "matplotlib>=3.9",
+#   "numpy>=2.0",
+#   "scipy>=1.14",
+# ]
+# ///
+"""Recover a sphere from connectivity and local Wasserstein travel times.
+
+The controlled observation at a point ``x=(x1,x2,x3)`` on the unit sphere is
+the diagonal Gaussian
+
+    mean(x) = (x1, x2, 0),
+    std(x)  = (c, c, c + x3).
+
+Consequently, the closed-form 2-Wasserstein distance between two observations
+is exactly their three-dimensional chord distance, although the Gaussian mean
+alone is only a doubly covered disk.  The proposed estimator is deliberately
+given *only* the triangulation connectivity and noisy local W2 edge lengths.
+Ground-truth coordinates are used afterwards for alignment and evaluation.
+
+The reconstruction pipeline is
+
+    local W2 lengths -> angle-deficit curvature -> radius from Gauss--Bonnet
+                     -> graph geodesics -> spherical classical scaling.
+
+The final two arrows deliberately impose the paper's constant-curvature S^2
+model class.  They are not a claim that an arbitrary surface is determined by
+angle deficits alone.  Curvature error is reported both against the noiseless
+discrete angle-deficit target and against the smooth unit-sphere value K=1.
+
+For comparison, the script also computes ordinary Euclidean MDS from the same
+graph distances and the mean-only disk.  It runs several mesh resolutions,
+noise levels, and seeds; writes trial/summary CSV files and EN/JA LaTeX tables;
+and renders bilingual paper figures.
+
+Run with:
+    uv run --python 3.12 wasserstein_surface_reconstruction.py
+
+A quick smoke test is available with ``--quick``.
+"""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import math
+from collections.abc import Sequence
+from dataclasses import dataclass
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import font_manager
+from matplotlib.collections import LineCollection
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from scipy import linalg
+from scipy.sparse import coo_matrix
+from scipy.sparse.csgraph import dijkstra
+from scipy.spatial import cKDTree
+
+plt.switch_backend("Agg")
+
+HERE = Path(__file__).resolve().parent
+MASTER_SEED = 20260731
+GAUSSIAN_STD_OFFSET = 1.25
+DEFAULT_SUBDIVISIONS = (0, 1, 2, 3)
+DEFAULT_NOISE_LEVELS = (0.0, 0.005, 0.01, 0.02)
+DEFAULT_SEEDS = (0, 1, 2)
+SHOWCASE_NOISE = 0.01
+EPSILON = 1.0e-12
+
+
+@dataclass(frozen=True)
+class Mesh:
+    """A triangular mesh used to generate controlled observations."""
+
+    vertices: np.ndarray
+    faces: np.ndarray
+    edges: np.ndarray
+
+
+@dataclass(frozen=True)
+class IntrinsicEstimate:
+    """Quantities inferred without access to ground-truth coordinates."""
+
+    curvature: np.ndarray
+    vertex_areas: np.ndarray
+    angle_deficits: np.ndarray
+    graph_distances: np.ndarray
+    spherical_coordinates: np.ndarray
+    ordinary_mds_coordinates: np.ndarray
+    learned_radius: float
+    total_area: float
+    euler_characteristic: int
+    invalid_triangle_fraction: float
+    clipped_spherical_pair_fraction: float
+
+
+@dataclass(frozen=True)
+class Trial:
+    """One evaluated reconstruction and the arrays needed for a showcase."""
+
+    metrics: dict[str, float]
+    estimate: IntrinsicEstimate
+    aligned_spherical: np.ndarray
+    aligned_ordinary_mds: np.ndarray
+    aligned_mean_disk: np.ndarray
+    noisy_edge_lengths: np.ndarray
+
+
+def japanese_font_family() -> str:
+    """Return a usable Japanese font family when one is installed."""
+
+    installed = {font.name for font in font_manager.fontManager.ttflist}
+    for candidate in (
+        "Hiragino Sans",
+        "Yu Gothic",
+        "Noto Sans CJK JP",
+        "IPAexGothic",
+        "IPAGothic",
+    ):
+        if candidate in installed:
+            return candidate
+    print(
+        "warning: no Japanese font found; Japanese glyphs may be missing",
+        flush=True,
+    )
+    return "sans-serif"
+
+
+def normalize_rows(values: np.ndarray) -> np.ndarray:
+    norms = np.linalg.norm(values, axis=1, keepdims=True)
+    return values / np.maximum(norms, EPSILON)
+
+
+def unique_edges(faces: np.ndarray) -> np.ndarray:
+    """Return sorted, unique undirected edges of triangular faces."""
+
+    raw = np.concatenate([faces[:, [0, 1]], faces[:, [1, 2]], faces[:, [2, 0]]], axis=0)
+    raw.sort(axis=1)
+    return np.unique(raw, axis=0)
+
+
+def base_icosahedron() -> tuple[np.ndarray, np.ndarray]:
+    """Construct a consistently indexed unit icosahedron."""
+
+    phi = (1.0 + math.sqrt(5.0)) / 2.0
+    vertices = np.asarray(
+        [
+            (-1, phi, 0),
+            (1, phi, 0),
+            (-1, -phi, 0),
+            (1, -phi, 0),
+            (0, -1, phi),
+            (0, 1, phi),
+            (0, -1, -phi),
+            (0, 1, -phi),
+            (phi, 0, -1),
+            (phi, 0, 1),
+            (-phi, 0, -1),
+            (-phi, 0, 1),
+        ],
+        dtype=np.float64,
+    )
+    vertices = normalize_rows(vertices)
+    faces = np.asarray(
+        [
+            (0, 11, 5),
+            (0, 5, 1),
+            (0, 1, 7),
+            (0, 7, 10),
+            (0, 10, 11),
+            (1, 5, 9),
+            (5, 11, 4),
+            (11, 10, 2),
+            (10, 7, 6),
+            (7, 1, 8),
+            (3, 9, 4),
+            (3, 4, 2),
+            (3, 2, 6),
+            (3, 6, 8),
+            (3, 8, 9),
+            (4, 9, 5),
+            (2, 4, 11),
+            (6, 2, 10),
+            (8, 6, 7),
+            (9, 8, 1),
+        ],
+        dtype=np.int64,
+    )
+    return vertices, faces
+
+
+def subdivide_icosphere(
+    vertices: np.ndarray, faces: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    """Split every face into four triangles and project midpoints to S^2."""
+
+    vertex_list = [vertex.copy() for vertex in vertices]
+    midpoint_cache: dict[tuple[int, int], int] = {}
+
+    def midpoint(left: int, right: int) -> int:
+        key = (min(left, right), max(left, right))
+        cached = midpoint_cache.get(key)
+        if cached is not None:
+            return cached
+        point = vertices[left] + vertices[right]
+        point /= np.linalg.norm(point)
+        index = len(vertex_list)
+        vertex_list.append(point)
+        midpoint_cache[key] = index
+        return index
+
+    refined_faces: list[tuple[int, int, int]] = []
+    for first, second, third in faces:
+        first_second = midpoint(int(first), int(second))
+        second_third = midpoint(int(second), int(third))
+        third_first = midpoint(int(third), int(first))
+        refined_faces.extend(
+            [
+                (int(first), first_second, third_first),
+                (int(second), second_third, first_second),
+                (int(third), third_first, second_third),
+                (first_second, second_third, third_first),
+            ]
+        )
+    return np.asarray(vertex_list), np.asarray(refined_faces, dtype=np.int64)
+
+
+def icosphere(subdivisions: int) -> Mesh:
+    """Return an icosphere with 10*4^s+2 vertices."""
+
+    if subdivisions < 0:
+        raise ValueError("subdivisions must be nonnegative")
+    vertices, faces = base_icosahedron()
+    for _ in range(subdivisions):
+        vertices, faces = subdivide_icosphere(vertices, faces)
+    edges = unique_edges(faces)
+    expected_vertices = 10 * (4**subdivisions) + 2
+    if len(vertices) != expected_vertices:
+        raise RuntimeError(
+            f"icosphere indexing failed: {len(vertices)} != {expected_vertices}"
+        )
+    return Mesh(vertices=vertices, faces=faces, edges=edges)
+
+
+def diagonal_gaussian_observations(
+    sphere: np.ndarray,
+    std_offset: float = GAUSSIAN_STD_OFFSET,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return the intentionally flattened means and height-carrying stds."""
+
+    if std_offset <= 1.0:
+        raise ValueError("std_offset must exceed one so every std is positive")
+    mean = np.column_stack([sphere[:, 0], sphere[:, 1], np.zeros(len(sphere))])
+    standard_deviation = np.column_stack(
+        [
+            np.full(len(sphere), std_offset),
+            np.full(len(sphere), std_offset),
+            std_offset + sphere[:, 2],
+        ]
+    )
+    return mean, standard_deviation
+
+
+def diagonal_gaussian_w2_edges(
+    mean: np.ndarray,
+    standard_deviation: np.ndarray,
+    edges: np.ndarray,
+) -> np.ndarray:
+    """Closed-form W2 lengths for diagonal Gaussians on the mesh edges."""
+
+    mean_difference = mean[edges[:, 0]] - mean[edges[:, 1]]
+    std_difference = standard_deviation[edges[:, 0]] - standard_deviation[edges[:, 1]]
+    return np.sqrt(
+        np.square(mean_difference).sum(axis=1) + np.square(std_difference).sum(axis=1)
+    )
+
+
+def noisy_lengths(
+    exact_lengths: np.ndarray,
+    relative_noise: float,
+    seed: int,
+) -> np.ndarray:
+    """Apply positive, approximately mean-one multiplicative observation noise."""
+
+    if relative_noise < 0.0:
+        raise ValueError("relative_noise must be nonnegative")
+    if relative_noise == 0.0:
+        return exact_lengths.copy()
+    rng = np.random.default_rng(seed)
+    perturbation = np.exp(
+        relative_noise * rng.standard_normal(len(exact_lengths))
+        - 0.5 * relative_noise**2
+    )
+    # This clipping is inactive at the paper's noise levels with overwhelming
+    # probability, but protects graph connectivity from numerical outliers.
+    perturbation = np.clip(perturbation, 0.5, 1.5)
+    return exact_lengths * perturbation
+
+
+def edge_length_lookup(
+    vertex_count: int,
+    edges: np.ndarray,
+    lengths: np.ndarray,
+) -> coo_matrix:
+    """Store symmetric edge lengths in sparse matrix form."""
+
+    rows = np.concatenate([edges[:, 0], edges[:, 1]])
+    columns = np.concatenate([edges[:, 1], edges[:, 0]])
+    values = np.concatenate([lengths, lengths])
+    return coo_matrix((values, (rows, columns)), shape=(vertex_count, vertex_count))
+
+
+def triangle_geometry_from_lengths(
+    vertex_count: int,
+    faces: np.ndarray,
+    edges: np.ndarray,
+    edge_lengths: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
+    """Compute angle deficits and barycentric areas from edge lengths only.
+
+    A rare noise realization can violate a triangle inequality.  For the local
+    curvature diagnostic only, the longest side of such a face is projected
+    infinitesimally inside the valid cone.  Graph distances continue to use the
+    unmodified measurements, and the affected fraction is reported.
+    """
+
+    lookup = {
+        (int(left), int(right)): float(length)
+        for (left, right), length in zip(edges, edge_lengths, strict=True)
+    }
+
+    def length(left: int, right: int) -> float:
+        key = (min(left, right), max(left, right))
+        return lookup[key]
+
+    angle_sums = np.zeros(vertex_count, dtype=np.float64)
+    vertex_areas = np.zeros(vertex_count, dtype=np.float64)
+    face_areas = np.zeros(len(faces), dtype=np.float64)
+    invalid_count = 0
+
+    for face_index, (first, second, third) in enumerate(faces):
+        # opposite[i] is the side opposite local vertex i.
+        opposite = np.asarray(
+            [
+                length(int(second), int(third)),
+                length(int(third), int(first)),
+                length(int(first), int(second)),
+            ],
+            dtype=np.float64,
+        )
+        longest = int(np.argmax(opposite))
+        other_sum = float(opposite.sum() - opposite[longest])
+        if opposite[longest] >= other_sum:
+            invalid_count += 1
+            opposite[longest] = other_sum * (1.0 - 1.0e-10)
+
+        angles = np.empty(3, dtype=np.float64)
+        for local_vertex in range(3):
+            side_opposite = opposite[local_vertex]
+            side_left = opposite[(local_vertex + 1) % 3]
+            side_right = opposite[(local_vertex + 2) % 3]
+            cosine = (side_left**2 + side_right**2 - side_opposite**2) / max(
+                2.0 * side_left * side_right, EPSILON
+            )
+            angles[local_vertex] = math.acos(float(np.clip(cosine, -1.0, 1.0)))
+
+        semiperimeter = 0.5 * float(opposite.sum())
+        area_squared = semiperimeter
+        for side in opposite:
+            area_squared *= max(semiperimeter - float(side), 0.0)
+        area = math.sqrt(max(area_squared, EPSILON**2))
+        face_areas[face_index] = area
+        for vertex, angle in zip(
+            (int(first), int(second), int(third)), angles, strict=True
+        ):
+            angle_sums[vertex] += angle
+            vertex_areas[vertex] += area / 3.0
+
+    angle_deficits = 2.0 * math.pi - angle_sums
+    curvature = angle_deficits / np.maximum(vertex_areas, EPSILON)
+    return (
+        curvature,
+        vertex_areas,
+        angle_deficits,
+        invalid_count / len(faces),
+    )
+
+
+def top_eigen_embedding(matrix: np.ndarray, dimensions: int) -> np.ndarray:
+    """Embed a symmetric Gram matrix using its leading positive eigenpairs."""
+
+    symmetric = 0.5 * (matrix + matrix.T)
+    vertex_count = len(symmetric)
+    first = max(0, vertex_count - dimensions)
+    eigenvalues, eigenvectors = linalg.eigh(
+        symmetric,
+        subset_by_index=(first, vertex_count - 1),
+        check_finite=False,
+        driver="evr",
+    )
+    order = np.argsort(eigenvalues)[::-1]
+    eigenvalues = np.maximum(eigenvalues[order], 0.0)
+    eigenvectors = eigenvectors[:, order]
+    return eigenvectors * np.sqrt(eigenvalues)[None, :]
+
+
+def center_gram(matrix: np.ndarray) -> np.ndarray:
+    """Apply H matrix H without constructing a dense centering matrix."""
+
+    row_mean = matrix.mean(axis=1, keepdims=True)
+    column_mean = matrix.mean(axis=0, keepdims=True)
+    return matrix - row_mean - column_mean + float(matrix.mean())
+
+
+def ordinary_classical_mds(distances: np.ndarray) -> np.ndarray:
+    gram = -0.5 * center_gram(np.square(distances))
+    return top_eigen_embedding(gram, dimensions=3)
+
+
+def spherical_classical_mds(
+    distances: np.ndarray,
+    radius: float,
+) -> tuple[np.ndarray, float]:
+    """Recover points using <x_i,x_j>=r^2 cos(d_ij/r)."""
+
+    angular_distance = distances / max(radius, EPSILON)
+    off_diagonal = ~np.eye(len(distances), dtype=bool)
+    clipped_fraction = float(np.mean(angular_distance[off_diagonal] > math.pi))
+    angular_distance = np.clip(angular_distance, 0.0, math.pi)
+    spherical_gram = radius**2 * np.cos(angular_distance)
+    # Exact, uniformly sampled spherical Gram matrices are already centered.
+    # Centering removes the finite-graph constant mode without using positions.
+    coordinates = top_eigen_embedding(center_gram(spherical_gram), dimensions=3)
+    coordinates = radius * normalize_rows(coordinates)
+    return coordinates, clipped_fraction
+
+
+def infer_from_local_lengths(
+    vertex_count: int,
+    faces: np.ndarray,
+    edges: np.ndarray,
+    edge_lengths: np.ndarray,
+) -> IntrinsicEstimate:
+    """Infer geometry using only topology and local measured lengths.
+
+    Keeping this function's interface free of true coordinates and Gaussian
+    parameters is an explicit guard against evaluation leakage.
+    """
+
+    if len(edge_lengths) != len(edges):
+        raise ValueError("one positive length is required for every edge")
+    if not np.isfinite(edge_lengths).all() or np.any(edge_lengths <= 0.0):
+        raise ValueError("all measured edge lengths must be finite and positive")
+
+    curvature, vertex_areas, deficits, invalid_fraction = (
+        triangle_geometry_from_lengths(vertex_count, faces, edges, edge_lengths)
+    )
+    euler_characteristic = vertex_count - len(edges) + len(faces)
+    total_curvature = 2.0 * math.pi * euler_characteristic
+    if euler_characteristic != 2:
+        raise ValueError(
+            "the spherical reconstruction stage explicitly assumes S^2 topology "
+            "(Euler characteristic two)"
+        )
+    total_area = float(vertex_areas.sum())
+    learned_radius = math.sqrt(total_area / total_curvature)
+
+    graph = edge_length_lookup(vertex_count, edges, edge_lengths).tocsr()
+    graph_distances = np.asarray(
+        dijkstra(graph, directed=False, return_predecessors=False)
+    )
+    if not np.isfinite(graph_distances).all():
+        raise RuntimeError("the local-distance graph is disconnected")
+
+    spherical, clipped_fraction = spherical_classical_mds(
+        graph_distances, learned_radius
+    )
+    ordinary = ordinary_classical_mds(graph_distances)
+    return IntrinsicEstimate(
+        curvature=curvature,
+        vertex_areas=vertex_areas,
+        angle_deficits=deficits,
+        graph_distances=graph_distances,
+        spherical_coordinates=spherical,
+        ordinary_mds_coordinates=ordinary,
+        learned_radius=learned_radius,
+        total_area=total_area,
+        euler_characteristic=euler_characteristic,
+        invalid_triangle_fraction=invalid_fraction,
+        clipped_spherical_pair_fraction=clipped_fraction,
+    )
+
+
+def orthogonal_alignment(
+    source: np.ndarray,
+    target: np.ndarray,
+) -> tuple[np.ndarray, float]:
+    """Align by translation and an orthogonal map, never by scaling."""
+
+    source_center = source.mean(axis=0)
+    target_center = target.mean(axis=0)
+    source_centered = source - source_center
+    target_centered = target - target_center
+    left, _, right_transpose = np.linalg.svd(
+        source_centered.T @ target_centered, full_matrices=False
+    )
+    rotation = left @ right_transpose
+    aligned = source_centered @ rotation + target_center
+    rmse = math.sqrt(float(np.square(aligned - target).sum(axis=1).mean()))
+    return aligned, rmse
+
+
+def symmetric_hausdorff(source: np.ndarray, target: np.ndarray) -> float:
+    source_to_target = cKDTree(target).query(source, k=1)[0]
+    target_to_source = cKDTree(source).query(target, k=1)[0]
+    return float(max(source_to_target.max(), target_to_source.max()))
+
+
+def symmetric_chamfer_rms(source: np.ndarray, target: np.ndarray) -> float:
+    source_to_target = cKDTree(target).query(source, k=1)[0]
+    target_to_source = cKDTree(source).query(target, k=1)[0]
+    return math.sqrt(
+        0.5
+        * float(np.square(source_to_target).mean() + np.square(target_to_source).mean())
+    )
+
+
+def true_great_circle_distances(sphere: np.ndarray) -> np.ndarray:
+    cosine = np.clip(sphere @ sphere.T, -1.0, 1.0)
+    return np.arccos(cosine)
+
+
+def relative_frobenius_error(
+    estimate: np.ndarray,
+    truth: np.ndarray,
+) -> float:
+    return float(np.linalg.norm(estimate - truth) / np.linalg.norm(truth))
+
+
+def weighted_smooth_curvature_rmse(estimate: IntrinsicEstimate) -> float:
+    """Error to smooth K=1, including the mesh discretization error."""
+
+    weights = estimate.vertex_areas / estimate.total_area
+    return math.sqrt(float(np.sum(weights * np.square(estimate.curvature - 1.0))))
+
+
+def weighted_oracle_curvature_rmse(
+    estimate: IntrinsicEstimate,
+    oracle_curvature: np.ndarray,
+    oracle_areas: np.ndarray,
+) -> float:
+    """Noise error relative to the same mesh with exact W2 edge lengths."""
+
+    weights = oracle_areas / oracle_areas.sum()
+    return math.sqrt(
+        float(np.sum(weights * np.square(estimate.curvature - oracle_curvature)))
+    )
+
+
+def run_trial(
+    mesh: Mesh,
+    subdivision: int,
+    noise_level: float,
+    seed_index: int,
+) -> Trial:
+    """Generate observations, infer from local W2, then evaluate."""
+
+    mean, standard_deviation = diagonal_gaussian_observations(mesh.vertices)
+    exact_w2 = diagonal_gaussian_w2_edges(mean, standard_deviation, mesh.edges)
+    exact_chords = np.linalg.norm(
+        mesh.vertices[mesh.edges[:, 0]] - mesh.vertices[mesh.edges[:, 1]],
+        axis=1,
+    )
+    w2_identity_error = float(np.max(np.abs(exact_w2 - exact_chords)))
+    if w2_identity_error > 5.0e-13:
+        raise RuntimeError(
+            f"Gaussian W2/chord identity failed: {w2_identity_error:.3e}"
+        )
+
+    # This noiseless, same-triangulation quantity is an evaluation target only.
+    # It never enters infer_from_local_lengths or the reconstructed coordinates.
+    oracle_curvature, oracle_areas, _, _ = triangle_geometry_from_lengths(
+        len(mesh.vertices), mesh.faces, mesh.edges, exact_w2
+    )
+
+    noise_seed = (
+        MASTER_SEED
+        + 1_000_003 * subdivision
+        + 101 * round(1_000_000 * noise_level)
+        + seed_index
+    )
+    measured_w2 = noisy_lengths(exact_w2, noise_level, noise_seed)
+
+    # The estimator sees no mesh.vertices, mean, standard_deviation, or target.
+    estimate = infer_from_local_lengths(
+        len(mesh.vertices), mesh.faces, mesh.edges, measured_w2
+    )
+
+    aligned_spherical, spherical_rmse = orthogonal_alignment(
+        estimate.spherical_coordinates, mesh.vertices
+    )
+    aligned_ordinary, ordinary_rmse = orthogonal_alignment(
+        estimate.ordinary_mds_coordinates, mesh.vertices
+    )
+    aligned_mean, mean_rmse = orthogonal_alignment(mean, mesh.vertices)
+    true_distances = true_great_circle_distances(mesh.vertices)
+
+    metrics = {
+        "subdivision": float(subdivision),
+        "vertices": float(len(mesh.vertices)),
+        "faces": float(len(mesh.faces)),
+        "edges": float(len(mesh.edges)),
+        "relative_edge_noise": float(noise_level),
+        "seed": float(seed_index),
+        "w2_chord_max_abs_error": w2_identity_error,
+        "edge_relative_rmse": float(
+            np.linalg.norm(measured_w2 - exact_w2) / np.linalg.norm(exact_w2)
+        ),
+        "euler_characteristic": float(estimate.euler_characteristic),
+        "integrated_curvature": float(estimate.angle_deficits.sum()),
+        "total_area": estimate.total_area,
+        "learned_radius": estimate.learned_radius,
+        "radius_absolute_error": abs(estimate.learned_radius - 1.0),
+        "curvature_oracle_weighted_rmse": weighted_oracle_curvature_rmse(
+            estimate, oracle_curvature, oracle_areas
+        ),
+        "curvature_smooth_k1_weighted_rmse": (weighted_smooth_curvature_rmse(estimate)),
+        "graph_geodesic_relative_error": relative_frobenius_error(
+            estimate.graph_distances, true_distances
+        ),
+        "spherical_reconstruction_rmse": spherical_rmse,
+        "spherical_reconstruction_hausdorff": symmetric_hausdorff(
+            aligned_spherical, mesh.vertices
+        ),
+        "spherical_reconstruction_chamfer_rms": symmetric_chamfer_rms(
+            aligned_spherical, mesh.vertices
+        ),
+        "ordinary_mds_rmse": ordinary_rmse,
+        "ordinary_mds_hausdorff": symmetric_hausdorff(aligned_ordinary, mesh.vertices),
+        "mean_disk_rmse": mean_rmse,
+        "mean_disk_hausdorff": symmetric_hausdorff(aligned_mean, mesh.vertices),
+        "invalid_triangle_fraction": estimate.invalid_triangle_fraction,
+        "clipped_spherical_pair_fraction": (estimate.clipped_spherical_pair_fraction),
+    }
+    return Trial(
+        metrics=metrics,
+        estimate=estimate,
+        aligned_spherical=aligned_spherical,
+        aligned_ordinary_mds=aligned_ordinary,
+        aligned_mean_disk=aligned_mean,
+        noisy_edge_lengths=measured_w2,
+    )
+
+
+def aggregate_rows(rows: Sequence[dict[str, float]]) -> list[dict[str, float]]:
+    """Aggregate numeric trial columns by resolution and noise level."""
+
+    groups: dict[tuple[int, float], list[dict[str, float]]] = {}
+    for row in rows:
+        key = (int(row["subdivision"]), row["relative_edge_noise"])
+        groups.setdefault(key, []).append(row)
+
+    identifier_columns = {
+        "subdivision",
+        "vertices",
+        "faces",
+        "edges",
+        "relative_edge_noise",
+        "seed",
+    }
+    metric_columns = [key for key in rows[0] if key not in identifier_columns]
+    summary: list[dict[str, float]] = []
+    for (subdivision, noise), group in sorted(groups.items()):
+        output: dict[str, float] = {
+            "subdivision": float(subdivision),
+            "vertices": group[0]["vertices"],
+            "faces": group[0]["faces"],
+            "edges": group[0]["edges"],
+            "relative_edge_noise": noise,
+            "trials": float(len(group)),
+        }
+        for column in metric_columns:
+            values = np.asarray([row[column] for row in group], dtype=np.float64)
+            output[f"{column}_mean"] = float(values.mean())
+            output[f"{column}_std"] = float(values.std(ddof=0))
+        summary.append(output)
+    return summary
+
+
+def write_dict_csv(path: Path, rows: Sequence[dict[str, float]]) -> None:
+    if not rows:
+        raise ValueError("cannot write an empty CSV")
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def latex_noise(noise: float) -> str:
+    return f"{100.0 * noise:.1f}\\%"
+
+
+def write_latex_table(
+    path: Path,
+    summary: Sequence[dict[str, float]],
+    finest_subdivision: int,
+    japanese: bool,
+) -> None:
+    selected = [row for row in summary if int(row["subdivision"]) == finest_subdivision]
+    if japanese:
+        header = (
+            "ノイズ & 半径誤差 & 曲率RMSE（離散） & 曲率RMSE（$K=1$） "
+            "& 提案法RMSE & 通常MDS & 平均のみ \\\\"
+        )
+        caption = (
+            "定曲率 $S^2$ 仮定の下での局所Wasserstein距離からの球面復元"
+            "（平均 $\\pm$ 標準偏差）。"
+        )
+        label = "tab:wasserstein-surface-reconstruction-ja"
+    else:
+        header = (
+            "Noise & Radius error & Curvature RMSE (discrete) "
+            "& Curvature RMSE ($K=1$) & Spherical RMSE "
+            "& Euclidean MDS & Mean only \\\\"
+        )
+        caption = (
+            "Constant-curvature $S^2$ recovery from local Wasserstein distances only "
+            "($\\mathrm{mean}\\pm\\mathrm{std}$)."
+        )
+        label = "tab:wasserstein-surface-reconstruction"
+
+    def value(row: dict[str, float], key: str) -> str:
+        return f"{row[key + '_mean']:.3f} $\\pm$ {row[key + '_std']:.3f}"
+
+    lines = [
+        "\\begin{table}[t]",
+        "\\centering",
+        "\\small",
+        f"\\caption{{{caption}}}",
+        f"\\label{{{label}}}",
+        "\\begin{tabular}{@{}lcccccc@{}}",
+        "\\toprule",
+        header,
+        "\\midrule",
+    ]
+    for row in selected:
+        lines.append(
+            " & ".join(
+                [
+                    latex_noise(row["relative_edge_noise"]),
+                    value(row, "radius_absolute_error"),
+                    value(row, "curvature_oracle_weighted_rmse"),
+                    value(row, "curvature_smooth_k1_weighted_rmse"),
+                    value(row, "spherical_reconstruction_rmse"),
+                    value(row, "ordinary_mds_rmse"),
+                    value(row, "mean_disk_rmse"),
+                ]
+            )
+            + " \\\\"
+        )
+    lines.extend(["\\bottomrule", "\\end{tabular}", "\\end{table}"])
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def set_equal_3d_axes(axis: plt.Axes, limit: float = 1.08) -> None:
+    axis.set_xlim(-limit, limit)
+    axis.set_ylim(-limit, limit)
+    axis.set_zlim(-limit, limit)
+    axis.set_box_aspect((1.0, 1.0, 1.0))
+    axis.set_xticks([])
+    axis.set_yticks([])
+    axis.set_zticks([])
+
+
+def add_mesh_surface(
+    axis: plt.Axes,
+    coordinates: np.ndarray,
+    faces: np.ndarray,
+    vertex_values: np.ndarray,
+    cmap: str = "coolwarm",
+    alpha: float = 0.9,
+    edgecolor: str = "white",
+    linewidth: float = 0.08,
+) -> Poly3DCollection:
+    face_values = vertex_values[faces].mean(axis=1)
+    minimum = float(vertex_values.min())
+    maximum = float(vertex_values.max())
+    if math.isclose(minimum, maximum, abs_tol=EPSILON):
+        maximum = minimum + 1.0
+    normalization = plt.Normalize(vmin=minimum, vmax=maximum)
+    color_map = plt.get_cmap(cmap)
+    collection = Poly3DCollection(
+        coordinates[faces],
+        facecolors=color_map(normalization(face_values)),
+        edgecolors=edgecolor,
+        linewidths=linewidth,
+        alpha=alpha,
+    )
+    collection.set_array(face_values)
+    collection.set_cmap(cmap)
+    collection.set_norm(normalization)
+    axis.add_collection3d(collection)
+    return collection
+
+
+def flat_map_segments(mesh: Mesh) -> tuple[np.ndarray, np.ndarray]:
+    longitude = np.arctan2(mesh.vertices[:, 1], mesh.vertices[:, 0])
+    latitude = np.arcsin(np.clip(mesh.vertices[:, 2], -1.0, 1.0))
+    flat = np.column_stack([longitude, latitude])
+    segments = []
+    for left, right in mesh.edges:
+        if abs(longitude[left] - longitude[right]) < math.pi:
+            segments.append(flat[[left, right]])
+    return flat, np.asarray(segments)
+
+
+def save_figure(figure: plt.Figure, output_stem: Path) -> None:
+    figure.savefig(output_stem.with_suffix(".png"), dpi=220, bbox_inches="tight")
+    figure.savefig(output_stem.with_suffix(".pdf"), bbox_inches="tight")
+    plt.close(figure)
+
+
+def plot_pipeline(
+    mesh: Mesh,
+    trial: Trial,
+    output_dir: Path,
+    japanese: bool,
+) -> None:
+    font = japanese_font_family() if japanese else "DejaVu Sans"
+    suffix = "_ja" if japanese else ""
+    labels = (
+        {
+            "flat": "平面地図（表示のみ）",
+            "disk": "Gaussian平均：潰れた円板",
+            "recovered": "局所 $W_2$ からの復元",
+            "overlay": "正解球との比較（評価時のみ整列）",
+            "truth": "正解",
+            "estimate": "復元",
+            "caption": ("推定器の入力：三角形接続とノイズ付き局所 $W_2$ 長のみ"),
+        }
+        if japanese
+        else {
+            "flat": "Flat map (display only)",
+            "disk": "Gaussian means: collapsed disk",
+            "recovered": "Recovered from local $W_2$",
+            "overlay": "Truth vs recovery (aligned for evaluation only)",
+            "truth": "truth",
+            "estimate": "recovered",
+            "caption": (
+                "Estimator input: triangle connectivity + noisy local $W_2$ lengths only"
+            ),
+        }
+    )
+
+    with plt.rc_context({"font.family": font, "font.size": 9.5}):
+        figure = plt.figure(figsize=(13.2, 4.05), constrained_layout=True)
+        grid = figure.add_gridspec(
+            2, 4, height_ratios=(0.12, 0.88), hspace=0.01, wspace=0.08
+        )
+        color = mesh.vertices[:, 2]
+
+        panel_titles = [
+            "(a) " + labels["flat"],
+            "(b) " + labels["disk"],
+            "(c) " + labels["recovered"],
+            "(d) " + labels["overlay"],
+        ]
+        for column, title in enumerate(panel_titles):
+            title_axis = figure.add_subplot(grid[0, column])
+            title_axis.axis("off")
+            title_axis.text(0.5, 0.35, title, ha="center", va="center", fontsize=9.7)
+
+        flat_axis = figure.add_subplot(grid[1, 0])
+        flat, segments = flat_map_segments(mesh)
+        flat_axis.add_collection(
+            LineCollection(segments, colors="#94a3b8", linewidths=0.25, alpha=0.35)
+        )
+        flat_axis.scatter(
+            flat[:, 0], flat[:, 1], c=color, cmap="coolwarm", s=6, zorder=2
+        )
+        flat_axis.set_xlim(-math.pi, math.pi)
+        flat_axis.set_ylim(-0.5 * math.pi, 0.5 * math.pi)
+        flat_axis.set_xticks([-math.pi, 0.0, math.pi], [r"$-\pi$", "0", r"$\pi$"])
+        flat_axis.set_yticks(
+            [-0.5 * math.pi, 0.0, 0.5 * math.pi],
+            [r"$-\pi/2$", "0", r"$\pi/2$"],
+        )
+        flat_axis.set_aspect("equal")
+
+        mean_axis = figure.add_subplot(grid[1, 1], projection="3d")
+        mean_axis.scatter(
+            trial.aligned_mean_disk[:, 0],
+            trial.aligned_mean_disk[:, 1],
+            trial.aligned_mean_disk[:, 2],
+            c=color,
+            cmap="coolwarm",
+            s=8,
+            alpha=0.8,
+            depthshade=False,
+        )
+        set_equal_3d_axes(mean_axis)
+        mean_axis.view_init(elev=23, azim=-55)
+
+        recovered_axis = figure.add_subplot(grid[1, 2], projection="3d")
+        add_mesh_surface(
+            recovered_axis,
+            trial.aligned_spherical,
+            mesh.faces,
+            color,
+            alpha=0.96,
+        )
+        set_equal_3d_axes(recovered_axis)
+        recovered_axis.view_init(elev=23, azim=-55)
+
+        overlay_axis = figure.add_subplot(grid[1, 3], projection="3d")
+        add_mesh_surface(
+            overlay_axis,
+            mesh.vertices,
+            mesh.faces,
+            np.ones(len(mesh.vertices)),
+            cmap="Greys",
+            alpha=0.18,
+            edgecolor="#64748b",
+            linewidth=0.16,
+        )
+        overlay_axis.scatter(
+            trial.aligned_spherical[:, 0],
+            trial.aligned_spherical[:, 1],
+            trial.aligned_spherical[:, 2],
+            c="#e11d48",
+            s=3.5,
+            alpha=0.75,
+            label=labels["estimate"],
+            depthshade=False,
+        )
+        overlay_axis.plot([], [], [], color="#64748b", label=labels["truth"])
+        set_equal_3d_axes(overlay_axis)
+        overlay_axis.view_init(elev=23, azim=-55)
+        overlay_axis.legend(loc="lower center", frameon=False, fontsize=8)
+
+        figure.suptitle(labels["caption"], fontsize=11.5)
+        save_figure(
+            figure,
+            output_dir / f"wasserstein_surface_reconstruction_pipeline{suffix}",
+        )
+
+
+def plot_curvature(
+    mesh: Mesh,
+    trial: Trial,
+    output_dir: Path,
+    japanese: bool,
+) -> None:
+    font = japanese_font_family() if japanese else "DejaVu Sans"
+    suffix = "_ja" if japanese else ""
+    labels = (
+        {
+            "map": "角度欠損による未平滑化Gauss曲率",
+            "hist": "未平滑化の頂点曲率（ノイズ感度）",
+            "curvature": "推定曲率 $\\widehat K$",
+            "density": "面積加重密度",
+            "truth": "正解 $K=1$",
+            "radius": "球面仮定 + Gauss–Bonnetで学習した半径",
+        }
+        if japanese
+        else {
+            "map": "Raw angle-deficit Gaussian curvature",
+            "hist": "Raw vertex curvature (noise sensitivity)",
+            "curvature": r"estimated curvature $\widehat K$",
+            "density": "area-weighted density",
+            "truth": "truth $K=1$",
+            "radius": r"$S^2$ prior + Gauss–Bonnet radius",
+        }
+    )
+    curvature = trial.estimate.curvature
+    lower, upper = np.quantile(curvature, [0.03, 0.97])
+    clipped = np.clip(curvature, lower, upper)
+
+    with plt.rc_context({"font.family": font, "font.size": 10}):
+        figure = plt.figure(figsize=(9.3, 3.65), constrained_layout=True)
+        surface_axis = figure.add_subplot(1, 2, 1, projection="3d")
+        collection = add_mesh_surface(
+            surface_axis,
+            trial.aligned_spherical,
+            mesh.faces,
+            clipped,
+            cmap="viridis",
+            alpha=0.97,
+        )
+        set_equal_3d_axes(surface_axis)
+        surface_axis.view_init(elev=23, azim=-55)
+        surface_axis.set_title("(a) " + labels["map"])
+        colorbar = figure.colorbar(collection, ax=surface_axis, shrink=0.68, pad=0.02)
+        colorbar.set_label(labels["curvature"])
+
+        histogram_axis = figure.add_subplot(1, 2, 2)
+        histogram_axis.hist(
+            curvature,
+            bins=34,
+            weights=trial.estimate.vertex_areas / trial.estimate.total_area,
+            color="#2563eb",
+            alpha=0.82,
+            edgecolor="white",
+            linewidth=0.4,
+            density=True,
+        )
+        histogram_axis.axvline(
+            1.0, color="#dc2626", linestyle="--", linewidth=1.8, label=labels["truth"]
+        )
+        histogram_axis.set_xlabel(labels["curvature"])
+        histogram_axis.set_ylabel(labels["density"])
+        histogram_axis.set_title("(b) " + labels["hist"])
+        histogram_axis.legend(frameon=False)
+        histogram_axis.grid(alpha=0.2)
+        histogram_axis.text(
+            0.98,
+            0.96,
+            f"{labels['radius']}:  $\\widehat r={trial.estimate.learned_radius:.3f}$",
+            transform=histogram_axis.transAxes,
+            ha="right",
+            va="top",
+            bbox={"facecolor": "white", "edgecolor": "#cbd5e1", "alpha": 0.9},
+        )
+        save_figure(
+            figure,
+            output_dir / f"wasserstein_surface_reconstruction_curvature{suffix}",
+        )
+
+
+def summary_metric(
+    summary: Sequence[dict[str, float]],
+    subdivision: int,
+    noise: float,
+    metric: str,
+) -> tuple[float, float]:
+    for row in summary:
+        if int(row["subdivision"]) == subdivision and math.isclose(
+            row["relative_edge_noise"], noise, abs_tol=1.0e-12
+        ):
+            return row[f"{metric}_mean"], row[f"{metric}_std"]
+    raise KeyError((subdivision, noise, metric))
+
+
+def plot_errors(
+    summary: Sequence[dict[str, float]],
+    subdivisions: Sequence[int],
+    noise_levels: Sequence[float],
+    output_dir: Path,
+    japanese: bool,
+) -> None:
+    font = japanese_font_family() if japanese else "DejaVu Sans"
+    suffix = "_ja" if japanese else ""
+    labels = (
+        {
+            "curvature": "曲率RMSE（無雑音の離散曲率に対して）",
+            "oracle": "無雑音の離散曲率に対して",
+            "smooth": "滑らかな球面 $K=1$ に対して",
+            "shape": "3D復元RMSE",
+            "intrinsic": "測地距離の相対誤差",
+            "vertices": "頂点数（解像度）",
+            "spherical": "提案法：球面MDS",
+            "ordinary": "通常のMDS",
+            "mean": "平均のみの円板",
+            "noise": "辺長ノイズ",
+            "tradeoff": "相対ノイズ固定：高解像度ほど未平滑化曲率誤差を増幅",
+            "zero": "0%では離散曲率を数値精度で復元",
+        }
+        if japanese
+        else {
+            "curvature": "curvature RMSE (vs discrete target)",
+            "oracle": "vs noiseless discrete target",
+            "smooth": "vs smooth sphere $K=1$",
+            "shape": "3D reconstruction RMSE",
+            "intrinsic": "relative geodesic-distance error",
+            "vertices": "vertices (resolution)",
+            "spherical": "ours: spherical MDS",
+            "ordinary": "ordinary MDS",
+            "mean": "mean-only disk",
+            "noise": "edge-length noise",
+            "tradeoff": (
+                "fixed relative noise: finer meshes amplify raw curvature error"
+            ),
+            "zero": "0% recovers the discrete target to numerical precision",
+        }
+    )
+    vertex_counts = np.asarray([10 * 4**level + 2 for level in subdivisions])
+    palette = plt.get_cmap("viridis")
+    colors = [palette(value) for value in np.linspace(0.08, 0.88, len(noise_levels))]
+
+    with plt.rc_context({"font.family": font, "font.size": 9.5}):
+        figure, axes = plt.subplots(1, 3, figsize=(12.7, 3.45), constrained_layout=True)
+        for noise, color in zip(noise_levels, colors, strict=True):
+            curvature_oracle_mean = []
+            curvature_oracle_std = []
+            curvature_smooth_mean = []
+            curvature_smooth_std = []
+            geodesic_mean = []
+            geodesic_std = []
+            spherical_mean = []
+            spherical_std = []
+            ordinary_mean = []
+            ordinary_std = []
+            mean_disk = []
+            for subdivision in subdivisions:
+                mean_value, std_value = summary_metric(
+                    summary, subdivision, noise, "curvature_oracle_weighted_rmse"
+                )
+                curvature_oracle_mean.append(mean_value)
+                curvature_oracle_std.append(std_value)
+                mean_value, std_value = summary_metric(
+                    summary,
+                    subdivision,
+                    noise,
+                    "curvature_smooth_k1_weighted_rmse",
+                )
+                curvature_smooth_mean.append(mean_value)
+                curvature_smooth_std.append(std_value)
+                mean_value, std_value = summary_metric(
+                    summary, subdivision, noise, "graph_geodesic_relative_error"
+                )
+                geodesic_mean.append(mean_value)
+                geodesic_std.append(std_value)
+                mean_value, std_value = summary_metric(
+                    summary, subdivision, noise, "spherical_reconstruction_rmse"
+                )
+                spherical_mean.append(mean_value)
+                spherical_std.append(std_value)
+                mean_value, std_value = summary_metric(
+                    summary, subdivision, noise, "ordinary_mds_rmse"
+                )
+                ordinary_mean.append(mean_value)
+                ordinary_std.append(std_value)
+                mean_disk.append(
+                    summary_metric(summary, subdivision, noise, "mean_disk_rmse")[0]
+                )
+
+            label = f"{labels['noise']} {100.0 * noise:.1f}%"
+            axes[0].errorbar(
+                vertex_counts,
+                curvature_oracle_mean,
+                yerr=curvature_oracle_std,
+                marker="o",
+                ms=4,
+                linewidth=1.4,
+                capsize=2,
+                color=color,
+                label=label,
+            )
+            if math.isclose(noise, noise_levels[0], abs_tol=EPSILON):
+                axes[0].plot(
+                    vertex_counts,
+                    curvature_smooth_mean,
+                    marker="s",
+                    ms=4,
+                    linestyle="--",
+                    color="#dc2626",
+                    label=labels["smooth"],
+                )
+            axes[1].errorbar(
+                vertex_counts,
+                spherical_mean,
+                yerr=spherical_std,
+                marker="o",
+                ms=4,
+                linewidth=1.5,
+                capsize=2,
+                color=color,
+                label=label,
+            )
+            # Ordinary MDS and mean-only curves are shown once at zero noise;
+            # their styles identify the baselines without overcrowding the panel.
+            if math.isclose(noise, noise_levels[0], abs_tol=EPSILON):
+                axes[1].plot(
+                    vertex_counts,
+                    ordinary_mean,
+                    marker="s",
+                    ms=4,
+                    linestyle="--",
+                    color="#f97316",
+                    label=labels["ordinary"],
+                )
+                axes[1].plot(
+                    vertex_counts,
+                    mean_disk,
+                    marker="^",
+                    ms=4,
+                    linestyle=":",
+                    color="#64748b",
+                    label=labels["mean"],
+                )
+            axes[2].errorbar(
+                vertex_counts,
+                geodesic_mean,
+                yerr=geodesic_std,
+                marker="o",
+                ms=4,
+                linewidth=1.4,
+                capsize=2,
+                color=color,
+                label=label,
+            )
+
+        titles = [labels["curvature"], labels["shape"], labels["intrinsic"]]
+        for index, (axis, title) in enumerate(zip(axes, titles, strict=True)):
+            axis.set_xscale("log", base=2)
+            if index == 0:
+                axis.set_yscale("linear")
+                axis.set_ylim(bottom=0.0)
+            else:
+                axis.set_yscale("log")
+            axis.set_xticks(vertex_counts, [str(value) for value in vertex_counts])
+            if japanese:
+                axis.tick_params(axis="x", labelsize=8)
+                for tick_label in axis.get_xticklabels():
+                    tick_label.set_rotation(28)
+                    tick_label.set_ha("right")
+            axis.set_xlabel(labels["vertices"])
+            axis.set_ylabel(title)
+            axis.set_title(f"({chr(ord('a') + index)}) {title}")
+            axis.grid(alpha=0.22, which="both")
+        axes[0].legend(frameon=False, fontsize=7.7)
+        axes[1].legend(frameon=False, fontsize=7.7)
+        axes[0].text(
+            0.02,
+            0.98,
+            labels["tradeoff"],
+            transform=axes[0].transAxes,
+            ha="left",
+            va="top",
+            fontsize=7.4,
+            color="#7c2d12",
+            bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.72},
+        )
+        axes[0].text(
+            0.02,
+            0.03,
+            labels["zero"],
+            transform=axes[0].transAxes,
+            ha="left",
+            va="bottom",
+            fontsize=7.2,
+            color="#312e81",
+            bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.72},
+        )
+        save_figure(
+            figure,
+            output_dir / f"wasserstein_surface_reconstruction_errors{suffix}",
+        )
+
+
+def parse_arguments() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--subdivisions",
+        nargs="+",
+        type=int,
+        default=list(DEFAULT_SUBDIVISIONS),
+        help="icosphere subdivision levels",
+    )
+    parser.add_argument(
+        "--noise-levels",
+        nargs="+",
+        type=float,
+        default=list(DEFAULT_NOISE_LEVELS),
+        help="relative standard deviations of multiplicative edge noise",
+    )
+    parser.add_argument(
+        "--seeds",
+        nargs="+",
+        type=int,
+        default=list(DEFAULT_SEEDS),
+        help="noise-replicate indices",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=HERE,
+        help="directory for CSV, TeX, PNG, and PDF outputs",
+    )
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help="run levels 0--2, noise 0/1%%, and one seed",
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    arguments = parse_arguments()
+    subdivisions = tuple(sorted(set(arguments.subdivisions)))
+    noise_levels = tuple(sorted(set(arguments.noise_levels)))
+    seeds = tuple(sorted(set(arguments.seeds)))
+    if arguments.quick:
+        subdivisions = (0, 1, 2)
+        noise_levels = (0.0, 0.01)
+        seeds = (0,)
+    if not subdivisions or not noise_levels or not seeds:
+        raise ValueError("subdivisions, noise levels, and seeds cannot be empty")
+    if min(subdivisions) < 0 or min(noise_levels) < 0.0:
+        raise ValueError("subdivisions and noise levels must be nonnegative")
+
+    output_dir = arguments.output_dir.resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    rows: list[dict[str, float]] = []
+    meshes = {level: icosphere(level) for level in subdivisions}
+    showcase_trial: Trial | None = None
+    showcase_mesh: Mesh | None = None
+    desired_noise = min(noise_levels, key=lambda value: abs(value - SHOWCASE_NOISE))
+
+    total_trials = len(subdivisions) * len(noise_levels) * len(seeds)
+    completed = 0
+    for subdivision in subdivisions:
+        mesh = meshes[subdivision]
+        for noise in noise_levels:
+            for seed in seeds:
+                trial = run_trial(mesh, subdivision, noise, seed)
+                rows.append(trial.metrics)
+                completed += 1
+                print(
+                    f"[{completed:02d}/{total_trials:02d}] "
+                    f"level={subdivision} V={len(mesh.vertices)} "
+                    f"noise={100.0 * noise:.2f}% seed={seed} "
+                    f"r={trial.estimate.learned_radius:.4f} "
+                    f"shape_rmse={trial.metrics['spherical_reconstruction_rmse']:.4f}",
+                    flush=True,
+                )
+                if (
+                    subdivision == max(subdivisions)
+                    and math.isclose(noise, desired_noise, abs_tol=EPSILON)
+                    and seed == seeds[0]
+                ):
+                    showcase_trial = trial
+                    showcase_mesh = mesh
+
+    if showcase_trial is None or showcase_mesh is None:
+        raise RuntimeError("failed to select a showcase trial")
+    summary = aggregate_rows(rows)
+    write_dict_csv(output_dir / "wasserstein_surface_reconstruction_results.csv", rows)
+    write_dict_csv(
+        output_dir / "wasserstein_surface_reconstruction_summary.csv", summary
+    )
+    write_latex_table(
+        output_dir / "wasserstein_surface_reconstruction_table.tex",
+        summary,
+        max(subdivisions),
+        japanese=False,
+    )
+    write_latex_table(
+        output_dir / "wasserstein_surface_reconstruction_table_ja.tex",
+        summary,
+        max(subdivisions),
+        japanese=True,
+    )
+    for japanese in (False, True):
+        plot_pipeline(showcase_mesh, showcase_trial, output_dir, japanese=japanese)
+        plot_curvature(showcase_mesh, showcase_trial, output_dir, japanese=japanese)
+        plot_errors(
+            summary,
+            subdivisions,
+            noise_levels,
+            output_dir,
+            japanese=japanese,
+        )
+
+    print(
+        "Wrote Wasserstein surface reconstruction CSV/TeX/PNG/PDF outputs to "
+        f"{output_dir}",
+        flush=True,
+    )
+
+
+if __name__ == "__main__":
+    main()
