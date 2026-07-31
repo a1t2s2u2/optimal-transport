@@ -652,9 +652,7 @@ def write_history(history: list[dict[str, float]], spec: DatasetSpec) -> None:
 def write_results(rows: list[dict[str, object]], spec: DatasetSpec) -> None:
     path = spec.artifact("low_rank_results.csv")
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(
-            handle, fieldnames=list(rows[0]), lineterminator="\n"
-        )
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
