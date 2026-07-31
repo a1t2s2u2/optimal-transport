@@ -2,18 +2,18 @@
 # /// script
 # requires-python = ">=3.11,<3.14"
 # dependencies = [
-#   "matplotlib>=3.9",
-#   "numpy>=2.0",
-#   "scipy>=1.14",
-#   "torch>=2.4",
+#   "matplotlib==3.11.1",
+#   "numpy==2.5.1",
+#   "scipy==1.18.0",
+#   "torch==2.13.0",
 # ]
 # ///
 """Prototype: recover a general convex polyhedron from local W2 edge chords.
 
 This experiment is the numerical counterpart of same-skeleton convex
-rigidity.  A diagonal-Gaussian observation is attached to every vertex so
-that W2 on every mesh edge equals its Euclidean chord.  The estimator receives
-only
+rigidity.  A full-rank Gaussian observation with noncommuting covariances is
+attached to every vertex so that W2 on every mesh edge equals its Euclidean
+chord.  The estimator receives only
 
     (number of vertices, oriented triangular faces, edges, measured chords).
 
@@ -25,8 +25,15 @@ no radius, row-normalization, or spherical term: after fixing one triangular
 face to remove E(3), its residuals are mesh-edge chord residuals only.
 
 The prototype evaluates a round sphere and a linearly transformed ellipsoid,
-both with the same convex triangular skeleton, at exact and 0.5% noisy W2
-chords.  ConvexHull must retain every vertex and exactly the input facets.
+both with the same convex triangular skeleton, at exact, 0.5%, and 1% noisy
+W2 chords.  Each noisy condition uses three deterministic seeds.  It also
+audits the local rigidity estimate
+
+    ||X_hat - X||_F <= 2 ||ell_hat - ell||_2 / s_X,
+
+where s_X is the smallest nonzero singular value of the true edge-length
+rigidity matrix after quotienting Euclidean motions.  ConvexHull must retain
+every vertex and exactly the input facets in every trial.
 
 Run with:
     uv run --python 3.12 convex_edge_realization_prototype.py
@@ -54,9 +61,11 @@ plt.switch_backend("Agg")
 HERE = Path(__file__).resolve().parent
 MASTER_SEED = 20260801
 SUBDIVISION = 1
-NOISE_LEVELS = (0.0, 0.005)
-ELLIPSOID_AXES = (1.35, 0.90, 0.65)
-GAUSSIAN_STD_OFFSET = 1.75
+NOISE_LEVELS = (0.0, 0.005, 0.01)
+NOISY_SEEDS = (0, 1, 2)
+# This remains visibly nonspherical while keeping 1% independent edge noise
+# inside the empirically audited convex same-skeleton neighborhood.
+ELLIPSOID_AXES = (1.20, 1.00, 0.80)
 CONTINUATION_STAGES = 41
 LBFGS_ITERATIONS = 100
 CONVEXITY_WEIGHT = 1_000.0
@@ -88,6 +97,7 @@ class EvaluatedCase:
 
     shape: str
     noise_level: float
+    seed_index: int
     truth: np.ndarray
     realization: Realization
     aligned_initializer: np.ndarray
@@ -247,8 +257,35 @@ def edge_statistics(
     length_scale = float(target_lengths.mean())
     stress = float(np.mean(np.square(residual / length_scale)))
     relative_rmse = float(np.linalg.norm(residual) / np.linalg.norm(target_lengths))
-    max_relative = float(np.max(np.abs(residual)) / length_scale)
+    max_relative = float(np.max(np.abs(residual) / target_lengths))
     return stress, relative_rmse, max_relative
+
+
+def rigidity_smallest_nonzero_singular_value(
+    coordinates: np.ndarray,
+    edges: np.ndarray,
+) -> tuple[float, int]:
+    """Return s_X for the edge-length rigidity matrix at a true realization."""
+
+    vertex_count = len(coordinates)
+    rigidity = np.zeros((len(edges), 3 * vertex_count), dtype=np.float64)
+    for row, (left, right) in enumerate(edges.tolist()):
+        difference = coordinates[left] - coordinates[right]
+        unit_direction = difference / max(np.linalg.norm(difference), EPSILON)
+        rigidity[row, 3 * left : 3 * left + 3] = unit_direction
+        rigidity[row, 3 * right : 3 * right + 3] = -unit_direction
+    singular_values = np.linalg.svd(rigidity, compute_uv=False)
+    tolerance = (
+        max(rigidity.shape) * np.finfo(np.float64).eps * float(singular_values.max())
+    )
+    nonzero = singular_values[singular_values > tolerance]
+    rank = len(nonzero)
+    expected_rank = 3 * vertex_count - 6
+    if rank != expected_rank:
+        raise RuntimeError(
+            f"true framework is not infinitesimally rigid: {rank} != {expected_rank}"
+        )
+    return float(nonzero.min()), rank
 
 
 def hull_diagnostics(
@@ -532,18 +569,25 @@ def evaluate_case(
     faces: np.ndarray,
     edges: np.ndarray,
     noise_level: float,
+    seed_index: int,
 ) -> EvaluatedCase:
-    mean, standard_deviation = spherical_experiment.diagonal_gaussian_observations(
-        truth, std_offset=GAUSSIAN_STD_OFFSET
-    )
-    exact_w2 = spherical_experiment.diagonal_gaussian_w2_edges(
-        mean, standard_deviation, edges
-    )
+    mean, covariance = spherical_experiment.noncommuting_gaussian_observations(truth)
+    exact_w2 = spherical_experiment.gaussian_w2_edges(mean, covariance, edges)
     exact_chords = np.linalg.norm(truth[edges[:, 0]] - truth[edges[:, 1]], axis=1)
     w2_identity_error = float(np.max(np.abs(exact_w2 - exact_chords)))
-    if w2_identity_error > 1.0e-12:
+    if w2_identity_error > 2.0e-12:
         raise RuntimeError(f"W2/chord identity failed: {w2_identity_error:.3e}")
-    seed = MASTER_SEED + sum(map(ord, shape)) + round(1.0e6 * noise_level)
+    parameter_scale, parameter_distortion = (
+        spherical_experiment.oracle_scaled_raw_parameter_distortion(
+            mean, covariance, edges, exact_chords
+        )
+    )
+    seed = (
+        MASTER_SEED
+        + sum(map(ord, shape))
+        + round(1.0e6 * noise_level)
+        + 10_000_019 * seed_index
+    )
     measured = spherical_experiment.noisy_lengths(exact_w2, noise_level, seed)
 
     # No truth is passed across this estimator boundary.
@@ -554,17 +598,46 @@ def evaluate_case(
     aligned_reconstruction, reconstruction_rmse = (
         spherical_experiment.orthogonal_alignment(realization.coordinates, truth)
     )
+    rigidity_singular_value, rigidity_rank = rigidity_smallest_nonzero_singular_value(
+        truth, edges
+    )
+    edge_noise_l2 = float(np.linalg.norm(measured - exact_w2))
+    aligned_frobenius = reconstruction_rmse * math.sqrt(len(truth))
+    local_rigidity_bound = 2.0 * edge_noise_l2 / rigidity_singular_value
+    if local_rigidity_bound > EPSILON:
+        error_to_bound_ratio = aligned_frobenius / local_rigidity_bound
+    else:
+        error_to_bound_ratio = math.nan
+    bound_satisfied = aligned_frobenius <= local_rigidity_bound + 1.0e-10
     metrics: dict[str, float | str | bool] = {
         "shape": shape,
         "relative_edge_noise": noise_level,
+        "seed": float(seed_index),
         "vertices": float(len(truth)),
         "faces": float(len(faces)),
         "edges": float(len(edges)),
         "free_coordinates_after_e3_fix": float(3 * (len(truth) - 3)),
         "active_edge_residuals": float(len(edges) - 3),
         "w2_chord_max_abs_error": w2_identity_error,
+        "gaussian_covariance_minimum_eigenvalue": float(
+            np.linalg.eigvalsh(covariance).min()
+        ),
+        "noncommuting_covariance_edge_fraction": (
+            spherical_experiment.noncommuting_pair_fraction(covariance, edges)
+        ),
+        "oracle_covariance_parameter_scale": parameter_scale,
+        "oracle_scaled_raw_parameter_distance_relative_rmse": parameter_distortion,
         "initializer_e3_rmse": initializer_rmse,
         "final_e3_rmse": reconstruction_rmse,
+        "rigidity_rank": float(rigidity_rank),
+        "rigidity_expected_rank": float(3 * len(truth) - 6),
+        "rigidity_smallest_nonzero_singular_value": rigidity_singular_value,
+        "edge_noise_l2": edge_noise_l2,
+        "aligned_frobenius_error": aligned_frobenius,
+        "local_rigidity_bound": local_rigidity_bound,
+        "error_to_bound_ratio": error_to_bound_ratio,
+        "local_bound_satisfied_with_tolerance": bound_satisfied,
+        "local_bound_slack": local_rigidity_bound - aligned_frobenius,
         "final_edge_stress": realization.final_edge_stress,
         "final_edge_relative_rmse": realization.final_edge_relative_rmse,
         "final_edge_max_relative_error": realization.final_edge_max_relative_error,
@@ -589,6 +662,7 @@ def evaluate_case(
     return EvaluatedCase(
         shape=shape,
         noise_level=noise_level,
+        seed_index=seed_index,
         truth=truth,
         realization=realization,
         aligned_initializer=aligned_initializer,
@@ -609,6 +683,143 @@ def write_dict_csv(
         )
         writer.writeheader()
         writer.writerows(rows)
+
+
+SUMMARY_METRICS = (
+    "w2_chord_max_abs_error",
+    "gaussian_covariance_minimum_eigenvalue",
+    "noncommuting_covariance_edge_fraction",
+    "oracle_covariance_parameter_scale",
+    "oracle_scaled_raw_parameter_distance_relative_rmse",
+    "rigidity_smallest_nonzero_singular_value",
+    "edge_noise_l2",
+    "aligned_frobenius_error",
+    "local_rigidity_bound",
+    "error_to_bound_ratio",
+    "final_e3_rmse",
+    "final_edge_relative_rmse",
+    "initializer_e3_rmse",
+)
+
+
+def aggregate_summary(
+    cases: Sequence[EvaluatedCase],
+) -> list[dict[str, float | str | bool]]:
+    groups: dict[tuple[str, float], list[EvaluatedCase]] = {}
+    for case in cases:
+        groups.setdefault((case.shape, case.noise_level), []).append(case)
+
+    shape_order = {"sphere": 0, "ellipsoid": 1}
+    summary: list[dict[str, float | str | bool]] = []
+    for (shape, noise), group in sorted(
+        groups.items(), key=lambda item: (shape_order[item[0][0]], item[0][1])
+    ):
+        output: dict[str, float | str | bool] = {
+            "shape": shape,
+            "relative_edge_noise": noise,
+            "trials": float(len(group)),
+        }
+        for metric in SUMMARY_METRICS:
+            values = np.asarray(
+                [float(case.metrics[metric]) for case in group], dtype=np.float64
+            )
+            finite = values[np.isfinite(values)]
+            if len(finite) == 0:
+                output[f"{metric}_mean"] = math.nan
+                output[f"{metric}_std"] = math.nan
+            else:
+                output[f"{metric}_mean"] = float(finite.mean())
+                output[f"{metric}_std"] = (
+                    0.0 if np.all(finite == finite[0]) else float(finite.std(ddof=0))
+                )
+        hull_passes = sum(
+            bool(case.metrics["same_skeleton_verified"]) for case in group
+        )
+        bound_passes = sum(
+            bool(case.metrics["local_bound_satisfied_with_tolerance"]) for case in group
+        )
+        output["same_skeleton_passes"] = float(hull_passes)
+        output["same_skeleton_pass_rate"] = hull_passes / len(group)
+        output["local_bound_passes"] = float(bound_passes)
+        output["local_bound_pass_rate"] = bound_passes / len(group)
+        output["local_bound_violations"] = float(len(group) - bound_passes)
+        summary.append(output)
+    return summary
+
+
+def write_latex_summary_table(
+    path: Path,
+    summary: Sequence[dict[str, float | str | bool]],
+    japanese: bool,
+) -> None:
+    if japanese:
+        header = (
+            "条件 & $\\|\\Delta\\ell\\|_2$ & $\\|\\widehat X-X\\|_F$ "
+            "& 局所上界 & 比 & Hull \\\\"
+        )
+        caption = (
+            "ノイズ下の同一骨格剛性監査。Frobenius誤差は最適な $E(3)$ 整列後、"
+            "上界は $2\\|\\Delta\\ell\\|_2/s_X$、比は誤差/上界である。"
+            "数値は平均 $\\pm$ 標準偏差、Hullは全頂点・facet一致数を表す。"
+        )
+        shape_labels = {"sphere": "球面", "ellipsoid": "楕円体"}
+        label = "tab:convex-edge-rigidity-ja"
+    else:
+        header = (
+            "Case & $\\|\\Delta\\ell\\|_2$ & $\\|\\widehat X-X\\|_F$ "
+            "& Local bound & Ratio & Hull \\\\"
+        )
+        caption = (
+            "Noisy local same-skeleton rigidity audit (mean $\\pm$ standard deviation). "
+            "Frobenius error follows optimal $E(3)$ alignment, the bound is "
+            "$2\\|\\Delta\\ell\\|_2/s_X$, and Ratio is error/bound. Hull reports "
+            "trials retaining every vertex and input facet."
+        )
+        shape_labels = {"sphere": "Sphere", "ellipsoid": "Ellipsoid"}
+        label = "tab:convex-edge-rigidity"
+
+    def mean_std(row: dict[str, float | str | bool], metric: str) -> str:
+        mean = float(row[f"{metric}_mean"])
+        standard_deviation = float(row[f"{metric}_std"])
+        if not math.isfinite(mean):
+            return "--"
+        return f"{mean:.3g} $\\pm$ {standard_deviation:.2g}"
+
+    lines = [
+        "\\begin{table}[t]",
+        "\\centering",
+        "\\small",
+        f"\\caption{{{caption}}}",
+        f"\\label{{{label}}}",
+        "\\resizebox{\\linewidth}{!}{%",
+        "\\begin{tabular}{@{}lccccc@{}}",
+        "\\toprule",
+        header,
+        "\\midrule",
+    ]
+    for row in summary:
+        if float(row["relative_edge_noise"]) == 0.0:
+            continue
+        trials = int(float(row["trials"]))
+        hull_passes = int(float(row["same_skeleton_passes"]))
+        lines.append(
+            " & ".join(
+                [
+                    (
+                        f"{shape_labels[str(row['shape'])]} "
+                        f"{100.0 * float(row['relative_edge_noise']):.1f}\\%"
+                    ),
+                    mean_std(row, "edge_noise_l2"),
+                    mean_std(row, "aligned_frobenius_error"),
+                    mean_std(row, "local_rigidity_bound"),
+                    mean_std(row, "error_to_bound_ratio"),
+                    f"{hull_passes}/{trials}",
+                ]
+            )
+            + " \\\\"
+        )
+    lines.extend(["\\bottomrule", "\\end{tabular}%", "}", "\\end{table}"])
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def plot_cases(
@@ -641,63 +852,62 @@ def plot_cases(
             "rmse": "aligned RMSE",
         }
     )
-    by_key = {(case.shape, case.noise_level): case for case in cases}
+    by_key = {
+        (case.shape, case.noise_level): case for case in cases if case.seed_index == 0
+    }
 
     with plt.rc_context({"font.family": font, "font.size": 8.5}):
-        figure = plt.figure(figsize=(12.0, 5.9), constrained_layout=True)
-        grid = figure.add_gridspec(2, 4, wspace=0.02, hspace=0.04)
-        for row, shape in enumerate(("sphere", "ellipsoid")):
-            exact = by_key[(shape, 0.0)]
-            noisy = by_key[(shape, 0.005)]
-            panels = (
-                (exact.truth, labels["truth"], None),
-                (
-                    exact.aligned_initializer,
-                    labels["initial"],
-                    float(exact.metrics["initializer_e3_rmse"]),
-                ),
-                (
-                    exact.aligned_reconstruction,
-                    labels["exact"],
-                    float(exact.metrics["final_e3_rmse"]),
-                ),
-                (
-                    noisy.aligned_reconstruction,
-                    labels["noisy"],
-                    float(noisy.metrics["final_e3_rmse"]),
-                ),
+        figure = plt.figure(figsize=(12.0, 3.25), constrained_layout=True)
+        grid = figure.add_gridspec(1, 4, wspace=0.02)
+        exact = by_key[("ellipsoid", 0.0)]
+        noisy = by_key[("ellipsoid", 0.005)]
+        panels = (
+            (exact.truth, labels["truth"], None),
+            (
+                exact.aligned_initializer,
+                labels["initial"],
+                float(exact.metrics["initializer_e3_rmse"]),
+            ),
+            (
+                exact.aligned_reconstruction,
+                labels["exact"],
+                float(exact.metrics["final_e3_rmse"]),
+            ),
+            (
+                noisy.aligned_reconstruction,
+                labels["noisy"],
+                float(noisy.metrics["final_e3_rmse"]),
+            ),
+        )
+        color = exact.truth[:, 2]
+        for column, (coordinates, title, rmse) in enumerate(panels):
+            axis = figure.add_subplot(grid[0, column], projection="3d")
+            spherical_experiment.add_mesh_surface(
+                axis,
+                coordinates,
+                faces,
+                color,
+                alpha=0.96,
+                linewidth=0.13,
             )
-            color = exact.truth[:, 2]
-            limit = 1.52 if shape == "ellipsoid" else 1.08
-            for column, (coordinates, title, rmse) in enumerate(panels):
-                axis = figure.add_subplot(grid[row, column], projection="3d")
-                spherical_experiment.add_mesh_surface(
-                    axis,
-                    coordinates,
-                    faces,
-                    color,
-                    alpha=0.96,
-                    linewidth=0.13,
+            spherical_experiment.set_equal_3d_axes(axis, limit=1.32)
+            axis.view_init(elev=22, azim=-56)
+            axis.set_title(title, pad=3, fontsize=8.7)
+            if rmse is not None:
+                axis.text2D(
+                    0.5,
+                    0.02,
+                    f"{labels['rmse']} = {rmse:.4f}",
+                    transform=axis.transAxes,
+                    ha="center",
+                    va="bottom",
+                    fontsize=7.8,
+                    bbox={
+                        "facecolor": "white",
+                        "edgecolor": "#cbd5e1",
+                        "alpha": 0.88,
+                    },
                 )
-                spherical_experiment.set_equal_3d_axes(axis, limit=limit)
-                axis.view_init(elev=22, azim=-56)
-                prefix = "sphere" if shape == "sphere" else "ellipsoid"
-                axis.set_title(f"{prefix}: {title}", pad=3, fontsize=8.7)
-                if rmse is not None:
-                    axis.text2D(
-                        0.5,
-                        0.02,
-                        f"{labels['rmse']} = {rmse:.4f}",
-                        transform=axis.transAxes,
-                        ha="center",
-                        va="bottom",
-                        fontsize=7.8,
-                        bbox={
-                            "facecolor": "white",
-                            "edgecolor": "#cbd5e1",
-                            "alpha": 0.88,
-                        },
-                    )
         figure.suptitle(labels["caption"], fontsize=11.2)
         spherical_experiment.save_figure(
             figure,
@@ -734,25 +944,39 @@ def main() -> None:
             raise RuntimeError(f"{shape} ground truth changed the mesh facets")
 
         for noise_level in NOISE_LEVELS:
-            case = evaluate_case(shape, truth, faces, edges, noise_level)
-            cases.append(case)
-            for row in case.realization.history:
-                history_rows.append(
-                    {
-                        "shape": shape,
-                        "relative_edge_noise": noise_level,
-                        **row,
-                    }
+            seed_indices = (0,) if noise_level == 0.0 else NOISY_SEEDS
+            for seed_index in seed_indices:
+                case = evaluate_case(
+                    shape,
+                    truth,
+                    faces,
+                    edges,
+                    noise_level,
+                    seed_index,
                 )
-            print(
-                f"{shape:9s} noise={100.0 * noise_level:4.1f}% "
-                f"edge_rel={case.realization.final_edge_relative_rmse:.3e} "
-                f"E3_RMSE={float(case.metrics['final_e3_rmse']):.5f} "
-                f"hull={case.realization.hull_vertex_count}V/"
-                f"{case.realization.hull_facet_count}F match="
-                f"{case.realization.convex_hull_facet_match}",
-                flush=True,
-            )
+                cases.append(case)
+                for row in case.realization.history:
+                    history_rows.append(
+                        {
+                            "shape": shape,
+                            "relative_edge_noise": noise_level,
+                            "seed": float(seed_index),
+                            **row,
+                        }
+                    )
+                print(
+                    f"{shape:9s} noise={100.0 * noise_level:4.1f}% "
+                    f"seed={seed_index} "
+                    f"edge_rel={case.realization.final_edge_relative_rmse:.3e} "
+                    f"E3_RMSE={float(case.metrics['final_e3_rmse']):.5f} "
+                    f"bound_ratio={float(case.metrics['error_to_bound_ratio']):.3g} "
+                    f"hull={case.realization.hull_vertex_count}V/"
+                    f"{case.realization.hull_facet_count}F match="
+                    f"{case.realization.convex_hull_facet_match}",
+                    flush=True,
+                )
+
+    summary = aggregate_summary(cases)
 
     write_dict_csv(
         output_dir / "convex_edge_realization_prototype_results.csv",
@@ -762,8 +986,53 @@ def main() -> None:
         output_dir / "convex_edge_realization_prototype_history.csv",
         history_rows,
     )
+    write_dict_csv(
+        output_dir / "convex_edge_realization_prototype_summary.csv",
+        summary,
+    )
+    write_latex_summary_table(
+        output_dir / "convex_edge_realization_prototype_table.tex",
+        summary,
+        japanese=False,
+    )
+    write_latex_summary_table(
+        output_dir / "convex_edge_realization_prototype_table_ja.tex",
+        summary,
+        japanese=True,
+    )
     for japanese in (False, True):
         plot_cases(cases, faces, output_dir, japanese=japanese)
+
+    noisy_cases = [case for case in cases if case.noise_level > 0.0]
+    violations = [
+        case
+        for case in noisy_cases
+        if not bool(case.metrics["local_bound_satisfied_with_tolerance"])
+    ]
+    if violations:
+        print(
+            "WARNING: the finite-noise local rigidity estimate was violated in "
+            f"{len(violations)}/{len(noisy_cases)} trials. The estimate uses "
+            "the derivative at the truth and is only a first-order local "
+            "prediction; finite perturbations add nonlinear remainder terms.",
+            flush=True,
+        )
+        for case in violations:
+            print(
+                f"  {case.shape} noise={100.0 * case.noise_level:.1f}% "
+                f"seed={case.seed_index} "
+                f"ratio={float(case.metrics['error_to_bound_ratio']):.6f}",
+                flush=True,
+            )
+    else:
+        maximum_ratio = max(
+            float(case.metrics["error_to_bound_ratio"]) for case in noisy_cases
+        )
+        print(
+            "All finite-noise trials satisfy the audited local estimate; "
+            f"maximum error/bound ratio={maximum_ratio:.6f}.",
+            flush=True,
+        )
     print(f"Wrote convex-realization prototype outputs to {output_dir}", flush=True)
 
 

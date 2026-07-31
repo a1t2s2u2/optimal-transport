@@ -1,583 +1,696 @@
 \begin{abstract}
-How far can a generative decoder be compressed before its latent geometry
-breaks?  Reconstruction error does not answer this question: a student can
-match a teacher at sampled latent codes while changing the derivatives that
-determine interpolation, retrieval, and geodesic distance.  We study
-teacher--student diagonal-Gaussian decoders under the 2-Wasserstein metric.
-The Gaussian closed form identifies the parameter map
-$F=(\mu,\sigma)$ as a Euclidean immersion with pullback metric
-$G=J_F^{\trans}J_F$.  A uniform student--teacher Jacobian error then certifies
-every intrinsic distance and, through teacher margins, triplet-retrieval
-accuracy.  Neural derivative-approximation rates yield the sufficient
-geometry--capacity law $P=O(\tau^{-d/(\nu-1)})$ for a $\nu$-smooth teacher on
-a $d$-dimensional latent region.
+The geometry of a probabilistic decoder is usually read from its Jacobian.
+This excludes black-box decoders and leaves a more basic inverse question
+unanswered: do local distances between output distributions determine the
+latent surface itself?  We give a positive answer under an explicit convex
+polyhedral model.  On a known sphere-type triangulation, local
+2-Wasserstein distances define the edge lengths of a piecewise-Euclidean
+metric.  The same lengths give exact PL curvature masses by angle defects.
+When they are the edges of an unknown strictly convex realization with the
+same triangular complex, face congruence and rigidity identify that
+realization in $\mathbb R^3$, up to rigid motion.  No decoder derivative or
+three-dimensional label is used.
 
-For a fixed smooth decoder trunk, we further prove that rank-constrained joint
-output--Jacobian distillation has a closed-form global solution: a truncated
-SVD of the covariance-whitened teacher head.  An analytic $28\times28$
-Gaussian image manifold gives an exact simultaneous output--distance
-threshold over every shared-trunk linear head: at 5\% tolerance, every rank at
-most 23 is infeasible, while rank 24 has 4.898\% output error and 4.555\%
-distance distortion, reducing head storage by $12.61\times$.  A neural width sweep shows why first-order
-supervision matters: on a frequency-warped Gaussian torus, output-only
-distillation fails the same 5\% grid test even at $69{,}128$ parameters,
-whereas output--Jacobian distillation passes at $18{,}184$.  Finally, on
-two-dimensional MNIST and FashionMNIST VAEs, covariance-aware head compression
-reaches the sampled 5\% threshold at ranks 12 and 13, rather than ranks 60 and
-63 for ordinary SVD, reducing head storage by $4.65\times$ and $4.32\times$.
-Across 100 endpoint-disjoint pairs per dataset, the passing students preserve
-curve length along the same numerical teacher-geodesic candidates with median
-errors 0.11\% and 0.10\%, respectively.
+We quantify the metric and local-realization parts of this chain.  Under shape
+regularity, additive edge
+error $\varepsilon$ perturbs a vertex curvature mass by
+$O(d_{\max}\varepsilon/\ell_{\min})$ and its area-normalized curvature by
+$O(\varepsilon/h^3)$ on a quasi-uniform mesh of scale $h$.  Relative edge
+error controls every intrinsic distance and hence Gromov--Hausdorff and
+Gromov--Wasserstein discrepancies.  A rigidity-matrix condition converts edge
+error into aligned three-dimensional vertex error locally, while a spectral-gap
+condition controls the round-sphere distance-to-coordinate step.  For mesh
+families with $s_{X_h}\gtrsim h^\beta$, the resulting Hausdorff tradeoff is
+$O(\varepsilon_hh^{-(\beta+1)}+h^2)$.  Our controlled
+benchmark hides a unit sphere in a full-rank, noncommuting Gaussian covariance
+path: decoder means collapse it to a disk, while local Wasserstein distances recover its full
+metric.  A round-sphere sweep separates stable global shape from
+noise-sensitive pointwise curvature.  A second edge-only realization recovers
+the convex hull of samples from a nonround ellipsoid without a spherical final
+constraint.
 \end{abstract}
 
 \section{Introduction}
 
-Knowledge distillation, pruning, low-rank factorization, and quantization can
-greatly reduce a neural network while retaining its usual test loss.  For a
-generative decoder, however, matching individual outputs is only a zeroth-order
-requirement.  A latent displacement is measured through the derivative of the
-decoder, and the shortest path between two codes depends on those derivatives
-along an entire curve.  Two decoders with almost identical reconstruction loss
-can therefore support different interpolations and nearest neighbours.
+A flat map does not carry its own scale.  Equal displacements near the equator
+and near a pole can represent different travel distances.  If sufficiently
+many local travel times are known, however, the missing scale, curvature, and
+eventually the globe can be recovered.  This paper studies the analogous
+problem for a generative decoder.  A latent code is a map coordinate, a decoded
+probability distribution is the observation at that coordinate, and local
+optimal-transport costs are the measured travel times.
 
-This paper asks one deliberately concrete question:
+Prior work commonly starts from a differentiable decoder and pulls an ambient
+metric back with its Jacobian \cite{arvanitidis2018,chen2018,roy2022}.
+That construction is useful once the decoder is known, but it does not say how
+much geometry is determined by finitely many distance queries.  It also makes
+the visual output ambiguous: a metric tensor or a curvature heat map is not
+yet a reconstructed surface.
+
+We instead pose an explicit inverse problem.
 
 \begin{quote}
-What is the smallest student that preserves every teacher-induced latent
-distance to a prescribed relative tolerance $\tau$?
+Given a triangulated latent surface and noisy $W_2$ distances only on its edges,
+how accurately can one recover intrinsic curvature and the hidden 3D surface?
 \end{quote}
 
-The phrase ``smallest'' is meaningless without fixing the admissible student
-family and numerical precision.  We consequently give two complementary
-answers.  First, for a general smooth student family we derive a sufficient
-parameter--accuracy rate and state precisely where finite-bit assumptions are
-needed.  Second, for the common deployment operation of replacing a decoder's
-dense output head by a rank-$r$ factorization, we obtain an exact optimum and a
-computable safe rank.  The second result is not an optimizer-dependent neural
-architecture search: it follows from one singular value decomposition.
-
-The geometry is defined by optimal transport.  Let a diagonal-Gaussian decoder
-be
+The input and output are deliberately finite.  Let
+$\mathcal T=(V,E,F)$ be a closed triangular complex homeomorphic to $S^2$.
+Let $(\mathcal Y,d_{\mathcal Y})$ be a common complete separable ground space,
+and let $W_2$ use the squared ground cost $d_{\mathcal Y}^2$.  At vertex $i$
+the decoder returns $\mu_i\in\mathcal P_2(\mathcal Y)$, but the estimator
+receives only
 \begin{equation}
- K_z=\mathcal N\!\left(\mu(z),
- \diag(\sigma(z)^2)\right),
- \qquad z\in\Omega\subset\R^d.
- \label{eq:decoder}
+ \mathcal O=
+ \left(\mathcal T,
+ \{\widehat\ell_{ij}:(i,j)\in E\}\right),
+ \qquad
+ \widehat\ell_{ij}\simeq W_2(\mu_i,\mu_j).
+ \label{eq:observations}
 \end{equation}
-For two codes, the exact Gaussian formula gives
+Ground-truth points in $\mathbb R^3$ are withheld until evaluation.  The edge
+lengths make every face a Euclidean triangle and therefore define a complete
+piecewise-Euclidean (PL) metric.  All quantities in the reconstruction---face
+angles, curvature, area, and intrinsic distance---are functions of
+\eqref{eq:observations} alone.
+All finite identifiability and stability results below use only $E$.  The
+round-sphere visualization later augments it with a three-hop local query set
+$E_{\mathrm q}\supset E$, still of linear size, to approximate global travel
+times; those additional queries are not used by the same-skeleton theorem.
+
+For extrinsic recovery we make a separate assumption instead of defining an
+ambient target after seeing the observations.
+
+\begin{definition}[Same-skeleton convex observation model]
+\label{def:same-skeleton-model}
+There is an unknown nondegenerate convex simplicial polyhedron
+$X_*=(x_i)_{i\in V}\subset\mathbb R^3$ whose boundary complex is exactly
+$\mathcal T$, and
 \begin{equation}
- W_2(K_z,K_{z'})^2
- =\norm{\mu(z)-\mu(z')}^2
-  +\norm{\sigma(z)-\sigma(z')}^2.
- \label{eq:gaussian-w2}
+ \ell_{ij}=W_2(\mu_i,\mu_j)=\norm{x_i-x_j}
+ \qquad ((i,j)\in E).
+ \label{eq:convex-observation-model}
 \end{equation}
-Thus $F=(\mu,\sigma)$ embeds decoder distributions into Euclidean parameter
-space.  The induced latent metric is $G=J_F^{\trans}J_F$, and its path distance
-is invariant to a change of latent coordinates.  This is the analytically
-tractable version of Wasserstein latent transport.
+Every vertex is extreme and every interior dihedral angle is strictly below
+$\pi$; we call this a strictly convex realization.  The measurements perturb
+the displayed lengths.  The complex and convex model class are known;
+$X_*$ is not.
+\end{definition}
 
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.98\textwidth]{experiments/certified_distillation_architecture.pdf}
-  \caption{Certified low-rank decoder compression.  A frozen trunk and bias are
-  shared by the dense teacher head $W$ and rank-$r$ student head $U_r$.
-  Calibration values and Jacobians define $C$; a rank-$r$ SVD of $WC^{1/2}$
-  gives $U_r=B_rC^{-1/2}$.  The spectral test certifies the all-pairs bound only
-  when global $s,M_1,\ell_1$ bounds are available; sampled $E_0$ and
-  $D_{\mathrm{loc}}$ in the real-data experiments are empirical tests.}
-  \label{fig:architecture}
-\end{figure*}
+Without Definition~\ref{def:same-skeleton-model}, the edge observations still
+define a valid PL proxy $M_\ell$, but need not recover a pre-existing ambient
+surface.  An arbitrary endpoint $W_2$ is an ambient chord, not an intrinsic
+geodesic.  Proposition~\ref{prop:hidden-sphere} verifies
+\eqref{eq:convex-observation-model} exactly for our benchmark.
 
-Our contributions are as follows.
+\paragraph{Contributions.}
 \begin{enumerate}
-  \item We define the minimum safe student by simultaneous output and intrinsic
-  distance tolerances.  A finite-error theorem turns uniform Jacobian error
-  into a multiplicative guarantee for every latent pair.
-  \item We introduce a triplet-margin certificate.  It converts a geometric
-  distortion bound into a directly reportable accuracy lower bound.  With a
-  mild margin condition, neural derivative approximation rates become an
-  explicit parameter--accuracy law.
-  \item For a fixed decoder trunk and a rank-constrained head, we solve joint
-  output--Jacobian distillation globally by a covariance-whitened SVD.  The
-  singular-value tail is an exact lower bound for the stated distillation
-  problem, and its next singular value yields a safe rank for all distances.
-  \item We evaluate the same predeclared 5\% criterion at three levels: an
-  exact multi-resolution Gaussian image manifold, trained neural students on
-  a warped Gaussian torus, and frozen MNIST/FashionMNIST VAE decoder heads.
-  Input--output panels and straight-versus-geodesic decoded sequences make the
-  real-data criterion directly inspectable.
+  \item We formulate \emph{Wasserstein travel-time reconstruction}: local
+  decoder-distribution distances define a PL latent metric without evaluating
+  a decoder Jacobian.
+  \item We connect three identifiable levels under a stated same-skeleton
+  convex model.  Edge lengths determine angle-defect curvature masses;
+  congruent triangular faces determine the exact convex realization; and a
+  nondegenerate rigidity matrix makes that realization locally stable.
+  \item We give explicit perturbation bounds from edge noise to curvature,
+  every intrinsic distance, GH/GW discrepancy, and aligned vertex error.  The
+  bounds expose the noise sensitivity of curvature: at mesh scale $h$,
+  additive length noise is amplified as $\varepsilon/h^3$ after area
+  normalization.  A conditional refinement corollary turns rigidity scaling
+  into an explicit resolution--noise requirement.
+  \item We introduce a ground-truth benchmark in which the decoder mean shows
+  only a disk while a full-rank noncommuting covariance path stores the missing
+  height.  Gaussian $W_2$ distances recover the exact edge lengths of an inscribed sphere, so the
+  probabilistic observation model is exact and auditable.  An edge-only
+  continuation experiment then verifies the same-skeleton step on an
+  ellipsoidal convex polyhedron.
 \end{enumerate}
+
+\paragraph{Scope of the OT claim.}
+Once edge lengths are supplied, our curvature, metric-stability, and rigidity
+results are metric-input statements and are not specific to optimal transport.
+The controlled model does use the Bures part of Gaussian $W_2$: its full-rank
+covariances do not commute, and their raw Frobenius distance has the
+position-dependent distortion in
+\eqref{eq:covariance-frobenius-distortion}.  It is nevertheless a designed
+Wasserstein geodesic, not a proof that $W_2$ is uniquely necessary.  Our claimed
+contribution is the end-to-end chain from a queryable decoder-distribution
+metric to PL curvature and a convex inverse reconstruction, not a new general
+graph-realization method.
+
+The paper does not infer topology, assert that a general intrinsic metric has a
+unique nonconvex embedding, or claim a true curvature for MNIST.  Sphere
+topology and convexity are assumptions, while the smooth sphere is a controlled
+evaluation target.
 
 \section{Related Work}
 
-Classical knowledge distillation transfers soft teacher outputs
-\cite{hinton2015}.  Sobolev training and Jacobian matching add derivative
-targets \cite{czarnecki2017,srinivas2018}.  Relational and
-similarity-preserving distillation match pairwise relations on a finite
-transfer set \cite{park2019,tung2019}.  Our use of a Jacobian loss is therefore
-not itself new.  The distinction is the guarantee: we connect first-order
-distillation to a continuous Wasserstein pullback metric, every intrinsic
-path distance, a capacity threshold, and certified retrieval accuracy.
+\paragraph{Latent geometry.}
+Pullback metrics for deterministic and stochastic generative models use
+decoder derivatives to define latent lengths and geodesics
+\cite{arvanitidis2018,chen2018}.  Optimal Latent Transport pulls a Wasserstein
+metric back from decoder distributions \cite{roy2022}.  Syrota et
+al.~prove that distances, angles, and volumes of deep latent-variable models
+can be identifiable even when coordinates are not \cite{syrota2025}.  These
+works establish or exploit geometry for a known differentiable model.  Our
+target is different: reconstruction accuracy from sparse, derivative-free
+Wasserstein distance observations.
 
-Weighted low-rank factorization already uses task or activation information
-instead of applying ordinary SVD directly to a weight matrix
-\cite{hsu2022}.  Our covariance-whitened algebra is an instance of this broad
-idea.  The new ingredient is to place decoder Jacobians in the covariance and
-translate the resulting approximation error into Wasserstein latent-metric
-and path-distance guarantees.
+\paragraph{Distances to manifolds.}
+Qiu and Dai estimate a smooth Riemannian metric and its derivatives from noisy
+intrinsic-distance responses, including a projected sphere, taxi travel time,
+and MNIST examples \cite{qiu2023}.  Fefferman et al.~reconstruct an abstract
+bounded-geometry manifold from noisy intrinsic distances with finite-sample
+guarantees \cite{fefferman2020}.  Consequently, distance-to-metric recovery by
+itself is not our novelty.  We specialize the observations to local decoder
+$W_2$ queries and continue from an intrinsic metric to discrete curvature and
+a convex extrinsic realization.  Isomap also chains local distances, but its
+goal is a Euclidean coordinate representation rather than curvature or convex
+surface identification \cite{tenenbaum2000}.
+Hamm et al.~recover the intrinsic metric and tangent spaces of a sampled
+submanifold of Wasserstein space in an asymptotic GW sense
+\cite{hamm2025}.  We instead take a finite PL target and continue to its
+curvature masses and identifiable convex realization.
 
-Pullback Riemannian metrics for deterministic and stochastic generative models
-were developed by Arvanitidis et al.~\cite{arvanitidis2018} and Chen et
-al.~\cite{chen2018}.  Optimal Latent Transport computes paths using transport
-costs between decoder distributions \cite{roy2022}.  These works analyze or
-use the geometry of a trained decoder.  We instead study what happens to that
-geometry when the decoder is compressed.  The Gaussian transport identity is
-classical \cite{givensshortt1984,takatsu2011}.
+\paragraph{Euclidean distance geometry.}
+Recovering Euclidean coordinates from incomplete distances is the classical
+distance-geometry problem; its theory includes graph rigidity, matrix
+completion, and sensor localization \cite{liberti2014}.  Our edge-only
+realization is an instance of that problem, not a new graph-realization method.
+The distinction is the preceding observation-and-guarantee chain: local
+distances between decoder distributions define a PL metric and curvature
+before a stated convex model permits an extrinsic realization.
 
-Our real-data study uses the variational-autoencoder construction
-\cite{kingma2014}, MNIST \cite{lecun1998}, and FashionMNIST
-\cite{xiao2017}.  Its target is explicitly the geometry of a frozen teacher
-decoder, not a claim that a two-dimensional VAE recovers either dataset's
-unknown true manifold.  Following prior work on decoder pullback metrics
-\cite{chen2018}, we also compare straight latent interpolation with numerical
-intrinsic-path candidates; these are paths constrained to the frozen decoder
-family, not ambient Wasserstein displacement geodesics.
+\paragraph{Polyhedral geometry and shape comparison.}
+Alexandrov's theorem characterizes convex polyhedra by their intrinsic PL
+metrics; Bobenko and Izmestiev give a constructive proof
+\cite{alexandrov2005,bobenko2008}.  Angle defect is the intrinsic curvature
+measure of a PL surface.  Its approximation of smooth Gaussian curvature
+requires mesh assumptions and is not pointwise consistent on arbitrary
+triangulations \cite{gawlik2020,hartig2021}.  We therefore state the finite-
+noise theorem first for the exact PL target and report smooth-sphere error
+separately.  Gromov--Wasserstein distance compares metric-measure spaces up to
+measure-preserving isometry \cite{memoli2011}; a known vertex correspondence
+also supplies a simpler upper bound through its distance distortion.
 
-Neural approximation in higher-order Sobolev norms provides upper and lower
-complexity rates for smooth function classes.  In particular, encodable
-weights attain nearly optimal derivative approximation rates
-\cite{guhring2021}, and smooth Tanh networks admit explicit high-order bounds
-\cite{deryck2021}.  We transfer these function-space rates to latent distance
-and task accuracy.  The resulting lower bounds apply to decoder derivative
-fidelity; they do not automatically become geometry-only lower bounds because
-different immersions can induce the same metric.
-
-\section{Wasserstein Geometry Distillation}
+\section{Wasserstein Edge Geometry}
 \label{sec:problem}
 
-Let $F_T,F_S:\Omega\to\R^N$ denote teacher and student Gaussian parameter
-maps, where $N=2n$ in \eqref{eq:decoder}, or $N=n$ when the observation
-covariance is fixed.  Assume throughout that $\Omega$ is a compact,
-path-connected $C^1$ domain or manifold on which every two points admit a
-rectifiable connecting curve, and that $F_T$ is a $C^1$ immersion.  Define
-\begin{equation}
- G_T=J_{F_T}^{\trans}J_{F_T},
- \qquad
- G_S=J_{F_S}^{\trans}J_{F_S}.
- \label{eq:metrics}
-\end{equation}
-For a piecewise $C^1$ curve $c:[0,1]\to\Omega$, its teacher length and
-distance are
-\begin{align}
- L_T(c)&=\int_0^1
- \sqrt{\dot c(t)^{\trans}G_T(c(t))\dot c(t)}\dd t,\notag\\
- d_T(z,z')&=\inf_{c(0)=z,\,c(1)=z'}L_T(c),
- \label{eq:path-distance}
-\end{align}
-with analogous definitions for $S$.
+Let every face $f=(i,j,k)\in F$ satisfy the strict triangle inequalities for
+the positive lengths $\ell_{ij},\ell_{jk},\ell_{ki}$.  Gluing the resulting
+Euclidean triangles along equal edges defines a PL metric space
+$M_\ell=(\mathcal T,d_\ell)$.  This object is intrinsic: no coordinates in an
+ambient Euclidean space are part of its definition.
 
-We separate output fidelity from geometry.  Let
+For a face incident to $i$, the angle at $i$ is computable by the cosine law,
+\begin{equation}
+ \theta_i^{jk}(\ell)
+ =\arccos\!\left(
+ \frac{\ell_{ij}^2+\ell_{ik}^2-\ell_{jk}^2}
+ {2\ell_{ij}\ell_{ik}}
+ \right).
+ \label{eq:cosine-angle}
+\end{equation}
+The exact PL curvature mass at an interior vertex and its
+barycentric-area density are
 \begin{align}
- E_0(S,T)&=\sup_{z\in\Omega}W_2(K_z^S,K_z^T),\notag\\
- D_{\rm pair}(S,T)&=
- \sup_{z\ne z'}
- \left|\frac{d_S(z,z')}{d_T(z,z')}-1\right|.
- \label{eq:two-errors}
+ \kappa_i(\ell)
+ &=2\pi-\sum_{f\ni i}\theta_{i,f}(\ell),
+ \label{eq:angle-defect}\\
+ A_i(\ell)
+ &=\frac13\sum_{f\ni i}A_f(\ell),
+ &K_i(\ell)&=\frac{\kappa_i(\ell)}{A_i(\ell)}.
+ \label{eq:discrete-density}
 \end{align}
-Output fidelity is necessary: without $E_0$, an unrelated isometric decoder
-would count as successful compression.  For a student class $\mathcal A_P$
-with at most $P$ encodable parameters, define
+Here $\kappa_i$ is an integrated curvature mass, measured in radians; it is
+not a pointwise Gaussian curvature.  The normalized $K_i$ is useful for
+comparison with a smooth surface, but depends additionally on the chosen
+vertex area and need not be pointwise consistent on an arbitrary mesh.  For
+every closed sphere triangulation,
+\begin{equation}
+ \sum_{i\in V}\kappa_i=4\pi
+ \label{eq:discrete-gauss-bonnet}
+\end{equation}
+by the Euclidean triangle angle sum and Euler's formula.
+
+\subsection{A sphere hidden in Gaussian uncertainty}
+
+The following construction is the controlled instance used in the experiment.
+It also makes clear why a mean-only distance is insufficient.
+
+\begin{proposition}[Noncommuting hidden-height Wasserstein identity]
+\label{prop:hidden-sphere}
+Fix $R>0$ and $k\in(0,1)$, and let
+\begin{equation}
+ B=\begin{pmatrix}1&0\\0&2\end{pmatrix},\qquad
+ H=k\begin{pmatrix}0&1\\1&0\end{pmatrix},\qquad
+ \lambda=\frac{4R^2}{3k^2}.
+ \label{eq:hidden-decoder}
+\end{equation}
+For $x=(x_1,x_2,x_3)$ with $|x_3|\le R$, set
 \begin{equation}
  \begin{aligned}
- P^\star(\eta,\tau)
- =\min\{P:\;&\exists S\in\mathcal A_P,\\
- &E_0(S,T)\le\eta,\\
- &D_{\rm pair}(S,T)\le\tau\}.
+  t_x&=\frac{x_3+R}{2R}, &m_x&=(x_1,x_2),\\
+  C_x&=\lambda(I_2+t_xH)B(I_2+t_xH).
  \end{aligned}
- \label{eq:min-safe-size}
+ \label{eq:hidden-covariance-path}
 \end{equation}
-The class and bit precision are part of this definition.
-
-For numerical evaluation, no path solver is needed for the stronger local
-quantity
+and $\mu_x=\mathcal N(m_x,C_x)$.  Then every $C_x$ is positive definite and,
+for every $x,y$ in this slab, the Gaussian Bures covariance distance
+$d_{\mathrm B}$ satisfies
 \begin{equation}
- D_{\rm loc}(S,T)=
- \sup_{z\in\Omega,\,v\ne0}
- \left|
- \sqrt{\frac{v^{\trans}G_S(z)v}{v^{\trans}G_T(z)v}}-1
- \right|.
- \label{eq:local-distortion}
+ \begin{aligned}
+ W_2^2(\mu_x,\mu_y)
+ &=\norm{m_x-m_y}^2+d_{\mathrm B}^2(C_x,C_y)\\
+ &=\norm{x-y}^2.
+ \end{aligned}
+ \label{eq:hidden-identity}
 \end{equation}
-It is obtained from the extremal generalized eigenvalues of $(G_S,G_T)$.
-Integrating lengths shows immediately that
-\begin{equation}
- D_{\rm loc}(S,T)\le\tau
- \quad\Longrightarrow\quad
- D_{\rm pair}(S,T)\le\tau.
- \label{eq:local-implies-global}
-\end{equation}
-
-\subsection{A certificate from Jacobian error}
-
-The following result supplies the test used throughout the paper.
-
-\begin{theorem}[Uniform geometry certificate]
-\label{thm:stability}
-Suppose, uniformly on $\Omega$,
-\begin{equation}
- \sigma_{\min}(J_{F_T})\ge s>0,
- \qquad
- \norm{J_{F_T}}_2\le M_1.
- \label{eq:teacher-conditioning}
-\end{equation}
-Let
-\begin{equation}
- \varepsilon_1
- =\sup_{z\in\Omega}
- \norm{J_{F_S}(z)-J_{F_T}(z)}_2
- \label{eq:jacobian-error}
-\end{equation}
-and define
-\begin{equation}
- q=2M_1\varepsilon_1+\varepsilon_1^2,
- \qquad
- \delta=\frac{q}{s^2}.
- \label{eq:delta}
-\end{equation}
-If $\varepsilon_1<s$ and $\delta<1$, then $F_S$ is an immersion and
-\begin{equation}
- (1-\delta)G_T\preceq G_S\preceq(1+\delta)G_T.
- \label{eq:metric-certificate}
-\end{equation}
-Consequently, every latent pair satisfies
-\begin{equation}
- \sqrt{1-\delta}\,d_T(z,z')
- \le d_S(z,z')
- \le\sqrt{1+\delta}\,d_T(z,z').
- \label{eq:distance-certificate}
-\end{equation}
-\end{theorem}
-
-\begin{proof}
-Write $J_S=J_T+E$.  Expansion gives
-\[
- \norm{G_S-G_T}_2
- \le2\norm{J_T}_2\norm{E}_2+\norm{E}_2^2
- \le q.
-\]
-Since $G_T\succeq s^2I$, this yields
-\eqref{eq:metric-certificate}.  Taking square roots, integrating along every
-curve, and then taking infima proves \eqref{eq:distance-certificate}.
-Finally $\sigma_{\min}(J_S)\ge s-\varepsilon_1>0$.
-\end{proof}
-
-For a requested relative error $\tau\in(0,1)$, the lower inequality in
-\eqref{eq:distance-certificate} is the restrictive one.  Therefore a directly
-computable sufficient Jacobian tolerance is
-\begin{equation}
- \varepsilon_\tau
- =\sqrt{M_1^2+s^2(2\tau-\tau^2)}-M_1.
- \label{eq:epsilon-tau}
-\end{equation}
-Indeed, $\varepsilon_1\le\varepsilon_\tau$ is equivalent to
-$\delta\le2\tau-\tau^2$, and hence $D_{\rm pair}\le\tau$.
-
-\subsection{From geometric distortion to accuracy}
-
-A percentage accuracy makes the consequence of the certificate easier to
-interpret.  For a triplet $(q,a,b)$, assume $d_T(q,a)<d_T(q,b)$ and define the
-teacher squared-distance margin
-\begin{equation}
- \gamma(q,a,b)=
- \frac{d_T(q,b)^2-d_T(q,a)^2}
- {d_T(q,b)^2+d_T(q,a)^2}.
- \label{eq:triplet-margin}
-\end{equation}
-
-\begin{proposition}[Certified triplet accuracy]
-\label{prop:triplet}
-Under Theorem~\ref{thm:stability}, every triplet satisfying
-$\gamma(q,a,b)>\delta$ retains its teacher ordering under the student.  Thus,
-for a test set $\mathcal T$, the student triplet agreement is at least
-\begin{equation}
- A_{\rm cert}(\delta)
- =\frac{1}{\abs{\mathcal T}}
- \sum_{t\in\mathcal T}
- \mathbf 1\{\gamma(t)>\delta\}.
- \label{eq:certified-accuracy}
-\end{equation}
+If $x_3\ne y_3$, then $C_xC_y\ne C_yC_x$.  On $S_R^2$, the mean map is a
+disk that identifies northern and southern points with the same
+$(x_1,x_2)$; the Wasserstein observation distinguishes them.
 \end{proposition}
 
 \begin{proof}
-Let $A=d_T(q,a)^2$ and $B=d_T(q,b)^2$.  Equation
-\eqref{eq:distance-certificate} preserves the ordering whenever
-$(1+\delta)A<(1-\delta)B$.  Rearrangement gives
-$(B-A)/(B+A)>\delta$, which is exactly \eqref{eq:triplet-margin}.
-\end{proof}
-
-Suppose a family of $P$-parameter students simultaneously satisfies
+Write $A_t=I_2+tH$ and $L_t=\sqrt\lambda A_tB^{1/2}$, so
+$C_t=L_tL_t^\trans$.  Since $A_s$ and $A_t$ are commuting positive definite
+polynomials in $H$, $L_s^\trans L_t$ is positive definite.  The orthogonal
+Procrustes formula for the Gaussian Bures distance therefore selects the
+identity alignment and gives \cite{givensshortt1984,takatsu2011}
 \begin{equation}
  \begin{aligned}
- \sup_z\norm{F_S(z)-F_T(z)}
- &\le C_0P^{-\nu/d},\\
- \varepsilon_1(P)&\le C_1P^{-(\nu-1)/d}.
+ d_{\mathrm B}^2(C_s,C_t)
+ &=\norm{L_s-L_t}_F^2\\
+ &=3\lambda k^2(s-t)^2
+ =4R^2(s-t)^2.
  \end{aligned}
- \label{eq:simultaneous-rate}
+ \label{eq:bures-height-identity}
 \end{equation}
-for a $\nu$-smooth teacher with $\nu>1$ and an architecture for which these
-uniform value and derivative rates hold.  Combining the value bound with
-\eqref{eq:epsilon-tau} gives
+Substituting $s=t_x$ and $t=t_y$ gives
+$d_{\mathrm B}(C_x,C_y)=|x_3-y_3|$, proving \eqref{eq:hidden-identity}.
+Positive definiteness follows from $t_x\in[0,1]$ and $k<1$.
+Direct multiplication gives
+\[
+ C_sC_t-C_tC_s
+ =3\lambda^2k(s-t)(1+k^2st)
+ \begin{pmatrix}0&1\\-1&0\end{pmatrix},
+\]
+which is nonzero for $s\ne t$.  In contrast, raw covariance coordinates obey
 \begin{equation}
- P^\star(\eta,\tau)
- \lesssim
- \max\left\{
- \left(\frac{C_0}{\eta}\right)^{d/\nu},
- \left(\frac{C_1}{\varepsilon_\tau}\right)^{d/(\nu-1)}
- \right\}.
- \label{eq:joint-capacity-law}
+ \norm{C_s-C_t}_F
+ =\lambda k|s-t|\sqrt{18+5k^2(s+t)^2},
+ \label{eq:covariance-frobenius-distortion}
 \end{equation}
-For fixed output tolerance and small $\tau$, this yields the
-geometry-dominated law
-\begin{equation}
- P^\star(\eta,\tau)
- =O\!\left(\tau^{-d/(\nu-1)}\right).
- \label{eq:capacity-law}
-\end{equation}
-The constants, domain assumptions, activation, depth, and logarithmic factors
-are inherited from the selected approximation theorem
-\cite{guhring2021,deryck2021}; \eqref{eq:joint-capacity-law} is a conditional
-transfer of those rates, not a dimension-free architecture claim.
+so no single rescaling of their Frobenius distance recovers the height metric.
+\end{proof}
 
-If the empirical or population triplet-margin distribution obeys
-$\Pr(\gamma\le t)\le C_\gamma t^\beta$, the derivative rate also implies
+If two sphere points have great-circle distance $d\in[0,\pi R]$, their
+Wasserstein distance in \eqref{eq:hidden-identity} is the chord
 \begin{equation}
- 1-A_{\rm cert}(P)
- \le C_\gamma\delta(P)^\beta
- =O\!\left(P^{-(\nu-1)\beta/d}\right).
- \label{eq:parameter-accuracy}
-\end{equation}
-Encodable-weight approximation lower bounds match the derivative exponent up
-to logarithms \cite{guhring2021}.  They prove optimality of decoder derivative
-approximation, not of geometry alone: rigid motions and other isometries erase
-information when $F$ is replaced by $J_F^{\trans}J_F$.
-
-\section{Closed-Form Low-Rank Distillation}
-\label{sec:low-rank}
-
-We now fix a setting in which the compression frontier can be computed exactly.
-Let a smooth decoder trunk $h:\Omega\to\R^p$ be shared by teacher and student,
-and compress only an affine Euclidean parameter head:
-\begin{equation}
- F_W(z)=Wh(z)+b,
+ W_2(\mu_x,\mu_y)=2R\sin\!\left(\frac{d}{2R}\right),
  \qquad
- F_U(z)=Uh(z)+b,
- \label{eq:linear-heads}
+ 0\le d-W_2\le \frac{d^3}{24R^2}.
+ \label{eq:chord-arc}
 \end{equation}
-where $W,U\in\R^{N\times p}$.  A rank-$r$ student can store $U$ as two
-factors using $r(N+p)+N$ head parameters including the bias, rather than
-$Np+N$.
+Thus a single remote $W_2$ query takes a shortcut through the sphere.  A chain
+of local queries removes that shortcut as the mesh is refined.  This is why
+our observation graph contains local edges rather than all endpoint pairs.
 
-This setting applies directly to a fixed-covariance Gaussian mean head.  If
-$F$ also contains learned standard deviations, positivity of the compressed
-channels on $\Omega$ is an additional admissibility condition: unconstrained
-SVD does not guarantee it.  A nonlinear softplus variance head is not covered
-by the affine closed form.
+\section{What Can Be Recovered?}
+\label{sec:theory}
 
-Given calibration codes $z_1,\ldots,z_m$, write $h_i=h(z_i)$ and
-$J_i=J_h(z_i)$.  For $\lambda\ge0$ and $\rho>0$, define
-\begin{equation}
- C=\frac1m\sum_{i=1}^m
- \left(h_ih_i^{\trans}+\lambda J_iJ_i^{\trans}\right)
- +\rho I_p.
- \label{eq:jet-covariance}
-\end{equation}
-The associated first-order distillation loss is
-\begin{equation}
- \mathcal L_C(U)=\norm{(U-W)C^{1/2}}_F^2.
- \label{eq:distillation-loss}
-\end{equation}
-Expanding \eqref{eq:jet-covariance} shows that this is the sum of teacher
-output error, $\lambda$ times Jacobian error, and a ridge term.
+We separate exact identifiability from stability under noise.  The first
+result is classical, but it supplies the missing condition behind the phrase
+``recover the surface.''
 
-\begin{theorem}[Exact rank--distillation frontier]
-\label{thm:rank-distillation}
-Let $B=WC^{1/2}$ and let $B_r$ be its rank-$r$ truncated SVD.  Then
+\begin{theorem}[Exact same-skeleton identification]
+\label{thm:convex-identification}
+Under Definition~\ref{def:same-skeleton-model}, exact local Wasserstein edge
+lengths determine $X_*$ up to an element of the Euclidean group.
+\end{theorem}
+
+\begin{proof}
+Each corresponding triangular face is congruent by the side--side--side
+criterion.  Cauchy's rigidity theorem then makes two convex polyhedra with
+congruent corresponding faces congruent \cite{alexandrov2005,pak2006}.
+\end{proof}
+
+This theorem is conditional on existence of the same-complex convex target;
+it does not infer convexity or combinatorics.  Alexandrov's theorem gives a
+different, purely intrinsic realization result for suitable positive-curvature
+PL metrics \cite{bobenko2008}, but its natural polyhedral edges need not equal
+the prescribed input graph.  We therefore do not compose Alexandrov's theorem
+with the edge-rigidity bound below.
+
+\subsection{Edge noise to curvature noise}
+
+Let $d_i$ be the number of faces incident to vertex $i$ and set
+$d_{\max}=\max_i d_i$.  We use the following shape-regular class.  Both the
+true and perturbed triangles have sides in
+$[\ell_{\min}/2,2\ell_{\max}]$ and angles at least $\alpha_0>0$; set
+$\rho=\ell_{\max}/\ell_{\min}$.  These conditions exclude triangles that are
+arbitrarily close to degenerate.
+
+\begin{theorem}[Stability of discrete curvature]
+\label{thm:curvature-noise}
+Suppose
 \begin{equation}
- U_r=B_rC^{-1/2}
- \label{eq:optimal-head}
+ \max_{e\in E}\abs{\widehat\ell_e-\ell_e}
+ \le\varepsilon.
+ \label{eq:additive-noise}
 \end{equation}
-is a global minimizer of \eqref{eq:distillation-loss} over all heads of rank at
-most $r$, and
+Under the shape-regular assumptions above, constants
+$C_\theta=C_\theta(\rho,\alpha_0)$ and
+$C_A=C_A(\rho,\alpha_0)$ satisfy
+\begin{align}
+ \abs{\widehat\kappa_i-\kappa_i}
+ &\le C_\theta d_i
+       \frac{\varepsilon}{\ell_{\min}},
+ \label{eq:defect-stability}\\
+ \abs{\widehat A_i-A_i}
+ &\le C_A d_i\ell_{\max}\varepsilon.
+ \label{eq:area-stability}
+\end{align}
+If the right side of \eqref{eq:area-stability} is at most $A_i/2$, then
 \begin{equation}
- \min_{\rank(U)\le r}\mathcal L_C(U)
- =\sum_{j>r}\sigma_j(B)^2.
- \label{eq:exact-tail}
+ \abs{\widehat K_i-K_i}
+ \le
+ \frac{2C_\theta d_i\varepsilon}
+      {A_i\ell_{\min}}
+ +\frac{2\abs{\kappa_i}C_A d_i\ell_{\max}\varepsilon}
+      {A_i^2}.
+ \label{eq:density-stability}
+\end{equation}
+In particular, positive defect masses are retained whenever
+\begin{equation}
+ C_\theta d_{\max}\frac{\varepsilon}{\ell_{\min}}
+ <\kappa_{\min}:=\min_i\kappa_i.
+ \label{eq:convexity-noise}
 \end{equation}
 \end{theorem}
 
 \begin{proof}
-Set $V=UC^{1/2}$.  Since $C$ is positive definite,
-$\rank(V)=\rank(U)$ and $\mathcal L_C(U)=\norm{V-B}_F^2$.  The result is the
-Eckart--Young--Mirsky theorem \cite{eckart1936,mirsky1960}, followed by the
-inverse change of variables.
+On a compact shape-regular set of side triples, differentiating the cosine law
+\eqref{eq:cosine-angle} bounds the $\ell_1$ norm of every angle gradient by
+$C_\theta/\ell_{\min}$; the factor $1/\sin\theta$ is controlled by
+$\alpha_0$.  The mean-value theorem and summation over the incident faces give
+\eqref{eq:defect-stability}.  Heron's formula is smooth on the same compact
+set, with gradient bounded by $C_A\ell_{\max}$, which proves
+\eqref{eq:area-stability}.  Finally,
+\[
+ \frac{\widehat\kappa_i}{\widehat A_i}
+ -\frac{\kappa_i}{A_i}
+ =\frac{\widehat\kappa_i-\kappa_i}{\widehat A_i}
+ +\kappa_i\frac{A_i-\widehat A_i}{A_i\widehat A_i},
+\]
+and $\widehat A_i\ge A_i/2$ yields \eqref{eq:density-stability}.
+Condition \eqref{eq:convexity-noise} makes every perturbed defect positive.
 \end{proof}
 
-Equation \eqref{eq:exact-tail} is a genuine impossibility result within the
-fixed-trunk, rank-$r$, first-order distillation problem.  It is not a lower
-bound over arbitrary decoders that merely share the same intrinsic metric.
-
-The same SVD also produces a distance certificate.  Define
+On a quasi-uniform mesh with edge scale $h$, bounded degree, and
+$A_i\asymp h^2$, Theorem~\ref{thm:curvature-noise} reads
 \begin{equation}
- \ell_1=\sup_{z\in\Omega}
- \norm{C^{-1/2}J_h(z)}_2,
+ \abs{\widehat\kappa_i-\kappa_i}
+ =O(\varepsilon/h),
  \qquad
- \overline\varepsilon_r=\sigma_{r+1}(B)\ell_1.
- \label{eq:spectral-jacobian-bound}
+ \abs{\widehat K_i-K_i}=O(\varepsilon/h^3).
+ \label{eq:noise-amplification}
 \end{equation}
-Because $U_r-W=(B_r-B)C^{-1/2}$ and
-$\norm{B_r-B}_2=\sigma_{r+1}(B)$,
-\begin{equation}
- \sup_z\norm{J_{F_{U_r}}(z)-J_{F_W}(z)}_2
- \le\overline\varepsilon_r.
- \label{eq:spectral-to-uniform}
-\end{equation}
+The first quantity is the exact PL curvature measure.  The second divides by a
+shrinking area and is necessarily more noise-sensitive.  Equation
+\eqref{eq:noise-amplification} is a perturbation result, not a claim of
+pointwise convergence to smooth curvature on arbitrary meshes.  If the edge
+error is relative, $\varepsilon\asymp\eta h$, then the two orders become
+$O(\eta)$ and $O(\eta/h^2)$.  If, in addition, the mesh family is
+curvature-consistent in the sense that $\kappa_i\asymp h^2$, retaining every
+defect sign is guaranteed by $\eta=O(h^2)$ with a sufficiently small constant.
+Thus
+fixed relative noise can preserve global distances while destroying
+pointwise curvature under refinement; the experiment reports both effects.
 
-\begin{corollary}[Certified safe rank]
-\label{cor:safe-rank}
-Let the teacher map $F_W$ satisfy \eqref{eq:teacher-conditioning}.  If
-$\overline\varepsilon_r\le\varepsilon_\tau$, then the rank-$r$ head
-\eqref{eq:optimal-head} preserves every teacher intrinsic distance within
-relative error $\tau$.  Hence
-\begin{equation}
- r_{\rm cert}(\tau)
- =\min\left\{r:
- \sigma_{r+1}(B)\ell_1\le\varepsilon_\tau
- \right\}
- \label{eq:certified-rank}
-\end{equation}
-is a safe rank along the SVD-optimal distillation frontier, provided certified
-global bounds on $s$, $M_1$, and $\ell_1$ are available.  Replacing the
-suprema by sample maxima yields an empirical test, not a continuum
-certificate.
-\end{corollary}
+\subsection{Intrinsic and extrinsic error}
 
-An analogous value bound follows by replacing $J_h$ with $h$.  Quantization
-can also be included by adding the uniform Jacobian perturbation of the
-quantized factors to $\overline\varepsilon_r$; minimizing total storage then
-chooses rank and bits under the same inequality.
+Relative length noise yields a scale-free guarantee.  Each pair of
+corresponding true and perturbed faces has a canonical affine map in barycentric
+coordinates.  Shape regularity makes its singular values stable.
 
-\section{An Exact Gaussian Image Task}
-\label{sec:exact-task}
-
-To test a capacity theorem, a real dataset alone is insufficient because its
-true decoder geometry is unknown.  We therefore construct a high-dimensional
-image decoder for which output error, rank lower bounds, and every distance
-are analytic.  Let $z=(x,y)$ lie on the flat two-torus
-$(\R/2\pi\mathbb Z)^2$ and define the $4T$ trunk features
+\begin{theorem}[Distance and metric-space stability]
+\label{thm:distance-stability}
+Assume shape regularity and
 \begin{equation}
- h_T(x,y)=
- \bigl(\cos(jx),\sin(jx),\cos(jy),\sin(jy)\bigr)_{j=1}^T.
- \label{eq:fourier-trunk}
+ \max_{e\in E}
+ \abs{\widehat\ell_e/\ell_e-1}\le\eta
+ \label{eq:relative-noise}
 \end{equation}
-Let $Q\in\R^{784\times4T}$ have orthonormal image atoms as columns and let
-$a_1\ge\cdots\ge a_T>0$.  The teacher's $28\times28$ mean image is
+for sufficiently small $\eta$.  There is
+$C_g=C_g(\rho,\alpha_0)$ such that the facewise affine correspondence
+$\Phi:M_\ell\to M_{\widehat\ell}$ obeys
 \begin{equation}
- \mu_T(z)=\mu_0+QD_T h_T(z),
- \label{eq:image-teacher}
-\end{equation}
-where $D_T$ repeats $a_j/j$ four times for each $j$.  We use a fixed positive
-observation variance, so
-$K_z^T=\mathcal N(\mu_T(z),\sigma_0^2I)$ and the exact $W_2$ cost is Euclidean
-mean-image distance.  The rank-$4K$ prefix student retains the first $K$
-frequency blocks with their teacher coefficients.
-
-\begin{proposition}[Exact output--distance law]
-\label{prop:exact-rank-law}
-Set
-\begin{equation}
- S_K=\sum_{j=1}^K a_j^2.
- \label{eq:spectral-energy}
-\end{equation}
-Then the teacher and student metrics are
-\begin{equation}
- G_T=S_TI_2,
- \qquad
- G_K=S_KI_2,
- \label{eq:torus-metrics}
-\end{equation}
-and for every distinct latent pair,
-\begin{equation}
- \frac{d_K(z,z')}{d_T(z,z')}
- =\sqrt{\frac{S_K}{S_T}}.
- \label{eq:exact-distance-ratio}
+ (1-C_g\eta)d_\ell(p,q)
+ \le d_{\widehat\ell}(\Phi p,\Phi q)
+ \le(1+C_g\eta)d_\ell(p,q).
+ \label{eq:all-distance-stability}
 \end{equation}
 Consequently,
 \begin{equation}
- D_{\rm loc}=D_{\rm pair}
- =1-\sqrt{\frac{S_K}{S_T}},
- \label{eq:exact-distortion}
+ d_{\mathrm{GH}}(M_\ell,M_{\widehat\ell})
+ \le\frac{C_g\eta}{2}\diam(M_\ell).
+ \label{eq:gh-bound}
 \end{equation}
-and the uniform teacher-output error is
+For any probability measure $\nu$ on $M_\ell$, including fixed uniform
+vertex weights, the coupling induced by $p\mapsto(p,\Phi p)$ gives
 \begin{equation}
- E_{0,K}
- =\left(2\sum_{j>K}\left(\frac{a_j}{j}\right)^2\right)^{1/2}.
- \label{eq:exact-output-error}
+ GW_2\!\left((M_\ell,d_\ell,\nu),
+ (M_{\widehat\ell},d_{\widehat\ell},\Phi_\#\nu)\right)
+ \le C_g\eta\diam(M_\ell).
+ \label{eq:gw-bound}
 \end{equation}
-Thus the first prefix satisfying both tolerances is
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+The Gram matrix of a Euclidean triangle is a smooth function of its three
+squared side lengths.  On the compact shape-regular class,
+\eqref{eq:relative-noise} therefore bounds the singular values of the affine
+map by $1\pm C_g\eta$.  Mapping each rectifiable path face by face, integrating
+the length bounds, and taking infima proves
+\eqref{eq:all-distance-stability}.  The graph of $\Phi$ is a correspondence
+with distortion at most $C_g\eta\diam(M_\ell)$, giving
+\eqref{eq:gh-bound}.  Using the induced measure coupling in the definition of
+$GW_2$ gives the final claim \cite{memoli2011}.
+\end{proof}
+
+Equation~\eqref{eq:gw-bound} deliberately uses the same abstract probability
+measure on both metrics.  The two metrics' separately normalized area
+measures are not exact pushforwards of one another; comparing those natural
+measures requires an additional density-perturbation term.
+
+The round-sphere experiment has one further map: approximate global distances
+are converted to three-dimensional coordinates by a spectral factorization.
+The following proposition isolates the stability of that final step.
+
+\begin{proposition}[Local stability of spherical spectral reconstruction]
+\label{prop:spherical-spectral-stability}
+Let $X\in\R^{n\times3}$ have rows $x_i\in S_R^2$, let $G=XX^\trans$, and
+assume $\gamma:=\lambda_3(G)>0$, so $\lambda_4(G)=0$.  Define
 \begin{equation}
- \begin{aligned}
- r_{\rm prefix}^\star(\eta,\tau)
- =4\min\{K:\;&E_{0,K}\le\eta,\\
-                 &S_K\ge(1-\tau)^2S_T\}.
- \end{aligned}
- \label{eq:exact-min-rank}
+ D_{ij}=R\arccos\!\left(\frac{x_i^\trans x_j}{R^2}\right).
+ \label{eq:true-spherical-distance-matrix}
 \end{equation}
-Moreover, under the uniform latent distribution, every shared-trunk rank-$r$
-head satisfies
+For a symmetric $\widehat D$ and $\widehat R>0$, form
+$\widehat G_{ij}=\widehat R^2\cos(\widehat D_{ij}/\widehat R)$, retain its
+three largest eigenvalues, factor the resulting positive semidefinite matrix
+as $\widehat Y\widehat Y^\trans$, and set
+$\widehat x_i=\widehat R\widehat y_i/\norm{\widehat y_i}$ row by row.  There
+is a neighbourhood of $(D,R)$ and a finite
+$C_{\mathrm{sph}}=C_{\mathrm{sph}}(X)$ such that the retained eigenvalues are positive,
+all rows are nonzero, and
 \begin{equation}
- E_0\ge
- \left(\frac12\sum_{\ell>r}\sigma_\ell(W)^2\right)^{1/2},
- \label{eq:output-rank-lower-bound}
+ \min_{Q\in O(3)}\norm{\widehat X-XQ}_F
+ \le C_{\mathrm{sph}}\left(
+ \norm{\widehat D-D}_F+\sqrt n\abs{\widehat R-R}
+ \right).
+ \label{eq:spherical-spectral-stability}
 \end{equation}
-where $W=QD_T$ has singular values $a_j/j$, each repeated four times.  For
-pure Jacobian distillation, define separately
-$C_J=\E[J_hJ_h^{\trans}]$.  The singular values of $WC_J^{1/2}$ are
-$a_j/\sqrt2$, each repeated four times, and the exact optimal tail loss at
-rank $4K$ is $2\sum_{j>K}a_j^2$.
+No separation among the leading three eigenvalues is required.
+\end{proposition}
+
+\begin{proof}[Proof sketch]
+For $B(D,r)_{ij}=r^2\cos(D_{ij}/r)$, the scalar derivatives are
+$-r\sin(d/r)$ in $d$ and $2r\cos(d/r)+d\sin(d/r)$ in $r$.  They are bounded
+near $(D,R)$, so $B$ is locally Lipschitz in the norms appearing in
+\eqref{eq:spherical-spectral-stability}.  Weyl's inequality and
+$\gamma>0$ separate the leading three-dimensional eigenspace from the
+remaining spectrum.  The projector onto this isolated eigenvalue cluster is
+a Riesz spectral projector and varies smoothly while the gap stays open;
+rank-three positive spectral truncation is therefore locally Lipschitz.
+For completeness, align two full-column-rank factors by orthogonal
+Procrustes.  On the resulting horizontal slice, the derivative of
+$Y\mapsto YY^\trans$ at $X$ is
+$E\mapsto XE^\trans+EX^\trans$.  In a singular-vector basis for $X$, a direct
+block calculation bounds its gain below by
+$\sqrt{2}\,\sigma_3(X)=\sqrt{2\gamma}$; the quadratic remainder $EE^\trans$
+can be absorbed locally.  Hence Gram-factor perturbation gives
+\[
+ \min_{Q\in O(3)}\norm{\widehat Y-XQ}_F
+ \le \frac{C_0}{\sqrt\gamma}\norm{\widehat G-G}_F
+\]
+locally, including when eigenvalues repeat inside the leading subspace.
+Finally, for $\norm x=R$ and $y\ne0$,
+$\|\widehat R y/\|y\|-x\|\le|\widehat R-R|+2\|y-x\|$.
+Applying this row by row proves the result.
+\end{proof}
+
+This proposition begins after $\widehat D$ and $\widehat R$ have been
+constructed.  It does not by itself guarantee the graph shortest paths,
+diameter calibration, or radius estimator used in the controlled benchmark.
+
+Theorem~\ref{thm:distance-stability} is intrinsic.  To measure reconstructed
+3D vertices, let $X\in\mathbb R^{|V|\times3}$ be a strictly convex triangulated
+realization and
+$\mathcal L(X)=(\norm{X_i-X_j})_{(i,j)\in E}$ its edge-length map.  Its
+Jacobian is the rigidity matrix $R_X$.  Write $\mathcal Z_X=\ker R_X$ for the
+six-dimensional space of infinitesimal Euclidean motions and define, using
+the Frobenius norm on coordinates,
+\begin{equation}
+ s_X=\sigma_{\min}\!\left(R_X\big|_{\mathcal Z_X^\perp}\right).
+ \label{eq:rigidity-singular-value}
+\end{equation}
+
+\begin{proposition}[Local same-skeleton 3D stability]
+\label{prop:rigidity}
+For a strictly convex triangulated realization, $s_X>0$.  Every length vector
+$\widehat\ell$ sufficiently close to $\mathcal L(X)$ has a unique nearby
+strictly convex realization $\widehat X$ with complex $\mathcal T$, modulo
+Euclidean motions, and
+\begin{equation}
+ \min_{Q\in O(3),\,b\in\R^3}
+ \norm{\widehat X-(XQ+\mathbf 1b^{\trans})}_{F}
+ \le
+ \frac{2}{s_X}
+ \norm{\widehat\ell-\mathcal L(X)}_2.
+ \label{eq:rigidity-bound}
+\end{equation}
+The factor $2$ can be replaced by $1+o(1)$ as the edge error tends to zero.
+\end{proposition}
+
+\begin{proof}[Proof sketch]
+Convex triangulated polyhedra are infinitesimally rigid \cite{pak2006}.
+For a sphere triangulation, $|E|=3|V|-6$.  Taking the affine slice through $X$
+tangent to $\mathcal Z_X^\perp$ therefore makes the derivative of $\mathcal L$
+square and nonsingular, with least singular value $s_X$.  The inverse-function
+theorem gives the local realization and uniqueness.  Shrinking the
+neighbourhood makes the inverse derivative norm at most $2/s_X$ and preserves
+strict convexity.  Minimization over rigid motions can only reduce the slice
+displacement, proving \eqref{eq:rigidity-bound}.  The result is local:
+it does not assert that an unconstrained optimizer will find this branch.
+\end{proof}
+
+Together, Theorem~\ref{thm:convex-identification} and
+Proposition~\ref{prop:rigidity} distinguish exact global identification from
+local numerical conditioning.  The constant $s_X$ is realization-specific;
+we do not assume that it stays bounded away from zero under refinement.
+
+\subsection{The smooth sphere is a separate approximation target}
+
+Exact edge recovery identifies a finite polyhedron, not the smooth sphere at
+finite resolution.  The remaining error can be bounded independently of the
+observation noise.
+
+\begin{proposition}[Inscribed-sphere approximation]
+\label{prop:inscribed-sphere}
+Let the vertices $x_i$ lie on the radius-$R$ sphere, suppose their convex hull
+$P_h$ contains the origin, and let $\mathcal T$ be its simplicial boundary.
+If
+\begin{equation}
+ h=\max_{(i,j)\in E}d_{S_R^2}(x_i,x_j)<\frac{\pi R}{2},
+ \label{eq:spherical-mesh-size}
+\end{equation}
+then exact observations from Proposition~\ref{prop:hidden-sphere} recover the
+intrinsic metric of $\partial P_h$.  Moreover,
+\begin{equation}
+ d_{\mathrm H}(\partial P_h,S_R^2)
+ \le R\bigl(1-\cos(h/R)\bigr)
+ \le\frac{h^2}{2R}.
+ \label{eq:inscribed-sphere-bound}
+\end{equation}
+If noisy lengths remain in the local neighbourhood of
+Proposition~\ref{prop:rigidity}, write $\widehat P$ for the convex polyhedron
+with vertices $\widehat X$.  Then, after rigid alignment,
+\begin{equation}
+ d_{\mathrm H}(\partial\widehat P,S_R^2)
+ \le
+ \frac{2}{s_X}\norm{\widehat\ell-\ell}_2
+ +R\bigl(1-\cos(h/R)\bigr)
+ \label{eq:noisy-sphere-decomposition}
+\end{equation}
+All Hausdorff distances in this proposition use the ambient Euclidean metric.
 \end{proposition}
 
 \begin{proof}
-For each $x$ block,
+Equation~\eqref{eq:hidden-identity} makes every reconstructed face congruent
+to the corresponding face of $P_h$; Theorem~\ref{thm:convex-identification}
+identifies the same-complex convex realization.  For a face containing
+$x_i$, set $u=x_i/R$.  Every vertex $x_j$ of that face satisfies
+$u^\trans x_j\ge R\cos(h/R)$; hence every convex combination $q$ in the face
+satisfies
 \[
- \left\|\partial_x
- \left[\frac{a_j}{j}(\cos(jx),\sin(jx))\right]\right\|^2
- =a_j^2.
+ \norm q\ge u^\trans q\ge R\cos(h/R).
 \]
-The $x$ and $y$ image atoms are orthogonal, so cross terms vanish.  Summing
-over blocks gives \eqref{eq:torus-metrics}.  All curve lengths are therefore
-scaled by $\sqrt{S_K/S_T}$, proving \eqref{eq:exact-distance-ratio} and
-\eqref{eq:exact-distortion}.  Orthonormality of $Q$ and
-$\cos^2+\sin^2=1$ give \eqref{eq:exact-output-error}.  Under normalized
-uniform measure, $\E[h_Th_T^{\trans}]=I/2$, so Eckart--Young--Mirsky gives the
-minimum root-mean-square output error in
-\eqref{eq:output-rank-lower-bound}; $E_0$ is at least this RMS value.  The
-pure-Jacobian statement follows by integrating the squared derivatives.
+Also $\norm q\le R$ because $q$ belongs to the convex hull.  Thus radial
+projection moves $q$ by at most $R(1-\cos(h/R))$.  Conversely, because the
+origin lies in $P_h$, every ray from the origin meets $\partial P_h$; applying
+the same bound to that intersection proves the reverse directed Hausdorff
+bound.  The elementary inequality
+$1-\cos t\le t^2/2$ proves \eqref{eq:inscribed-sphere-bound}.
+The triangle inequality with Proposition~\ref{prop:rigidity} gives
+\eqref{eq:noisy-sphere-decomposition}.
 \end{proof}
 
-The benchmark task is intentionally binary and auditable.  For a tolerance
-$\tau$, define
+In particular, the uniform error assumption
+$\max_e|\widehat\ell_e-\ell_e|\le\varepsilon$ gives
 \begin{equation}
- \mathrm{PairAcc}@\tau
- =\frac1{\abs{\mathcal P}}
- \sum_{(z,z')\in\mathcal P}
- \mathbf1\left\{
- \left|\frac{d_K(z,z')}{d_T(z,z')}-1\right|\le\tau
- \right\}.
- \label{eq:pair-accuracy}
+ d_{\mathrm H}(\partial\widehat P,S_R^2)
+ \le
+ \frac{2\sqrt{|E|}}{s_X}\,\varepsilon
+ +\frac{h^2}{2R}.
+ \label{eq:end-to-end-sphere}
 \end{equation}
-Because \eqref{eq:exact-distance-ratio} holds for every pair, this accuracy is
-zero below the prefix distance threshold and one at or above it.  Together
-with \eqref{eq:output-rank-lower-bound}, the numerical choice in
-Section~\ref{sec:controlled-experiment} will establish a true minimum rank over
-all shared-trunk linear heads for simultaneous output and distance fidelity.
-This is not a claim that all real decoder manifolds have uniform scale.
+Equation~\eqref{eq:end-to-end-sphere} is the paper's simplest answer to the
+question of how close the recovered manifold is: one term measures local
+Wasserstein observation error and the other finite-mesh approximation error.
+
+\begin{corollary}[Conditional resolution--noise tradeoff]
+\label{cor:conditional-refinement}
+Consider a quasi-uniform family on a fixed sphere for which
+$|E_h|\le C_E h^{-2}$ and $s_{X_h}\ge c_s h^\beta$ with $\beta\ge0$.
+Assume at every resolution that the reconstruction stays in the local branch
+of Proposition~\ref{prop:rigidity}, and denote its convex polyhedron by
+$\widehat P_h$.  Then
+\begin{equation}
+ d_{\mathrm H}(\partial\widehat P_h,S_R^2)
+ \le \frac{2\sqrt{C_E}}{c_s}\,
+ \varepsilon_hh^{-(\beta+1)}+\frac{h^2}{2R}.
+ \label{eq:conditional-refinement-rate}
+\end{equation}
+Consequently, $\varepsilon_h=o(h^{\beta+1})$ suffices for consistency, and
+$\varepsilon_h=O(h^{\beta+3})$ retains the $O(h^2)$ discretization rate.  To
+target Hausdorff error $\delta$, it is sufficient to take
+$h\asymp\delta^{1/2}$ and
+$\varepsilon_h=O(\delta^{(\beta+3)/2})$, using $O(\delta^{-1})$ edges.
+Equivalently, balancing the terms for a given small $\varepsilon$ gives error
+$O(\varepsilon^{2/(\beta+3)})$.
+\end{corollary}
+
+\begin{proof}
+Substitute $\sqrt{|E_h|}\le\sqrt{C_E}h^{-1}$ and
+$s_{X_h}^{-1}\le c_s^{-1}h^{-\beta}$ into
+\eqref{eq:end-to-end-sphere}; the remaining claims follow by comparing or
+balancing the two terms.
+\end{proof}
+
+The two terms in \eqref{eq:noisy-sphere-decomposition} have different
+meanings.  The first is observation and reconstruction error for the finite PL
+target; the second is discretization error between that target and the smooth
+sphere.  We report them separately rather than presenting a zero-noise
+polyhedron as the exact smooth sphere.  The rigidity constant is local to a
+fixed polyhedron and is not claimed to remain uniform under refinement.

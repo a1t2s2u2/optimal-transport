@@ -1,86 +1,92 @@
-# How Small Can a Decoder Be?
+# Reconstructing Latent Surfaces from Local Wasserstein Distances
 
-This directory contains the English and Japanese editions of
-**Certified Geometry--Capacity Thresholds for Wasserstein Latent
-Distillation** and its reproducible experiments.
+English and Japanese editions of **Jacobian-Free Recovery of Curvature and
+Convex Shape**, together with the fully reproducible experiment.
 
-## Question
+## The question
 
-For a diagonal-Gaussian teacher decoder and a compressed student, how many
-parameters are needed to preserve both teacher outputs and teacher intrinsic
-latent distances to prescribed tolerances?
+Can local distances between the output distributions of a probabilistic
+decoder recover a curved latent surface, without evaluating a decoder
+Jacobian?
 
-The Gaussian 2-Wasserstein identity turns the decoder parameter map
+The paper gives two deliberately separate answers.
 
-```text
-F(z) = (mu(z), sigma(z))
-```
+1. **Finite theory.** On a known triangular complex, local Wasserstein edge
+   lengths define a piecewise-Euclidean metric and exact angle-defect curvature.
+   If those lengths come from an unknown strictly convex polyhedron with the
+   same triangular complex, its 3D realization is unique up to a Euclidean
+   motion. Explicit bounds propagate edge noise to curvature, intrinsic
+   distances, metric-space discrepancy, and local 3D error. Under the
+   conditional rigidity scaling $s_{X_h}\gtrsim h^\beta$, Hausdorff error is
+   $O(\varepsilon_h h^{-(\beta+1)}+h^2)$.
+2. **Visible sphere experiment.** A controlled Gaussian decoder collapses its
+   means to a disk but stores the missing height along a full-rank,
+   noncommuting covariance path. Its exact Wasserstein distance is the hidden
+   3D chord. A constant-curvature spherical estimator reconstructs the surface
+   from sparse three-hop local queries.
 
-into a Euclidean immersion with pullback metric
+The experiment assumes sphere topology, constant curvature, and antipodal
+coverage. These assumptions are printed in the paper and figures; the
+implemented spectral estimator is not presented as a general convex-surface
+solver. The paper's Hausdorff bound applies to the nearby same-skeleton convex
+realization, not to the graph-shortest-path/spherical-scaling pipeline.
 
-```text
-G(z) = J_F(z)^T J_F(z).
-```
+## Main controlled result
 
-The paper converts uniform student--teacher Jacobian error into all-distance
-and triplet-accuracy guarantees, gives a conditional geometry--capacity rate,
-and solves fixed-trunk rank-constrained first-order distillation by a
-covariance-whitened SVD.
+At 642 vertices, three-hop queries use 11,370 pairs, or 5.53% of all pairs.
+The general Gaussian $W_2$ formula matches hidden chords to
+$1.5\times10^{-15}$; 98.35% of queried covariance pairs are noncommuting.
+An oracle-scaled raw covariance-parameter metric still has 1.245% relative
+distance RMSE.
+With exact distances:
 
-## Main result
+- relative geodesic-distance error: 0.00261;
+- aligned 3D reconstruction RMSE: 0.00287;
+- topology-only control RMSE: 0.13627;
+- ordinary Euclidean MDS RMSE: 0.36165;
+- decoder-mean disk RMSE: 0.65383.
 
-The controlled task uses a `28 x 28` Gaussian image decoder with a
-512-dimensional Fourier trunk. At predeclared output and distance tolerances
-`eta = tau = 5%`:
+At 1% local-length noise, 3D RMSE is 0.00349, while raw pointwise curvature
+RMSE rises to 2.32 and 32.6% of angle defects become nonpositive. This is an
+important result rather than a hidden failure: global shape under a spherical
+prior is much more stable than unsmoothed local curvature.
 
-| Student | Output error | Distance distortion | Decision |
-|---|---:|---:|---|
-| rank 20 | 6.2788% | 5.4485% | fail |
-| rank 24 | 4.8980% | 4.5555% | pass |
-
-Every shared-trunk head of rank at most 23 has output RMS at least 5.2772%, so
-rank 24 is a proved minimum over the stated head family. Its factorized head
-has 31,888 parameters instead of 402,192, a 12.61x reduction.
-
-Further experiments use the same threshold logic:
-
-- a diagonal-Gaussian warped torus with nonconstant variance compares
-  output-only and output--Jacobian neural distillation;
-- MNIST and FashionMNIST VAEs compare ordinary, value-weighted, and
-  value--Jacobian SVD of frozen decoder heads. Covariance-aware methods cross
-  the sampled 5% boundaries at ranks 12 and 13; ordinary SVD requires ranks 60
-  and 63;
-- straight latent interpolation is compared with numerical intrinsic paths on
-  100 endpoint-disjoint pairs per dataset. Passing students preserve curve
-  length along the same teacher paths with median errors 0.11% and 0.10%.
-
-The paper includes an end-to-end architecture diagram, input/teacher/student
-reconstruction grids for both datasets, and decoded straight/geodesic image
-sequences.
+A separate edge-only realization removes the spherical constraint after
+initialization. On a 42-vertex variable-curvature ellipsoid it improves the
+spherical initializer RMSE from 0.1270 to numerical zero with exact chords.
+Across three seeds, mean RMSE is 0.00720 at 0.5% edge noise and 0.01463 at 1%.
+All 14 reconstructions preserve all 42 convex-hull vertices and 80 prescribed
+facets; all 12 noisy trials lie below the audited local rigidity scale
+$2\|\Delta\ell\|_2/s_X$.
 
 ## Reproduction
 
-Run all experiments:
+Run the experiment:
 
-```sh
-make paper-experiments
-```
+    make paper-surface-experiment
+    make paper-convex-experiment
+
+Run both current experiments:
+
+    make paper-experiments
 
 Build the English and Japanese PDFs:
 
-```sh
-make paper
-make paper-ja
-```
+    make paper
+    make paper-ja
 
-Regenerate experiments and both editions:
+Regenerate the experiment and both editions:
 
-```sh
-make paper-all
-```
+    make paper-all
 
-The PDFs are written to `out/main.pdf` and `out/main-ja.pdf`. Raw frontiers
-are stored in `experiments/lowrank_torus_results.csv`,
-`experiments/distillation_results.csv`, and
-`experiments/{mnist,fashion_mnist}_low_rank_results.csv`. Numerical path
-audits are stored in `experiments/*_geodesic_{metrics,aggregate,summary}.csv`.
+The executable PEP 723 headers pin the audited NumPy, SciPy, Matplotlib, and
+PyTorch versions; the Make targets select Python 3.12.
+
+Outputs:
+
+- English paper: out/main.pdf
+- Japanese paper: out/main-ja.pdf
+- CSV data, TeX tables, and bilingual PNG/PDF figures: experiments/
+
+The older decoder-distillation scripts remain in experiments/ only for
+historical reproducibility and are not used by this paper.

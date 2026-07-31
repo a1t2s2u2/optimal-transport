@@ -1,302 +1,319 @@
-\section{実験}
+\section{視覚的に明瞭な逆問題}
 \label{sec:experiments}
 
-全実験で同じ問いを用いる。すなわち、学生の容量を見る前に固定した閾値を
-満たすかを判定する。画像torusでは数学的正解により最小rankを証明し、
-変形Gaussian torusでは非定数分散をもつニューラル学習を検証する。
-MNISTとFashionMNISTでは、学習済みdecoderの圧縮、decode出力、数値内在経路を調べる。
+理論では、二つの復元問題を区別した。定義~\ref{def:same-skeleton-model} のもとでは、
+厳密なメッシュ辺長から同一骨格凸多面体（same-skeleton convex polyhedron）を同定できる。
+これが一般の有限逆問題である。実験では、結果を目で確認できる、より限定された問いを扱う。
+すなわち、隠れた滑らかな曲面が標準球面（round sphere）であると既知のとき、疎な局所
+Wasserstein観測から、平面へ潰れた表現を再び球面へ展開できるかを問う。標準球面という
+仮定は推定器の一部であり、任意のデータから推定された結論ではない。
 
-\subsection{固定trunkにおける厳密な最小値}
-\label{sec:controlled-experiment}
+\subsection{定曲率復元アルゴリズム}
+\label{sec:spherical-estimator}
 
-\paragraph{設定}
-第~\ref{sec:exact-task}節を $T=128$、$a_j=1/j$ とし、$Q$ にはzig-zag順の
-最初の512個の2次元DCT atomを用いる。biasを含むdense教師headは
-$402{,}192$ scalar、rank-$r$二因子headは $r(784+512)+784$ scalarを保存する。
-これはheadをdense行列として配備する際の計数であり、解析的DCT生成規則そのものは
-より小さく保存できる。
+推定器が受け取るのは、三角形複体 $\mathcal T$ と、疎な局所クエリ集合
+$E_{\mathrm q}\supseteq E$ 上で測定されたWasserstein弦長 $\widehat c_{ij}$ である。
+隠れた3次元頂点も、ベンチマークの生成に用いたガウス分布のパラメータも受け取らない。
 
-次の二条件を事前に固定する。
+\paragraph{曲率とスケール}
+部分集合 $\{\widehat c_e:e\in E\}$ は各面をユークリッド三角形として定める。
+式~\eqref{eq:angle-defect}--\eqref{eq:discrete-density} から、未平滑な角欠損曲率質量
+（angle-defect curvature）とPL総面積 $\widehat A$ が得られる。球面位相より、
+$\sum_i\widehat\kappa_i=4\pi$ は厳密に成り立つ。さらに定曲率モデル
+$K=1/R^2$ を仮定すると、ガウス--ボンネ（Gauss--Bonnet）の定理からスケール推定値
 \begin{equation}
- E_0\le\eta=5\%,
- \qquad
- D_{\mathrm{pair}}\le\tau=5\%.
- \label{eq:exact-requirements}
+ \widehat R=\sqrt{\frac{\widehat A}{4\pi}}.
+ \label{eq:learned-radius}
 \end{equation}
-厳密な恒等式 $D_{\mathrm{loc}}=D_{\mathrm{pair}}$ により経路探索は不要である。表示画像に
-のみ同一のcontrast倍率を掛けるが、これは $F$ と報告誤差には含めない。
+を得る。有限解像度で辺長が厳密なら、これは内接PL曲面の半径を推定するため、滑らかな
+球面半径よりわずかに小さい。ノイズ付き辺長では、この片側の関係は保存されない。
 
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.98\textwidth]{experiments/lowrank_torus_ja.png}
-  \caption{厳密な出力--幾何frontier。両曲線とも解析値である。rank 20は事前指定した
-  出力・距離5\%条件をともに破り、rank 24は両方を満たす。生画像の差は小さいため、
-  小窓に共通尺度の絶対残差を示す。}
-  \label{fig:exact-frontier}
-\end{figure*}
-
-\begin{table}[t]
-  \centering
-  \small
-  \caption{同時条件に対する厳密閾値。各行で出力・距離許容誤差を等しくし、
-  圧縮率はdense教師headとfactorized学生headの保存scalar数の比とする。}
-  \label{tab:exact-thresholds}
-  \resizebox{\columnwidth}{!}{\input{experiments/lowrank_torus_table_ja.tex}}
-\end{table}
-
-\paragraph{明確な5\%結果}
-5周波数block、すなわちrank 20では、命題~\ref{prop:exact-rank-law} より
+\paragraph{局所弦長から大域移動時間へ}
+クエリされた各点対に対して、球面上の弦長--弧長変換
 \begin{equation}
- E_{0,5}=6.2788\%,
- \qquad
- D_5=5.4485\%
+ \widehat a_{ij}
+ =2\widehat R\arcsin\!\left(
+ \min\!\left\{1,\frac{\widehat c_{ij}}{2\widehat R}\right\}\right).
+ \label{eq:experimental-chord-arc}
 \end{equation}
-となり、両条件に不合格である。6 block、rank 24では
+を適用する。疎グラフ $(V,E_{\mathrm q},\widehat a)$ 上の最短路から、全点対距離行列
+$\widetilde D$ を得る。ベンチマークの標本化には対蹠点対（antipodal pair）が含まれるので、
+直径に関する校正を一度だけ明示的に行う。
 \begin{equation}
- E_{0,6}=4.8980\%,
- \qquad
- D_6=4.5555\%
+ \widehat D
+ =\frac{\pi\widehat R}{\max_{i,j}\widetilde D_{ij}}\widetilde D.
+ \label{eq:diameter-calibration}
 \end{equation}
-となり実行可能である。これは、選んだ打ち切り列で最初に合格するというだけではない。
-式~\eqref{eq:output-rank-lower-bound} は、trunkを共有する任意のrank-23 headに対し、
+これはグラフ直径を正規化するが、方向依存の経路歪みは残り、報告する測地距離誤差に
+現れる。この処理は、標準球面と対蹠点の被覆に関する強い仮定に依存する。既知の対蹠点
+被覆がない応用では、この処理を用いることはできない。
+
+\paragraph{復元曲面}
+半径 $R$ の球面のグラム行列（Gram matrix）は
+$G_{ij}=R^2\cos(d_{ij}/R)$ である。そこで
 \begin{equation}
- \inf_{\rank(U)\le23}
- \left(\E_z\norm{(U-W)h(z)}^2\right)^{1/2}
- =5.2772\%>\eta
+ \widehat G_{ij}
+ =\widehat R^2\cos(\widehat D_{ij}/\widehat R),
+ \label{eq:spherical-gram}
 \end{equation}
-というRMS出力下界を与える。一様誤差 $E_0$ はRMS以上なので、rank 23以下は
-式~\eqref{eq:exact-requirements} を満たせない。したがってrank 24は、このtrunkと
-biasを共有する全線形head中の真の最小rankである。headは $31{,}888$ scalarで、
-$12.61\times$ 圧縮となる。
+を構成し、正の固有値に対応する上位三つの固有方向を残して、得られた各行を半径
+$\widehat R$ へ射影する。これは球面古典的尺度構成法（spherical classical scaling）である。
+実験出力を解釈しやすくする一方、この手法は常に球面を返す。したがって、これは定曲率計量
+復元の例示であって、定理~\ref{thm:convex-identification} の一般凸実現を解く数値解法ではない。
+命題~\ref{prop:spherical-spectral-stability} は、$\widehat D$ と $\widehat R$ が正解に近いとき、
+この最終スペクトル段が局所的に安定であることを示す。その距離誤差項には、前段のグラフ近似と
+直径近似も明示的に残る。
 
-表~\ref{tab:exact-thresholds} は同時rate--distortionを示す。10\%では、出力忠実度の
-条件により幾何だけのrank 12からrank 16へ上がる。1\%ではrank 100が必要となり、
-圧縮率は $3.08\times$ まで下がる。出力条件がなければ、教師と異なる等長写像も
-成功となるため、両条件が必要である。
+写像全体は
+\begin{equation}
+\begin{aligned}
+ &(\mathcal T,\text{local }W_2\text{ chords})\\
+ &\quad\longrightarrow
+ (\widehat\kappa,\widehat A,\widehat R)
+ \longrightarrow\widehat D
+ \longrightarrow\widehat X\subset\mathbb R^3 .
+\end{aligned}
+\label{eq:experimental-pipeline}
+\end{equation}
+である。評価前のすべての演算は、明示した入力のみの関数である。
 
-rank 24はFourier Gramの厳密な恒等式から導かれ、一般のJacobian誤差上界が
-rank 24を予測したわけではない。定理~\ref{thm:stability} は便利な十分条件だが
-保守的になりうる。次の実験では、この一般保証を学習済み学生上で検証する。
+\subsection{制御データと負の対照実験}
+\label{sec:controlled-data}
 
-\subsection{非定数分散をもつニューラルstress test}
-\label{sec:neural-stress}
+\paragraph{球面を隠す円板}
+命題~\ref{prop:hidden-sphere} を $k=1/2$ として単位球面上に具体化する。ガウス平均
+$(x_1,x_2)$ は二重被覆された円板を占める一方、全ランク共分散経路が $x_3$ を保持し、
+異なる高さの間では非可換となる。厳密な恒等式
+\begin{equation}
+ W_2(\mu_x,\mu_y)=\norm{x-y}
+ \label{eq:experiment-w2-chord}
+\end{equation}
+により各観測は3次元弦長を与えるが、推定器が受け取るのはスカラーの点対距離だけである。
+解析的デコーダーを
+用いるのは意図的であり、逆幾何の誤差をニューラル最適化とモンテカルロ
+（Monte Carlo）OT誤差から分離する。
 
-潜在領域を2-torusとし、
+一様なicosphere（正二十面体細分球面）頂点を使うと、結合関係から正解の多くが漏洩する。
+そこで、固定した球面上の微分同相写像（diffeomorphism）
 \begin{align}
- e(\phi)&=(\cos\phi_1,\sin\phi_1,
-             \cos\phi_2,\sin\phi_2),\notag\\
- \phi(z)&=\bigl(z_1+0.05\sin(4z_2),
-                 z_2+0.05\sin(4z_1)\bigr),\notag\\
- F_T(z)&=\left(0.9e(\phi(z)),
- 0.75+\sqrt{1-0.9^2}\,e(\phi(z))\right)
- \label{eq:warped-teacher}
+ \phi'&=\phi+0.175\sin(2\phi),\notag\\
+ \lambda'&=\lambda+0.24\sin^2(\phi'),
+ \label{eq:sampling-warp}
 \end{align}
-とする。後半4 channelは正の標準偏差なので、固定共分散への退化ではなく、
-対角Gaussianの完全な $W_2$ 公式を使う。warpには解析的評価 $s=0.8$、$M_1=1.2$ がある。
+により頂点を移動する。この写像は標準球面と対蹠点の対応を保存する一方、頂点位置を
+視覚的にも明らかに非一様にする。細分化レベル $0$ から $3$ を用い、頂点数はそれぞれ
+$12,42,162,$ および $642$ である。
 
-学生は周期入力 $(\cos z_1,\sin z_1,\cos z_2,\sin z_2)$ をもつ2層Tanh networkで、
-4から256まで2倍ずつ増やす7幅を3 seed、各2,500 step学習する。baselineは出力MSE、
-一次手法はその損失に5倍の平均Jacobian二乗誤差を加える。出力RMSE 2\%以下、
-距離歪み5\%以下を事前条件とする。
+局所クエリグラフは、メッシュ上で3ホップ以内にあるすべての点対を含む。最細分化レベルでは、
+全 $205{,}761$ 点対のうち $11{,}370$ 点対、すなわち $5.53\%$ である。メッシュ次数と
+ホップ半径を固定するため、細分化に対するクエリ数は $O(|V|)$ である。クエリ点対が
+三角形の辺でもある場合は、同じノイズ付き測定値を再利用する。曲率推定だけに独立な辺長
+オラクルを与えることはない。
 
-評価は固定 $48\times48$ torus格子で行う。格子上の最大Jacobian誤差を
-定理~\ref{thm:stability} に代入し、得たplug-in上界をgraph距離と3,072 tripletに
-比較する。これは有限格子診断であり、連続領域の形式保証にはcoveringまたは
-Lipschitz剰余項の検証が別途必要である。
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.94\textwidth]{experiments/distillation_tradeoff_ja.png}
-  \caption{ニューラル容量sweep（3 seedの平均）。実線は実測、破線は有限格子上の
-  定理下限・上限である。周波数4の変形教師（下段）では、一次蒸留だけが5\%距離境界を
-  越える。上段の単純torusは低周波数の参照である。}
-  \label{fig:neural-sweep}
-\end{figure*}
-
-変形教師で最大の出力のみ学生は69,128 parameterをもち、出力条件は満たす
-（RMSE 1.308\%）が、plug-in距離上界61.62\%、実測最大点対歪み15.41\%、
-triplet一致率95.27\%であり、幾何条件に不合格である。出力--Jacobian学習は
-幅128、18,184 parameterで全3 seedが合格する。出力RMSE 0.083\%、
-$\widehat\varepsilon_1=0.0210$、定理上界4.06\%、実測最大点対歪み2.72\%、
-triplet一致率99.12\%である。全84 runで、実測局所計量歪みは対応するplug-in
-$\delta$ 以下だった。これはoptimizer非依存の下界ではないが、定理が使う量を
-学習でき、出力fitだけではその量を学べない場合があることを示す。
-
-\subsection{実データVAE head圧縮}
-\label{sec:realdata}
-
-\paragraph{設定}
-30,000枚のseed固定MNIST\cite{lecun1998}およびFashionMNIST\cite{xiao2017}訓練
-subsetで、別々の2次元Gaussian VAE\cite{kingma2014}を12 epoch学習する。
-Figure~\ref{fig:architecture} の通り、どちらも幅64の2層Tanh decoder trunk
-$h:\R^2\to\R^{64}$ と、固定観測共分散をもつ $784\times64$ affine平均headを使う。
-encoder、trunk、biasを凍結し、$W$ だけを置換する。VAE全体ではなくdecoder headの
-圧縮を測る。
-
-通常SVD（$C=I$）、出力重み付きSVD（$C=\E[hh^{\trans}]+\rho I$）、
-式~\eqref{eq:jet-covariance} の出力--Jacobian SVDを比較する。各データの共分散は
-訓練posterior mean 4,096点で推定する。Jacobian共分散のtraceは出力共分散の4倍に
-固定し、test rankでは調整しない。
-
-全64 rankをofficial testのposterior mean 4,000点で評価する。
-$\widehat D_{\mathrm{loc}}$ は固定1,536点上の一般化固有値長さ誤差の最大値であり、
-6,000個の局所teacher-$W_2$ chord tripletも用いる。rank選択と報告に同じ有限subsetを
-使うため、標本閾値であり、held-out連続保証ではない。
-
-\begin{table*}[t]
-  \centering
-  \small
-  \caption{標本5\%局所幾何crossing。tripletは局所teacher-$W_2$ chord順序一致率で、
-  class label精度や内在測地精度ではない。factor headがdenseより大きい場合はdenseへ
-  fallbackするため $1.00\times$ とする。}
-  \label{tab:realdata-crossings}
-  \resizebox{0.98\textwidth}{!}{\input{experiments/realdata_low_rank_table_ja.tex}}
-\end{table*}
-
-MNISTの通常SVDはrank 60で初めて合格し（4.944\%、rank 59は6.794\%）、
-二つの共分散重み付き法はrank 12で合格する（4.196\%、4.173\%）。rank 12はheadを
-50,960から10,960（$4.65\times$）、decoder全体を55,312から15,312
-（$3.61\times$）へ圧縮する。FashionMNISTでも通常SVDはrank 63、両重み付き法は
-rank 13で合格する。出力--Jacobian学生は歪み3.359\%で、headは11,808
-（$4.32\times$）、decoderは16,160（$3.42\times$）となる。局所chord-triplet
-一致率はそれぞれ99.95\%、100.00\%である。
-
-Jacobian項はどちらでも出力重み付けよりcrossing rankを下げない。同一rankで余裕を
-広げる場合はあるが、強圧縮の全rankで常に優位ではない。したがって、実データでの
-頑健な結論は、較正共分散が大きなrank減少を生み、Jacobian項はその重み付き族の中で
-幾何を直接狙う、というものである。
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.96\textwidth]{experiments/mnist_low_rank_images_ja.png}
-  \vspace{1mm}
-  \includegraphics[width=0.99\textwidth]{experiments/fashion_mnist_low_rank_images_ja.png}
-  \caption{official-test入力、凍結教師復元、出力--Jacobian学生の標本5\%閾値直前・直後。
-  MNISTはrank 11/12、FashionMNISTは12/13である。隣接する学生画像はほぼ同一に見えても、
-  微分で定まる幾何条件の反対側に位置しうる。}
-  \label{fig:realdata-images}
-\end{figure*}
-
-\subsection{潜在直線と数値的内在経路}
-\label{sec:geodesic-visualization}
-
-保存対象の幾何を画像として可視化する。端点はposterior meanであり、経路は事前指定した
-評価矩形、すなわち固定したofficial-test 3,000画像poolのposterior meanについて、各座標の
-0.5--99.5\%分位点に3\% marginを加えた領域内に制限する。この矩形は数値trust regionであり、
-Gaussian posteriorのsupportではない。
-端点対は異なるlabel、中心5--95\%のcode、復元誤差75 percentile以下、中程度の
-Mahalanobis距離という条件で選ぶ。
-
-端点を固定した49節点について、教師引き戻しenergyの中点離散化
+各厳密弦長に
 \begin{equation}
- \begin{aligned}
- E_K(c)&=(K-1)\sum_{k=0}^{K-2}
- \dot z_k^{\trans}G_T(\bar z_k)\dot z_k,\\
- \dot z_k&=z_{k+1}-z_k,
- &\bar z_k&=\frac{z_{k+1}+z_k}{2}.
- \end{aligned}
- \label{eq:discrete-geodesic-energy}
+ \exp(\sigma Z-\sigma^2/2),
+ \qquad Z\sim\mathcal N(0,1),
+ \label{eq:multiplicative-noise}
 \end{equation}
-を最小化する。3初期経路を決定的Adamで700 step最適化し、最終長は別の細分計量積分で
-再計算する。表示用経路だけをさらに教師弧長で等間隔化する。大域最適性は保証しないため、結果を
-\emph{数値測地線候補}と呼ぶ。これは凍結decoder族内の内在経路であり、ambient
-Wasserstein変位測地線でも未知の真のdata manifold上の経路でもない。
+を乗じる。$\sigma\in\{0,0.005,0.01,0.02\}$ とする。ノイズなし条件は1回だけ実行し、
+各ノイズ付き条件では固定した3種類の乱数シード（seed）を用いる。指数関数により、長さの
+正値性と平均が保たれる。
 
-各データ100組の固定乱数・端点非重複対を評価する。図のdiagnostic pairは候補計算前に、
-直線経路だけのdecoded step不均一性とchord超過で選ぶ。Table~\ref{tab:geodesics} は
-2,000回の条件付きpercentile pair bootstrapであり、単一凍結教師の端点対変動を測る。
-教師学習や母集団の不確実性は含まない。報告する200本の教師候補では、8分割と16分割の
-相対長差は $2\times10^{-6}$ 未満で、評価矩形境界へ接触した候補はない。各経路を4倍細分した
-標本上で、$G_T$ の最小固有値はMNIST 3.29、FashionMNIST 4.49以上、最大条件数は6.30、
-7.14である。この有限検査はRiemann幾何としての解釈を支持するが、連続経路全体の証明ではない。
+\paragraph{ベースライン}
+すべての3次元誤差では、平行移動を許すが再スケーリングを許さない直交プロクラステス
+位置合わせ（orthogonal Procrustes alignment）を用いる。正解座標を用いるのは、
+この評価時だけである。
+\begin{enumerate}
+ \item \emph{位相のみ（Topology only）}では、元の一様icosphereを変形後の正解対象へ
+ 位置合わせする。これは結合関係と球面事前分布を厳密にもつが、測定長を一切受け取らず、
+ 位相からの情報漏洩を直接検査する。
+ \item \emph{ユークリッド多次元尺度構成法（Euclidean multidimensional scaling; MDS）}
+ では、同じ復元大域距離行列 $\widehat D$ に通常の3次元古典的MDSを適用する。
+ \item \emph{平均のみ（Mean only）}では、決定論的デコーダーから見える、円板へ潰れた
+ ガウス平均を埋め込む。
+\end{enumerate}
+
+\paragraph{評価指標}
+全点対の大円距離に対する相対フロベニウス誤差（relative Frobenius error）、
+位置合わせ後の対応頂点二乗平均平方根誤差（root mean squared error; RMSE）、
+対称ハウスドルフ距離（symmetric Hausdorff distance）、および面積重み付き曲率RMSEを
+報告する。ここで、位置合わせ後の頂点RMSEは
+$|V|^{-1/2}\min_{Q,b}\norm{\widehat X-(XQ+\mathbf 1b^\trans)}_F$ である。
+問合せ点対集合 $\mathcal Q$ に対する相対弦長ストレスは
+$\norm{(\widehat c^{\mathrm{rec}}-\widehat c^{\mathrm{obs}})_{\mathcal Q}}_2/
+\norm{\widehat c^{\mathrm{obs}}_{\mathcal Q}}_2$ とする。生パラメータ監査では
+$d_\alpha(i,j)^2=\norm{m_i-m_j}^2+\alpha^2\norm{C_i-C_j}_F^2$ を用い、一つの
+$\alpha\ge0$ を正解に対する相対距離RMSEが最小になるよう選ぶ。これはオラクル
+ベースラインであり、推定器への入力ではない。
+曲率は、同じメッシュ上のノイズなし角欠損値と
+滑らかな $K=1$ の両方に対して比較する。非正の角欠損をもつ頂点の割合も報告する。
+正値性は単なる補助的診断ではなく、定理の条件だからである。
 
 \begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.96\textwidth]{experiments/mnist_geodesic_interpolation_ja.png}
-  \vspace{2mm}
-  \includegraphics[width=0.96\textwidth]{experiments/fashion_mnist_geodesic_interpolation_ja.png}
-  \caption{入力端点とdecode補間列。第一decode行はlatent等時間、第二行は同じ直線経路を
-  教師弧長で等間隔化し、第三行は経路を数値教師測地線候補へ変える。最終行は同じlatent
-  frameを合格圧縮学生でdecodeする。上段はlatent経路と表示frame間の固定共分散Gaussian
-  $W_2$ chordである。$[0,1]$ clipは表示だけに用いる。}
-  \label{fig:realdata-geodesics}
+ \centering
+ \includegraphics[width=0.99\textwidth]
+ {experiments/wasserstein_surface_reconstruction_pipeline_ja.png}
+ \caption{頂点数642、局所長さノイズ1\%における入出力。(a)は変形地図の表示であり、
+ 推定器への入力ではない。(b)のガウス平均は南北の情報を失う。定曲率推定器は、位相と
+ 全点対 $W_2$ 弦長のうちわずか5.53\%だけから(c)を出力する。(d)では、隠れた頂点を
+ 解答の位置合わせと重ね描きにだけ用いる。視覚的な結論は、まさに平面地図の比喩に対応する。
+ 局所移動時間から、失われた球面スケールが復元される。}
+ \label{fig:wasserstein-surface-pipeline}
 \end{figure*}
 
-\begin{table*}[t]
-  \centering
-  \small
-  \caption{固定端点対に対する数値内在経路結果。直線超過は
-  $L_T(c_{\mathrm{line}})/L_T(\widehat\gamma_T)-1$。学生経路長誤差は合格する
-  rank-12/rank-13学生を同じ教師経路上で測った曲線長誤差である。区間は単一凍結教師に
-  条件付けたpercentile pair bootstrapである。角括弧内もpercent値である。}
-  \label{tab:geodesics}
-  \resizebox{0.94\textwidth}{!}{\input{experiments/realdata_geodesic_table_ja.tex}}
-\end{table*}
+\subsection{結果}
+\label{sec:surface-results}
 
-潜在直線の長さ超過中央値はMNIST 0.60\%、FashionMNIST 0.75\%、最大値は10.90\%、
-4.63\%である。合格学生が同じ教師経路に与える長さ誤差は中央値0.11\%、0.10\%、
-最大0.36\%、0.22\%に留まる。表示したFashionMNIST対では、教師直線長15.027に対し
-候補長14.524で、3.47\%短い。latent等時間の隣接frame $W_2$ の変動係数は0.110、
-同じ直線を弧長等間隔化すると0.005、数値候補では0.007となる。したがって速度補正と
-経路変更を分離できる。学生行は教師行と厳密に同じlatent codeを使う。学生自身の候補は
-表示した1組だけで最適化し、詳細CSVの候補長監査に用いるが、100組の統計には含めない。
+\paragraph{OTは欠落した座標を保持する}
+すべての試行で、一般ガウス $W_2$ 公式で計算した距離と隠れた3次元弦長の最大差は
+$1.5\times10^{-15}$ 以下である。最細問合せグラフでは、共分散の最小固有値は $1.754$、
+問合せ共分散対の $98.35\%$ は非可換である。さらに、生の共分散Frobenius差に対して一つの
+大域スケールを正解から最適化しても、パラメータ距離の相対RMSEは $0.01245$ 残る一方、
+Wasserstein恒等式は機械精度で成立する。平均のみのRMSEは $0.6538$ であり、平面円板では
+正解対象を表現できない。図~\ref{fig:wasserstein-surface-pipeline} は、局所Wasserstein長が
+欠落した次元を復元することを示す。
 
-\section{議論と限界}
+\paragraph{解像度とともに復元精度が向上する}
+厳密観測では、相対測地距離誤差は、頂点数 $12,42,162,642$ に対して
+\begin{equation}
+ 0.0985,\ 0.0392,\ 0.00915,\ 0.00261
+ \label{eq:observed-distance-sequence}
+\end{equation}
+と減少する。位置合わせ後の3次元RMSEも同様に
+\begin{equation}
+ 0.1365,\ 0.0400,\ 0.0105,\ 0.00287.
+ \label{eq:observed-shape-sequence}
+\end{equation}
+と減少する。
+最粗の12頂点メッシュでは、PL半径の過小推定により、ノイズなし問合せの $24.2\%$ で
+弦長--弧長変換の引数がクリップされる。レベル1--3のノイズなし条件ではクリップはなく、
+三つの細かい解像度点および最細メッシュの結論には影響しない。
+頂点数642では、位相のみの対照は $0.1363$、通常MDSは $0.3616$、
+平均円板は $0.6538$ にとどまる。したがって、結合関係と $S^2$ 出力制約だけでは
+結果を説明できない。復元したクエリ弦長の相対ストレス（relative stress）は、
+ノイズなしで $0.00330$ である。
+残るグラフ近似誤差とスペクトル近似誤差を隠さず定量化している。対称Hausdorff誤差は、
+厳密辺長で $0.00337$、ノイズ1\%で $0.00678$ である。
 
-\paragraph{何が本当に最小か}
-厳密タスクでは、全rank headに対する出力下界と実行可能な距離保存headを組み合わせ、
-trunkとbiasを共有する全線形head中でrank 24が最小だと証明する。
-定理~\ref{thm:rank-distillation} は別に、各rankで定義した一次蒸留損失の厳密最適値を
-与える。異なる非線形trunkがさらに少ないparameterで同じ教師挙動を表せないとは
-主張しない。
+\input{experiments/wasserstein_surface_reconstruction_table_ja.tex}
 
-\paragraph{保証と標本テスト}
-定理~\ref{thm:stability} は $s,M_1,\varepsilon_1$ の正しい大域評価があれば連続領域の
-主張である。解析画像タスクでは全量が厳密である。ニューラルsweepと両画像datasetでは
-supremumを有限集合で置き換えており、その通りに標本結果と呼ぶ。大域保証には
-covering、interval bound、または検証済みLipschitz剰余項が必要である。
+表~\ref{tab:wasserstein-surface-reconstruction-ja} が示すように、弦長ノイズ1\%でも、定曲率推定器の
+測地距離誤差は $0.00437$、3次元RMSEは $0.00349$ にとどまる。ノイズ2\%では、それぞれ
+$0.00706$ と $0.00518$ である。これらの小さな曲面誤差は、
+第~\ref{sec:spherical-estimator}節の強い $S^2$ 射影を条件とする。任意のノイズ付き計量も
+同様に容易に埋め込めることを示す証拠ではない。
 
-\paragraph{parameter、bit、配備}
-制約のない実数一個は無限情報を符号化するため、普遍的parameter数下界には
-符号化可能または量子化重みが必要である。配備時は式~\eqref{eq:min-safe-size} で
-rank factorと精度を含む保存bit数を最小化すべきである。量子化誤差は
-定理~\ref{thm:stability} へ追加Jacobian摂動として入る。
+\begin{figure*}[t]
+ \centering
+ \includegraphics[width=0.625\textwidth]
+ {experiments/wasserstein_surface_reconstruction_errors_ja.png}\hfill
+ \includegraphics[width=0.355\textwidth]
+ {experiments/wasserstein_surface_reconstruction_curvature_ja.png}
+ \caption{解像度により、二つの統計的レジーム（regime）が分離される。(a)--(c)：固定した小さな
+ 相対ノイズのもとでも、大域距離と定曲率3次元復元は解像度とともに改善するが、生の
+ 面積正規化曲率はノイズを増幅する。(d)--(e)：頂点数642、ノイズ1\%で未平滑の曲率は
+ 広い分布をもち、学習半径が $0.997$ であっても負になりうる。これは
+ 式~\eqref{eq:noise-amplification} と定性的に整合する。大域的に良好な球面復元は、
+ 点ごとの曲率復元を意味しない。}
+ \label{fig:wasserstein-surface-errors}
+\end{figure*}
 
-\paragraph{教師相対幾何}
-実データで保存できるのは凍結教師であり、教師が真のdata manifoldを回復したことは
-保証できない。両VAEは教師1 seedと制限の強い2次元codeを使い、教師PSNRはMNIST
-13.19 dB、FashionMNIST 14.78 dBである。SOTA画像modelではなく透明な適用例である。
-固定共分散では $W_2$ は平均画像のEuclid距離へ帰着するが、変形torus実験は非定数
-標準偏差を扱う。完全共分散ではBures--Wasserstein幾何が必要となる。
+\begin{figure*}[t]
+ \centering
+ \includegraphics[width=0.98\textwidth]
+ {experiments/convex_edge_realization_prototype_ja.png}
+ \caption{非球形の楕円体状凸多面体に対する、辺長だけからの実現。列は隠れた正解、
+ 明らかに不正確な球面初期値、厳密辺長からの実現、0.5\%摂動辺長からの実現を示す。
+ 最終段階で用いるのはメッシュ辺上のWasserstein弦長残差だけである。表示したノイズ付き
+ 結果は乱数種0であり、球面・楕円体の全試行は表~\ref{tab:convex-edge-rigidity-ja} に示す。}
+ \label{fig:convex-edge-realization}
+\end{figure*}
 
-\paragraph{数値経路}
-表示経路は座標依存の評価矩形内で得たmulti-start局所解である。積分解像度と境界余裕の
-監査は単純な数値失敗を除くが、大域測地線を証明しない。grid初期化、節点倍増、矩形拡張
-感度、知覚的出力計量を加えると、補間品質に関する主張を強められる。
+\paragraph{点ごとの曲率が最も難しい}
+厳密な長さでは、ノイズなしPL対象に対する曲率誤差は機械精度で0となる。頂点数642で残る
+滑らかな $K=1$ に対するRMSE $0.0218$ は、離散化に由来する。固定相対ノイズの挙動は
+異なる。同じ解像度で、長さノイズ $0.5\%,1\%,$ および $2\%$ は、生の離散曲率RMSE
+$1.17,2.32,$ および $4.73$ をそれぞれ生じる。ノイズ1\%では、頂点の $32.6\%$ が
+非正の角欠損をもつ。
 
-\paragraph{範囲}
-本論文は距離と検索に集中する。曲率安定性には二階制御が必要であり、非線形分散head
-には制約付きまたは非線形圧縮が必要である。強い経験的主張には複数教師seed、rank選択と
-最終評価を分けたsplit、Jacobian weight ablation、$28\times28$ grayscale以外の
-datasetが必要である。
+これは、式~\eqref{eq:noise-amplification} における決定論的な区別と定性的に整合する。
+同定理が用いるのは最大辺誤差である一方、\eqref{eq:multiplicative-noise} では独立な
+対数正規誤差（log-normal errors）を生成する。小さな $\sigma$ に対し、有限な問合せ辺集合
+における相対誤差の最大絶対値は、典型的には $\sigma\sqrt{\log|E_{\mathrm q}|}$ オーダーである。
+したがって、このスイープが検証するのは予測された増幅パターンであり、定理の定数ではない。
+$\varepsilon\asymp\eta h$ なら、角欠損誤差は $O(\eta)$ だが、頂点面積で除すことにより
+曲率密度誤差は $O(\eta/h^2)$ となる。したがって、固定相対ノイズのもとでの細分化は、
+大域距離の復元を改善する一方、未平滑な点ごとの微分量を悪化させる。細かいスケールで
+整合的な曲率を得るには、ノイズを小さくするか、正則化された推定器が必要である。
+特に、正の角欠損条件~\eqref{eq:convexity-noise} は、ノイズを加えた最細メッシュの試行では
+成立しない。そこで良好な球面出力が得られるのは、明示した定曲率射影によるものであり、
+凸実現定理を適用した結果ではない。
 
-\section{結論}
+\subsection{標準球面を越える同一骨格復元}
+\label{sec:convex-realization-experiment}
 
-圧縮デコーダーの容量は、保存すべき挙動で定義すべきである。Gaussianデコーダーでは
-最適輸送によりその挙動が引き戻し計量となる。本研究は値と微分の同時近似から十分な
-容量則を導き、計量歪みをtriplet精度へ変換し、固定trunkのrank制約付き一次蒸留を
-共分散白色化SVDで解いた。厳密画像タスクでは、出力・距離とも5\%という条件のもとで
-rank 23以下が不可能、rank 24が実行可能で、headは $12.61\times$ 小さくなる。
-非定数分散のニューラルstress testとMNIST/FashionMNIST標本frontierは、同じ基準が
-学習と配備を導けることを示す。入力--出力一覧と直線--内在経路decode列は、保存した
-幾何が何をするかを可視化する。これは全ニューラルnetwork中の普遍的最小ではないが、
-「どこまで小さくできるか」を数学的制約と監査可能な精度境界へ変える枠組みである。
+球面に対する一連の実験は視覚的に単純だが、命題~\ref{prop:rigidity} の一般的な実現過程を
+実行してはいない。そこで、小規模かつ独立した距離幾何（distance geometry）実験を追加する。
+推定器が受け取るのは
+$(|V|,F,E,\{\widehat\ell_e\}_{e\in E})$ だけである。球面多次元尺度構成法
+（spherical MDS）から凸な初期分枝を得た後、継続法（continuation）により
+\begin{equation}
+ \sum_{(i,j)\in E}
+ \left(
+ \frac{\norm{X_i-X_j}-\widehat\ell_{ij}}
+ {\overline\ell}
+ \right)^2 .
+ \label{eq:edge-realization-objective}
+\end{equation}
+を最小化する。ここで $\overline\ell$ は、観測された辺長の平均である。
+観測された三辺長から一つの非退化なアンカー三角形を配置し、ユークリッド
+運動のゲージ自由度を除く。局所凸性ペナルティを用いるのは41段階の継続過程だけである。
+最後の最小二乗による精密化には、117個の自由座標と117個の非アンカー辺残差があり、半径、
+行の正規化、球面損失、正解座標はいずれも含まれない。
 
-\section*{再現性}
+球面上の42標本点の凸包と、それらを軸長 $(1.20,1.00,0.80)$ で線形変換した点の凸包を試す。
+後者は、非定数ガウス曲率をもつ滑らかな狭義凸曲面を標本化した、楕円体状凸多面体である。
+隠れたガウス構成では、引き続き
+$W_2(\mu_x,\mu_y)=\norm{x-y}$ が成り立つ。厳密弦長に対する位置合わせ後RMSEは、球面で
+$3.25\times10^{-15}$、楕円体で $2.17\times10^{-15}$ である。一方、楕円体に対する
+球面初期値のRMSEは $0.1270$ である。3乱数種の平均RMSEは、辺ノイズ0.5\%で
+$0.00601$ と $0.00720$、1\%で $0.01094$ と $0.01463$ である。14個の出力はすべて、
+凸包に42頂点をすべて保持し、面数もちょうど指定した80となる。
 
-固定seedのscript、CSV、表、図、英日両版は次で再生成できる。
-\begin{verbatim}
-make paper-all
-\end{verbatim}
-dataset downloadとMNIST/FashionMNISTの学習済み教師checkpointはlocal cacheに保存し、
-version管理しない。
+\input{experiments/convex_edge_realization_prototype_table_ja.tex}
+
+ノイズを含む場合に辺長へ厳密に適合させることは、ノイズ除去ではない。球面三角形分割では
+$|E|=3|V|-6$ であり、局所剛性により、十分小さく摂動された長さベクトルは、一般には異なる
+近傍の凸多面体へ写される。観測された座標誤差は、命題~\ref{prop:rigidity} の安定性量である。
+報告したRMSEは、その $|V|^{-1/2}$ 正規化である。正解での剛性行列は階数
+$120=3|V|-6$ をもち、$s_X$ は球面で $0.352$、楕円体で $0.287$ である。12個の
+ノイズ付き試行はすべて局所スケール $2\norm{\widehat\ell-\ell}_2/s_X$ を下回り、
+誤差と上界の比の最大値は $0.233$ だった。このプロトタイプは対象とする局所分枝を
+数値的に検証するが、継続法の大域収束を証明するものではない。
+
+\section{適用範囲と結論}
+\label{sec:limitations}
+
+制御実験から、正確かつ視覚的に検証可能な次の結論が得られる。局所Wasserstein弦長が
+隠れた標準球面計量（round metric）を符号化する確率的デコーダーでは、疎なクエリから、
+デコーダーの微分を用いずに大域移動時間と球面を復元できる。理論はこれとは別に、一般の
+同一骨格狭義凸
+多面体について辺長から何が決まるかを述べ、式~\eqref{eq:end-to-end-sphere} により
+球面に対するエンドツーエンド（end-to-end）誤差分解を与える。この分解が対象とするのは
+近傍の同一骨格凸実現であり、実装したグラフ最短路・球面尺度構成パイプラインそのものの
+保証ではない。
+
+いくつかの仮定は明示的に残る。位相と三角形分割は入力として与える。球面に対する一連の
+実験は、定曲率、既知の対蹠点被覆、および厳密な $W_2$ をもつガウスベンチマークを
+仮定し、その全点対数値計算段階は $O(|V|^2)$ のメモリを用いる。辺長だけを用いる実験は
+42頂点かつ各ノイズ条件3乱数種に限られ、継続法が正しい凸分枝にとどまることを必要とし、
+大域収束を保証しない。
+いずれの実験もMNISTの真の幾何を推定せず、曲率を平滑化せず、ミニマックス（minimax）
+統計率も与えない。学習デコーダーではさらに、有限標本誤差と数値OT誤差が生じる。
+これらは理論の辺誤差項に入るが、本実験では評価しない。
+
+したがって、ヤコビ行列に基づく潜在幾何からの概念的変更は単純である。幾何を、観測可能な
+局所分布距離からの逆問題として扱える。制御された場合、答えは単なる曲率ヒートマップでは
+ない。Wasserstein観測誤差と有限メッシュ近似誤差に分解可能な誤差をもつ、復元曲面そのもので
+ある。

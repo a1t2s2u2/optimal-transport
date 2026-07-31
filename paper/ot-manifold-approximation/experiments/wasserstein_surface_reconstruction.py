@@ -2,23 +2,20 @@
 # /// script
 # requires-python = ">=3.11,<3.14"
 # dependencies = [
-#   "matplotlib>=3.9",
-#   "numpy>=2.0",
-#   "scipy>=1.14",
+#   "matplotlib==3.11.1",
+#   "numpy==2.5.1",
+#   "scipy==1.18.0",
 # ]
 # ///
 """Recover a sphere from connectivity and local Wasserstein travel times.
 
 The controlled observation at a point ``x=(x1,x2,x3)`` on the unit sphere is
-the diagonal Gaussian
-
-    mean(x) = (x1, x2, 0),
-    std(x)  = (c, c, c + x3).
-
-Consequently, the closed-form 2-Wasserstein distance between two observations
-is exactly their three-dimensional chord distance, although the Gaussian mean
-alone is only a doubly covered disk.  Samples are smoothly redistributed on
-the sphere, so the uniform icosphere determined by topology is not the answer.
+a full-rank two-dimensional Gaussian.  Its mean ``(x1,x2)`` is only a doubly
+covered disk, while its 2-by-2 covariance follows an explicit noncommuting
+Bures--Wasserstein geodesic parameterized by ``x3``.  Consequently, the
+general Gaussian 2-Wasserstein formula gives exactly the three-dimensional
+chord distance.  Samples are smoothly redistributed on the sphere, so the
+uniform icosphere determined by topology is not the answer.
 The proposed estimator is deliberately given *only* the triangulation and
 noisy W2 chords for vertex pairs within three topology hops.  These O(n) local
 queries remain sparse among the O(n^2) possible pairs.  Ground-truth
@@ -63,6 +60,7 @@ from matplotlib import font_manager
 from matplotlib.collections import LineCollection
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from scipy import linalg
+from scipy.optimize import minimize_scalar
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import dijkstra
 from scipy.spatial import cKDTree
@@ -71,7 +69,8 @@ plt.switch_backend("Agg")
 
 HERE = Path(__file__).resolve().parent
 MASTER_SEED = 20260731
-GAUSSIAN_STD_OFFSET = 1.25
+GAUSSIAN_HEIGHT_RADIUS = 1.0
+GAUSSIAN_GEODESIC_COUPLING = 0.5
 LATITUDE_WARP_FACTOR = 1.35
 LONGITUDE_TWIST_RADIANS = 0.24
 LOCAL_QUERY_HOPS = 3
@@ -351,37 +350,149 @@ def icosphere(subdivisions: int) -> Mesh:
     )
 
 
-def diagonal_gaussian_observations(
-    sphere: np.ndarray,
-    std_offset: float = GAUSSIAN_STD_OFFSET,
+def noncommuting_gaussian_observations(
+    surface: np.ndarray,
+    height_radius: float = GAUSSIAN_HEIGHT_RADIUS,
+    coupling: float = GAUSSIAN_GEODESIC_COUPLING,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return the intentionally flattened means and height-carrying stds."""
+    """Return disk means and full-rank covariances carrying the third coordinate.
 
-    if std_offset <= 1.0:
-        raise ValueError("std_offset must exceed one so every std is positive")
-    mean = np.column_stack([sphere[:, 0], sphere[:, 1], np.zeros(len(sphere))])
-    standard_deviation = np.column_stack(
-        [
-            np.full(len(sphere), std_offset),
-            np.full(len(sphere), std_offset),
-            std_offset + sphere[:, 2],
-        ]
+    For ``D=diag(1,2)``, ``H=coupling * [[0,1],[1,0]]``, and
+    ``A_t=I+tH``, the covariance path ``scale * A_t D A_t`` is a
+    constant-speed Bures geodesic.  The chosen scale makes covariance-sector
+    W2 distance equal the difference of the input third coordinates.
+    """
+
+    if surface.ndim != 2 or surface.shape[1] < 3:
+        raise ValueError("surface coordinates must have shape (n, d) with d >= 3")
+    if not np.isfinite(surface).all():
+        raise ValueError("surface coordinates must be finite")
+    if height_radius <= 0.0:
+        raise ValueError("height_radius must be positive")
+    if not 0.0 < coupling < 1.0:
+        raise ValueError("coupling must lie strictly between zero and one")
+    heights = surface[:, 2]
+    if np.max(np.abs(heights), initial=0.0) > height_radius + 64.0 * EPSILON:
+        raise ValueError("third coordinates must lie inside the height range")
+
+    times = (heights + height_radius) / (2.0 * height_radius)
+    base_covariance = np.diag(np.asarray([1.0, 2.0], dtype=np.float64))
+    generator = coupling * np.asarray([[0.0, 1.0], [1.0, 0.0]])
+    transports = np.eye(2)[None, :, :] + times[:, None, None] * generator
+    scale = 4.0 * height_radius**2 / (3.0 * coupling**2)
+    covariances = scale * (
+        transports @ base_covariance[None, :, :] @ transports.swapaxes(-1, -2)
     )
-    return mean, standard_deviation
+    means = surface[:, :2].copy()
+    return means, covariances
 
 
-def diagonal_gaussian_w2_edges(
+def gaussian_w2_edges(
     mean: np.ndarray,
-    standard_deviation: np.ndarray,
+    covariance: np.ndarray,
     pairs: np.ndarray,
 ) -> np.ndarray:
-    """Closed-form W2 lengths for diagonal Gaussians at queried pairs."""
+    """Evaluate the general 2-by-2 Gaussian Bures/W2 formula.
+
+    If ``C=L L^T`` and ``D=R R^T``, the Bures term is the orthogonal
+    Procrustes value ``min_Q ||L-RQ||_F``.  Computing the minimizing residual
+    directly is equivalent to the usual matrix-square-root formula and avoids
+    cancellation when the covariances are close.  No hidden chord coordinate
+    enters this evaluation.
+    """
+
+    if mean.ndim != 2 or mean.shape[1] != 2:
+        raise ValueError("the observation means must have shape (n, 2)")
+    if covariance.shape != (len(mean), 2, 2):
+        raise ValueError("the observation covariances must have shape (n, 2, 2)")
+    left = np.asarray(covariance[pairs[:, 0]], dtype=np.float64)
+    right = np.asarray(covariance[pairs[:, 1]], dtype=np.float64)
+    left = 0.5 * (left + left.swapaxes(-1, -2))
+    right = 0.5 * (right + right.swapaxes(-1, -2))
+    try:
+        left_factor = np.linalg.cholesky(left)
+        right_factor = np.linalg.cholesky(right)
+    except np.linalg.LinAlgError as error:
+        raise ValueError("observation covariance must be positive definite") from error
+    cross_factor = left_factor.swapaxes(-1, -2) @ right_factor
+    left_singular_vectors, _, right_singular_vectors_transpose = np.linalg.svd(
+        cross_factor
+    )
+    alignment = right_singular_vectors_transpose.swapaxes(
+        -1, -2
+    ) @ left_singular_vectors.swapaxes(-1, -2)
+    covariance_residual = left_factor - right_factor @ alignment
+    covariance_cost = np.square(covariance_residual).sum(axis=(1, 2))
+    mean_difference = mean[pairs[:, 0]] - mean[pairs[:, 1]]
+    squared_w2 = np.square(mean_difference).sum(axis=1) + covariance_cost
+    return np.sqrt(np.maximum(squared_w2, 0.0))
+
+
+def oracle_scaled_raw_parameter_distortion(
+    mean: np.ndarray,
+    covariance: np.ndarray,
+    pairs: np.ndarray,
+    target_distances: np.ndarray,
+) -> tuple[float, float]:
+    """Audit the best globally scaled raw covariance-parameter baseline.
+
+    The parameter distance is
+    ``sqrt(||delta mean||^2 + alpha^2 ||delta covariance||_F^2)``.  The oracle
+    chooses the nonnegative ``alpha^2`` that minimizes L2 error against the
+    target unsquared distances.
+    """
 
     mean_difference = mean[pairs[:, 0]] - mean[pairs[:, 1]]
-    std_difference = standard_deviation[pairs[:, 0]] - standard_deviation[pairs[:, 1]]
-    return np.sqrt(
-        np.square(mean_difference).sum(axis=1) + np.square(std_difference).sum(axis=1)
+    covariance_difference = covariance[pairs[:, 0]] - covariance[pairs[:, 1]]
+    mean_squared = np.square(mean_difference).sum(axis=1)
+    covariance_frobenius_squared = np.square(covariance_difference).sum(axis=(1, 2))
+    missing_squared = np.maximum(np.square(target_distances) - mean_squared, 0.0)
+    positive = covariance_frobenius_squared > EPSILON
+    if not np.any(positive):
+        return 0.0, math.inf
+    pointwise_scales = (
+        missing_squared[positive] / covariance_frobenius_squared[positive]
     )
+    upper_bound = 1.01 * float(np.max(pointwise_scales, initial=0.0))
+    if upper_bound <= EPSILON:
+        scale_squared = 0.0
+    else:
+        result = minimize_scalar(
+            lambda candidate: float(
+                np.square(
+                    np.sqrt(mean_squared + candidate * covariance_frobenius_squared)
+                    - target_distances
+                ).sum()
+            ),
+            bounds=(0.0, upper_bound),
+            method="bounded",
+            options={"xatol": 1.0e-15},
+        )
+        if not result.success:
+            raise RuntimeError("oracle raw-parameter scale optimization failed")
+        scale_squared = float(result.x)
+    parameter_distances = np.sqrt(
+        mean_squared + scale_squared * covariance_frobenius_squared
+    )
+    relative_distortion = float(
+        np.linalg.norm(parameter_distances - target_distances)
+        / np.linalg.norm(target_distances)
+    )
+    return math.sqrt(scale_squared), relative_distortion
+
+
+def noncommuting_pair_fraction(covariance: np.ndarray, pairs: np.ndarray) -> float:
+    """Return the fraction of queried covariance pairs with nonzero commutator."""
+
+    left = covariance[pairs[:, 0]]
+    right = covariance[pairs[:, 1]]
+    commutators = left @ right - right @ left
+    commutator_norm = np.linalg.norm(commutators, axis=(1, 2))
+    relative_scale = np.linalg.norm(left, axis=(1, 2)) * np.linalg.norm(
+        right, axis=(1, 2)
+    )
+    threshold = 1024.0 * np.finfo(np.float64).eps * np.maximum(1.0, relative_scale)
+    return float(np.mean(commutator_norm > threshold))
 
 
 def noisy_lengths(
@@ -389,7 +500,7 @@ def noisy_lengths(
     relative_noise: float,
     seed: int,
 ) -> np.ndarray:
-    """Apply positive, approximately mean-one multiplicative observation noise."""
+    """Apply positive, mean-one multiplicative observation noise."""
 
     if relative_noise < 0.0:
         raise ValueError("relative_noise must be nonnegative")
@@ -400,9 +511,6 @@ def noisy_lengths(
         relative_noise * rng.standard_normal(len(exact_lengths))
         - 0.5 * relative_noise**2
     )
-    # This clipping is inactive at the paper's noise levels with overwhelming
-    # probability, but protects graph connectivity from numerical outliers.
-    perturbation = np.clip(perturbation, 0.5, 1.5)
     return exact_lengths * perturbation
 
 
@@ -724,17 +832,20 @@ def run_trial(
 ) -> Trial:
     """Generate observations, infer from local W2, then evaluate."""
 
-    mean, standard_deviation = diagonal_gaussian_observations(mesh.vertices)
-    exact_w2 = diagonal_gaussian_w2_edges(mean, standard_deviation, mesh.query_pairs)
+    mean, covariance = noncommuting_gaussian_observations(mesh.vertices)
+    exact_w2 = gaussian_w2_edges(mean, covariance, mesh.query_pairs)
     exact_chords = np.linalg.norm(
         mesh.vertices[mesh.query_pairs[:, 0]] - mesh.vertices[mesh.query_pairs[:, 1]],
         axis=1,
     )
     w2_identity_error = float(np.max(np.abs(exact_w2 - exact_chords)))
-    if w2_identity_error > 5.0e-13:
+    if w2_identity_error > 2.0e-12:
         raise RuntimeError(
             f"Gaussian W2/chord identity failed: {w2_identity_error:.3e}"
         )
+    parameter_scale, parameter_distortion = oracle_scaled_raw_parameter_distortion(
+        mean, covariance, mesh.query_pairs, exact_chords
+    )
 
     # This noiseless, same-triangulation quantity is an evaluation target only.
     # It never enters infer_from_local_lengths or the reconstructed coordinates.
@@ -797,6 +908,14 @@ def run_trial(
         "relative_edge_noise": float(noise_level),
         "seed": float(seed_index),
         "w2_chord_max_abs_error": w2_identity_error,
+        "gaussian_covariance_minimum_eigenvalue": float(
+            np.linalg.eigvalsh(covariance).min()
+        ),
+        "noncommuting_covariance_query_fraction": noncommuting_pair_fraction(
+            covariance, mesh.query_pairs
+        ),
+        "oracle_covariance_parameter_scale": parameter_scale,
+        "oracle_scaled_raw_parameter_distance_relative_rmse": parameter_distortion,
         "query_chord_relative_rmse": float(
             np.linalg.norm(measured_query_w2 - exact_w2) / np.linalg.norm(exact_w2)
         ),
@@ -933,8 +1052,8 @@ def write_latex_table(
     selected = [row for row in summary if int(row["subdivision"]) == finest_subdivision]
     if japanese:
         header = (
-            "ノイズ & 測地誤差 & 曲率RMSE & 非正欠損率 "
-            "& 3D復元 & 位相のみ & 通常MDS & 平均のみ \\\\"
+            "ノイズ & 測地誤差 & 曲率RMSE（PL） & 非正欠損率 "
+            "& 球面3D RMSE & 位相のみ & 通常MDS & 平均のみ \\\\"
         )
         caption = (
             "疎な3-hop局所Wasserstein弦長と定曲率 $S^2$ の弦--弧・直径補正"
@@ -943,7 +1062,8 @@ def write_latex_table(
         label = "tab:wasserstein-surface-reconstruction-ja"
     else:
         header = (
-            "Noise & Geodesic error & Curvature RMSE & Nonpositive defects & Ours "
+            "Noise & Geodesic error & Curvature RMSE (vs PL) "
+            "& Nonpositive defects & Spherical 3D RMSE "
             "& Topology only & Euclidean MDS & Mean only \\\\"
         )
         caption = (
@@ -954,7 +1074,22 @@ def write_latex_table(
         label = "tab:wasserstein-surface-reconstruction"
 
     def value(row: dict[str, float], key: str) -> str:
-        return f"{row[key + '_mean']:.3f} $\\pm$ {row[key + '_std']:.3f}"
+        precision = (
+            4
+            if key
+            in {
+                "graph_geodesic_relative_error",
+                "spherical_reconstruction_rmse",
+                "topology_uniform_rmse",
+                "ordinary_mds_rmse",
+                "mean_disk_rmse",
+            }
+            else 3
+        )
+        return (
+            f"{row[key + '_mean']:.{precision}f} "
+            f"$\\pm$ {row[key + '_std']:.{precision}f}"
+        )
 
     lines = [
         "\\begin{table*}[t]",
@@ -962,6 +1097,7 @@ def write_latex_table(
         "\\small",
         f"\\caption{{{caption}}}",
         f"\\label{{{label}}}",
+        "\\resizebox{0.98\\textwidth}{!}{%",
         "\\begin{tabular}{@{}lccccccc@{}}",
         "\\toprule",
         header,
@@ -983,7 +1119,7 @@ def write_latex_table(
             )
             + " \\\\"
         )
-    lines.extend(["\\bottomrule", "\\end{tabular}", "\\end{table*}"])
+    lines.extend(["\\bottomrule", "\\end{tabular}", "}%", "\\end{table*}"])
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -1041,7 +1177,11 @@ def flat_map_segments(mesh: Mesh) -> tuple[np.ndarray, np.ndarray]:
 
 def save_figure(figure: plt.Figure, output_stem: Path) -> None:
     figure.savefig(output_stem.with_suffix(".png"), dpi=220, bbox_inches="tight")
-    figure.savefig(output_stem.with_suffix(".pdf"), bbox_inches="tight")
+    figure.savefig(
+        output_stem.with_suffix(".pdf"),
+        bbox_inches="tight",
+        metadata={"CreationDate": None, "ModDate": None},
+    )
     plt.close(figure)
 
 
@@ -1221,7 +1361,7 @@ def plot_curvature(
         )
         set_equal_3d_axes(surface_axis)
         surface_axis.view_init(elev=23, azim=-55)
-        surface_axis.set_title("(a) " + labels["map"])
+        surface_axis.set_title("(d) " + labels["map"])
         colorbar = figure.colorbar(collection, ax=surface_axis, shrink=0.68, pad=0.02)
         colorbar.set_label(labels["curvature"])
 
@@ -1241,7 +1381,7 @@ def plot_curvature(
         )
         histogram_axis.set_xlabel(labels["curvature"])
         histogram_axis.set_ylabel(labels["density"])
-        histogram_axis.set_title("(b) " + labels["hist"])
+        histogram_axis.set_title("(e) " + labels["hist"])
         histogram_axis.legend(frameon=False)
         histogram_axis.grid(alpha=0.2)
         histogram_axis.text(
@@ -1571,12 +1711,14 @@ def main() -> None:
     showcase_mesh: Mesh | None = None
     desired_noise = min(noise_levels, key=lambda value: abs(value - SHOWCASE_NOISE))
 
-    total_trials = len(subdivisions) * len(noise_levels) * len(seeds)
+    trials_per_mesh = sum(1 if noise == 0.0 else len(seeds) for noise in noise_levels)
+    total_trials = len(subdivisions) * trials_per_mesh
     completed = 0
     for subdivision in subdivisions:
         mesh = meshes[subdivision]
         for noise in noise_levels:
-            for seed in seeds:
+            seed_indices = (seeds[0],) if noise == 0.0 else seeds
+            for seed in seed_indices:
                 trial = run_trial(mesh, subdivision, noise, seed)
                 rows.append(trial.metrics)
                 completed += 1

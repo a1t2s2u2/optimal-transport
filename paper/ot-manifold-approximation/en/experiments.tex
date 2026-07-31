@@ -1,373 +1,351 @@
-\section{Experiments}
+\section{A Visible Inverse Problem}
 \label{sec:experiments}
 
-Every experiment asks the same operational question: does a student satisfy a
-threshold fixed before its capacity is inspected?  The three settings have
-different roles.  The image torus has a mathematical ground truth and proves a
-minimum rank; the warped Gaussian torus tests neural optimization with
-nonconstant variances; MNIST and FashionMNIST test compression, decoded
-outputs, and numerical intrinsic paths for learned decoders.
+The theory distinguishes two reconstruction questions.  Exact mesh-edge
+lengths identify a same-skeleton convex polyhedron under
+Definition~\ref{def:same-skeleton-model}; this is the general finite inverse
+problem.  The experiment asks a narrower question whose answer can be seen:
+if the hidden smooth surface is known to be a round sphere, can sparse local
+Wasserstein observations unfold a collapsed planar representation back into
+that sphere?  The round-sphere assumption is part of the estimator, not a
+conclusion inferred from arbitrary data.
 
-\subsection{An Exact Shared-Trunk Minimum}
-\label{sec:controlled-experiment}
+\subsection{A constant-curvature reconstruction algorithm}
+\label{sec:spherical-estimator}
 
-\paragraph{Setup.}
-We instantiate Section~\ref{sec:exact-task} with $T=128$, $a_j=1/j$, and $Q$
-equal to the first 512 two-dimensional DCT atoms in zig-zag order.  The dense
-$784\times512$ teacher head, including its bias, uses $402{,}192$ stored
-scalars.  A factorized rank-$r$ head uses $r(784+512)+784$.  This count treats
-the head as a dense deployed matrix; the analytic DCT construction itself is
-of course more compact.
+The estimator receives a triangular complex $\mathcal T$ and measured
+Wasserstein chords $\widehat c_{ij}$ for a sparse local query set
+$E_{\mathrm q}\supseteq E$.  It receives neither the hidden 3D vertices nor the
+Gaussian parameters used to create the benchmark.
 
-We predeclare two simultaneous requirements,
+\paragraph{Curvature and scale.}
+The subset $\{\widehat c_e:e\in E\}$ makes every face a Euclidean triangle.
+Equations~\eqref{eq:angle-defect}--\eqref{eq:discrete-density} then give raw
+angle-defect curvature and total PL area $\widehat A$.  Sphere topology gives
+$\sum_i\widehat\kappa_i=4\pi$ exactly.  Under the additional constant-curvature
+model $K=1/R^2$, Gauss--Bonnet therefore gives the scale estimate
 \begin{equation}
- E_0\le\eta=5\%,
- \qquad
- D_{\rm pair}\le\tau=5\%.
- \label{eq:exact-requirements}
+ \widehat R=\sqrt{\frac{\widehat A}{4\pi}}.
+ \label{eq:learned-radius}
 \end{equation}
-The exact identity $D_{\rm loc}=D_{\rm pair}$ makes the second condition
-computable without a path solver.  Displayed images receive the same
-contrast multiplier solely for visualization; it is not part of $F$ or the
-reported errors.
+With exact lengths at finite resolution, this estimates the radius of the
+inscribed PL surface and is slightly smaller than the smooth radius; noisy
+lengths do not preserve that one-sided statement.
 
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.98\textwidth]{experiments/lowrank_torus.png}
-  \caption{Exact output--geometry frontier.  Both curves are analytic.  Rank
-  20 violates the predeclared 5\% output and distance requirements; rank 24
-  satisfies both.  Raw images are visually similar, so the insets show
-  absolute residuals on a common scale.}
-  \label{fig:exact-frontier}
-\end{figure*}
-
-\begin{table}[t]
-  \centering
-  \small
-  \caption{Exact simultaneous thresholds.  The two tolerances are equal in
-  each row; compression is the dense-teacher to factorized-student head
-  storage ratio.}
-  \label{tab:exact-thresholds}
-  \resizebox{\columnwidth}{!}{\input{experiments/lowrank_torus_table.tex}}
-\end{table}
-
-\paragraph{A sharp five-percent result.}
-For five retained frequency blocks (rank 20), Proposition
-\ref{prop:exact-rank-law} gives
+\paragraph{Local chords to global travel times.}
+For every queried pair, we apply the spherical chord--arc conversion
 \begin{equation}
- E_{0,5}=6.2788\%,
- \qquad
- D_5=5.4485\%.
+ \widehat a_{ij}
+ =2\widehat R\arcsin\!\left(
+ \min\!\left\{1,\frac{\widehat c_{ij}}{2\widehat R}\right\}\right).
+ \label{eq:experimental-chord-arc}
 \end{equation}
-It fails both requirements.  Six blocks (rank 24) give
+Shortest paths in the sparse graph $(V,E_{\mathrm q},\widehat a)$ produce an
+all-pairs matrix $\widetilde D$.  The benchmark sampling includes antipodal
+pairs, so we make one explicit diameter calibration,
 \begin{equation}
- E_{0,6}=4.8980\%,
- \qquad
- D_6=4.5555\%,
+ \widehat D
+ =\frac{\pi\widehat R}{\max_{i,j}\widetilde D_{ij}}\widetilde D.
+ \label{eq:diameter-calibration}
 \end{equation}
-so the prefix head is feasible.  More importantly, this is not merely the
-first point on a chosen truncation curve.  Equation
-\eqref{eq:output-rank-lower-bound} gives every shared-trunk rank-23 head the
-root-mean-square output lower bound
+This normalizes the graph diameter; direction-dependent path distortion
+remains and is measured in the reported geodesic error.  The calibration is a
+strong round-sphere and coverage assumption; an application without known
+antipodal coverage may not use this step.
+
+\paragraph{The reconstructed surface.}
+A radius-$R$ sphere has Gram matrix
+$G_{ij}=R^2\cos(d_{ij}/R)$.  We form
 \begin{equation}
- \inf_{\rank(U)\le23}
- \left(\E_z\norm{(U-W)h(z)}^2\right)^{1/2}
- =5.2772\%>\eta.
+ \widehat G_{ij}
+ =\widehat R^2\cos(\widehat D_{ij}/\widehat R),
+ \label{eq:spherical-gram}
 \end{equation}
-Because the uniform error $E_0$ is at least the RMS error, no rank at most 23
-can satisfy \eqref{eq:exact-requirements}.  Rank 24 is therefore the true
-minimum over all linear heads sharing this trunk and bias.  It uses $31{,}888$
-head scalars, a $12.61\times$ reduction.
+retain its three leading positive eigendirections, and project each resulting
+row to radius $\widehat R$.  This is spherical classical scaling.  It makes
+the experimental output easy to interpret, but it always returns a sphere.
+It is therefore an illustration of constant-curvature metric recovery, not a
+numerical solver for the general convex realization in
+Theorem~\ref{thm:convex-identification}.  Proposition~\ref{prop:spherical-spectral-stability}
+shows that this final spectral step is locally stable once $\widehat D$ and
+$\widehat R$ are close; its distance-error term also keeps the preceding
+graph and diameter approximations visible.
 
-Table~\ref{tab:exact-thresholds} shows the joint rate--distortion tradeoff.  At
-10\%, output fidelity raises the minimum from the geometry-only rank 12 to
-rank 16.  At 1\%, rank 100 is required and compression falls to
-$3.08\times$.  This illustrates why output and geometry must both appear in
-the definition: geometry alone permits output-different isometries.
+The full map is
+\begin{equation}
+\begin{aligned}
+ &(\mathcal T,\text{local }W_2\text{ chords})\\
+ &\quad\longrightarrow
+ (\widehat\kappa,\widehat A,\widehat R)
+ \longrightarrow\widehat D
+ \longrightarrow\widehat X\subset\mathbb R^3 .
+\end{aligned}
+\label{eq:experimental-pipeline}
+\end{equation}
+Every operation before evaluation is a function of the stated input.
 
-The rank-24 result uses the exact Fourier Gram identity, not the more general
-Jacobian-error bound in Theorem~\ref{thm:stability}; the latter is a convenient
-sufficient condition and can be conservative.  The controlled task therefore
-verifies the definition and a sharp structured result, while the next task
-tests the generic certificate on learned neural students.
+\subsection{Controlled data and negative controls}
+\label{sec:controlled-data}
 
-\subsection{Neural Stress Test with Nonconstant Variance}
-\label{sec:neural-stress}
+\paragraph{A disk that hides a sphere.}
+We instantiate Proposition~\ref{prop:hidden-sphere} on the unit sphere with
+$k=1/2$.  The Gaussian means $(x_1,x_2)$ occupy a doubly covered disk, whereas
+the full-rank covariance path retains $x_3$ and is noncommuting between
+different heights.  The exact identity
+\begin{equation}
+ W_2(\mu_x,\mu_y)=\norm{x-y}
+ \label{eq:experiment-w2-chord}
+\end{equation}
+makes each observation a 3D chord, while the estimator receives only scalar
+pairwise distances.  This
+analytic decoder is intentional: it isolates the inverse-geometry error from
+neural optimization and Monte Carlo OT error.
 
-The latent region is the two-torus and
+Uniform icosphere vertices would leak much of the answer through connectivity.
+We therefore move them by the fixed spherical diffeomorphism
 \begin{align}
- e(\phi)&=(\cos\phi_1,\sin\phi_1,
-             \cos\phi_2,\sin\phi_2),\notag\\
- \phi(z)&=\bigl(z_1+0.05\sin(4z_2),
-                 z_2+0.05\sin(4z_1)\bigr),\notag\\
- F_T(z)&=\left(0.9e(\phi(z)),
- 0.75+\sqrt{1-0.9^2}\,e(\phi(z))\right).
- \label{eq:warped-teacher}
+ \phi'&=\phi+0.175\sin(2\phi),\notag\\
+ \lambda'&=\lambda+0.24\sin^2(\phi'),
+ \label{eq:sampling-warp}
 \end{align}
-The last four channels are strictly positive standard deviations, so this
-experiment uses the full diagonal-Gaussian $W_2$ formula rather than its
-fixed-covariance special case.  The warp has analytic conditioning bounds
-$s=0.8$ and $M_1=1.2$.
+which preserves the round surface and antipodal pairing but creates visibly
+nonuniform vertex locations.  We use subdivision levels $0$ through $3$,
+giving $12,42,162,$ and $642$ vertices.
 
-Students are two-hidden-layer Tanh networks with seven widths, doubling from
-4 to 256, and periodic inputs
-$(\cos z_1,\sin z_1,\cos z_2,\sin z_2)$.  We train three deterministic seeds
-for 2,500 steps.  The baseline minimizes output MSE; the first-order objective
-adds five times the mean squared Jacobian error.  We predeclare output
-RMSE at most 2\% and distance distortion at most 5\%.
+The local query graph contains every pair within three mesh hops.  At the
+finest level this is $11{,}370$ of $205{,}761$ possible pairs, or $5.53\%$.
+Because mesh degree and hop radius are fixed, query count is $O(|V|)$ under
+refinement.  The same noisy measurement is reused when a queried pair is a
+triangle edge; curvature never receives an independent oracle edge.
 
-Evaluation uses a fixed $48\times48$ torus grid.  We insert its maximum
-Jacobian error into Theorem~\ref{thm:stability}, and compare the resulting
-plug-in upper bound with graph distances and 3,072 triplets.  This is a
-finite-grid diagnostic: a formal continuum certificate would additionally
-require a validated covering/Lipschitz remainder.
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.94\textwidth]{experiments/distillation_tradeoff.png}
-  \caption{Neural capacity sweep (three seeds; curves show their means).
-  Solid lines are observed values and dashed lines are finite-grid theorem
-  bounds.  On the frequency-4 warped teacher (bottom row), first-order
-  distillation crosses the 5\% distance boundary, whereas output-only training
-  does not within the tested range.  The plain torus (top row) is included as
-  a lower-frequency reference.}
-  \label{fig:neural-sweep}
-\end{figure*}
-
-On the warped teacher, the largest output-only student has $69{,}128$
-parameters and meets the 2\% output requirement (1.308\% RMSE), but its
-plug-in distance bound is 61.62\%, its observed maximum pair distortion is
-15.41\%, and its triplet agreement is 95.27\%.  It therefore fails for a
-specifically geometric reason.  Output--Jacobian training passes for all
-three seeds at width 128 ($18{,}184$ parameters): output RMSE is 0.083\%,
-$\widehat\varepsilon_1=0.0210$, the theorem bound is 4.06\%, observed maximum
-pair distortion is 2.72\%, and triplet agreement is 99.12\%.  Across all 84
-runs, observed local metric distortion never exceeds the corresponding
-plug-in $\delta$.  These results do not prove an optimizer-independent lower
-bound; they show that the quantity used by the theorem is learnable and that
-output fitting alone need not learn it.
-
-\subsection{Real-Data VAE Head Compression}
-\label{sec:realdata}
-
-\paragraph{Setup.}
-We train separate two-dimensional Gaussian VAEs \cite{kingma2014} on seeded
-subsets of 30,000 MNIST \cite{lecun1998} and FashionMNIST \cite{xiao2017}
-training images for 12 epochs.  Both use the architecture in
-Figure~\ref{fig:architecture}: a two-layer width-64 Tanh decoder trunk
-$h:\R^2\to\R^{64}$ and a $784\times64$ affine mean head with fixed
-observation covariance.  We freeze encoder, trunk, and bias and replace only
-$W$.  This is decoder-head compression, not whole-VAE compression.
-
-We compare ordinary SVD ($C=I$), value-weighted SVD
-($C=\E[hh^{\trans}]+\rho I$), and value--Jacobian SVD using
-\eqref{eq:jet-covariance}.  For each dataset, $C$ is fitted on 4,096 training
-posterior means.  The Jacobian covariance is assigned four times the trace of
-the value covariance, fixed before test-rank evaluation.
-
-All 64 ranks are evaluated on 4,000 official-test posterior means.  We report
-$\widehat D_{\rm loc}$, the maximum generalized-eigenvalue length error on a
-fixed 1,536-point subset, and 6,000 local teacher-$W_2$ chord triplets.  Rank
-selection and reporting use this same finite subset.  The crossings are
-therefore sampled thresholds, not held-out continuum certificates.
-
-\begin{table*}[t]
-  \centering
-  \small
-  \caption{Sampled 5\% local-geometry crossings.  ``Triplet'' is local
-  teacher-$W_2$ chord-order agreement, not class-label accuracy or intrinsic
-  geodesic accuracy.  A factorized head larger than the dense head falls back
-  to dense storage, hence $1.00\times$.}
-  \label{tab:realdata-crossings}
-  \resizebox{0.98\textwidth}{!}{\input{experiments/realdata_low_rank_table.tex}}
-\end{table*}
-
-On MNIST, ordinary SVD first passes at rank 60
-($4.944\%$; rank 59 gives $6.794\%$), while both covariance-aware methods pass
-at rank 12 ($4.196\%$ and $4.173\%$).  Rank 12 reduces the head from 50,960 to
-10,960 parameters ($4.65\times$) and the full decoder from 55,312 to 15,312
-($3.61\times$).  FashionMNIST independently reproduces the separation:
-ordinary SVD first passes at rank 63, while both weighted methods pass at rank
-13.  The value--Jacobian student has $3.359\%$ distortion and reduces the head
-to 11,808 parameters ($4.32\times$), or the decoder to 16,160
-($3.42\times$).  Their local chord-triplet agreements are 99.95\% and 100.00\%.
-
-The Jacobian term does not reduce the crossing rank relative to value weighting
-on either dataset.  It gives slightly more margin at the crossing, but it does
-not dominate at every aggressive rank: the objectives allocate limited rank
-differently.  The robust real-data conclusion is therefore that calibration
-covariance produces the large rank reduction, while the Jacobian component
-targets geometry within that weighted family.
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.96\textwidth]{experiments/mnist_low_rank_images.png}
-  \vspace{1mm}
-  \includegraphics[width=0.99\textwidth]{experiments/fashion_mnist_low_rank_images.png}
-  \caption{Official-test inputs, frozen-teacher reconstructions, and
-  value--Jacobian students immediately below and above each sampled 5\%
-  threshold.  MNIST uses ranks 11/12 and FashionMNIST uses 12/13.  The adjacent
-  images can look nearly identical while lying on opposite sides of a
-  derivative-defined geometric criterion.}
-  \label{fig:realdata-images}
-\end{figure*}
-
-\subsection{Straight Lines versus Numerical Intrinsic Paths}
-\label{sec:geodesic-visualization}
-
-We next make the preserved geometry visible.  Endpoints are posterior means,
-and the path remains inside a prespecified evaluation rectangle: coordinate-
-wise 0.5--99.5\% quantiles of the fixed 3,000-image official-test posterior-
-mean pool, with a 3\% margin.  This rectangle is a numerical trust region, not
-the support of a Gaussian posterior.  Endpoint pairs use different labels,
-central 5--95\% codes, reconstruction errors below the 75th percentile, and
-moderate Mahalanobis separation.
-
-For 49 knots with fixed endpoints, we minimize the midpoint discretization of
-the teacher pullback energy,
+We multiply every exact chord by
 \begin{equation}
- \begin{aligned}
- E_K(c)&=(K-1)\sum_{k=0}^{K-2}
- \dot z_k^{\trans}G_T(\bar z_k)\dot z_k,\\
- \dot z_k&=z_{k+1}-z_k,
- &\bar z_k&=\frac{z_{k+1}+z_k}{2}.
- \end{aligned}
- \label{eq:discrete-geodesic-energy}
+ \exp(\sigma Z-\sigma^2/2),
+ \qquad Z\sim\mathcal N(0,1),
+ \label{eq:multiplicative-noise}
 \end{equation}
-Three initial paths are optimized for 700 deterministic Adam steps, and final
-length is recomputed separately by fine metric quadrature.  The displayed path
-is additionally resampled at equal teacher arc length.  We call the result a
-\emph{numerical geodesic candidate}: global optimality is not certified.  It
-is an intrinsic path constrained to the frozen decoder family, not an ambient
-Wasserstein displacement geodesic and not a path on the unknown true data
-manifold.
+for $\sigma\in\{0,0.005,0.01,0.02\}$.  The noiseless condition is run once;
+each noisy condition uses three deterministic seeds.  The exponential makes
+lengths positive and mean preserving.
 
-We evaluate 100 fixed, randomly sampled, endpoint-disjoint pairs per dataset.
-The diagnostic pair in each figure is selected using only the straight path's
-decoded-step nonuniformity and chord excess, before computing its candidate.
-Table~\ref{tab:geodesics} reports conditional percentile pair-bootstrap
-intervals over 2,000 resamples; they measure endpoint-pair variation for one
-frozen teacher, not teacher-training or population uncertainty.  Across the
-200 reported teacher candidates, the relative 8-versus-16 subdivision length
-gap is below $2\times10^{-6}$, and none touches the evaluation-box boundary.
-On a fourfold densification of every path, the sampled minimum eigenvalues of
-$G_T$ are 3.29 (MNIST) and 4.49 (FashionMNIST), while the largest sampled
-condition numbers are 6.30 and 7.14.  This finite check supports, but does not
-certify over the continuum, the Riemannian interpretation.
+\paragraph{Baselines.}
+All 3D errors use an orthogonal Procrustes alignment with translation but no
+rescaling.  Ground-truth coordinates enter only here.
+\begin{enumerate}
+ \item \emph{Topology only} aligns the original uniform icosphere to the warped
+ target.  It has exactly the right connectivity and sphere prior but receives
+ no measured length, directly testing topology leakage.
+ \item \emph{Euclidean MDS} applies ordinary three-dimensional classical MDS
+ to the same recovered global-distance matrix $\widehat D$.
+ \item \emph{Mean only} embeds the Gaussian means, the collapsed disk visible
+ to a deterministic decoder.
+\end{enumerate}
+
+\paragraph{Metrics.}
+We report relative Frobenius error of all-pairs great-circle distances,
+corresponding-vertex RMSE after alignment, symmetric Hausdorff distance, and
+area-weighted curvature RMSE.  Here aligned vertex RMSE is
+$|V|^{-1/2}\min_{Q,b}\norm{\widehat X-(XQ+\mathbf 1b^\trans)}_F$.
+For a queried pair set $\mathcal Q$, relative chord stress means
+$\norm{(\widehat c^{\mathrm{rec}}-\widehat c^{\mathrm{obs}})_{\mathcal Q}}_2/
+\norm{\widehat c^{\mathrm{obs}}_{\mathcal Q}}_2$.  The raw-parameter audit uses
+$d_\alpha(i,j)^2=\norm{m_i-m_j}^2+\alpha^2\norm{C_i-C_j}_F^2$, where the
+single $\alpha\ge0$ is chosen with ground truth to minimize relative distance
+RMSE; it is an oracle baseline, not an estimator input.
+Curvature is compared both with the noiseless angle-defect value on the same
+mesh and with smooth $K=1$.  We also report the fraction of nonpositive angle
+defects, because positivity is a theorem condition rather than a cosmetic
+diagnostic.
 
 \begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.96\textwidth]{experiments/mnist_geodesic_interpolation.png}
-  \vspace{2mm}
-  \includegraphics[width=0.96\textwidth]{experiments/fashion_mnist_geodesic_interpolation.png}
-  \caption{Input endpoints and decoded interpolation sequences.  The first
-  decoded row uses an affine latent clock; the second uses the identical
-  straight route at constant teacher arc length; the third changes the route
-  to the numerical teacher-geodesic candidate; the last decodes those same
-  latent frames with the passing compressed student.  Top panels show the
-  latent routes and exact fixed-covariance Gaussian $W_2$ chords between
-  displayed frames.  Clipping to $[0,1]$ is for display only.}
-  \label{fig:realdata-geodesics}
+ \centering
+ \includegraphics[width=0.99\textwidth]
+ {experiments/wasserstein_surface_reconstruction_pipeline.png}
+ \caption{Input and output at 642 vertices and 1\% local-length noise.
+ Panel (a) is a display of the warped map, not an estimator input.
+ The Gaussian mean in (b) loses north--south information.  From topology and
+ only 5.53\% of all pairwise $W_2$ chords, the constant-curvature estimator
+ returns (c).  Panel (d) uses the hidden vertices only to align and overlay the
+ answer.  The visual conclusion is exactly the flat-map analogy: local travel
+ times restore the missing spherical scale.}
+ \label{fig:wasserstein-surface-pipeline}
 \end{figure*}
 
-\begin{table*}[t]
-  \centering
-  \small
-  \caption{Numerical intrinsic-path results over fixed endpoint pairs.  Straight
-  excess is $L_T(c_{\rm line})/L_T(\widehat\gamma_T)-1$.  Student path error
-  measures curve-length error for the passing rank-12/rank-13 student along
-  the same teacher path.  Intervals are conditional percentile pair-bootstrap
-  intervals for one frozen teacher.  All bracketed values are percentages.}
-  \label{tab:geodesics}
-  \resizebox{0.94\textwidth}{!}{\input{experiments/realdata_geodesic_table.tex}}
-\end{table*}
+\subsection{Results}
+\label{sec:surface-results}
 
-The median straight-line excess is 0.60\% on MNIST and 0.75\% on
-FashionMNIST, with maxima 10.90\% and 4.63\%.  The passing students preserve
-curve length along the same teacher candidates with median errors only 0.11\%
-and 0.10\%
-(maxima 0.36\% and 0.22\%).  In the displayed FashionMNIST pair, the teacher
-straight route has length 15.027 and the candidate has length 14.524, a 3.47\%
-reduction.  Uniform latent time has adjacent-frame $W_2$ coefficient of
-variation 0.110; arc-length reparameterization reduces it to 0.005, and the
-numerical candidate has 0.007.  Thus the plot separates a speed effect from a
-genuine route change.  The student row uses exactly the same latent codes as
-the teacher row.  A student-optimized candidate is computed only for the
-displayed pair and reported as a candidate-length audit in the detailed CSV;
-it is not part of the 100-pair statistic.
+\paragraph{OT contains the missing coordinate.}
+Across every trial, the maximum discrepancy between the general Gaussian
+$W_2$ formula and the hidden 3D chord is at most $1.5\times10^{-15}$.  On the finest
+query graph, the minimum covariance eigenvalue is $1.754$ and $98.35\%$ of
+queried covariance pairs do not commute.  Even an oracle choice of one global
+scale on raw covariance Frobenius differences leaves relative parameter-
+distance RMSE $0.01245$, whereas the Wasserstein identity is at machine
+precision.  Mean-only RMSE is $0.6538$, so the flat disk cannot represent the
+target.  Figure~\ref{fig:wasserstein-surface-pipeline} shows that local
+Wasserstein lengths restore the missing dimension.
 
-\section{Discussion and Limitations}
+\paragraph{Recovery improves with resolution.}
+With exact observations, relative geodesic error decreases as
+\begin{equation}
+ 0.0985,\ 0.0392,\ 0.00915,\ 0.00261
+ \label{eq:observed-distance-sequence}
+\end{equation}
+over $12,42,162,642$ vertices.  Aligned 3D RMSE similarly decreases as
+\begin{equation}
+ 0.1365,\ 0.0400,\ 0.0105,\ 0.00287.
+ \label{eq:observed-shape-sequence}
+\end{equation}
+At the coarsest 12-vertex mesh, the PL radius underestimate makes the
+chord--arc argument clip for $24.2\%$ of noiseless queries.  No noiseless
+clipping occurs at levels 1--3, so it does not affect the three finer points or
+the finest-mesh conclusions.
+At 642 vertices the topology-only control remains at $0.1363$, ordinary MDS
+at $0.3616$, and the mean disk at $0.6538$.  Thus connectivity plus an
+$S^2$ output constraint is not sufficient to explain the result.  The
+reconstructed query chords have relative stress $0.00330$ in the noiseless
+case, quantifying the remaining graph and spectral approximation rather than
+hiding it.  Symmetric Hausdorff error is $0.00337$ with exact lengths and
+$0.00678$ at 1\% noise.
 
-\paragraph{What is genuinely minimal?}
-The exact task proves rank 24 minimal over every linear head sharing the stated
-trunk and bias because it combines a universal rank-output lower bound with a
-feasible distance-preserving head.  Theorem~\ref{thm:rank-distillation}
-separately gives the exact optimum of the declared first-order distillation
-loss at every rank.  Neither statement excludes a different nonlinear trunk
-from representing the same teacher behavior with fewer parameters.
+\input{experiments/wasserstein_surface_reconstruction_table.tex}
 
-\paragraph{Certificates versus sampled tests.}
-Theorem~\ref{thm:stability} is a continuum statement when valid global bounds
-on $s$, $M_1$, and $\varepsilon_1$ are available.  The analytic image task has
-exact global quantities.  The neural sweep and both image datasets replace
-suprema by finite sets and are labeled accordingly.  A covering argument,
-interval bounds, or a verified Lipschitz remainder is required before calling
-those curves global certificates.
+Table~\ref{tab:wasserstein-surface-reconstruction} shows that 1\% chord noise
+raises geodesic error only to $0.00437$ and 3D RMSE to $0.00349$ under the
+constant-curvature estimator.  At 2\% noise these become $0.00706$ and
+$0.00518$.  These small surface errors are conditional on the strong
+$S^2$ projection in Section~\ref{sec:spherical-estimator}; they are not
+evidence that arbitrary noisy metrics are equally easy to embed.
 
-\paragraph{Parameters, bits, and deployment.}
-An unrestricted real number can encode unbounded information, so universal
-parameter-count lower bounds require encodable or quantized weights.  For
-deployment, \eqref{eq:min-safe-size} should minimize stored bits and include
-rank-factor indices and precision.  Quantization contributes an additional
-Jacobian perturbation to Theorem~\ref{thm:stability}.
+\begin{figure*}[t]
+ \centering
+ \includegraphics[width=0.625\textwidth]
+ {experiments/wasserstein_surface_reconstruction_errors.png}\hfill
+ \includegraphics[width=0.355\textwidth]
+ {experiments/wasserstein_surface_reconstruction_curvature.png}
+ \caption{Resolution separates two statistical regimes.
+ Panels (a)--(c): global distances and the constant-curvature 3D
+ reconstruction improve with resolution, including under fixed small
+ relative noise, while raw area-normalized curvature amplifies it.
+ Panels (d)--(e): unsmoothed curvature at 642 vertices and 1\% noise has a
+ broad distribution and may become negative even though the learned radius
+ is $0.997$.  The behavior is qualitatively consistent with
+ Equation~\eqref{eq:noise-amplification}: a good global sphere is not
+ pointwise curvature recovery.}
+ \label{fig:wasserstein-surface-errors}
+\end{figure*}
 
-\paragraph{Teacher-relative geometry.}
-On real data, compression can preserve a frozen teacher; it cannot certify
-that the teacher recovered the true data manifold.  Both VAEs have one teacher
-seed and a deliberately restrictive two-dimensional code; teacher PSNR is
-13.19 dB on MNIST and 14.78 dB on FashionMNIST.  They are transparent
-applications rather than state-of-the-art image models.  Fixed covariance
-makes $W_2$ the Euclidean mean-image special case; the warped-torus experiment
-covers learned, nonconstant standard deviations.  Full covariance would
-require Bures--Wasserstein geometry.
+\begin{figure*}[t]
+ \centering
+ \includegraphics[width=0.98\textwidth]
+ {experiments/convex_edge_realization_prototype.png}
+ \caption{Edge-only realization of a nonround ellipsoidal convex polyhedron.
+ Columns show hidden truth, the visibly incorrect spherical initializer,
+ exact-edge realization, and 0.5\%-perturbed-edge realization.  The final
+ stage uses only mesh-edge Wasserstein chord residuals.  The displayed noisy
+ result is seed 0; Table~\ref{tab:convex-edge-rigidity} reports all sphere and
+ ellipsoid trials.}
+ \label{fig:convex-edge-realization}
+\end{figure*}
 
-\paragraph{Numerical paths.}
-The displayed paths are local multistart minimizers inside a coordinate-
-dependent evaluation rectangle.  Quadrature and boundary diagnostics rule out
-the simplest numerical failures but do not prove a global geodesic.  A grid
-initialization, knot-refinement study, rectangle-expansion sensitivity, and
-perceptual output metric would strengthen claims about interpolation quality.
+\paragraph{Pointwise curvature is the hard quantity.}
+With exact lengths, curvature relative to the noiseless PL target is zero to
+machine precision; the remaining smooth-$K=1$ RMSE is $0.0218$ at 642
+vertices and is a discretization effect.  Fixed relative noise behaves
+differently.  At the same resolution, $0.5\%,1\%,$ and $2\%$ length noise
+produce raw discrete-curvature RMSE $1.17,2.32,$ and $4.73$, respectively.
+At 1\% noise, $32.6\%$ of vertices have nonpositive defect.
 
-\paragraph{Scope.}
-We study distance and retrieval.  Curvature stability would require
-second-order control, and nonlinear variance heads would require constrained
-or nonlinear compression.  Stronger empirical claims need multiple teacher
-seeds, an independent validation/test split for rank selection, a
-Jacobian-weight ablation, and datasets beyond $28\times28$ grayscale images.
+This is qualitatively consistent with the deterministic distinction in
+Equation~\eqref{eq:noise-amplification}.  That theorem uses a maximum edge
+error, whereas \eqref{eq:multiplicative-noise} draws independent log-normal
+errors; for small $\sigma$, their maximum relative magnitude over a finite
+query set is typically of order
+$\sigma\sqrt{\log|E_{\mathrm q}|}$.  The sweep therefore tests the predicted
+amplification pattern, not the theorem's constants.  If
+$\varepsilon\asymp\eta h$, defect error is $O(\eta)$ but division by vertex
+area makes curvature-density error $O(\eta/h^2)$.  Refinement at fixed
+relative noise therefore helps global distance reconstruction while hurting
+an unsmoothed pointwise derivative.
+Consistent fine-scale curvature needs shrinking noise or a regularized
+estimator.  In particular, the positive-defect condition
+\eqref{eq:convexity-noise} does not hold in the noisy finest-mesh trials; their
+good spherical outputs come from the declared constant-curvature projection,
+not from an application of the convex-realization theorem.
 
-\section{Conclusion}
+\subsection{The same-skeleton step beyond a round sphere}
+\label{sec:convex-realization-experiment}
 
-The capacity of a compressed decoder should be defined by the behavior it must
-preserve.  For Gaussian decoders, optimal transport turns that behavior into
-a pullback metric.  We derived a sufficient scaling from simultaneous value
-and derivative approximation, converted metric distortion into triplet
-accuracy, and solved fixed-trunk rank-constrained first-order distillation by
-covariance-whitened SVD.  The exact image task gives a proof-level answer:
-with 5\% output and distance tolerances, rank 23 and below are impossible,
-rank 24 is feasible, and the head is $12.61\times$ smaller.  A nonconstant-
-variance neural stress test and sampled MNIST/FashionMNIST frontiers show how
-the same criterion guides training and deployment.  Input--output panels and
-straight-versus-intrinsic decoded sequences then expose what the preserved
-geometry does.  The result is not a universal minimum neural network; it is a
-reproducible way to turn ``how small?'' into a mathematical constraint and an
-auditable accuracy boundary.
+The spherical sweep is visually simple but does not execute the general
+realization step in Proposition~\ref{prop:rigidity}.  We therefore add a
+small, separate distance-geometry experiment.  Its estimator receives only
+$(|V|,F,E,\{\widehat\ell_e\}_{e\in E})$.  Spherical MDS supplies an initial
+convex branch, after which continuation minimizes
+\begin{equation}
+ \sum_{(i,j)\in E}
+ \left(
+ \frac{\norm{X_i-X_j}-\widehat\ell_{ij}}
+ {\overline\ell}
+ \right)^2 .
+ \label{eq:edge-realization-objective}
+\end{equation}
+Here $\overline\ell$ is the mean observed edge length.
+One nondegenerate anchor triangle is placed from its three observed side
+lengths, removing the Euclidean-motion gauge.  A local convexity penalty is
+used only during 41 continuation stages.  The final least-squares polish has
+117 free coordinates and 117 nonanchor edge residuals; it contains no radius,
+row normalization, spherical loss, or ground-truth coordinate.
 
-\section*{Reproducibility}
+We test convex hulls of 42 samples from a sphere and from its linear image with
+axes $(1.20,1.00,0.80)$.  The latter is an ellipsoidal convex polyhedron
+sampling a smooth strictly convex surface of nonconstant Gaussian curvature.
+The hidden-Gaussian construction still gives
+$W_2(\mu_x,\mu_y)=\norm{x-y}$.  With exact chords, aligned RMSE is
+$3.25\times10^{-15}$ on the sphere and $2.17\times10^{-15}$ on the ellipsoid,
+although the ellipsoid's spherical initializer has RMSE $0.1270$.  At 0.5\%
+edge noise, mean RMSE over three seeds is $0.00601$ and $0.00720$; at 1\%, it
+is $0.01094$ and $0.01463$.  All 14 outputs retain all 42 convex-hull vertices
+and exactly the prescribed 80 facets.
 
-The scripts, fixed seeds, CSV results, tables, figures, and both language
-editions are regenerated with
-\begin{verbatim}
-make paper-all
-\end{verbatim}
-Dataset downloads and the learned MNIST/FashionMNIST teacher checkpoints are
-cached locally and excluded from version control.
+\input{experiments/convex_edge_realization_prototype_table.tex}
+
+Exact fitting of the noisy cases is not denoising.  A triangulated sphere has
+$|E|=3|V|-6$, and local rigidity maps a sufficiently small perturbed length
+vector to a nearby, generally different convex polyhedron.  The observed
+coordinate error is the stability quantity in Proposition~\ref{prop:rigidity}.
+The reported RMSE is its $|V|^{-1/2}$ normalization.  The true rigidity
+matrices have full rank $120=3|V|-6$, with $s_X=0.352$ on the sphere and
+$0.287$ on the ellipsoid.  All 12 noisy trials satisfy the local scale
+$2\norm{\widehat\ell-\ell}_2/s_X$; the largest observed error-to-bound ratio
+is $0.233$.  This prototype verifies the intended local branch numerically;
+it does not prove global convergence of continuation.
+
+\section{Scope and Conclusion}
+\label{sec:limitations}
+
+The controlled result establishes a precise, visually testable statement:
+for a probabilistic decoder whose local Wasserstein chords encode a hidden
+round metric, sparse queries can recover global travel times and the spherical
+surface without decoder derivatives.  The theorem separately states what
+edge lengths determine for a general same-skeleton strictly convex
+polyhedron, and gives an end-to-end sphere error decomposition in
+\eqref{eq:end-to-end-sphere}.  That decomposition concerns a nearby
+same-skeleton convex realization; it is not a guarantee for the implemented
+graph-shortest-path and spherical-scaling pipeline.
+
+Several assumptions remain visible.  Topology and triangulation are supplied.
+The spherical sweep assumes constant curvature, known antipodal coverage, and
+a Gaussian benchmark with exact $W_2$; its all-pairs numerical stage uses
+$O(|V|^2)$ memory.  The edge-only experiment has only 42 vertices and three
+noisy seeds per condition, requires continuation to remain on the correct
+convex branch, and does not establish global convergence.  Neither experiment
+infers a true geometry for MNIST,
+smooths curvature, or gives a minimax statistical rate.  A learned decoder
+would additionally introduce finite-sample and numerical OT errors; these
+enter the edge-error term of the theory but are not evaluated here.
+
+The main conceptual change from Jacobian-based latent geometry is therefore
+simple: geometry can be treated as an inverse problem from observable local
+distribution distances.  In the controlled case, the answer is not merely a
+curvature heat map.  It is a reconstructed surface whose error can be split
+into Wasserstein observation error and finite-mesh approximation error.
