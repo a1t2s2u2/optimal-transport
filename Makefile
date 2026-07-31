@@ -8,7 +8,7 @@
 
 SITE := node tools/site
 
-.PHONY: help sites cuturi-site cuturi-pdf wasserstein-site clean-sites paper paper-ja paper-experiments paper-surface-experiment paper-cartography-experiment paper-distillation-experiment paper-mnist-experiment paper-geodesic-experiment paper-architecture-figure paper-all
+.PHONY: help sites cuturi-site cuturi-pdf wasserstein-site clean-sites paper paper-ja paper-experiments paper-surface-experiment paper-convex-experiment paper-cartography-experiment paper-distillation-experiment paper-mnist-experiment paper-geodesic-experiment paper-architecture-figure paper-all
 
 help:
 	@echo "make sites             すべてのセミナーのサイトを生成"
@@ -17,6 +17,7 @@ help:
 	@echo "make wasserstein-site  Wasserstein 距離のサイトを生成（PDF は生成しない）"
 	@echo "make paper-experiments 局所Wasserstein距離からの曲面復元実験を再実行"
 	@echo "make paper-surface-experiment 曲面復元実験だけを再実行"
+	@echo "make paper-convex-experiment 同一骨格の凸面実現実験だけを再実行"
 	@echo "make paper-distillation-experiment 幾何保存蒸留の容量実験を再実行"
 	@echo "make paper-mnist-experiment MNIST/FashionMNIST VAE head圧縮実験を再実行"
 	@echo "make paper-geodesic-experiment 潜在直線・数値測地線比較を再実行"
@@ -51,6 +52,9 @@ paper-cartography-experiment:
 paper-surface-experiment:
 	uv run --python 3.12 paper/ot-manifold-approximation/experiments/wasserstein_surface_reconstruction.py
 
+paper-convex-experiment:
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/convex_edge_realization_prototype.py
+
 paper-distillation-experiment:
 	uv run --python 3.12 paper/ot-manifold-approximation/experiments/geometry_distillation.py
 	uv run --python 3.12 paper/ot-manifold-approximation/experiments/lowrank_torus.py
@@ -66,7 +70,7 @@ paper-geodesic-experiment:
 paper-architecture-figure:
 	uv run --python 3.12 paper/ot-manifold-approximation/experiments/certified_distillation_architecture.py
 
-paper-experiments: paper-surface-experiment
+paper-experiments: paper-surface-experiment paper-convex-experiment
 
 paper:
 	cd paper/ot-manifold-approximation && latexmk
