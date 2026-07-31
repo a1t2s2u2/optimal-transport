@@ -17,24 +17,30 @@ the diagonal Gaussian
 
 Consequently, the closed-form 2-Wasserstein distance between two observations
 is exactly their three-dimensional chord distance, although the Gaussian mean
-alone is only a doubly covered disk.  The proposed estimator is deliberately
-given *only* the triangulation connectivity and noisy local W2 edge lengths.
-Ground-truth coordinates are used afterwards for alignment and evaluation.
+alone is only a doubly covered disk.  Samples are smoothly redistributed on
+the sphere, so the uniform icosphere determined by topology is not the answer.
+The proposed estimator is deliberately given *only* the triangulation and
+noisy W2 chords for vertex pairs within three topology hops.  These O(n) local
+queries remain sparse among the O(n^2) possible pairs.  Ground-truth
+coordinates are used afterwards for alignment and evaluation.
 
 The reconstruction pipeline is
 
-    local W2 lengths -> angle-deficit curvature -> radius from Gauss--Bonnet
-                     -> graph geodesics -> spherical classical scaling.
+    local W2 chords -> angle-deficit curvature -> radius from Gauss--Bonnet
+                    -> chord-to-arc correction -> graph geodesics
+                    -> round-sphere diameter calibration
+                    -> spherical classical scaling.
 
-The final two arrows deliberately impose the paper's constant-curvature S^2
-model class.  They are not a claim that an arbitrary surface is determined by
-angle deficits alone.  Curvature error is reported both against the noiseless
-discrete angle-deficit target and against the smooth unit-sphere value K=1.
+The radius/correction/scaling stages deliberately impose the paper's
+constant-curvature S^2 model class.  They are not a claim that an arbitrary
+surface is determined by angle deficits alone.  Curvature error is reported
+both against the noiseless discrete angle-deficit target and against the
+smooth unit-sphere value K=1.
 
-For comparison, the script also computes ordinary Euclidean MDS from the same
-graph distances and the mean-only disk.  It runs several mesh resolutions,
-noise levels, and seeds; writes trial/summary CSV files and EN/JA LaTeX tables;
-and renders bilingual paper figures.
+For comparison, the script also computes a topology-only uniform icosphere,
+ordinary Euclidean MDS from the same graph distances, and the mean-only disk.
+It runs several mesh resolutions, noise levels, and seeds; writes trial/summary
+CSV files and EN/JA LaTeX tables; and renders bilingual paper figures.
 
 Run with:
     uv run --python 3.12 wasserstein_surface_reconstruction.py
@@ -66,6 +72,9 @@ plt.switch_backend("Agg")
 HERE = Path(__file__).resolve().parent
 MASTER_SEED = 20260731
 GAUSSIAN_STD_OFFSET = 1.25
+LATITUDE_WARP_FACTOR = 1.35
+LONGITUDE_TWIST_RADIANS = 0.24
+LOCAL_QUERY_HOPS = 3
 DEFAULT_SUBDIVISIONS = (0, 1, 2, 3)
 DEFAULT_NOISE_LEVELS = (0.0, 0.005, 0.01, 0.02)
 DEFAULT_SEEDS = (0, 1, 2)
@@ -78,8 +87,10 @@ class Mesh:
     """A triangular mesh used to generate controlled observations."""
 
     vertices: np.ndarray
+    uniform_vertices: np.ndarray
     faces: np.ndarray
     edges: np.ndarray
+    query_pairs: np.ndarray
 
 
 @dataclass(frozen=True)
@@ -96,6 +107,8 @@ class IntrinsicEstimate:
     total_area: float
     euler_characteristic: int
     invalid_triangle_fraction: float
+    clipped_chord_to_arc_fraction: float
+    graph_diameter_calibration_factor: float
     clipped_spherical_pair_fraction: float
 
 
@@ -106,9 +119,10 @@ class Trial:
     metrics: dict[str, float]
     estimate: IntrinsicEstimate
     aligned_spherical: np.ndarray
+    aligned_topology_uniform: np.ndarray
     aligned_ordinary_mds: np.ndarray
     aligned_mean_disk: np.ndarray
-    noisy_edge_lengths: np.ndarray
+    noisy_query_lengths: np.ndarray
 
 
 def japanese_font_family() -> str:
@@ -142,6 +156,87 @@ def unique_edges(faces: np.ndarray) -> np.ndarray:
     raw = np.concatenate([faces[:, [0, 1]], faces[:, [1, 2]], faces[:, [2, 0]]], axis=0)
     raw.sort(axis=1)
     return np.unique(raw, axis=0)
+
+
+def local_query_pairs(
+    vertex_count: int,
+    edges: np.ndarray,
+    maximum_hops: int = LOCAL_QUERY_HOPS,
+) -> np.ndarray:
+    """Return every unordered vertex pair within a fixed topology radius.
+
+    The maximum degree of an icosphere is bounded.  Thus a fixed hop radius
+    gives O(vertex_count) queries, rather than the quadratic complete graph.
+    """
+
+    if maximum_hops < 1:
+        raise ValueError("maximum_hops must be positive")
+    neighbours: list[set[int]] = [set() for _ in range(vertex_count)]
+    for left, right in edges:
+        neighbours[int(left)].add(int(right))
+        neighbours[int(right)].add(int(left))
+
+    pairs: list[tuple[int, int]] = []
+    for source in range(vertex_count):
+        visited = {source}
+        frontier = {source}
+        for _ in range(maximum_hops):
+            next_frontier: set[int] = set()
+            for vertex in frontier:
+                next_frontier.update(neighbours[vertex])
+            next_frontier.difference_update(visited)
+            visited.update(next_frontier)
+            frontier = next_frontier
+        pairs.extend((source, target) for target in sorted(visited) if source < target)
+
+    query_pairs = np.asarray(pairs, dtype=np.int64)
+    query_set = {tuple(pair) for pair in query_pairs.tolist()}
+    if any(tuple(edge) not in query_set for edge in edges.tolist()):
+        raise RuntimeError("triangulation edges must be a subset of local queries")
+    return query_pairs
+
+
+def warp_sphere_samples(uniform_sphere: np.ndarray) -> np.ndarray:
+    """Smoothly redistribute samples while keeping them on the unit sphere.
+
+    The latitude map has derivative ``LATITUDE_WARP_FACTOR`` at the equator
+    and remains strictly monotone up to the poles.  A z-dependent axial
+    rotation adds a mild longitude twist.  Both are deterministic diffeomorphisms
+    of S^2; only sampling locations change, not the underlying round geometry.
+    """
+
+    longitude = np.arctan2(uniform_sphere[:, 1], uniform_sphere[:, 0])
+    latitude = np.arcsin(np.clip(uniform_sphere[:, 2], -1.0, 1.0))
+    latitude_amplitude = 0.5 * (LATITUDE_WARP_FACTOR - 1.0)
+    warped_latitude = latitude + latitude_amplitude * np.sin(2.0 * latitude)
+    warped_height = np.sin(warped_latitude)
+    # An even function of height preserves the mesh's antipodal sample pairs,
+    # while still twisting latitude bands relative to one another.
+    warped_longitude = longitude + LONGITUDE_TWIST_RADIANS * warped_height**2
+    radial = np.cos(warped_latitude)
+    warped = np.column_stack(
+        [
+            radial * np.cos(warped_longitude),
+            radial * np.sin(warped_longitude),
+            warped_height,
+        ]
+    )
+    return normalize_rows(warped)
+
+
+def validate_spherical_mesh(vertices: np.ndarray, faces: np.ndarray) -> None:
+    """Reject degenerate or orientation-flipped warped triangles."""
+
+    norm_error = float(np.max(np.abs(np.linalg.norm(vertices, axis=1) - 1.0)))
+    if norm_error > 1.0e-12:
+        raise RuntimeError(f"warped vertices left the unit sphere: {norm_error:.3e}")
+    first = vertices[faces[:, 0]]
+    second = vertices[faces[:, 1]]
+    third = vertices[faces[:, 2]]
+    normals = np.cross(second - first, third - first)
+    signed_orientation = np.einsum("ij,ij->i", normals, first + second + third)
+    if np.any(signed_orientation <= 1.0e-12):
+        raise RuntimeError("latitude/longitude warp flipped or collapsed a face")
 
 
 def base_icosahedron() -> tuple[np.ndarray, np.ndarray]:
@@ -231,20 +326,29 @@ def subdivide_icosphere(
 
 
 def icosphere(subdivisions: int) -> Mesh:
-    """Return an icosphere with 10*4^s+2 vertices."""
+    """Return uniform topology and smoothly redistributed sphere samples."""
 
     if subdivisions < 0:
         raise ValueError("subdivisions must be nonnegative")
-    vertices, faces = base_icosahedron()
+    uniform_vertices, faces = base_icosahedron()
     for _ in range(subdivisions):
-        vertices, faces = subdivide_icosphere(vertices, faces)
+        uniform_vertices, faces = subdivide_icosphere(uniform_vertices, faces)
     edges = unique_edges(faces)
     expected_vertices = 10 * (4**subdivisions) + 2
-    if len(vertices) != expected_vertices:
+    if len(uniform_vertices) != expected_vertices:
         raise RuntimeError(
-            f"icosphere indexing failed: {len(vertices)} != {expected_vertices}"
+            f"icosphere indexing failed: {len(uniform_vertices)} != {expected_vertices}"
         )
-    return Mesh(vertices=vertices, faces=faces, edges=edges)
+    vertices = warp_sphere_samples(uniform_vertices)
+    validate_spherical_mesh(vertices, faces)
+    query_pairs = local_query_pairs(len(vertices), edges)
+    return Mesh(
+        vertices=vertices,
+        uniform_vertices=uniform_vertices,
+        faces=faces,
+        edges=edges,
+        query_pairs=query_pairs,
+    )
 
 
 def diagonal_gaussian_observations(
@@ -269,12 +373,12 @@ def diagonal_gaussian_observations(
 def diagonal_gaussian_w2_edges(
     mean: np.ndarray,
     standard_deviation: np.ndarray,
-    edges: np.ndarray,
+    pairs: np.ndarray,
 ) -> np.ndarray:
-    """Closed-form W2 lengths for diagonal Gaussians on the mesh edges."""
+    """Closed-form W2 lengths for diagonal Gaussians at queried pairs."""
 
-    mean_difference = mean[edges[:, 0]] - mean[edges[:, 1]]
-    std_difference = standard_deviation[edges[:, 0]] - standard_deviation[edges[:, 1]]
+    mean_difference = mean[pairs[:, 0]] - mean[pairs[:, 1]]
+    std_difference = standard_deviation[pairs[:, 0]] - standard_deviation[pairs[:, 1]]
     return np.sqrt(
         np.square(mean_difference).sum(axis=1) + np.square(std_difference).sum(axis=1)
     )
@@ -300,6 +404,38 @@ def noisy_lengths(
     # probability, but protects graph connectivity from numerical outliers.
     perturbation = np.clip(perturbation, 0.5, 1.5)
     return exact_lengths * perturbation
+
+
+def subset_pair_lengths(
+    query_pairs: np.ndarray,
+    query_lengths: np.ndarray,
+    subset_pairs: np.ndarray,
+) -> np.ndarray:
+    """Select measured lengths for a pair subset without re-observation."""
+
+    lookup = {
+        (int(left), int(right)): float(length)
+        for (left, right), length in zip(query_pairs, query_lengths, strict=True)
+    }
+    try:
+        return np.asarray(
+            [lookup[(int(left), int(right))] for left, right in subset_pairs],
+            dtype=np.float64,
+        )
+    except KeyError as error:
+        raise ValueError("every triangulation edge must be locally queried") from error
+
+
+def spherical_chord_to_arc(
+    chord_lengths: np.ndarray,
+    radius: float,
+) -> tuple[np.ndarray, float]:
+    """Apply the constant-curvature S^2 chord-to-arc correction."""
+
+    ratios = chord_lengths / max(2.0 * radius, EPSILON)
+    clipped_fraction = float(np.mean(ratios > 1.0))
+    angular_half_lengths = np.arcsin(np.clip(ratios, 0.0, 1.0))
+    return 2.0 * radius * angular_half_lengths, clipped_fraction
 
 
 def edge_length_lookup(
@@ -433,9 +569,9 @@ def spherical_classical_mds(
     clipped_fraction = float(np.mean(angular_distance[off_diagonal] > math.pi))
     angular_distance = np.clip(angular_distance, 0.0, math.pi)
     spherical_gram = radius**2 * np.cos(angular_distance)
-    # Exact, uniformly sampled spherical Gram matrices are already centered.
-    # Centering removes the finite-graph constant mode without using positions.
-    coordinates = top_eigen_embedding(center_gram(spherical_gram), dimensions=3)
+    # Unlike Euclidean MDS, spherical scaling does not center this Gram matrix:
+    # the origin is the sphere center, and samples are intentionally nonuniform.
+    coordinates = top_eigen_embedding(spherical_gram, dimensions=3)
     coordinates = radius * normalize_rows(coordinates)
     return coordinates, clipped_fraction
 
@@ -443,24 +579,31 @@ def spherical_classical_mds(
 def infer_from_local_lengths(
     vertex_count: int,
     faces: np.ndarray,
-    edges: np.ndarray,
-    edge_lengths: np.ndarray,
+    query_pairs: np.ndarray,
+    query_chord_lengths: np.ndarray,
 ) -> IntrinsicEstimate:
-    """Infer geometry using only topology and local measured lengths.
+    """Infer geometry using only topology and sparse local measured chords.
 
     Keeping this function's interface free of true coordinates and Gaussian
     parameters is an explicit guard against evaluation leakage.
     """
 
-    if len(edge_lengths) != len(edges):
-        raise ValueError("one positive length is required for every edge")
-    if not np.isfinite(edge_lengths).all() or np.any(edge_lengths <= 0.0):
-        raise ValueError("all measured edge lengths must be finite and positive")
+    if len(query_chord_lengths) != len(query_pairs):
+        raise ValueError("one positive chord is required for every local query")
+    if not np.isfinite(query_chord_lengths).all() or np.any(query_chord_lengths <= 0.0):
+        raise ValueError("all measured query chords must be finite and positive")
+
+    triangulation_edges = unique_edges(faces)
+    triangle_edge_chords = subset_pair_lengths(
+        query_pairs, query_chord_lengths, triangulation_edges
+    )
 
     curvature, vertex_areas, deficits, invalid_fraction = (
-        triangle_geometry_from_lengths(vertex_count, faces, edges, edge_lengths)
+        triangle_geometry_from_lengths(
+            vertex_count, faces, triangulation_edges, triangle_edge_chords
+        )
     )
-    euler_characteristic = vertex_count - len(edges) + len(faces)
+    euler_characteristic = vertex_count - len(triangulation_edges) + len(faces)
     total_curvature = 2.0 * math.pi * euler_characteristic
     if euler_characteristic != 2:
         raise ValueError(
@@ -470,12 +613,21 @@ def infer_from_local_lengths(
     total_area = float(vertex_areas.sum())
     learned_radius = math.sqrt(total_area / total_curvature)
 
-    graph = edge_length_lookup(vertex_count, edges, edge_lengths).tocsr()
+    query_arc_lengths, chord_clipped_fraction = spherical_chord_to_arc(
+        query_chord_lengths, learned_radius
+    )
+    graph = edge_length_lookup(vertex_count, query_pairs, query_arc_lengths).tocsr()
     graph_distances = np.asarray(
         dijkstra(graph, directed=False, return_predecessors=False)
     )
     if not np.isfinite(graph_distances).all():
         raise RuntimeError("the local-distance graph is disconnected")
+    # A round sphere of learned radius R has diameter pi R.  The warped mesh
+    # retains antipodal samples, so this topology/constant-curvature calibration
+    # removes the fixed-direction stretch of finite-hop graph shortest paths.
+    raw_graph_diameter = float(graph_distances.max())
+    diameter_calibration = math.pi * learned_radius / max(raw_graph_diameter, EPSILON)
+    graph_distances *= diameter_calibration
 
     spherical, clipped_fraction = spherical_classical_mds(
         graph_distances, learned_radius
@@ -492,6 +644,8 @@ def infer_from_local_lengths(
         total_area=total_area,
         euler_characteristic=euler_characteristic,
         invalid_triangle_fraction=invalid_fraction,
+        clipped_chord_to_arc_fraction=chord_clipped_fraction,
+        graph_diameter_calibration_factor=diameter_calibration,
         clipped_spherical_pair_fraction=clipped_fraction,
     )
 
@@ -571,9 +725,9 @@ def run_trial(
     """Generate observations, infer from local W2, then evaluate."""
 
     mean, standard_deviation = diagonal_gaussian_observations(mesh.vertices)
-    exact_w2 = diagonal_gaussian_w2_edges(mean, standard_deviation, mesh.edges)
+    exact_w2 = diagonal_gaussian_w2_edges(mean, standard_deviation, mesh.query_pairs)
     exact_chords = np.linalg.norm(
-        mesh.vertices[mesh.edges[:, 0]] - mesh.vertices[mesh.edges[:, 1]],
+        mesh.vertices[mesh.query_pairs[:, 0]] - mesh.vertices[mesh.query_pairs[:, 1]],
         axis=1,
     )
     w2_identity_error = float(np.max(np.abs(exact_w2 - exact_chords)))
@@ -584,8 +738,9 @@ def run_trial(
 
     # This noiseless, same-triangulation quantity is an evaluation target only.
     # It never enters infer_from_local_lengths or the reconstructed coordinates.
+    exact_triangle_edge_w2 = subset_pair_lengths(mesh.query_pairs, exact_w2, mesh.edges)
     oracle_curvature, oracle_areas, _, _ = triangle_geometry_from_lengths(
-        len(mesh.vertices), mesh.faces, mesh.edges, exact_w2
+        len(mesh.vertices), mesh.faces, mesh.edges, exact_triangle_edge_w2
     )
 
     noise_seed = (
@@ -594,32 +749,60 @@ def run_trial(
         + 101 * round(1_000_000 * noise_level)
         + seed_index
     )
-    measured_w2 = noisy_lengths(exact_w2, noise_level, noise_seed)
+    measured_query_w2 = noisy_lengths(exact_w2, noise_level, noise_seed)
+    measured_triangle_edge_w2 = subset_pair_lengths(
+        mesh.query_pairs, measured_query_w2, mesh.edges
+    )
 
-    # The estimator sees no mesh.vertices, mean, standard_deviation, or target.
+    # The estimator sees no mesh.vertices, uniform_vertices, Gaussian
+    # parameters, or target distances.
     estimate = infer_from_local_lengths(
-        len(mesh.vertices), mesh.faces, mesh.edges, measured_w2
+        len(mesh.vertices), mesh.faces, mesh.query_pairs, measured_query_w2
     )
 
     aligned_spherical, spherical_rmse = orthogonal_alignment(
         estimate.spherical_coordinates, mesh.vertices
+    )
+    aligned_topology, topology_rmse = orthogonal_alignment(
+        mesh.uniform_vertices, mesh.vertices
     )
     aligned_ordinary, ordinary_rmse = orthogonal_alignment(
         estimate.ordinary_mds_coordinates, mesh.vertices
     )
     aligned_mean, mean_rmse = orthogonal_alignment(mean, mesh.vertices)
     true_distances = true_great_circle_distances(mesh.vertices)
+    possible_pairs = len(mesh.vertices) * (len(mesh.vertices) - 1) / 2
+    reconstructed_query_chords = np.linalg.norm(
+        estimate.spherical_coordinates[mesh.query_pairs[:, 0]]
+        - estimate.spherical_coordinates[mesh.query_pairs[:, 1]],
+        axis=1,
+    )
+    reconstructed_edge_chords = subset_pair_lengths(
+        mesh.query_pairs, reconstructed_query_chords, mesh.edges
+    )
 
     metrics = {
         "subdivision": float(subdivision),
         "vertices": float(len(mesh.vertices)),
         "faces": float(len(mesh.faces)),
         "edges": float(len(mesh.edges)),
+        "latitude_warp_factor": LATITUDE_WARP_FACTOR,
+        "longitude_twist_radians": LONGITUDE_TWIST_RADIANS,
+        "local_query_hops": float(LOCAL_QUERY_HOPS),
+        "local_query_pairs": float(len(mesh.query_pairs)),
+        "local_query_pair_fraction": float(len(mesh.query_pairs) / possible_pairs),
+        "local_queries_per_vertex": float(
+            2.0 * len(mesh.query_pairs) / len(mesh.vertices)
+        ),
         "relative_edge_noise": float(noise_level),
         "seed": float(seed_index),
         "w2_chord_max_abs_error": w2_identity_error,
-        "edge_relative_rmse": float(
-            np.linalg.norm(measured_w2 - exact_w2) / np.linalg.norm(exact_w2)
+        "query_chord_relative_rmse": float(
+            np.linalg.norm(measured_query_w2 - exact_w2) / np.linalg.norm(exact_w2)
+        ),
+        "triangle_edge_relative_rmse": float(
+            np.linalg.norm(measured_triangle_edge_w2 - exact_triangle_edge_w2)
+            / np.linalg.norm(exact_triangle_edge_w2)
         ),
         "euler_characteristic": float(estimate.euler_characteristic),
         "integrated_curvature": float(estimate.angle_deficits.sum()),
@@ -630,6 +813,9 @@ def run_trial(
             estimate, oracle_curvature, oracle_areas
         ),
         "curvature_smooth_k1_weighted_rmse": (weighted_smooth_curvature_rmse(estimate)),
+        "nonpositive_angle_defect_fraction": float(
+            np.mean(estimate.angle_deficits <= 0.0)
+        ),
         "graph_geodesic_relative_error": relative_frobenius_error(
             estimate.graph_distances, true_distances
         ),
@@ -640,20 +826,37 @@ def run_trial(
         "spherical_reconstruction_chamfer_rms": symmetric_chamfer_rms(
             aligned_spherical, mesh.vertices
         ),
+        "reconstruction_query_chord_relative_stress": float(
+            np.linalg.norm(reconstructed_query_chords - measured_query_w2)
+            / np.linalg.norm(measured_query_w2)
+        ),
+        "reconstruction_edge_chord_relative_stress": float(
+            np.linalg.norm(reconstructed_edge_chords - measured_triangle_edge_w2)
+            / np.linalg.norm(measured_triangle_edge_w2)
+        ),
         "ordinary_mds_rmse": ordinary_rmse,
         "ordinary_mds_hausdorff": symmetric_hausdorff(aligned_ordinary, mesh.vertices),
+        "topology_uniform_rmse": topology_rmse,
+        "topology_uniform_hausdorff": symmetric_hausdorff(
+            aligned_topology, mesh.vertices
+        ),
         "mean_disk_rmse": mean_rmse,
         "mean_disk_hausdorff": symmetric_hausdorff(aligned_mean, mesh.vertices),
         "invalid_triangle_fraction": estimate.invalid_triangle_fraction,
+        "clipped_chord_to_arc_fraction": (estimate.clipped_chord_to_arc_fraction),
+        "graph_diameter_calibration_factor": (
+            estimate.graph_diameter_calibration_factor
+        ),
         "clipped_spherical_pair_fraction": (estimate.clipped_spherical_pair_fraction),
     }
     return Trial(
         metrics=metrics,
         estimate=estimate,
         aligned_spherical=aligned_spherical,
+        aligned_topology_uniform=aligned_topology,
         aligned_ordinary_mds=aligned_ordinary,
         aligned_mean_disk=aligned_mean,
-        noisy_edge_lengths=measured_w2,
+        noisy_query_lengths=measured_query_w2,
     )
 
 
@@ -670,6 +873,12 @@ def aggregate_rows(rows: Sequence[dict[str, float]]) -> list[dict[str, float]]:
         "vertices",
         "faces",
         "edges",
+        "latitude_warp_factor",
+        "longitude_twist_radians",
+        "local_query_hops",
+        "local_query_pairs",
+        "local_query_pair_fraction",
+        "local_queries_per_vertex",
         "relative_edge_noise",
         "seed",
     }
@@ -681,6 +890,12 @@ def aggregate_rows(rows: Sequence[dict[str, float]]) -> list[dict[str, float]]:
             "vertices": group[0]["vertices"],
             "faces": group[0]["faces"],
             "edges": group[0]["edges"],
+            "latitude_warp_factor": group[0]["latitude_warp_factor"],
+            "longitude_twist_radians": group[0]["longitude_twist_radians"],
+            "local_query_hops": group[0]["local_query_hops"],
+            "local_query_pairs": group[0]["local_query_pairs"],
+            "local_query_pair_fraction": group[0]["local_query_pair_fraction"],
+            "local_queries_per_vertex": group[0]["local_queries_per_vertex"],
             "relative_edge_noise": noise,
             "trials": float(len(group)),
         }
@@ -696,7 +911,11 @@ def write_dict_csv(path: Path, rows: Sequence[dict[str, float]]) -> None:
     if not rows:
         raise ValueError("cannot write an empty CSV")
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=list(rows[0].keys()),
+            lineterminator="\n",
+        )
         writer.writeheader()
         writer.writerows(rows)
 
@@ -714,23 +933,23 @@ def write_latex_table(
     selected = [row for row in summary if int(row["subdivision"]) == finest_subdivision]
     if japanese:
         header = (
-            "ノイズ & 半径誤差 & 曲率RMSE（離散） & 曲率RMSE（$K=1$） "
-            "& 提案法RMSE & 通常MDS & 平均のみ \\\\"
+            "ノイズ & 測地誤差 & 曲率RMSE & 非正欠損率 "
+            "& 3D復元 & 位相のみ & 通常MDS & 平均のみ \\\\"
         )
         caption = (
-            "定曲率 $S^2$ 仮定の下での局所Wasserstein距離からの球面復元"
-            "（平均 $\\pm$ 標準偏差）。"
+            "疎な3-hop局所Wasserstein弦長と定曲率 $S^2$ の弦--弧・直径補正"
+            "による球面復元（最細メッシュ、平均 $\\pm$ 標準偏差）。"
         )
         label = "tab:wasserstein-surface-reconstruction-ja"
     else:
         header = (
-            "Noise & Radius error & Curvature RMSE (discrete) "
-            "& Curvature RMSE ($K=1$) & Spherical RMSE "
-            "& Euclidean MDS & Mean only \\\\"
+            "Noise & Geodesic error & Curvature RMSE & Nonpositive defects & Ours "
+            "& Topology only & Euclidean MDS & Mean only \\\\"
         )
         caption = (
-            "Constant-curvature $S^2$ recovery from local Wasserstein distances only "
-            "($\\mathrm{mean}\\pm\\mathrm{std}$)."
+            "Sphere recovery from sparse three-hop local Wasserstein chords with "
+            "constant-curvature $S^2$ chord--arc and diameter corrections "
+            "on the finest mesh ($\\mathrm{mean}\\pm\\mathrm{std}$)."
         )
         label = "tab:wasserstein-surface-reconstruction"
 
@@ -738,12 +957,12 @@ def write_latex_table(
         return f"{row[key + '_mean']:.3f} $\\pm$ {row[key + '_std']:.3f}"
 
     lines = [
-        "\\begin{table}[t]",
+        "\\begin{table*}[t]",
         "\\centering",
         "\\small",
         f"\\caption{{{caption}}}",
         f"\\label{{{label}}}",
-        "\\begin{tabular}{@{}lcccccc@{}}",
+        "\\begin{tabular}{@{}lccccccc@{}}",
         "\\toprule",
         header,
         "\\midrule",
@@ -753,17 +972,18 @@ def write_latex_table(
             " & ".join(
                 [
                     latex_noise(row["relative_edge_noise"]),
-                    value(row, "radius_absolute_error"),
+                    value(row, "graph_geodesic_relative_error"),
                     value(row, "curvature_oracle_weighted_rmse"),
-                    value(row, "curvature_smooth_k1_weighted_rmse"),
+                    value(row, "nonpositive_angle_defect_fraction"),
                     value(row, "spherical_reconstruction_rmse"),
+                    value(row, "topology_uniform_rmse"),
                     value(row, "ordinary_mds_rmse"),
                     value(row, "mean_disk_rmse"),
                 ]
             )
             + " \\\\"
         )
-    lines.extend(["\\bottomrule", "\\end{tabular}", "\\end{table}"])
+    lines.extend(["\\bottomrule", "\\end{tabular}", "\\end{table*}"])
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -833,26 +1053,33 @@ def plot_pipeline(
 ) -> None:
     font = japanese_font_family() if japanese else "DejaVu Sans"
     suffix = "_ja" if japanese else ""
+    possible_pairs = len(mesh.vertices) * (len(mesh.vertices) - 1) / 2
+    query_percent = 100.0 * len(mesh.query_pairs) / possible_pairs
     labels = (
         {
-            "flat": "平面地図（表示のみ）",
+            "flat": "ワープした平面地図（表示のみ）",
             "disk": "Gaussian平均：潰れた円板",
-            "recovered": "局所 $W_2$ からの復元",
+            "recovered": "3-hop局所 $W_2$ からの復元",
             "overlay": "正解球との比較（評価時のみ整列）",
             "truth": "正解",
             "estimate": "復元",
-            "caption": ("推定器の入力：三角形接続とノイズ付き局所 $W_2$ 長のみ"),
+            "caption": (
+                f"入力：接続 + 3-hop局所 $W_2$ 弦 "
+                f"（{len(mesh.query_pairs):,}対、全対の{query_percent:.1f}%）; "
+                "$S^2$ 弦–弧・直径補正"
+            ),
         }
         if japanese
         else {
-            "flat": "Flat map (display only)",
+            "flat": "Warped flat map (display only)",
             "disk": "Gaussian means: collapsed disk",
-            "recovered": "Recovered from local $W_2$",
+            "recovered": "Recovered from three-hop local $W_2$",
             "overlay": "Truth vs recovery (aligned for evaluation only)",
             "truth": "truth",
             "estimate": "recovered",
             "caption": (
-                "Estimator input: triangle connectivity + noisy local $W_2$ lengths only"
+                f"Input: topology + {len(mesh.query_pairs):,} sparse three-hop $W_2$ "
+                f"chords ({query_percent:.1f}% of all pairs); $S^2$ chord–arc/diameter correction"
             ),
         }
     )
@@ -1064,9 +1291,10 @@ def plot_errors(
             "intrinsic": "測地距離の相対誤差",
             "vertices": "頂点数（解像度）",
             "spherical": "提案法：球面MDS",
+            "topology": "位相のみ：一様icosphere",
             "ordinary": "通常のMDS",
             "mean": "平均のみの円板",
-            "noise": "辺長ノイズ",
+            "noise": "局所弦長ノイズ",
             "tradeoff": "相対ノイズ固定：高解像度ほど未平滑化曲率誤差を増幅",
             "zero": "0%では離散曲率を数値精度で復元",
         }
@@ -1079,9 +1307,10 @@ def plot_errors(
             "intrinsic": "relative geodesic-distance error",
             "vertices": "vertices (resolution)",
             "spherical": "ours: spherical MDS",
+            "topology": "topology-only uniform mesh",
             "ordinary": "ordinary MDS",
             "mean": "mean-only disk",
-            "noise": "edge-length noise",
+            "noise": "local-chord noise",
             "tradeoff": (
                 "fixed relative noise: finer meshes amplify raw curvature error"
             ),
@@ -1105,6 +1334,7 @@ def plot_errors(
             spherical_std = []
             ordinary_mean = []
             ordinary_std = []
+            topology_uniform = []
             mean_disk = []
             for subdivision in subdivisions:
                 mean_value, std_value = summary_metric(
@@ -1135,6 +1365,11 @@ def plot_errors(
                 )
                 ordinary_mean.append(mean_value)
                 ordinary_std.append(std_value)
+                topology_uniform.append(
+                    summary_metric(
+                        summary, subdivision, noise, "topology_uniform_rmse"
+                    )[0]
+                )
                 mean_disk.append(
                     summary_metric(summary, subdivision, noise, "mean_disk_rmse")[0]
                 )
@@ -1172,9 +1407,18 @@ def plot_errors(
                 color=color,
                 label=label,
             )
-            # Ordinary MDS and mean-only curves are shown once at zero noise;
-            # their styles identify the baselines without overcrowding the panel.
+            # Noise-independent baselines and ordinary MDS at zero noise are
+            # shown once; their styles identify them without duplicating lines.
             if math.isclose(noise, noise_levels[0], abs_tol=EPSILON):
+                axes[1].plot(
+                    vertex_counts,
+                    topology_uniform,
+                    marker="D",
+                    ms=3.8,
+                    linestyle="-.",
+                    color="#a21caf",
+                    label=labels["topology"],
+                )
                 axes[1].plot(
                     vertex_counts,
                     ordinary_mean,
@@ -1223,8 +1467,23 @@ def plot_errors(
             axis.set_ylabel(title)
             axis.set_title(f"({chr(ord('a') + index)}) {title}")
             axis.grid(alpha=0.22, which="both")
-        axes[0].legend(frameon=False, fontsize=7.7)
-        axes[1].legend(frameon=False, fontsize=7.7)
+        axes[0].legend(
+            loc="upper left",
+            bbox_to_anchor=(0.0, 0.87),
+            frameon=True,
+            framealpha=0.88,
+            facecolor="white",
+            edgecolor="none",
+            fontsize=7.2,
+        )
+        axes[1].legend(
+            loc="upper right",
+            frameon=True,
+            framealpha=0.88,
+            facecolor="white",
+            edgecolor="none",
+            fontsize=6.9,
+        )
         axes[0].text(
             0.02,
             0.98,
@@ -1267,7 +1526,7 @@ def parse_arguments() -> argparse.Namespace:
         nargs="+",
         type=float,
         default=list(DEFAULT_NOISE_LEVELS),
-        help="relative standard deviations of multiplicative edge noise",
+        help="relative standard deviations of multiplicative local-chord noise",
     )
     parser.add_argument(
         "--seeds",
