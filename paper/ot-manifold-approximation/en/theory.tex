@@ -21,10 +21,13 @@ most 23 is infeasible, while rank 24 has 4.898\% output error and 4.555\%
 distance distortion, reducing head storage by $12.61\times$.  A neural width sweep shows why first-order
 supervision matters: on a frequency-warped Gaussian torus, output-only
 distillation fails the same 5\% grid test even at $69{,}128$ parameters,
-whereas output--Jacobian distillation passes at $18{,}184$.  Finally, on a
-trained two-dimensional MNIST VAE, covariance-aware head compression reaches
-the sampled 5\% threshold at rank 12 rather than rank 60 for ordinary SVD,
-with $4.65\times$ head compression and 99.95\% teacher-triplet agreement.
+whereas output--Jacobian distillation passes at $18{,}184$.  Finally, on
+two-dimensional MNIST and FashionMNIST VAEs, covariance-aware head compression
+reaches the sampled 5\% threshold at ranks 12 and 13, rather than ranks 60 and
+63 for ordinary SVD, reducing head storage by $4.65\times$ and $4.32\times$.
+Across 100 endpoint-disjoint pairs per dataset, the passing students preserve
+curve length along the same numerical teacher-geodesic candidates with median
+errors 0.11\% and 0.10\%, respectively.
 \end{abstract}
 
 \section{Introduction}
@@ -88,9 +91,22 @@ Our contributions are as follows.
   problem, and its next singular value yields a safe rank for all distances.
   \item We evaluate the same predeclared 5\% criterion at three levels: an
   exact multi-resolution Gaussian image manifold, trained neural students on
-  a warped Gaussian torus, and the frozen decoder head of an MNIST VAE.  This
-  separates theorem verification, optimization behavior, and real-data use.
+  a warped Gaussian torus, and frozen MNIST/FashionMNIST VAE decoder heads.
+  Input--output panels and straight-versus-geodesic decoded sequences make the
+  real-data criterion directly inspectable.
 \end{enumerate}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.98\textwidth]{experiments/certified_distillation_architecture.pdf}
+  \caption{The complete architecture and one-shot compression procedure.  The
+  encoder supplies posterior codes; teacher and student share a frozen smooth
+  trunk.  Calibration codes produce a value--Jacobian covariance, one
+  covariance-whitened SVD produces the rank-$r$ head, and deployment accepts
+  it only when both output fidelity and local geometry pass their prespecified
+  tolerances.}
+  \label{fig:architecture}
+\end{figure*}
 
 \section{Related Work}
 
@@ -119,9 +135,13 @@ geometry when the decoder is compressed.  The Gaussian transport identity is
 classical \cite{givensshortt1984,takatsu2011}.
 
 Our real-data study uses the variational-autoencoder construction
-\cite{kingma2014} and MNIST \cite{lecun1998}.  Its target is explicitly the
-geometry of a frozen teacher decoder, not a claim that a two-dimensional VAE
-recovers the unknown true manifold of handwritten digits.
+\cite{kingma2014}, MNIST \cite{lecun1998}, and FashionMNIST
+\cite{xiao2017}.  Its target is explicitly the geometry of a frozen teacher
+decoder, not a claim that a two-dimensional VAE recovers either dataset's
+unknown true manifold.  Following prior work on decoder pullback metrics
+\cite{chen2018}, we also compare straight latent interpolation with numerical
+intrinsic-path candidates; these are paths constrained to the frozen decoder
+family, not ambient Wasserstein displacement geodesics.
 
 Neural approximation in higher-order Sobolev norms provides upper and lower
 complexity rates for smooth function classes.  In particular, encodable
@@ -131,6 +151,8 @@ weights attain nearly optimal derivative approximation rates
 and task accuracy.  The resulting lower bounds apply to decoder derivative
 fidelity; they do not automatically become geometry-only lower bounds because
 different immersions can induce the same metric.
+
+\clearpage
 
 \section{Wasserstein Geometry Distillation}
 \label{sec:problem}

@@ -5,8 +5,8 @@ Every experiment asks the same operational question: does a student satisfy a
 threshold fixed before its capacity is inspected?  The three settings have
 different roles.  The image torus has a mathematical ground truth and proves a
 minimum rank; the warped Gaussian torus tests neural optimization with
-nonconstant variances; MNIST tests whether the same compression rule remains
-useful for a learned decoder.
+nonconstant variances; MNIST and FashionMNIST test compression, decoded
+outputs, and numerical intrinsic paths for learned decoders.
 
 \subsection{An Exact Shared-Trunk Minimum}
 \label{sec:controlled-experiment}
@@ -147,81 +147,154 @@ plug-in $\delta$.  These results do not prove an optimizer-independent lower
 bound; they show that the quantity used by the theorem is learnable and that
 output fitting alone need not learn it.
 
-\subsection{MNIST VAE Head Compression}
-\label{sec:mnist}
+\subsection{Real-Data VAE Head Compression}
+\label{sec:realdata}
 
 \paragraph{Setup.}
-We train a two-dimensional Gaussian VAE \cite{kingma2014} on a seeded subset
-of 30,000 MNIST training images \cite{lecun1998} for 12 epochs.  Its smooth
-decoder has a two-layer width-64 Tanh trunk
-$h:\R^2\to\R^{64}$ and a $784\times64$ affine mean head with fixed observation
-covariance.  We freeze the encoder, trunk, and bias, and replace only $W$ by a
-rank-$r$ head.  This experiment therefore measures decoder-head compression,
-not compression of the complete VAE.
+We train separate two-dimensional Gaussian VAEs \cite{kingma2014} on seeded
+subsets of 30,000 MNIST \cite{lecun1998} and FashionMNIST \cite{xiao2017}
+training images for 12 epochs.  Both use the architecture in
+Figure~\ref{fig:architecture}: a two-layer width-64 Tanh decoder trunk
+$h:\R^2\to\R^{64}$ and a $784\times64$ affine mean head with fixed
+observation covariance.  We freeze encoder, trunk, and bias and replace only
+$W$.  This is decoder-head compression, not whole-VAE compression.
 
 We compare ordinary SVD ($C=I$), value-weighted SVD
 ($C=\E[hh^{\trans}]+\rho I$), and value--Jacobian SVD using
-\eqref{eq:jet-covariance}.  The covariance is fitted on 4,096 posterior means
-from the training split.  For the third method, the Jacobian covariance is
-rescaled to four times the trace of the value covariance; this fixed weight is
-not tuned on test ranks.
+\eqref{eq:jet-covariance}.  For each dataset, $C$ is fitted on 4,096 training
+posterior means.  The Jacobian covariance is assigned four times the trace of
+the value covariance, fixed before test-rank evaluation.
 
 All 64 ranks are evaluated on 4,000 official-test posterior means.  We report
 $\widehat D_{\rm loc}$, the maximum generalized-eigenvalue length error on a
-fixed 1,536-point subset, and 6,000 local teacher-$W_2$ chord triplets.  The
-5\% crossing is selected and reported on this same finite subset, so it is a
-sampled threshold, not a held-out continuum certificate or a claim about the
-unknown true MNIST manifold.
+fixed 1,536-point subset, and 6,000 local teacher-$W_2$ chord triplets.  Rank
+selection and reporting use this same finite subset.  The crossings are
+therefore sampled thresholds, not held-out continuum certificates.
+
+\begin{table*}[t]
+  \centering
+  \small
+  \caption{Sampled 5\% local-geometry crossings.  ``Triplet'' is local
+  teacher-$W_2$ chord-order agreement, not class-label accuracy or intrinsic
+  geodesic accuracy.  A factorized head larger than the dense head falls back
+  to dense storage, hence $1.00\times$.}
+  \label{tab:realdata-crossings}
+  \resizebox{0.98\textwidth}{!}{\input{experiments/realdata_low_rank_table.tex}}
+\end{table*}
+
+On MNIST, ordinary SVD first passes at rank 60
+($4.944\%$; rank 59 gives $6.794\%$), while both covariance-aware methods pass
+at rank 12 ($4.196\%$ and $4.173\%$).  Rank 12 reduces the head from 50,960 to
+10,960 parameters ($4.65\times$) and the full decoder from 55,312 to 15,312
+($3.61\times$).  FashionMNIST independently reproduces the separation:
+ordinary SVD first passes at rank 63, while both weighted methods pass at rank
+13.  The value--Jacobian student has $3.359\%$ distortion and reduces the head
+to 11,808 parameters ($4.32\times$), or the decoder to 16,160
+($3.42\times$).  Their local chord-triplet agreements are 99.95\% and 100.00\%.
+
+The Jacobian term does not reduce the crossing rank relative to value weighting
+on either dataset.  It gives slightly more margin at the crossing, but it does
+not dominate at every aggressive rank: the objectives allocate limited rank
+differently.  The robust real-data conclusion is therefore that calibration
+covariance produces the large rank reduction, while the Jacobian component
+targets geometry within that weighted family.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=0.94\textwidth]{experiments/mnist_low_rank_compression.png}
-  \caption{MNIST head-compression frontier.  Covariance-aware SVD reaches the
-  sampled 5\% local-length threshold at rank 12; ordinary SVD requires rank 60,
-  where factorized storage is no smaller than the dense head.  Output error,
-  local teacher-$W_2$ chord agreement, and reconstruction PSNR show that value
-  fidelity and geometry are related but not interchangeable.}
-  \label{fig:mnist-frontier}
+  \includegraphics[width=0.96\textwidth]{experiments/mnist_low_rank_images.png}
+  \vspace{1mm}
+  \includegraphics[width=0.99\textwidth]{experiments/fashion_mnist_low_rank_images.png}
+  \caption{Official-test inputs, frozen-teacher reconstructions, and
+  value--Jacobian students immediately below and above each sampled 5\%
+  threshold.  MNIST uses ranks 11/12 and FashionMNIST uses 12/13.  The adjacent
+  images can look nearly identical while lying on opposite sides of a
+  derivative-defined geometric criterion.}
+  \label{fig:realdata-images}
+\end{figure*}
+
+\subsection{Straight Lines versus Numerical Intrinsic Paths}
+\label{sec:geodesic-visualization}
+
+We next make the preserved geometry visible.  Endpoints are posterior means,
+and the path remains inside a prespecified evaluation rectangle: coordinate-
+wise 0.5--99.5\% quantiles of the fixed 3,000-image official-test posterior-
+mean pool, with a 3\% margin.  This rectangle is a numerical trust region, not
+the support of a Gaussian posterior.  Endpoint pairs use different labels,
+central 5--95\% codes, reconstruction errors below the 75th percentile, and
+moderate Mahalanobis separation.
+
+For 49 knots with fixed endpoints, we minimize the midpoint discretization of
+the teacher pullback energy,
+\begin{equation}
+ \begin{aligned}
+ E_K(c)&=(K-1)\sum_{k=0}^{K-2}
+ \dot z_k^{\trans}G_T(\bar z_k)\dot z_k,\\
+ \dot z_k&=z_{k+1}-z_k,
+ &\bar z_k&=\frac{z_{k+1}+z_k}{2}.
+ \end{aligned}
+ \label{eq:discrete-geodesic-energy}
+\end{equation}
+Three initial paths are optimized for 700 deterministic Adam steps, and final
+length is recomputed separately by fine metric quadrature.  The displayed path
+is additionally resampled at equal teacher arc length.  We call the result a
+\emph{numerical geodesic candidate}: global optimality is not certified.  It
+is an intrinsic path constrained to the frozen decoder family, not an ambient
+Wasserstein displacement geodesic and not a path on the unknown true data
+manifold.
+
+We evaluate 100 fixed, randomly sampled, endpoint-disjoint pairs per dataset.
+The diagnostic pair in each figure is selected using only the straight path's
+decoded-step nonuniformity and chord excess, before computing its candidate.
+Table~\ref{tab:geodesics} reports conditional percentile pair-bootstrap
+intervals over 2,000 resamples; they measure endpoint-pair variation for one
+frozen teacher, not teacher-training or population uncertainty.  Across the
+200 reported teacher candidates, the relative 8-versus-16 subdivision length
+gap is below $2\times10^{-6}$, and none touches the evaluation-box boundary.
+On a fourfold densification of every path, the sampled minimum eigenvalues of
+$G_T$ are 3.29 (MNIST) and 4.49 (FashionMNIST), while the largest sampled
+condition numbers are 6.30 and 7.14.  This finite check supports, but does not
+certify over the continuum, the Riemannian interpretation.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.96\textwidth]{experiments/mnist_geodesic_interpolation.png}
+  \vspace{2mm}
+  \includegraphics[width=0.96\textwidth]{experiments/fashion_mnist_geodesic_interpolation.png}
+  \caption{Input endpoints and decoded interpolation sequences.  The first
+  decoded row uses an affine latent clock; the second uses the identical
+  straight route at constant teacher arc length; the third changes the route
+  to the numerical teacher-geodesic candidate; the last decodes those same
+  latent frames with the passing compressed student.  Top panels show the
+  latent routes and exact fixed-covariance Gaussian $W_2$ chords between
+  displayed frames.  Clipping to $[0,1]$ is for display only.}
+  \label{fig:realdata-geodesics}
 \end{figure*}
 
 \begin{table*}[t]
   \centering
   \small
-  \caption{MNIST results immediately around each sampled 5\% crossing, plus a
-  common aggressive rank-8 budget.  ``Triplet'' is local teacher-$W_2$ chord
-  agreement, not label accuracy or intrinsic geodesic accuracy.}
-  \label{tab:mnist}
-  \resizebox{0.98\textwidth}{!}{\input{experiments/mnist_low_rank_table.tex}}
+  \caption{Numerical intrinsic-path results over fixed endpoint pairs.  Straight
+  excess is $L_T(c_{\rm line})/L_T(\widehat\gamma_T)-1$.  Student path error
+  measures curve-length error for the passing rank-12/rank-13 student along
+  the same teacher path.  Intervals are conditional percentile pair-bootstrap
+  intervals for one frozen teacher.  All bracketed values are percentages.}
+  \label{tab:geodesics}
+  \resizebox{0.94\textwidth}{!}{\input{experiments/realdata_geodesic_table.tex}}
 \end{table*}
 
-Ordinary SVD first crosses 5\% at rank 60
-($\widehat D_{\rm loc}=4.944\%$; rank 59 gives 6.794\%).  Its dense fallback
-uses 50,960 head parameters, so there is effectively no head compression.
-Both covariance-aware methods cross at rank 12: 4.196\% for value weighting
-and 4.173\% for value--Jacobian weighting.  Rank 12 reduces the head from
-50,960 to 10,960 parameters ($4.65\times$) and the full decoder from 55,312
-to 15,312 ($3.61\times$).  The value--Jacobian student has teacher-output
-RMSE 0.00386 and 99.95\% local chord-triplet agreement.
-
-The Jacobian term does not move this particular 5\% crossing below rank 12;
-the main rank reduction there comes from data covariance.  Its distinct effect
-appears at the aggressive rank-8 budget.  Adding the Jacobian term reduces
-$\widehat D_{\rm loc}$ from 57.64\% to 26.24\% and increases chord-triplet
-agreement from 91.92\% to 94.23\%, even though output RMSE worsens from 0.0245
-to 0.0346.  This is direct evidence that optimizing reconstruction fidelity
-alone allocates rank differently from optimizing latent geometry.
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.93\textwidth]{experiments/mnist_low_rank_images.png}
-  \caption{Official-test inputs, frozen-teacher reconstructions, and
-  value--Jacobian students immediately below and above the sampled 5\%
-  threshold.  Rank 11 and rank 12 look almost identical, despite lying on
-  opposite sides of the geometric criterion.}
-  \label{fig:mnist-images}
-\end{figure*}
-
-\clearpage
+The median straight-line excess is 0.60\% on MNIST and 0.75\% on
+FashionMNIST, with maxima 10.90\% and 4.63\%.  The passing students preserve
+curve length along the same teacher candidates with median errors only 0.11\%
+and 0.10\%
+(maxima 0.36\% and 0.22\%).  In the displayed FashionMNIST pair, the teacher
+straight route has length 15.027 and the candidate has length 14.524, a 3.47\%
+reduction.  Uniform latent time has adjacent-frame $W_2$ coefficient of
+variation 0.110; arc-length reparameterization reduces it to 0.005, and the
+numerical candidate has 0.007.  Thus the plot separates a speed effect from a
+genuine route change.  The student row uses exactly the same latent codes as
+the teacher row.  A student-optimized candidate is computed only for the
+displayed pair and reported as a candidate-length audit in the detailed CSV;
+it is not part of the 100-pair statistic.
 
 \section{Discussion and Limitations}
 
@@ -236,10 +309,10 @@ from representing the same teacher behavior with fewer parameters.
 \paragraph{Certificates versus sampled tests.}
 Theorem~\ref{thm:stability} is a continuum statement when valid global bounds
 on $s$, $M_1$, and $\varepsilon_1$ are available.  The analytic image task has
-exact global quantities.  The neural sweep and MNIST replace suprema by finite
-sets and are labeled accordingly.  A covering argument, interval bounds, or a
-verified Lipschitz remainder is required before calling those curves global
-certificates.
+exact global quantities.  The neural sweep and both image datasets replace
+suprema by finite sets and are labeled accordingly.  A covering argument,
+interval bounds, or a verified Lipschitz remainder is required before calling
+those curves global certificates.
 
 \paragraph{Parameters, bits, and deployment.}
 An unrestricted real number can encode unbounded information, so universal
@@ -250,19 +323,27 @@ Jacobian perturbation to Theorem~\ref{thm:stability}.
 
 \paragraph{Teacher-relative geometry.}
 On real data, compression can preserve a frozen teacher; it cannot certify
-that the teacher recovered the true data manifold.  The MNIST VAE has one
-teacher seed, a deliberately restrictive two-dimensional code, and 13.19 dB
-teacher PSNR, so it is a transparent application rather than a state-of-the-art
-image benchmark.  Its fixed covariance makes $W_2$ the Euclidean mean-image
-special case; the warped-torus experiment covers learned, nonconstant standard
-deviations.  Full covariance would require Bures--Wasserstein geometry.
+that the teacher recovered the true data manifold.  Both VAEs have one teacher
+seed and a deliberately restrictive two-dimensional code; teacher PSNR is
+13.19 dB on MNIST and 14.78 dB on FashionMNIST.  They are transparent
+applications rather than state-of-the-art image models.  Fixed covariance
+makes $W_2$ the Euclidean mean-image special case; the warped-torus experiment
+covers learned, nonconstant standard deviations.  Full covariance would
+require Bures--Wasserstein geometry.
+
+\paragraph{Numerical paths.}
+The displayed paths are local multistart minimizers inside a coordinate-
+dependent evaluation rectangle.  Quadrature and boundary diagnostics rule out
+the simplest numerical failures but do not prove a global geodesic.  A grid
+initialization, knot-refinement study, rectangle-expansion sensitivity, and
+perceptual output metric would strengthen claims about interpolation quality.
 
 \paragraph{Scope.}
 We study distance and retrieval.  Curvature stability would require
 second-order control, and nonlinear variance heads would require constrained
-or nonlinear compression.  Stronger empirical claims need multiple teachers,
-an independent validation/test split for rank selection, a Jacobian-weight
-ablation, and datasets beyond MNIST.
+or nonlinear compression.  Stronger empirical claims need multiple teacher
+seeds, an independent validation/test split for rank selection, a
+Jacobian-weight ablation, and datasets beyond $28\times28$ grayscale images.
 
 \section{Conclusion}
 
@@ -274,10 +355,12 @@ accuracy, and solved fixed-trunk rank-constrained first-order distillation by
 covariance-whitened SVD.  The exact image task gives a proof-level answer:
 with 5\% output and distance tolerances, rank 23 and below are impossible,
 rank 24 is feasible, and the head is $12.61\times$ smaller.  A nonconstant-
-variance neural stress test and a sampled MNIST frontier then show how the same
-criterion can guide training and deployment.  The result is not a universal
-minimum neural network; it is a reproducible way to turn ``how small?'' into a
-mathematical constraint and an auditable accuracy boundary.
+variance neural stress test and sampled MNIST/FashionMNIST frontiers show how
+the same criterion guides training and deployment.  Input--output panels and
+straight-versus-intrinsic decoded sequences then expose what the preserved
+geometry does.  The result is not a universal minimum neural network; it is a
+reproducible way to turn ``how small?'' into a mathematical constraint and an
+auditable accuracy boundary.
 
 \section*{Reproducibility}
 
@@ -286,5 +369,5 @@ editions are regenerated with
 \begin{verbatim}
 make paper-all
 \end{verbatim}
-MNIST downloads and its learned teacher checkpoint are cached locally and are
-excluded from version control.
+Dataset downloads and the learned MNIST/FashionMNIST teacher checkpoints are
+cached locally and excluded from version control.

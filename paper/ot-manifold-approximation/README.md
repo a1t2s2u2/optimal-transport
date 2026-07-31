@@ -42,13 +42,21 @@ Every shared-trunk head of rank at most 23 has output RMS at least 5.2772%, so
 rank 24 is a proved minimum over the stated head family. Its factorized head
 has 31,888 parameters instead of 402,192, a 12.61x reduction.
 
-Two further experiments use the same threshold logic:
+Further experiments use the same threshold logic:
 
 - a diagonal-Gaussian warped torus with nonconstant variance compares
   output-only and output--Jacobian neural distillation;
-- an MNIST VAE compares ordinary, value-weighted, and value--Jacobian SVD of a
-  frozen decoder head. The covariance-aware methods cross the sampled 5%
-  boundary at rank 12; ordinary SVD requires rank 60.
+- MNIST and FashionMNIST VAEs compare ordinary, value-weighted, and
+  value--Jacobian SVD of frozen decoder heads. Covariance-aware methods cross
+  the sampled 5% boundaries at ranks 12 and 13; ordinary SVD requires ranks 60
+  and 63;
+- straight latent interpolation is compared with numerical intrinsic paths on
+  100 endpoint-disjoint pairs per dataset. Passing students preserve curve
+  length along the same teacher paths with median errors 0.11% and 0.10%.
+
+The paper includes an end-to-end architecture diagram, input/teacher/student
+reconstruction grids for both datasets, and decoded straight/geodesic image
+sequences.
 
 ## Reproduction
 
@@ -74,4 +82,5 @@ make paper-all
 The PDFs are written to `out/main.pdf` and `out/main-ja.pdf`. Raw frontiers
 are stored in `experiments/lowrank_torus_results.csv`,
 `experiments/distillation_results.csv`, and
-`experiments/mnist_low_rank_results.csv`.
+`experiments/{mnist,fashion_mnist}_low_rank_results.csv`. Numerical path
+audits are stored in `experiments/*_geodesic_{metrics,aggregate,summary}.csv`.

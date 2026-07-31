@@ -16,9 +16,11 @@ $P=O(\tau^{-d/(\nu-1)})$ という十分な幾何--容量則を得る。
 rank 24は出力誤差4.898\%、距離歪み4.555\%で合格する。headは
 $12.61\times$ 圧縮される。さらに非定数分散をもつ変形Gaussian torusでは、
 出力だけの蒸留は69,128パラメータでも5\%格子テストに不合格だが、
-出力--Jacobian蒸留は18,184パラメータで合格する。2次元MNIST VAEでは、
-共分散重み付きhead圧縮が通常SVDのrank 60に対してrank 12で標本5\%閾値を満たし、
-headを $4.65\times$ 圧縮して教師triplet一致率99.95\%を得る。
+出力--Jacobian蒸留は18,184パラメータで合格する。2次元MNIST VAEと
+FashionMNIST VAEでは、共分散重み付きhead圧縮が通常SVDのrank 60、63に対して
+rank 12、13で標本5\%閾値を満たし、headを $4.65\times$、$4.32\times$ 圧縮する。
+各データ100組の端点非重複対では、合格学生が同じ教師数値測地線候補に与える
+曲線長誤差は中央値0.11\%、0.10\%である。
 \end{abstract}
 
 \section{はじめに}
@@ -68,8 +70,19 @@ parameter--accuracy率を導き、有限bit仮定が必要な箇所を明示す�
   \item 固定trunkとrank制約付きheadに対し、出力・Jacobian同時蒸留を
   共分散白色化SVDで大域的に解く。特異値tailは定義した問題の厳密下限となる。
   \item 同じ事前指定5\%基準を、厳密Gaussian画像多様体、学習する変形Gaussian
-  torus、MNIST VAEの三段階で評価し、定理検証・最適化挙動・実データ適用を分ける。
+  torus、MNIST/FashionMNIST VAEの三段階で評価する。入力--出力一覧と
+  直線--測地線デコード列により、実データ上の判定を視覚的にも確認する。
 \end{enumerate}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.98\textwidth]{experiments/certified_distillation_architecture_ja.pdf}
+  \caption{モデル構造と1回限りの圧縮手順。encoderがposterior codeを与え、
+  教師と学生は滑らかな固定trunkを共有する。較正codeから値--Jacobian共分散を作り、
+  共分散白色化SVDを1回行ってrank-$r$ headを得る。出力と局所幾何が事前指定した
+  許容値をともに満たすときだけ配備する。}
+  \label{fig:architecture}
+\end{figure*}
 
 \section{関連研究}
 
@@ -91,14 +104,18 @@ Chenら\cite{chen2018}により発展した。Optimal Latent Transportはデコ�
 解析・利用する。本研究は圧縮時にその幾何がいつ壊れるかを扱う。Gaussian輸送の
 公式は古典的である\cite{givensshortt1984,takatsu2011}。
 
-実データ実験にはVAE\cite{kingma2014}とMNIST\cite{lecun1998}を用いる。対象は
-凍結教師の幾何であり、2次元VAEが手書き数字の未知の真の多様体を回復したとは
-主張しない。
+実データ実験にはVAE\cite{kingma2014}、MNIST\cite{lecun1998}、
+FashionMNIST\cite{xiao2017}を用いる。対象は凍結教師の幾何であり、2次元VAEが
+各データの未知の真の多様体を回復したとは主張しない。既存のdecoder引き戻し計量
+\cite{chen2018}にならい、潜在直線と数値的な内在経路候補も比較する。これは
+凍結decoder族内に制約された経路であり、ambient Wasserstein変位測地線ではない。
 
 高階Sobolevノルムにおけるニューラル近似理論は、滑らかな関数族に対する
 上界と下界を与える。符号化可能な重みではほぼ最適な微分近似率が得られ
 \cite{guhring2021}、Tanhネットワークにも高階の明示的評価がある
 \cite{deryck2021}。本研究はこれらを潜在距離とタスク精度へ転送する。
+
+\clearpage
 
 \section{Wasserstein幾何蒸留}
 \label{sec:problem}
