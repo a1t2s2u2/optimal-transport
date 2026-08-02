@@ -1,653 +1,520 @@
 \begin{abstract}
-確率的デコーダー（probabilistic decoder）の幾何は通常、そのヤコビ行列
-（Jacobian）から読み取られる。
-しかし、この方法ではブラックボックスデコーダーを扱えず、より根本的な逆問題
-（inverse problem）、すなわち「出力分布間の局所距離から潜在曲面そのものを
-決定できるか」という問いが残る。本論文は、明示的な凸多面体モデル
-（convex polyhedral model）のもとで
-この問いに肯定的な答えを与える。既知の球面型三角形分割上では、局所的な
-2-Wasserstein距離が区分的ユークリッド（piecewise-Euclidean; PL）計量の辺長を定め、
-同じ辺長から角欠損（angle defect）による厳密なPL曲率質量（curvature mass）が
-得られる。それらが同一の三角形複体をもつ未知の狭義凸実現
-（strictly convex realization）の辺であるとき、面の合同性（face congruence）と
-剛性（rigidity）により、その実現は剛体運動（rigid motion）を除いて
-$\mathbb R^3$ 内で同定される。デコーダーの
-微分も3次元ラベルも用いない。
+2次元潜在空間のプロットは、デコーダーが捉える幾何ではなく、
+エンコーダーが選んだ座標で描かれている。本論文では、この歪みを別の形で表現し直して
+可視化できる最小の設定を扱う。すなわち、2次元潜在領域の既知の三角形分割、
+デコードされた測度間の局所的な2-Wasserstein距離、および
+$\mathbb R^3$ 内の三角形曲面である。出力を、隠れた真の形状とはみなさない。
+出力は、デコーダーのWasserstein辺長が定める内在PL計量の3次元表現である。
 
-この復元過程のうち、計量復元と局所実現の部分を定量化する。形状正則性
-（shape regularity）のもとで、加法的な辺長
-誤差 $\varepsilon$ は頂点曲率質量を
-$O(d_{\max}\varepsilon/\ell_{\min})$、スケール $h$ の準一様
-（quasi-uniform）メッシュ上で面積正規化曲率を $O(\varepsilon/h^3)$ だけ摂動する。
-相対辺長誤差はすべての内在距離（intrinsic distance）を制御し、したがって
-Gromov--Hausdorff距離と
-Gromov--Wasserstein距離も制御する。剛性行列（rigidity matrix）の条件により、
-辺長誤差を剛体位置合わせ後の3次元頂点誤差へ局所的に変換でき、スペクトルギャップ
-条件により球面上の距離から座標へ戻す段階も制御できる。
-$s_{X_h}\gtrsim h^\beta$ を満たすメッシュ族では、得られるHausdorff誤差の
-トレードオフは $O(\varepsilon_hh^{-(\beta+1)}+h^2)$ である。制御された
-ベンチマークでは、全ランクかつ非可換なガウス共分散経路に単位球面を隠す。
-デコーダー平均だけを
-見ると球面は円板へ潰れる一方、局所Wasserstein距離はその計量全体を復元する。
-標準球面に対する一連の実験は、安定な大域形状復元と、ノイズ感度の高い点ごとの曲率推定を
-分離する。第2の辺長のみの実現実験は、最終段に球面制約を課さず、非球形楕円体からの
-標本の凸包を復元する。
+理論的な接続は二つの部分からなる。対角ガウスデコーダーでは、一様に形状正則な
+メッシュ族上で、辺上の $W_2$ が誘導するPL距離が、連続な引き戻し距離へ相対誤差
+$O(h)$ で収束する。さらに、任意の出力実現について、面ごとのアフィン写像の
+最小・最大特異値がすべての内在PL距離を評価し、頂点に接続する各面の角度変化が
+角欠損による曲率質量の変化を評価する。後者の監査量は入出力から計算でき、
+小誤差仮定を必要としない。検証済みの数値OT誤差 $\varepsilon$ が十分小さければ、
+この監査を理想的な辺上の $W_2$ 値まで拡張できる。この構成と有限事後監査は
+最適化手法に依存せず、デコーダーの微分、一定曲率、凸性、既知の3次元正解形状の
+いずれも必要としない。一方、ガウスメッシュ整合性の収束率では、これとは別に
+微分の上界・下界を仮定する。
+
+まず、Wasserstein幾何が、位置によって正と負に変化する曲率をもつ既知の曲面と
+厳密に一致する対角ガウスデコーダーを用いて、この構成を評価する。次に、MNIST上で
+2次元VAEを学習し、デコード画像を画素平面上の質量とみなして計算した、正則化なしの
+離散OTに基づき、数字3の領域を可視化する。図では、平坦な入力座標、デコード画像、
+計量に適合させた曲面、曲率、および最適化損失を、検証可能な一つのパイプラインとして示す。
 \end{abstract}
 
 \section{はじめに}
 
-平面地図は、それ自体では場所ごとの縮尺を保持しない。赤道付近と極付近で同じだけ
-地図上を動いても、実際の移動距離は異なりうる。しかし、十分な数の局所移動時間が
-分かれば、失われた縮尺、曲率、そして最終的には地球の形状を復元できる。本論文は、
-生成デコーダーに対する同様の問題を扱う。潜在コードを地図座標、その座標でデコード
-された確率分布を観測、局所的な最適輸送（optimal transport; OT）費用を測定された
-移動時間とみなす。
+潜在座標は地図上の座標に相当するが、デコーダーが生成する対象の変化量を
+測るとは限らない。平面の世界地図上で同じ距離だけ動いても、実際の移動距離が
+場所によって異なるように、VAEのプロット上の等しい二つの移動が、画像内の質量を
+大きく異なる量だけ動かすことがある。引き戻し幾何は、デコーダーを微分し、
+そのヤコビ行列からリーマン計量を定義することで、この違いを厳密に記述する
+\cite{arvanitidis2018,chen2018,roy2022}。そこから得られる計量テンソル、
+拡大率、測地線は有益だが、計量テンソルだけでは、まだ目に見える曲面にはならない。
 
-既存研究の多くは、微分可能なデコーダーから出発し、そのヤコビ行列を用いて周囲計量
-（ambient metric）を引き戻す（pullback）\cite{arvanitidis2018,chen2018,roy2022}。
-この構成は
-デコーダーが既知なら有用だが、有限個の距離クエリからどこまで幾何を決定できるかは
-明らかにしない。また、計量テンソルや曲率ヒートマップは、まだ復元された曲面では
-ないため、視覚的な出力にも曖昧さが残る。
-
-そこで、本論文は次の明示的な逆問題を設定する。
-
+そこで、本論文では意図的に次の限定された問いを考える。
 \begin{quote}
-三角形分割された潜在曲面（latent surface）と、その辺上でのみ観測された
-ノイズ付き $W_2$ 距離から、内在曲率と隠れた3次元曲面をどの精度で復元できるか。
+2次元潜在メッシュと、そのデコード出力間の局所Wasserstein距離が与えられたとき、
+それらの距離と可変曲率を、$\mathbb R^3$ 内の曲面としてどの程度忠実に表示できるか。
 \end{quote}
+ここで「表示」という語が本質的である。一般に、内在計量から3次元埋め込みは
+一意に定まらない。シートは、どの内在的な長さも変えずに折り曲げられるからである。
+反対に、任意のデコーダー誘導計量が3次元内に厳密な実現をもつとも限らない。
+そこで、正解形状が未知でも観測できる量、すなわち局所OT辺長の残差、内在距離の
+歪み、および角欠損曲率の歪みによって、表示の正しさを定義する。
 
-入出力は意図的に有限とする。$S^2$ と同相な閉三角形複体を
-$\mathcal T=(V,E,F)$ とする。共通の完備可分な基礎空間（ground space）を
-$(\mathcal Y,d_{\mathcal Y})$ とし、$W_2$ の基礎費用を $d_{\mathcal Y}^2$ とする。
-頂点 $i$ でデコーダーは $\mu_i\in\mathcal P_2(\mathcal Y)$ を返すが、推定器が受け取るのは
+本論文の構成は、次の有限量から無限小量へつながる関係を発展させたものである。
 \begin{equation}
- \mathcal O=
- \left(\mathcal T,
- \{\widehat\ell_{ij}:(i,j)\in E\}\right),
- \qquad
- \widehat\ell_{ij}\simeq W_2(\mu_i,\mu_j).
- \label{eq:observations}
+ \begin{aligned}
+ z&\longmapsto K_z
+ \longmapsto W_2(K_z,K_{z'})
+ \longmapsto \text{PL計量}\\
+ &\longmapsto \text{曲率}
+ \longmapsto \mathbb R^3\text{内の表示}.
+ \end{aligned}
+ \label{eq:paper-chain}
 \end{equation}
-のみである。$\mathbb R^3$ 内の正解点は評価時まで推定器に与えない。辺長から各面が
-ユークリッド三角形として定まり、完備なPL計量が得られる。復元に現れる面角、曲率、面積、
-内在距離はすべて、\eqref{eq:observations} だけの関数である。
-以下の有限同定・安定性結果が用いるのは $E$ だけである。後の標準球面可視化では、
-大域移動時間を近似するため3-hop局所問合せ集合
-$E_{\mathrm q}\supset E$ を追加するが、その大きさは依然として線形であり、これらの
-追加問合せは同一骨格定理には用いない。
-
-外在的な復元では、観測後に周囲空間内の目標を定義するのではなく、別途次の仮定を
-置く。
-
-\begin{definition}[同一骨格凸観測モデル（same-skeleton convex observation model）]
-\label{def:same-skeleton-model}
-境界複体がちょうど $\mathcal T$ である未知の非退化な凸単体的多面体
-（convex simplicial polyhedron）
-$X_*=(x_i)_{i\in V}\subset\mathbb R^3$ が存在し、
-\begin{equation}
- \ell_{ij}=W_2(\mu_i,\mu_j)=\norm{x_i-x_j}
- \qquad ((i,j)\in E).
- \label{eq:convex-observation-model}
-\end{equation}
-が成り立つ。すべての頂点が極点（extreme point）であり、すべての内二面角
-（interior dihedral angle）が $\pi$ 未満である。このような実現を狭義凸実現
-（strictly convex realization）と呼ぶ。測定値は上記の辺長を摂動したものである。
-複体と凸モデルクラスは既知だが、$X_*$ は未知である。
-\end{definition}
-
-定義~\ref{def:same-skeleton-model} がなくても、辺観測は妥当なPL代理対象
-$M_\ell$ を定めるが、既存の周囲曲面を復元するとは限らない。任意の端点間の
-$W_2$ は周囲空間内の弦であって、内在測地距離ではない。
-命題~\ref{prop:hidden-sphere} は、本論文のベンチマークについて
-\eqref{eq:convex-observation-model} が厳密に成立することを示す。
+ここで $K_z$ はデコーダーから構成される確率測度であり、「PL」は三角形複体上の
+区分的ユークリッド構造を意味する。最初の二つの矢印は、確率的デコーダーに対して
+構築されてきたWasserstein潜在幾何である。本論文の貢献は、これらの標準的な
+PL構成を、デコーダー誘導Wasserstein観測および連続なガウス整合性極限へ
+結びつけることにある。
 
 \paragraph{本論文の貢献}
 \begin{enumerate}
-  \item 局所的なデコーダー分布間距離から、デコーダーのヤコビ行列を評価せずに
-  PL潜在計量を定める\emph{Wasserstein移動時間復元}
-  （Wasserstein travel-time reconstruction）を定式化する。
-  \item 明示した同一骨格凸モデルのもとで、同定可能な三つの階層を接続する。
-  辺長は角欠損曲率質量を定め、合同な三角形面は厳密な凸実現を定め、さらに
-  非退化な剛性行列はその実現を局所的に安定にする。
-  \item 辺ノイズから曲率、すべての内在距離、GH/GW差、および位置合わせ後の
-  頂点誤差まで、明示的な摂動評価を与える。この評価は曲率のノイズ感度を示す。
-  メッシュスケール $h$ では、加法的長さ誤差が面積正規化後に
-  $\varepsilon/h^3$ へ増幅される。条件付き細分化の系により、剛性のスケーリングを
-  明示的な解像度--ノイズ要件へ変換する。
-  \item デコーダー平均には円板しか現れず、全ランクかつ非可換な共分散経路に欠落した高さを
-  保存する正解既知のベンチマークを導入する。ガウス分布の $W_2$ 距離が内接球面多面体の辺長を
-  厳密に復元するため、確率的観測モデルを厳密に検証できる。続く辺長のみの継続法実験
-  により、楕円体状凸多面体（ellipsoidal convex polyhedron）でも同一骨格段階を検証する。
+  \item 2次元三角形分割上の局所的なデコード測度間距離から、
+  \emph{Wasserstein潜在曲面}を直接定義する。この構成にはデコーダーの評価と
+  OT問題の求解が必要だが、デコーダーの微分は必要ない。
+  \item 滑らかな対角ガウスデコーダーについて、一様に形状正則なメッシュ族上で、
+  有限な辺上の $W_2$ が誘導するPL距離が、連続なWasserstein引き戻し距離へ
+  $O(h)$ で整合することを証明する。
+  \item PL写像に対する標準的な面ごとの歪み監査を、本設定へ適用する。特異値が
+  すべての内在距離を評価し、接続面の角度変化が曲率質量を評価する。さらに、
+  OT誤差 $\varepsilon$ が別途与えられれば、この監査を理想的な辺上の $W_2$ 値まで
+  拡張できる。
+  \item 厳密な混合曲率ガウス制御実験と、デコードされたインクの空間輸送に基づく
+  MNIST数字3の曲面という、視覚的に確認できる二つの実験を示す。後者で一つの数字だけを
+  用いるのは、10クラスすべてが一つの滑らかな多様体をなすという根拠のない仮定を
+  避けるためである。
 \end{enumerate}
 
-\paragraph{OTに関する主張の範囲}
-辺長が与えられた後の曲率、計量安定性、剛性に関する結果は、距離を入力とする主張であり、
-最適輸送に固有ではない。一方、制御モデルはガウス $W_2$ のBures部分を実際に用いる。
-共分散は全ランクで互いに非可換であり、生のFrobenius距離には
-\eqref{eq:covariance-frobenius-distortion} の位置依存歪みがある。ただし、これは設計された
-Wasserstein測地線であって、$W_2$ が唯一必要な距離であることの証明ではない。本論文が
-主張する貢献は、問い合わせ可能なデコーダー分布間計量からPL曲率と凸逆復元までを結ぶ
-一貫した定式化と保証であり、一般のグラフ実現法そのものの新規性ではない。
-
-本論文は、位相を推定せず、一般の内在計量が一意な非凸埋め込みをもつとも主張せず、
-MNISTに真の曲率が存在するとも主張しない。球面位相と凸性は仮定であり、滑らかな
-球面は制御された評価対象である。
+\paragraph{一文で表した主張}
+指定された潜在メッシュ上の局所的なデコーダー誘導Wasserstein距離から、監査可能な
+3次元PL表示を構成し、観測された辺上の $W_2$ 計量に対する歪みを事後評価する。
 
 \section{関連研究}
 
-\paragraph{潜在幾何（latent geometry）}
-決定論的および確率的生成モデルの引き戻し計量は、デコーダーの微分を用いて潜在長と
-測地線を定める\cite{arvanitidis2018,chen2018}。Optimal Latent Transportは、
-デコーダー分布間のWasserstein計量を引き戻す\cite{roy2022}。Syrotaらは、座標が
-同定不能であっても、深層潜在変数モデルの距離、角度、体積は同定可能となりうることを
-示した\cite{syrota2025}。これらの研究は、既知の微分可能モデルに対して幾何を構成、
-または利用する。本論文の対象は異なり、疎かつ微分を用いないWasserstein距離観測からの
-復元精度を扱う。
+\paragraph{生成モデルの幾何}
+Latent Space Oddityとその後の研究は、観測空間の計量を決定論的または確率的な
+デコーダーを通じて引き戻し、測地線と体積歪みを計算する
+\cite{arvanitidis2018,chen2018,arvanitidis2022}。Optimal Latent Transportは、
+代わりにデコーダー分布からWasserstein幾何を引き戻す\cite{roy2022}。
+同定可能性に関する研究は、潜在座標自体が同定不能な場合でも、計量構造が意味を
+もちうることを示している\cite{syrota2025}。これらの研究は、
+式~\eqref{eq:paper-chain} の計量を動機づける。本論文の目的は異なり、ヤコビ行列を
+評価することなく、有限個の点から3次元可視化を構成し、その曲率を事後監査する。
 
-\paragraph{距離から多様体へ（distances to manifolds）}
-QiuとDaiは、射影された球面、タクシー移動時間、MNISTを含む例に対して、ノイズ付き
-内在距離応答から滑らかなリーマン計量（Riemannian metric）とその微分を推定する
-\cite{qiu2023}。
-Feffermanらは、ノイズ付き内在距離から有界幾何（bounded geometry）をもつ抽象多様体を
-有限標本保証付きで
-復元する\cite{fefferman2020}。したがって、距離から計量を復元すること自体は本論文の
-新規性ではない。本論文は観測を局所的なデコーダー $W_2$ クエリに限定し、内在計量から
-離散曲率、さらに凸な外在実現（extrinsic realization）まで進む。Isomapも局所距離を
-連結するが、その目的は
-曲率や凸曲面の同定ではなく、ユークリッド座標表現を得ることである
-\cite{tenenbaum2000}。
-Hammらは、Wasserstein空間内の標本化された部分多様体について、漸近的なGWの意味で
-内在計量と接空間を復元する\cite{hamm2025}。これに対し本論文は有限PL対象を採用し、
-その曲率質量と同定可能な凸実現までを扱う。
+\paragraph{距離からの学習}
+Isomapはグラフ距離から低次元座標を復元する\cite{tenenbaum2000}。より直接的には、
+Wassmapはユークリッド非類似度を点対Wasserstein距離へ置き換え、画像多様体の
+近似等長座標を求めるとともに、特定の変換族について復元を証明する
+\cite{hamm2023wassmap}。LOT Wassmapは線形化された輸送によってこの構成を高速化し、
+得られる埋め込み近似を制御する\cite{cloninger2025}。QiuとDaiは、ノイズを含む
+内在距離の応答からリーマン計量を推定し、その応用例にMNISTを含めている
+\cite{qiu2023}。Feffermanらは、ノイズを含む内在距離から抽象多様体を復元するための
+有限標本保証を与えた\cite{fefferman2020}。Hammらは、外在Wasserstein距離から、
+Wasserstein空間の部分多様体を計量測度の意味で漸近的に復元できることを示した
+\cite{hamm2025}。本論文は、新しい一般的な多様体学習アルゴリズムを主張するものでは
+ない。構造をもたない点群から多様体座標を推定するのではなく、観測をデコード測度に
+限定し、指定された2次元メッシュを保持する。出力は可変曲率PL曲面であり、保証は
+出力曲面の歪みに対する厳密な事後監査である。未知の標本パラメータや位相を復元する
+という主張ではない。
 
-\paragraph{ユークリッド距離幾何（Euclidean distance geometry）}
-不完全な距離集合からユークリッド座標を復元する問題は古典的な距離幾何であり、
-グラフ剛性、行列補完、センサ位置推定を含む\cite{liberti2014}。本論文の辺長のみの
-実現もこの問題の一例であり、新しい一般グラフ実現法ではない。相違は、その前段の観測と
-保証の連鎖にある。すなわち、局所的なデコーダー分布間距離からPL計量と曲率を定めた後、
-明示した凸モデルのもとで外在実現へ進む。
+\paragraph{区分的アフィンなメッシュ歪み}
+面ごとのヤコビ行列の特異値は、三角形メッシュのパラメータ化において歪みを測定し、
+制約するための標準的な道具である\cite{lipman2012}。本論文はこの確立された記述を
+用いるのであって、新しいメッシュ写像定理を主張するものではない。本論文の貢献は、
+これをデコーダー誘導Wasserstein辺幾何へ結びつけ、連続なガウス引き戻し極限と合成し、
+得られる監査を角欠損曲率とともに報告することにある。
 
-\paragraph{多面体幾何と形状比較（polyhedral geometry and shape comparison）}
-Alexandrovの定理は、内在PL計量によって凸多面体を特徴づける。BobenkoとIzmestievは
-その構成的証明を与えた\cite{alexandrov2005,bobenko2008}。角欠損はPL曲面の内在曲率
-測度である。滑らかなガウス曲率（Gaussian curvature）を近似するにはメッシュに
-仮定が必要であり、任意の
-三角形分割上で点ごとに整合的とは限らない\cite{gawlik2020,hartig2021}。そこで本論文は、
-まず厳密なPL対象に対する有限ノイズ定理を述べ、滑らかな球面に対する誤差は別に報告する。
-Gromov--Wasserstein距離は、測度保存等長写像（measure-preserving isometry）を除いて
-距離測度空間を比較する
-\cite{memoli2011}。既知の頂点対応を用いれば、その距離歪みから、より単純な上界も得られる。
+\paragraph{離散OTと曲率}
+離散カントロヴィッチ輸送は、画素格子上の質量とみなした画像間の自然な距離を与える
+\cite{peyre2019}。本論文ではPOTを通じて正則化なしの線形計画法ソルバーを用いるため
+\cite{flamary2021}、報告するMNIST距離にはエントロピー正則化によるバイアスがない。
+角欠損はPL曲面の内在曲率質量である。角欠損が滑らかなガウス曲率へ収束するには
+メッシュ条件が必要であり、任意の三角形分割上で点ごとに信頼できるとは限らない
+\cite{gawlik2020,hartig2021}。したがって、本論文の監査は、まず有限PL曲率質量を
+扱う。面積による正規化は、それが要求するより強いノイズスケーリングを明示した
+うえでのみ扱う。
 
-\section{Wasserstein辺幾何}
-\label{sec:problem}
+\section{潜在メッシュ上のWasserstein幾何}
+\label{sec:setup}
 
-各面 $f=(i,j,k)\in F$ について、正の長さ
-$\ell_{ij},\ell_{jk},\ell_{ki}$ が狭義三角不等式を満たすとする。得られる
-ユークリッド三角形を
-等しい辺に沿って貼り合わせると、PL計量空間
-$M_\ell=(\mathcal T,d_\ell)$ が定まる。この対象は内在的であり、その定義には
-周囲ユークリッド空間内の座標を一切用いない。
+$\cZ\subset\mathbb R^2$ を潜在領域とし、
+\begin{equation}
+ K:\cZ\longrightarrow\cP_2(\mathcal Y),\qquad z\longmapsto K_z,
+ \label{eq:decoder-measure-map}
+\end{equation}
+とする。ここで $(\mathcal Y,d_{\mathcal Y})$ は完備可分な基礎空間である。
+この写像は確率的デコーダーの条件付き分布でもよく、デコードされた対象から
+明示的に構成した確率測度でもよい。MNISTでは後者を用い、正規化したグレースケール
+強度を画素位置に置かれた質量とみなす。この二つの解釈を混同しない。
 
-$i$ を含む面における頂点 $i$ の角は、余弦定理から
+デコーダーは、次の擬距離を誘導する。
+\begin{equation}
+ d_K(z,z'):=W_2(K_z,K_{z'}).
+ \label{eq:decoder-pseudometric}
+\end{equation}
+$K$ が単射なら、これは距離になる。以下では単射性を必要としない。ただし、
+非退化な三角形を作るため、長さが零となる辺は除外する必要がある。
+
+\subsection{連続的な引き戻し計量との関係}
+
+各成分が正の $\sigma(z)$ をもつ対角ガウスデコーダー
+\begin{equation}
+ K_z=\mathcal N\!\left(m(z),\diag(\sigma(z)^2)\right),
+ \qquad F(z)=(m(z),\sigma(z)),
+ \label{eq:diagonal-gaussian-decoder}
+\end{equation}
+に対し、ガウス輸送の公式から\cite{givensshortt1984,takatsu2011}、
+\begin{equation}
+ W_2(K_z,K_{z'})=\norm{F(z)-F(z')}.
+ \label{eq:gaussian-chord}
+\end{equation}
+を得る。$F$ が滑らかなはめ込みなら、その引き戻し計量は
+$G(z)=J_F(z)^{\trans}J_F(z)$ であり、
+\begin{equation}
+ W_2(K_z,K_{z+h})^2
+ =h^{\trans}G(z)h+o(\norm h^2).
+ \label{eq:local-w2-expansion}
+\end{equation}
+が成り立つ。したがって、局所的な $W_2$ 問合せは、ヤコビ行列から計算される計量と
+同じ計量の有限観測である。後述のPL事後監査は、ガウス性も微分可能性も必要としない。
+式~\eqref{eq:local-w2-expansion} は、十分に局所的なWasserstein弦長が適切な観測と
+なる理由を説明するためだけに用いる。
+
+ガウスの場合には、連続対象と有限対象を結ぶ精密な結果も得られる。
+$\Omega\subset\mathbb R^2$ をコンパクトかつ連結な多角形領域とし、
+式~\eqref{eq:diagonal-gaussian-decoder} の写像 $F$ が、$\Omega$ の近傍から
+$\mathbb R^{2n}$ への $C^2$ 写像へ拡張できると仮定する。その引き戻し距離を $d_G$ とする。
+$\Omega$ の整合的な三角形分割族 $\{\mathcal T_h\}_{h\downarrow0}$ を考え、
+形状正則性定数は一様に有界、パラメータ空間における最大直径は $h$ とする。
+$F_h$ を、$\mathcal T_h$ 上の $F$ の節点区分的アフィン補間とする。
+
+\begin{proposition}[ガウスメッシュの整合性]
+\label{prop:gaussian-mesh-consistency}
+\begin{equation}
+ \inf_{z\in\Omega}\sigma_{\min}(J_F(z))\ge m>0,
+ \qquad
+ \sup_{z\in\Omega}\norm{D^2F(z)}\le H
+ \label{eq:gaussian-consistency-assumptions}
+\end{equation}
+を仮定する。各メッシュ辺 $(i,j)$ に対し、$\ell_{h,ij}$ をWasserstein弦長
+$W_2(K_{z_i},K_{z_j})$ とする。一様な形状正則性の上界のみに依存する定数 $C_I$ が
+存在し、$\eta_h:=C_IHh/m<1$ なら、これらの辺長は非退化な三角形を構成する。
+それらを貼り合わせた抽象PL複体を $M_{\ell_h}$ とし、頂点ラベルと面ごとの重心座標を
+保つPL同相写像を $\iota_h:\Omega\to M_{\ell_h}$ とする。このとき、すべての
+$p,q\in\Omega$ に対して
+\begin{equation}
+ (1-\eta_h)d_G(p,q)
+ \le d_{\ell_h}(\iota_hp,\iota_hq)
+ \le(1+\eta_h)d_G(p,q)
+ \label{eq:gaussian-mesh-consistency}
+\end{equation}
+が成り立つ。
+\end{proposition}
+
+\begin{proof}
+形状正則な基準三角形へ写した後にTaylor展開を用いると、各面のほとんど至る所で、
+標準的な節点補間評価\cite{ciarlet1978}
+$\norm{D F_h-D F}\le C_IHh$ を得る。したがって、任意の接ベクトル $v$ について
+\begin{equation}
+ \abs{\norm{D F_hv}-\norm{D Fv}}
+ \le C_IHh\norm v
+ \le\eta_h\norm{D Fv}
+\end{equation}
+が成り立つ。逆三角不等式からも
+$\norm{D F_hv}\ge(m-C_IHh)\norm v>0$ を得るため、すべてのアフィン面像は
+非退化である。式~\eqref{eq:gaussian-chord} により、その辺長は厳密に $\ell_h$ である。
+したがって、各抽象PL面は $F_h$ による対応するアフィン像と等長であり、
+$\iota_h\circ\gamma$ のPL長は
+$\int\norm{D F_h(\gamma(t))\dot\gamma(t)}\,dt$ となる。表示した各点での不等式を、
+パラメータ空間内のすべての可長曲線に沿って積分し、下限を取れば、
+式~\eqref{eq:gaussian-mesh-consistency} を得る。
+\end{proof}
+
+$F$ と $F_h$ のいずれにも大域的な単射性は必要ない。比較対象は、交点を近道として
+含む周囲空間内の像ではなく、抽象的に貼り合わせたPL計量だからである。
+
+さらに、同じ抽象メッシュ上の表示辺長割当て $\widetilde\ell$ も非退化な面をもつとする。
+後述の定義において $\widehat\ell$ を $\ell_h$ に置き換えて $s_-,s_+$ を計算し、
+重心座標を保つPL同相写像を
+$\Psi_h:M_{\ell_h}\to M_{\widetilde\ell}$、
+$\Phi_h=\Psi_h\circ\iota_h$ と置く。このとき、すべての $p,q\in\Omega$ に対して
+\begin{equation}
+ \begin{aligned}
+ s_-(1-\eta_h)d_G(p,q)
+ &\le d_{\widetilde\ell}(\Phi_hp,\Phi_hq)\\
+ &\le s_+(1+\eta_h)d_G(p,q)
+ \end{aligned}
+ \label{eq:end-to-end-gaussian-display}
+\end{equation}
+が成り立つ。したがって、表示された計量の列が $d_G$ へ収束するには、測定された
+面ごとの係数も1へ近づく必要がある。ここでは、最適化手法に関する保証は主張しない。
+また、この距離の結果だけから、点ごとの曲率に関する同様の結論は得られない。
+角欠損が滑らかなガウス曲率へ収束するには、関連研究で述べた追加のメッシュ条件が必要である。
+さらに、$\eta_h$ は微分の上界・下界 $m,H$ を必要とする事前係数であり、
+$(s_-,s_+,\Delta_i)$ と異なり、観測辺長と表示辺長だけからは計算できない。
+この連続整合性命題は、対角ガウスに固有のユークリッド表現を利用している。
+離散画像を用いるMNIST写像や、一般のWasserstein値写像へそのまま適用できるわけではない。
+
+\subsection{有限入力とPL曲率}
+
+$\mathcal T=(V,E,F)$ を、境界をもつ場合も許したコンパクトな2次元多様体の、
+有限かつ連結な三角形分割とし、各頂点に $z_i\in\cZ$ と
+$K_i:=K_{z_i}$ を対応させる。未知の厳密な辺長と、その数値的な観測値を
+\begin{equation}
+ \ell_{ij}^{*}=W_2(K_i,K_j),
+ \qquad \widehat\ell_{ij}\simeq\ell_{ij}^{*}
+ \quad ((i,j)\in E).
+ \label{eq:true-observed-lengths}
+\end{equation}
+とする。任意の正の辺長割当て $\ell$ について、各面を構成する三つの辺長が
+狭義三角不等式を満たせば、対応するユークリッド三角形を貼り合わせることにより、
+周囲空間内の座標を選ぶことなく、内在PL計量
+$M_\ell=(\mathcal T,d_\ell)$ が定まる。$\ell^*$ はこの条件を満たすと仮定し、
+観測辺長と表示辺長が有効かどうかは後で監査する。
+
+この構成で直接用いるWasserstein距離は、メッシュ辺上のものだけである。一般に、
+隣接しない頂点における $d_{\ell^*}(i,j)$ は、直接計算した
+$W_2(K_i,K_j)$ とも、連続なデコーダー引き戻し計量の測地距離とも一致しない。
+式~\eqref{eq:local-w2-expansion} は局所近似を動機づける。
+命題~\ref{prop:gaussian-mesh-consistency} は、滑らかな対角ガウスはめ込みについて、
+そのような細分化結果を一つ与える。一般のWasserstein値デコーダーに対する同様の
+主張には、標本化と正則性に関する追加仮定が必要である。以下の有限監査が対象とするのは、
+ここで定義した、辺上の $W_2$ が誘導するPL計量そのものである。
+
+$f=(i,j,k)$ における頂点 $i$ の角は、余弦定理から
 \begin{equation}
  \theta_i^{jk}(\ell)
  =\arccos\!\left(
  \frac{\ell_{ij}^2+\ell_{ik}^2-\ell_{jk}^2}
  {2\ell_{ij}\ell_{ik}}
  \right).
- \label{eq:cosine-angle}
+ \label{eq:finite-angle}
 \end{equation}
-と計算できる。内部頂点における厳密なPL曲率質量と、その重心面積密度
-（barycentric-area density）は
+と定まる。内部頂点の曲率質量は
+\begin{equation}
+ \kappa_i(\ell)=2\pi-\sum_{f\ni i}\theta_{i,f}(\ell).
+ \label{eq:finite-curvature}
+\end{equation}
+である。境界頂点では、$2\pi$ を $\pi$ に置き換える。そこで得られる量は
+ガウス曲率ではなく、境界の測地曲率質量である。主要実験では内部頂点を報告する。
+重心頂点面積 $A_i=\frac13\sum_{f\ni i}A_f$ を用いれば、曲率密度
+$\mathcal K_i=\kappa_i/A_i$ も定義できるが、有限量として主要なのは $\kappa_i$ である。
+
+\section{監査可能な3次元表示}
+\label{sec:certificate}
+
+$Q\supseteq E$ を可視化のために問い合わせる局所点対の集合とし、すべての
+$(i,j)\in Q$ について $\widehat\ell_{ij}>0$ とする。
+$x_i\in\mathbb R^3$ からなる座標 $X=(x_i)_{i\in V}$ を、次の無次元な局所ストレスの
+最小化によって構成する。
+\begin{equation}
+ \mathcal L_Q(X)
+ =\frac1{|Q|}\sum_{(i,j)\in Q}
+ \left(
+  \frac{\norm{x_i-x_j}-\widehat\ell_{ij}}
+  {\widehat\ell_{ij}}
+ \right)^2
+ +\lambda\mathcal R_{\mathrm{display}}(X).
+ \label{eq:display-objective}
+\end{equation}
+任意項 $\mathcal R_{\mathrm{display}}$ は、視覚的に滑らかな解の枝を選択するためのもので、
+命題には現れない。独立した曲率損失は必要ない。各面の三つの辺長が一致すれば、
+すべての面角と角欠損もすでに一致するからである。
+
+表示された辺長を $\widetilde\ell_{ij}=\norm{x_i-x_j}$ とし、
 \begin{align}
- \kappa_i(\ell)
- &=2\pi-\sum_{f\ni i}\theta_{i,f}(\ell),
- \label{eq:angle-defect}\\
- A_i(\ell)
- &=\frac13\sum_{f\ni i}A_f(\ell),
- &K_i(\ell)&=\frac{\kappa_i(\ell)}{A_i(\ell)}.
- \label{eq:discrete-density}
+ \varepsilon
+ &=\max_{e\in E}\abs{\widehat\ell_e-\ell_e^*},
+ \label{eq:ot-error}\\
+ \delta
+ &=\max_{e\in E}\abs{\widetilde\ell_e-\widehat\ell_e}.
+ \label{eq:display-error}
 \end{align}
-である。$\kappa_i$ はラジアン（radian）単位の積分曲率質量であって、点ごとの
-ガウス曲率ではない。
-正規化量 $K_i$ は滑らかな曲面との比較に有用だが、選択した頂点面積にも依存し、
-任意のメッシュ上で点ごとの整合性をもつとは限らない。任意の閉球面三角形分割では、
-ユークリッド三角形の内角和とオイラー（Euler）の公式から
+と定義する。第1項は、固定した測度 $K_i$ に対する数値的なOT近似誤差を表す。
+第2項は可視化後に観測できる。三角不等式から、誤差分解の全体は
 \begin{equation}
- \sum_{i\in V}\kappa_i=4\pi
- \label{eq:discrete-gauss-bonnet}
+ \max_{e\in E}\abs{\widetilde\ell_e-\ell_e^*}
+ \le\varepsilon+\delta.
+ \label{eq:edge-error-decomposition}
 \end{equation}
-が成り立つ。
+となる。
 
-\subsection{ガウス型不確実性に隠れた球面}
-
-次の構成が、実験で用いる制御された例である。また、平均だけに基づく距離では
-不十分である理由も明確にする。
-
-\begin{proposition}[非可換共分散に高さを隠すWasserstein恒等式]
-\label{prop:hidden-sphere}
-$R>0$ と $k\in(0,1)$ を固定し、
+スカラー $\delta$ は有用だが、必要以上に悲観的な評価となる。より鋭い保証も、有限で
+直接計算できる。ラベルを固定した面 $f=(i,j,k)$ と、有効な任意の辺長割当て $\ell$ に対し、
 \begin{equation}
- B=\begin{pmatrix}1&0\\0&2\end{pmatrix},\qquad
- H=k\begin{pmatrix}0&1\\1&0\end{pmatrix},\qquad
- \lambda=\frac{4R^2}{3k^2}
- \label{eq:hidden-decoder}
+ P_f(\ell)=
+ \begin{pmatrix}
+  \ell_{ij} & a_f(\ell)\\
+  0 & b_f(\ell)
+ \end{pmatrix},
+ \quad
+ \begin{aligned}
+ a_f(\ell)&=\frac{\ell_{ij}^2+\ell_{ik}^2-\ell_{jk}^2}
+ {2\ell_{ij}},\\
+ b_f(\ell)&=\sqrt{\ell_{ik}^2-a_f(\ell)^2}
+ \end{aligned}
+ \label{eq:canonical-triangle}
 \end{equation}
-とする。$|x_3|\le R$ を満たす $x=(x_1,x_2,x_3)$ に対し、
+と置く。この行列の列ベクトルは、頂点 $i$ から伸びる二辺を、標準化した
+ユークリッド三角形内に配置する。面ごとのアフィン歪みと、その大域的な最小・最大値を
 \begin{equation}
  \begin{aligned}
-  t_x&=\frac{x_3+R}{2R}, &m_x&=(x_1,x_2),\\
-  C_x&=\lambda(I_2+t_xH)B(I_2+t_xH)
+ T_f&=P_f(\widetilde\ell)P_f(\widehat\ell)^{-1},\\
+ s_-&:=\min_{f\in F}\sigma_{\min}(T_f),\\
+ s_+&:=\max_{f\in F}\sigma_{\max}(T_f).
  \end{aligned}
- \label{eq:hidden-covariance-path}
+ \label{eq:face-distortion}
 \end{equation}
-と置き、$\mu_x=\mathcal N(m_x,C_x)$ とする。すべての $C_x$ は正定値であり、
-このスラブ内の任意の $x,y$ に対して、ガウスBures共分散距離 $d_{\mathrm B}$ は
+と定義する。ラベルを固定した各三角形の平面上の配置を変えても、$T_f$ の左右に
+直交行列が掛かるだけなので、その特異値は変わらない。各頂点では、角度変化の相殺を
+用いない上界を
+\begin{equation}
+ \Delta_i:=\sum_{f\ni i}
+ \abs{\theta_{i,f}(\widetilde\ell)-
+       \theta_{i,f}(\widehat\ell)}
+ \label{eq:posterior-only-certificate}
+\end{equation}
+と定義する。
+
+\begin{proposition}[固定PL実現の事後歪み]
+\label{prop:pl-certificate}
+$\widehat\ell$ と $\widetilde\ell$ の両方が、すべての面で狭義三角不等式を満たすとする。
+対応する面の内部で、頂点ラベルと重心座標を保つPL同相写像を
+$\Phi:M_{\widehat\ell}\to M_{\widetilde\ell}$ とする。このとき
+$0<s_-\le s_+<\infty$ であり、抽象的に貼り合わせた複体内のすべての $p,q$ に対して
+\begin{equation}
+ s_-d_{\widehat\ell}(p,q)
+ \le d_{\widetilde\ell}(\Phi p,\Phi q)
+ \le s_+d_{\widehat\ell}(p,q)
+ \label{eq:distance-certificate}
+\end{equation}
+が成り立つ。また、すべての内部頂点で
+\begin{equation}
+ \abs{\kappa_i(\widetilde\ell)-\kappa_i(\widehat\ell)}
+ \le \Delta_i
+ \label{eq:curvature-certificate}
+\end{equation}
+を満たす。境界頂点では、両辺を境界の測地曲率質量として解釈すれば、同じ曲率不等式が
+成り立つ。
+\end{proposition}
+
+\begin{proof}
+非退化性により、すべての $T_f$ は可逆である。各面では、その特異値が任意の接ベクトルの
+長さの変化を評価する。この評価を任意の可長曲線へ面ごとに適用し、曲線について下限を
+取る。$\Phi$ は同相写像なので、逆像となるすべての曲線にも同じ議論を適用すれば、
+式~\eqref{eq:distance-certificate} の両側を得る。曲率差では、内部の $2\pi$、または
+境界の $\pi$ が相殺する。接続する各面の角度変化に三角不等式を適用すれば、
+式~\eqref{eq:curvature-certificate} を得る。
+\end{proof}
+
+この命題は、小誤差仮定も形状正則性の仮定も必要としない。退化に近い面があれば、
+小さな $s_-$、大きな $s_+$、または大きな $\Delta_i$ として現れる。ここでの距離は、
+抽象PL複体の距離である。表示された三角形が $\mathbb R^3$ 内で自己交差しても、その交点が、
+抽象複体上で無関係な面どうしを結ぶ近道になることはない。
+
+計算した辺長を理想的なWasserstein値へ結びつけるため、真の三角形と観測三角形の辺長が
+$[\ell_{\min},\ell_{\max}]$ に含まれ、すべての角が $\alpha_0>0$ 以上であり、
+\(
+\eta_\varepsilon:=\varepsilon/\ell_{\min}
+\le\eta_0(\ell_{\max}/\ell_{\min},\alpha_0)
+\)
+を満たすと仮定する。三角形の角とグラム行列は辺長に滑らかに依存するため、これらの
+一様な上界・下界だけに依存する定数 $C_\theta,C_g$ が存在する。頂点 $i$ に接続する
+面の数を $d_i$ とすると、
+\begin{equation}
+ \abs{\kappa_i(\widetilde\ell)-\kappa_i(\ell^*)}
+ \le \Delta_i+C_\theta d_i\eta_\varepsilon
+ \label{eq:ideal-curvature-certificate}
+\end{equation}
+が成り立つ。また、対応する重心座標写像
+$\Phi^*:M_{\ell^*}\to M_{\widetilde\ell}$ と、すべての
+$p,q\in M_{\ell^*}$ について、
 \begin{equation}
  \begin{aligned}
- W_2^2(\mu_x,\mu_y)
- &=\norm{m_x-m_y}^2+d_{\mathrm B}^2(C_x,C_y)\\
- &=\norm{x-y}^2.
+ s_-(1-C_g\eta_\varepsilon)d_{\ell^*}(p,q)
+ &\le d_{\widetilde\ell}(\Phi^*p,\Phi^*q)\\
+ &\le s_+(1+C_g\eta_\varepsilon)d_{\ell^*}(p,q)
  \end{aligned}
- \label{eq:hidden-identity}
+ \label{eq:ideal-distance-certificate}
 \end{equation}
-が成り立つ。$x_3\ne y_3$ なら $C_xC_y\ne C_yC_x$ である。$S_R^2$ 上では、平均写像は
-円板となり、同じ $(x_1,x_2)$ をもつ北半球と南半球の点を同一視するが、
-Wasserstein観測はそれらを区別する。
-\end{proposition}
+を得る。ここで $\eta_0$ は、下側の係数が正となるように選ぶ。したがって、厳密な
+事後量 $(s_-,s_+,\Delta_i)$ は計算されたOT幾何を保証し、検証済みのOT誤差上界
+$\varepsilon$ があれば、その保証を理想的な辺上の $W_2$ 幾何まで拡張できる。
+外向き丸めを用いない浮動小数点計算の値は、形式的な区間保証ではなく、これらの
+理論的評価に対する計算上の診断値として報告する。
 
-\begin{proof}
-$A_t=I_2+tH$ および $L_t=\sqrt\lambda A_tB^{1/2}$ と置けば
-$C_t=L_tL_t^\trans$ である。$A_s$ と $A_t$ は $H$ の可換な正定値多項式なので、
-$L_s^\trans L_t$ は正定値である。したがってガウスBures距離に対する直交Procrustes公式では
-恒等変換が選ばれ、\cite{givensshortt1984,takatsu2011}
+単一の残差による評価と比較するため、真の三角形、観測三角形、表示三角形が、同じ
+一様な形状正則クラスに属し、$r:=\varepsilon+\delta$ が十分に小さいとする。
+同じ摂動評価により、式~\eqref{eq:ideal-curvature-certificate}--
+\eqref{eq:ideal-distance-certificate} は
 \begin{equation}
  \begin{aligned}
- d_{\mathrm B}^2(C_s,C_t)
- &=\norm{L_s-L_t}_F^2\\
- &=3\lambda k^2(s-t)^2
- =4R^2(s-t)^2
+ \abs{\widetilde\kappa_i-\kappa_i^*}
+ &\le C_\theta d_i\frac{r}{\ell_{\min}},\\
+ (1-C_g r/\ell_{\min})d_{\ell^*}(p,q)
+ &\le d_{\widetilde\ell}(\Phi^*p,\Phi^*q)\\
+ &\le(1+C_g r/\ell_{\min})d_{\ell^*}(p,q)
  \end{aligned}
- \label{eq:bures-height-identity}
+ \label{eq:residual-simplification}
 \end{equation}
-を得る。$s=t_x$、$t=t_y$ を代入すると
-$d_{\mathrm B}(C_x,C_y)=|x_3-y_3|$ となり、\eqref{eq:hidden-identity} が従う。
-$t_x\in[0,1]$ と $k<1$ から正定値性も分かる。直接計算により
-\[
- C_sC_t-C_tC_s
- =3\lambda^2k(s-t)(1+k^2st)
- \begin{pmatrix}0&1\\-1&0\end{pmatrix}
-\]
-であり、$s\ne t$ なら非零である。一方、生の共分散座標は
+へ簡約される。
+
+スケール $h$ の準一様メッシュで次数が有界なら、残差による簡約は
 \begin{equation}
- \norm{C_s-C_t}_F
- =\lambda k|s-t|\sqrt{18+5k^2(s+t)^2}
- \label{eq:covariance-frobenius-distortion}
+ \abs{\widetilde\kappa_i-\kappa_i^*}
+ =O\!\left(\frac{\varepsilon+\delta}{h}\right)
+ \label{eq:mass-scaling}
 \end{equation}
-を満たすので、そのFrobenius距離を一つの定数で再尺度化しても高さ計量は復元できない。
-\end{proof}
-
-球面上の2点間の大円距離を $d\in[0,\pi R]$ とすると、
-\eqref{eq:hidden-identity} のWasserstein距離は弦長
+となる。真の重心面積と表示された重心面積を、それぞれ $A_i^*$ と
+$\widetilde A_i$ と書く。形状正則性と $r=O(h)$ から
+$A_i^*,\widetilde A_i\asymp h^2$ および
+$\abs{\widetilde A_i-A_i^*}=O(hr)$ を得る。また、次数の有界性から
+$\abs{\kappa_i^*}=O(1)$ である。二つの商の差を分解すると、最悪の場合には、
+より強いスケーリング
 \begin{equation}
- W_2(\mu_x,\mu_y)=2R\sin\!\left(\frac{d}{2R}\right),
- \qquad
- 0\le d-W_2\le \frac{d^3}{24R^2}.
- \label{eq:chord-arc}
+ \abs{\widetilde{\mathcal K}_i-\mathcal K_i^*}
+ =O\!\left(\frac{\varepsilon+\delta}{h^3}\right)
+ \label{eq:density-scaling}
 \end{equation}
-である。したがって、遠方の2点に対する単一の $W_2$ クエリは球面内部を近道する。
-局所クエリを連結すれば、メッシュ細分化に伴ってこの近道は解消される。このため、
-観測グラフは全点対ではなく局所辺から構成する。
+を得る。したがって、敵対的な固定相対辺ノイズのもとでは、細分化しても距離歪みの
+次数は変わらない一方、平滑化していない点ごとの曲率ヒートマップは悪化しうる。
+本論文で主要な有限量は曲率質量である。
 
-\section{何が復元可能か}
-\label{sec:theory}
+\subsection{Wasserstein距離は3次元に収まるか}
 
-厳密な同定可能性（identifiability）とノイズ下での安定性を分けて論じる。最初の結果は
-古典的だが、「曲面を復元する」という表現に欠けていた条件を与える。
-
-\begin{theorem}[厳密な同一骨格同定]
-\label{thm:convex-identification}
-定義~\ref{def:same-skeleton-model} のもとで、厳密な局所Wasserstein辺長は、
-ユークリッド群（Euclidean group）の作用を除いて $X_*$ を決定する。
-\end{theorem}
-
-\begin{proof}
-三辺相等（side--side--side; SSS）条件により、対応する各三角形面は合同である。
-したがってコーシー（Cauchy）の剛性定理により、対応面が合同な二つの凸多面体は合同となる
-\cite{alexandrov2005,pak2006}。
-\end{proof}
-
-この定理は、同一複体をもつ凸な正解対象の存在を条件とし、凸性や組合せ構造そのものを
-推定するわけではない。Alexandrovの定理は、適切な正曲率PL計量に対して、これとは異なる
-純粋に内在的な実現結果を与える\cite{bobenko2008}。しかし、その実現における自然な
-多面体辺は、指定した入力グラフの辺と一致するとは限らない。したがって本論文では、
-Alexandrovの定理と後述する辺剛性評価を合成しない。
-
-\subsection{辺ノイズから曲率ノイズへ}
-
-$d_i$ を頂点 $i$ に接続する面の数とし、$d_{\max}=\max_i d_i$ と置く。次の形状正則
-クラスを用いる。真の三角形と
-摂動後の三角形はいずれも、辺長が
-$[\ell_{\min}/2,2\ell_{\max}]$ に含まれ、すべての角が $\alpha_0>0$ 以上であるとする。
-また $\rho=\ell_{\max}/\ell_{\min}$ と置く。これらの条件により、任意に退化へ近づく
-三角形を除外する。
-
-\begin{theorem}[離散曲率の安定性]
-\label{thm:curvature-noise}
-次を仮定する。
+すべての点対距離が利用できる場合、3次元実現可能性には厳密かつ有限の判定法がある。
+完全距離行列 $D_{ij}=W_2(K_i,K_j)$ は対称で、対角成分が零であるとする。また、
+$H=I-|V|^{-1}\mathbf1\mathbf1^{\trans}$ とし、
 \begin{equation}
- \max_{e\in E}\abs{\widehat\ell_e-\ell_e}
- \le\varepsilon.
- \label{eq:additive-noise}
+ B=-\frac12H(D\circ D)H
+ \label{eq:centered-distance-gram}
 \end{equation}
-上記の形状正則性のもとで、定数
-$C_\theta=C_\theta(\rho,\alpha_0)$ および
-$C_A=C_A(\rho,\alpha_0)$ が存在し、
-\begin{align}
- \abs{\widehat\kappa_i-\kappa_i}
- &\le C_\theta d_i
-       \frac{\varepsilon}{\ell_{\min}},
- \label{eq:defect-stability}\\
- \abs{\widehat A_i-A_i}
- &\le C_A d_i\ell_{\max}\varepsilon.
- \label{eq:area-stability}
-\end{align}
-を満たす。\eqref{eq:area-stability} の右辺が $A_i/2$ 以下なら、
-\begin{equation}
- \abs{\widehat K_i-K_i}
- \le
- \frac{2C_\theta d_i\varepsilon}
-      {A_i\ell_{\min}}
- +\frac{2\abs{\kappa_i}C_A d_i\ell_{\max}\varepsilon}
-      {A_i^2}.
- \label{eq:density-stability}
-\end{equation}
-特に、
-\begin{equation}
- C_\theta d_{\max}\frac{\varepsilon}{\ell_{\min}}
- <\kappa_{\min}:=\min_i\kappa_i.
- \label{eq:convexity-noise}
-\end{equation}
-なら、正の角欠損質量は摂動後も保たれる。
-\end{theorem}
+と置く。ここで $\circ$ は要素ごとの積を表す。
 
-\begin{proof}
-辺長三つ組からなるコンパクトな形状正則集合上で余弦定理
-\eqref{eq:cosine-angle} を微分すると、各角度勾配の $\ell_1$ ノルムは
-$C_\theta/\ell_{\min}$ で抑えられる。$1/\sin\theta$ の因子は $\alpha_0$ により
-制御される。平均値の定理を用い、頂点に接続する面について和を取れば
-\eqref{eq:defect-stability} を得る。同じコンパクト集合上でヘロン（Heron）の公式は滑らかで、
-その勾配は $C_A\ell_{\max}$ で抑えられるため、\eqref{eq:area-stability} が従う。
-最後に、
-\[
- \frac{\widehat\kappa_i}{\widehat A_i}
- -\frac{\kappa_i}{A_i}
- =\frac{\widehat\kappa_i-\kappa_i}{\widehat A_i}
- +\kappa_i\frac{A_i-\widehat A_i}{A_i\widehat A_i},
-\]
-および $\widehat A_i\ge A_i/2$ から \eqref{eq:density-stability} を得る。
-条件~\eqref{eq:convexity-noise} により、摂動後の角欠損はすべて正となる。
-\end{proof}
-
-辺スケールが $h$、次数が有界、かつ $A_i\asymp h^2$ である準一様メッシュでは、
-定理~\ref{thm:curvature-noise} は
-\begin{equation}
- \abs{\widehat\kappa_i-\kappa_i}
- =O(\varepsilon/h),
- \qquad
- \abs{\widehat K_i-K_i}=O(\varepsilon/h^3).
- \label{eq:noise-amplification}
-\end{equation}
-となる。前者は厳密なPL曲率測度である。後者は縮小する面積で除すため、必然的に
-ノイズ感度が高い。式~\eqref{eq:noise-amplification} は摂動評価であって、任意の
-メッシュ上で滑らかな曲率へ点ごとに収束するとの主張ではない。辺誤差が相対的で
-$\varepsilon\asymp\eta h$ なら、二つのオーダーはそれぞれ $O(\eta)$ と
-$O(\eta/h^2)$ になる。さらに、メッシュ族が $\kappa_i\asymp h^2$ という意味で
-曲率整合的（curvature-consistent）であるとき、十分小さい定数を伴う
-$\eta=O(h^2)$ は、すべての角欠損の符号を保つための十分条件となる。
-したがって、固定した相対ノイズは、細分化のもとで大域距離を保存しながら点ごとの
-曲率情報を失わせうる。実験では両方の効果を報告する。
-
-\subsection{内在誤差と外在誤差}
-
-相対長さノイズからは、スケールに依存しない保証が得られる。対応する真の面と摂動後の
-面の各組には、重心座標（barycentric coordinates）を保つ標準的なアフィン写像がある。
-形状正則性により、その特異値は安定となる。
-
-\begin{theorem}[距離および距離空間の安定性]
-\label{thm:distance-stability}
-形状正則性と、十分小さい $\eta$ に対する
-\begin{equation}
- \max_{e\in E}
- \abs{\widehat\ell_e/\ell_e-1}\le\eta
- \label{eq:relative-noise}
-\end{equation}
-を仮定する。このとき $C_g=C_g(\rho,\alpha_0)$ が存在し、面ごとのアフィン対応
-$\Phi:M_\ell\to M_{\widehat\ell}$ は
-\begin{equation}
- (1-C_g\eta)d_\ell(p,q)
- \le d_{\widehat\ell}(\Phi p,\Phi q)
- \le(1+C_g\eta)d_\ell(p,q).
- \label{eq:all-distance-stability}
-\end{equation}
-を満たす。したがって、
-\begin{equation}
- d_{\mathrm{GH}}(M_\ell,M_{\widehat\ell})
- \le\frac{C_g\eta}{2}\diam(M_\ell).
- \label{eq:gh-bound}
-\end{equation}
-さらに、固定された一様頂点重みを含む $M_\ell$ 上の任意の確率測度 $\nu$ に対し、
-$p\mapsto(p,\Phi p)$ が誘導するカップリング（coupling）から
-\begin{equation}
- GW_2\!\left((M_\ell,d_\ell,\nu),
- (M_{\widehat\ell},d_{\widehat\ell},\Phi_\#\nu)\right)
- \le C_g\eta\diam(M_\ell).
- \label{eq:gw-bound}
-\end{equation}
-を得る。
-\end{theorem}
-
-\begin{proof}[証明の概略]
-ユークリッド三角形のグラム行列（Gram matrix）は、三つの辺長の二乗の滑らかな関数である。
-したがって、
-コンパクトな形状正則クラス上では、\eqref{eq:relative-noise} によりアフィン写像の
-特異値を $1\pm C_g\eta$ で抑えられる。各可長曲線を面ごとに写し、長さ評価を積分して
-下限を取ることで \eqref{eq:all-distance-stability} を得る。$\Phi$ のグラフは、歪みが
-高々 $C_g\eta\diam(M_\ell)$ の対応（correspondence）であるため、
-\eqref{eq:gh-bound} が従う。$GW_2$ の定義で誘導された測度カップリングを用いれば、
-最後の主張を得る\cite{memoli2011}。
-\end{proof}
-
-式~\eqref{eq:gw-bound} では、意図的に二つの計量上で同じ抽象確率測度を用いている。
-各計量について別々に正規化した面積測度は、互いの厳密な押し出し（pushforward）では
-ない。これらの自然な測度を比較するには、密度摂動に由来する追加項が必要である。
-
-球面実験にはもう一つの写像がある。近似された全球距離をスペクトル分解によって
-3次元座標へ変換する写像である。次の命題は、この最終段の安定性だけを切り出す。
-
-\begin{proposition}[球面スペクトル復元の局所安定性]
-\label{prop:spherical-spectral-stability}
-$X\in\R^{n\times3}$ の各行が $x_i\in S_R^2$ を満たすとし、$G=XX^\trans$、
-$\gamma:=\lambda_3(G)>0$ とする。このとき $\lambda_4(G)=0$ である。さらに
-\begin{equation}
- D_{ij}=R\arccos\!\left(\frac{x_i^\trans x_j}{R^2}\right)
- \label{eq:true-spherical-distance-matrix}
-\end{equation}
-と定める。対称行列 $\widehat D$ と $\widehat R>0$ に対し、
-$\widehat G_{ij}=\widehat R^2\cos(\widehat D_{ij}/\widehat R)$ を作る。
-その最大の三つの固有値を残し、得られる半正定値行列を
-$\widehat Y\widehat Y^\trans$ と因数分解し、行ごとに
-$\widehat x_i=\widehat R\widehat y_i/\norm{\widehat y_i}$ とする。
-$(D,R)$ の近傍と有限な $C_{\mathrm{sph}}=C_{\mathrm{sph}}(X)$ が存在し、その近傍では
-残した固有値は正で全行は非零となり、
-\begin{equation}
- \min_{Q\in O(3)}\norm{\widehat X-XQ}_F
- \le C_{\mathrm{sph}}\left(
- \norm{\widehat D-D}_F+\sqrt n\abs{\widehat R-R}
- \right)
- \label{eq:spherical-spectral-stability}
-\end{equation}
-が成り立つ。上位三つの固有値相互の分離は仮定しない。
-\end{proposition}
-
-\begin{proof}[証明の概略]
-$B(D,r)_{ij}=r^2\cos(D_{ij}/r)$ と置く。$d$ と $r$ に関するスカラー微分はそれぞれ
-$-r\sin(d/r)$ と $2r\cos(d/r)+d\sin(d/r)$ であり、$(D,R)$ の近傍で有界である。
-したがって $B$ は \eqref{eq:spherical-spectral-stability} のノルムに関して局所Lipschitz
-である。Weylの不等式と $\gamma>0$ により、上位3次元固有空間は残りのスペクトルから
-分離される。この孤立固有値クラスタへの射影はRieszスペクトル射影であり、ギャップが
-開いている限り滑らかに変化するので、ランク3の正のスペクトル切断も局所Lipschitzとなる。
-完全性のため、二つの列フルランク因子を直交Procrustesで位置合わせする。得られる水平
-スライス上で、$Y\mapsto YY^\trans$ の $X$ における微分は
-$E\mapsto XE^\trans+EX^\trans$ である。$X$ の特異ベクトル基底における直接のブロック計算
-から、その利得は下から $\sqrt{2}\,\sigma_3(X)=\sqrt{2\gamma}$ で抑えられ、二次剰余
-$EE^\trans$ は局所的に吸収できる。したがってグラム因子の摂動評価として、局所的に
-\[
- \min_{Q\in O(3)}\norm{\widehat Y-XQ}_F
- \le \frac{C_0}{\sqrt\gamma}\norm{\widehat G-G}_F
-\]
-を得る。この評価は上位固有空間内部で固有値が重複しても成立する。最後に、
-$\norm x=R$ と $y\ne0$ に対して
-$\|\widehat R y/\|y\|-x\|\le|\widehat R-R|+2\|y-x\|$ である。
-これを行ごとに適用すれば結論を得る。
-\end{proof}
-
-この命題は $\widehat D$ と $\widehat R$ を構成した後から始まる。制御ベンチマークで用いる
-グラフ最短路、直径補正、半径推定そのものを保証するものではない。
-
-定理~\ref{thm:distance-stability} は内在的な結果である。復元した3次元頂点を測るため、
-$X\in\mathbb R^{|V|\times3}$ を狭義凸な三角形分割実現とし、その辺長写像を
-$\mathcal L(X)=(\norm{X_i-X_j})_{(i,j)\in E}$ とする。このヤコビ行列が剛性行列
-$R_X$ である。6次元の無限小ユークリッド運動の空間を
-$\mathcal Z_X=\ker R_X$ と書き、座標上のFrobeniusノルムに関して
-\begin{equation}
- s_X=\sigma_{\min}\!\left(R_X\big|_{\mathcal Z_X^\perp}\right)
- \label{eq:rigidity-singular-value}
-\end{equation}
-と定める。
-
-\begin{proposition}[局所的な同一骨格3次元安定性]
-\label{prop:rigidity}
-狭義凸三角形分割実現では $s_X>0$ である。$\mathcal L(X)$ に十分近い任意の辺長ベクトル
-$\widehat\ell$ は、ユークリッド運動を除いて一意な、複体 $\mathcal T$ をもつ近傍の狭義凸実現
-$\widehat X$ をもち、
-\begin{equation}
- \min_{Q\in O(3),\,b\in\R^3}
- \norm{\widehat X-(XQ+\mathbf 1b^{\trans})}_{F}
- \le
- \frac{2}{s_X}
- \norm{\widehat\ell-\mathcal L(X)}_2.
- \label{eq:rigidity-bound}
-\end{equation}
-を満たす。辺誤差が0へ近づくとき、係数 $2$ は $1+o(1)$ に置き換えられる。
-\end{proposition}
-
-\begin{proof}[証明の概略]
-凸三角形分割多面体は無限小剛性（infinitesimal rigidity）をもつ\cite{pak2006}。
-球面三角形分割では $|E|=3|V|-6$ である。したがって、$X$ を通り
-$\mathcal Z_X^\perp$ に接するアフィンスライスを取ると、$\mathcal L$ の微分行列は正方かつ
-非特異となり、その最小特異値は $s_X$ である。逆関数定理により局所実現と一意性を得る。
-近傍を十分縮小すれば逆写像の微分ノルムを $2/s_X$ 以下にでき、狭義凸性も保たれる。
-剛体運動について最小化すればスライス上の変位は増えないので、
-\eqref{eq:rigidity-bound} が従う。この結果は局所的であり、制約のない最適化法がこの
-分枝を見つけるとは主張しない。
-\end{proof}
-
-定理~\ref{thm:convex-identification} と命題~\ref{prop:rigidity} を合わせると、厳密な
-大域同定と局所的な数値条件を区別できる。定数 $s_X$ は各実現に固有であり、細分化の
-もとで0から一様に離れているとは仮定しない。
-
-\subsection{滑らかな球面は別の近似対象である}
-
-辺長を厳密に復元して同定されるのは有限多面体であり、有限解像度での滑らかな球面では
-ない。残る誤差は、観測ノイズとは独立に評価できる。
-
-\begin{proposition}[内接球面多面体による近似]
-\label{prop:inscribed-sphere}
-頂点 $x_i$ が半径 $R$ の球面上にあり、その凸包 $P_h$ が原点を含み、
-$\mathcal T$ がその単体的境界であるとする。もし
-\begin{equation}
- h=\max_{(i,j)\in E}d_{S_R^2}(x_i,x_j)<\frac{\pi R}{2},
- \label{eq:spherical-mesh-size}
-\end{equation}
-なら、命題~\ref{prop:hidden-sphere} の厳密な観測は $\partial P_h$ の内在計量を復元する。
-さらに、
-\begin{equation}
- d_{\mathrm H}(\partial P_h,S_R^2)
- \le R\bigl(1-\cos(h/R)\bigr)
- \le\frac{h^2}{2R}.
- \label{eq:inscribed-sphere-bound}
-\end{equation}
-が成り立つ。ノイズ付き辺長が命題~\ref{prop:rigidity} の局所近傍にとどまるとき、
-$\widehat P$ を頂点 $\widehat X$ をもつ凸多面体とする。このとき、剛体位置合わせ後に
-\begin{equation}
- d_{\mathrm H}(\partial\widehat P,S_R^2)
- \le
- \frac{2}{s_X}\norm{\widehat\ell-\ell}_2
- +R\bigl(1-\cos(h/R)\bigr)
- \label{eq:noisy-sphere-decomposition}
-\end{equation}
-を得る。本命題のHausdorff距離はすべて周囲ユークリッド距離を用いる。
+\begin{proposition}[有限3次元実現可能性検定]
+\label{prop:dimension-test}
+完全距離行列 $D$ が $\mathbb R^q$ 内の点によって厳密に実現されるための必要十分条件は、
+$B$ が半正定値で $\rank(B)\le q$ を満たすことである。この条件が成り立つとき、
+最小のユークリッド周囲空間の次元は $\rank(B)$ である。特に、$\mathbb R^3$ 内で
+厳密に可視化できるための必要十分条件は、$B\succeq0$ かつ $\rank(B)\le3$ である。
 \end{proposition}
 
 \begin{proof}
-式~\eqref{eq:hidden-identity} により、復元される各面は $P_h$ の対応面と合同になる。
-定理~\ref{thm:convex-identification} は同一複体をもつ凸実現を同定する。$x_i$ を含む面について
-$u=x_i/R$ と置く。この面の各頂点 $x_j$ は
-$u^\trans x_j\ge R\cos(h/R)$ を満たす。したがって、面内の任意の凸結合 $q$ について
-\[
- \norm q\ge u^\trans q\ge R\cos(h/R).
-\]
-また、$q$ は凸包に属するので $\norm q\le R$ である。したがって放射射影
-（radial projection）が $q$ を動かす距離は高々 $R(1-\cos(h/R))$ である。
-逆に、原点が $P_h$ に含まれるため、原点から出る任意の半直線は
-$\partial P_h$ と交わる。その交点に同じ評価を適用すると、逆向きの有向Hausdorff評価も得られる。
-初等不等式 $1-\cos t\le t^2/2$ から \eqref{eq:inscribed-sphere-bound} を得る。
-命題~\ref{prop:rigidity} と三角不等式により \eqref{eq:noisy-sphere-decomposition} が従う。
+$D$ を実現する中心化された点を行にもつ行列を $Y$ とする。二乗距離を展開すると
+$B=YY^{\trans}$ となるので、上述の半正定値性と階数条件を得る。逆に、正の固有値分解を
+用いて $B=YY^{\trans}$ と分解する。二重中心化の展開を逆にたどると、
+$D_{ij}^2=\norm{Y_i-Y_j}^2$ が復元される。グラム行列の階数は、中心化された点の
+線形包の次元に等しい\cite{liberti2014}。
 \end{proof}
 
-特に、一様誤差の仮定
-$\max_e|\widehat\ell_e-\ell_e|\le\varepsilon$ から
-\begin{equation}
- d_{\mathrm H}(\partial\widehat P,S_R^2)
- \le
- \frac{2\sqrt{|E|}}{s_X}\,\varepsilon
- +\frac{h^2}{2R}.
- \label{eq:end-to-end-sphere}
-\end{equation}
-を得る。式~\eqref{eq:end-to-end-sphere} は、「復元した多様体がどれだけ近いか」という
-問いに対する本論文の最も単純な答えである。一方の項が局所Wasserstein観測誤差を、
-もう一方が有限メッシュ近似誤差を測る。
+一般のWasserstein計量が、このユークリッド性検定を通過するとは限らず、本論文の
+局所実験も通過を仮定しない。$B$ が不定値なら、どのユークリッド次元でも完全距離行列を
+実現できない。$B\succeq0$ だが $\rank(B)>3$ なら、ユークリッド次元の上限が明確に
+不足している。この検定は、局所辺だけからは実行できない。非零の局所残差には、最適化や
+滑らかさに関する規約の影響も含まれうる。一方、辺残差が零でも、未観測の完全距離行列が
+ユークリッド的であるとは限らない。制御ガウスデコーダーは、構成上、完全距離行列に
+対するこの検定を通過するが、MNISTにはこの検定を適用しない。
 
-\begin{corollary}[条件付き解像度--ノイズのトレードオフ]
-\label{cor:conditional-refinement}
-固定された球面上の準一様メッシュ族について、$|E_h|\le C_E h^{-2}$ および
-$s_{X_h}\ge c_s h^\beta$（$\beta\ge0$）を仮定する。各解像度で復元が
-命題~\ref{prop:rigidity} の局所分枝内にとどまるとし、その凸多面体を
-$\widehat P_h$ と書く。このとき
-\begin{equation}
- d_{\mathrm H}(\partial\widehat P_h,S_R^2)
- \le \frac{2\sqrt{C_E}}{c_s}\,
- \varepsilon_hh^{-(\beta+1)}+\frac{h^2}{2R}
- \label{eq:conditional-refinement-rate}
-\end{equation}
-が成り立つ。したがって $\varepsilon_h=o(h^{\beta+1})$ は整合性の十分条件であり、
-$\varepsilon_h=O(h^{\beta+3})$ なら $O(h^2)$ の離散化率を保つ。Hausdorff誤差
-$\delta$ を目標とするには、$h\asymp\delta^{1/2}$、
-$\varepsilon_h=O(\delta^{(\beta+3)/2})$ とすれば十分であり、必要な辺数は
-$O(\delta^{-1})$ である。同様に、与えられた小さな $\varepsilon$ に対して二項を
-釣り合わせると、誤差は $O(\varepsilon^{2/(\beta+3)})$ となる。
-\end{corollary}
+\subsection{3次元表示から同定できないもの}
 
-\begin{proof}
-$\sqrt{|E_h|}\le\sqrt{C_E}h^{-1}$ と
-$s_{X_h}^{-1}\le c_s^{-1}h^{-\beta}$ を \eqref{eq:end-to-end-sphere} に代入する。
-残りの主張は二項を比較、または釣り合わせれば従う。
-\end{proof}
-
-式~\eqref{eq:noisy-sphere-decomposition} の二項は意味が異なる。第一項は有限PL対象に
-対する観測・復元誤差、第二項はその対象と滑らかな球面の間の離散化誤差である。
-本論文では両者を分けて報告し、ノイズが0の多面体を厳密な滑らかな球面として提示しない。
-剛性定数は固定された多面体に局所的な量であり、細分化のもとで一様に保たれるとは
-主張しない。
+$\varepsilon=\delta=0$ であっても、同定されるのは内在幾何だけである。一辺を共有する
+二つの三角形は、すべての面の辺長、角、内在距離、曲率質量を保ったまま、その辺の周りに
+回転できる。したがって、滑らかさや高さ関数という制約が選ぶのは一つの表現であって、
+新しい幾何学的証拠ではない。MNISTについて、一意な外在形状も、真のデータ多様体曲率も
+主張しない。本論文では、明示的に定義したデコード画像測度写像 $K$ を可視化し、
+その有限OT幾何が3次元にどの程度適合するかを正確に報告する。
