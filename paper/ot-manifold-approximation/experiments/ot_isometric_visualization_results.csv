@@ -1,0 +1,3 @@
+method,vertex_count,face_count,characteristic_metric_deviation,edge_relative_rms,two_hop_relative_rms,isometry_loss,bending_loss,minimum_generalized_stretch,maximum_generalized_stretch,metric_smoothing_strength,raw_metric_log_roughness,smoothed_metric_log_roughness
+original_latent,240,447,0.43482663279108297,0.2552237220081901,0.4333043403316375,0.13035279053504462,0.0,nan,nan,3.0,0.6525095110981268,0.017094070512653308
+ot_corrected,240,447,0.08829160212367611,0.16944835487675722,0.47223695568662594,0.0071587047408506015,0.003941097201480316,0.7669959206631405,1.1837941335344346,3.0,0.6525095110981268,0.017094070512653308
