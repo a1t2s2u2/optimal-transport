@@ -1,79 +1,57 @@
-# Geometry-preserving decoder distillation experiments
+# Auditable Wasserstein latent visualization
 
-## Exact low-rank image task
-
-`lowrank_torus.py` constructs a high-dimensional Gaussian image decoder whose
-Wasserstein pullback metric, rank-constrained distillation frontier, and every
-intrinsic distance are known in closed form.
-
-Run it with:
+The current paper uses one reproducible pipeline:
 
 ```sh
-uv run --python 3.12 \
-  paper/ot-manifold-approximation/experiments/lowrank_torus.py
+make paper-visualization-experiment
 ```
 
-It generates:
+`curvature_certified_visualization.py` takes a triangulated two-dimensional
+latent region, constructs local 2-Wasserstein distances between decoded
+measures, and fits both a two-dimensional display and triangular surfaces in
+three dimensions.  It produces bilingual figures, CSV diagnostics, and LaTeX
+tables in this directory.
 
-- `lowrank_torus_results.csv`: every tested rank and exact distortion;
-- `lowrank_torus_table.tex` and `_ja.tex`: paper tables;
-- `lowrank_torus.png` and `_ja.png`: the exact 5% pass/fail boundary.
+The script contains two evaluations.
 
-The task uses `T=128`, `a_j=1/j`, a 512-dimensional Fourier trunk, and a
-784-dimensional mean-image head. With both output and distance tolerances set
-to 5%, rank 20 fails (`E0=6.2788%`, distance `5.4485%`) and rank 24 passes
-(`E0=4.8980%`, distance `4.5555%`). The rank-23 optimal output RMS lower bound
-is `5.2772%`, proving rank 24 minimal among all shared-trunk linear heads.
+1. **Controlled Gaussian decoder.**  Its Wasserstein edge lengths are exactly
+   the chord lengths of a known graph surface with spatially varying positive
+   and negative curvature.  This tests recovery against a visible answer.
+2. **MNIST VAE.**  A two-dimensional VAE is trained on 30,000 images.  Decoded
+   digit-3-region images are pooled to 14 by 14, normalized as masses on the
+   pixel plane, and compared by unregularized discrete Kantorovich OT.  There is no
+   ground-truth 3D MNIST surface: the reported quantities are local distance
+   residual, held-out distance error, facewise bi-Lipschitz factors, PL
+   curvature-mass bounds, and folding diagnostics.
 
-## Neural width sweep
+The main MNIST surface is selected from a declared stress--bending sweep using
+adjacent-face normal consistency and a face nondegeneracy threshold.  A free
+2D low-stress reference is reported because lower planar stress can hide collapsed or
+reversed faces.  The unregularized free-3D solution is also reported because
+very low stress can hide an origami-like folded display.
 
-`geometry_distillation.py` distills an analytic Gaussian teacher into smooth
-MLP students with different widths and compares output-only against
-Jacobian-aware distillation. It reports the theorem's bound and observed local
-and pairwise distortion on the same scale. Its `delta_cert` column is a
-finite-grid plug-in certificate on the declared 48-by-48 grid; a continuum
-certificate additionally needs a validated covering/Lipschitz remainder.
+MNIST downloads and the trained checkpoint are stored in `.cache/`, which is
+ignored by Git.  If the checkpoint is absent, the current script trains it
+before running the visualization.
 
-## MNIST and FashionMNIST VAE head compression
+## Main outputs
 
-`mnist_low_rank_geometry.py --dataset {mnist,fashion-mnist}` trains or reloads
-a dataset-specific two-dimensional smooth Gaussian VAE, freezes its decoder
-trunk, and compares ordinary SVD, value-weighted SVD, and value--Jacobian SVD.
-It generates dataset-prefixed CSVs, LaTeX tables, training plots, and
-English/Japanese input--teacher--student image grids. Downloads and checkpoints
-are stored in `.cache/` and ignored by git.
+- `curvature_certified_control.{png,pdf}`: controlled input, target, output,
+  and alignment;
+- `curvature_certified_mnist.{png,pdf}`: flat and smooth-3D displays with
+  linked real and decoded images;
+- `curvature_certified_diagnostics.{png,pdf}`: optimization, smoothness sweep,
+  query stress, folding, and curvature diagnostics;
+- `curvature_certified_visualization_results.csv`: numerical audit trail;
+- `curvature_certified_visualization_history.csv`: selected-run optimization
+  history (all initialization scores are printed during reproduction);
+- `curvature_certified_visualization_table.tex` and
+  `curvature_certified_visualization_certificate_table.tex`: paper tables.
 
-The 5% frontier is a maximum over a declared finite test subset, not a
-continuum certificate. Ordinary SVD first passes at rank 60, while both
-covariance-aware MNIST methods pass at rank 12. On FashionMNIST the
-corresponding ranks are 63 and 13. Passing weighted heads are 4.65x and 4.32x
-smaller than their dense teachers.
+Files suffixed `_ja` are the Japanese figure/table variants.
 
-## Straight versus numerical intrinsic paths
+## Historical experiments
 
-`geodesic_interpolation.py` compares three decoded sequences between the same
-test-image posterior means:
-
-- the straight latent route at affine latent time;
-- the same route reparameterized at constant teacher arc length;
-- a multistart numerical geodesic candidate under the frozen teacher's
-  Wasserstein pullback metric.
-
-It also decodes the same teacher-geodesic frames with the passing compressed
-student. The primary CSV uses 100 endpoint-disjoint pairs per dataset; the large
-figure is a diagnostic pair selected from straight-path statistics before its
-geodesic is computed. The path is constrained to a posterior-mean evaluation
-box and is not claimed to be a globally optimal geodesic, an ambient
-Wasserstein displacement geodesic, or a path on the unknown true data
-manifold.
-
-## Architecture figure
-
-`certified_distillation_architecture.py` regenerates the vector PDF and PNG
-architecture diagrams in English and Japanese.
-
-## Legacy benchmark
-
-`wasserstein_cartography.py` and its outputs reproduce the earlier
-Wasserstein-cartography study. They are retained for comparison but are not
-used by the current paper or `make paper-experiments`.
+The other scripts reproduce earlier sphere-reconstruction and decoder-
+distillation directions.  They remain for provenance, but they are not used by
+the current paper or by `make paper-experiments`.

@@ -8,14 +8,15 @@
 
 SITE := node tools/site
 
-.PHONY: help sites cuturi-site cuturi-pdf wasserstein-site clean-sites paper paper-ja paper-experiments paper-surface-experiment paper-convex-experiment paper-cartography-experiment paper-distillation-experiment paper-mnist-experiment paper-geodesic-experiment paper-architecture-figure paper-all
+.PHONY: help sites cuturi-site cuturi-pdf wasserstein-site clean-sites paper paper-ja paper-experiments paper-visualization-experiment paper-surface-experiment paper-convex-experiment paper-cartography-experiment paper-distillation-experiment paper-mnist-experiment paper-geodesic-experiment paper-architecture-figure paper-all
 
 help:
 	@echo "make sites             すべてのセミナーのサイトを生成"
 	@echo "make cuturi-site       計算最適輸送のサイトを生成"
 	@echo "make cuturi-pdf        計算最適輸送の PDF を生成"
 	@echo "make wasserstein-site  Wasserstein 距離のサイトを生成（PDF は生成しない）"
-	@echo "make paper-experiments 局所Wasserstein距離からの曲面復元実験を再実行"
+	@echo "make paper-experiments 監査可能なWasserstein可視化実験を再実行"
+	@echo "make paper-visualization-experiment 現論文の可視化実験だけを再実行"
 	@echo "make paper-surface-experiment 曲面復元実験だけを再実行"
 	@echo "make paper-convex-experiment 同一骨格の凸面実現実験だけを再実行"
 	@echo "make paper-distillation-experiment 幾何保存蒸留の容量実験を再実行"
@@ -49,6 +50,9 @@ wasserstein-site:
 paper-cartography-experiment:
 	uv run --python 3.12 paper/ot-manifold-approximation/experiments/wasserstein_cartography.py
 
+paper-visualization-experiment:
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/curvature_certified_visualization.py
+
 paper-surface-experiment:
 	uv run --python 3.12 paper/ot-manifold-approximation/experiments/wasserstein_surface_reconstruction.py
 
@@ -70,7 +74,7 @@ paper-geodesic-experiment:
 paper-architecture-figure:
 	uv run --python 3.12 paper/ot-manifold-approximation/experiments/certified_distillation_architecture.py
 
-paper-experiments: paper-surface-experiment paper-convex-experiment
+paper-experiments: paper-visualization-experiment
 
 paper:
 	cd paper/ot-manifold-approximation && latexmk
