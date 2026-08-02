@@ -1,0 +1,303 @@
+\section{Experiments: From a Flat Input to a Visible Surface}
+\label{sec:experiments}
+
+The experiments answer two separate questions.  The controlled problem asks
+whether the full pipeline recovers a known variable-curvature surface when
+its assumptions are exactly true.  MNIST asks what the same definition shows
+for a learned neural decoder when no external shape is known.  Ground-truth
+3D coordinates are used only in the controlled evaluation.
+
+\subsection{Visualization and evaluation protocol}
+
+For both data sets, the input is
+\begin{equation}
+ (\{z_i\}_{i\in V},\mathcal T,
+   \{W_2(K_i,K_j):(i,j)\in Q\}),
+ \label{eq:experiment-input}
+\end{equation}
+and the output is a coordinate $x_i\in\mathbb R^3$ for every input vertex,
+with the same triangular faces.  The theoretical edges $E$ are always in
+$Q$.  We fit each representation's free parameters by deterministic Adam
+followed by full-batch L-BFGS, use three fixed initializations, and select the
+smallest stated
+objective.  Backpropagation is merely the numerical solver used here; neither
+the problem definition nor Proposition~\ref{prop:pl-certificate} assumes it.
+
+We compare up to four representations.
+\begin{enumerate}
+  \item \emph{Scaled latent 2D} whitens the supplied latent coordinates and
+  chooses one positive global scale to minimize the relative stress.  This
+  invertible affine normalization leaves the flat map and its topology intact;
+  it does not fit vertices independently.
+  \item \emph{Free 2D} fits every planar vertex independently.  It is an
+  unconstrained low-stress reference for flat coordinates, not a valid map when faces collapse or
+  reverse orientation; we report those failures explicitly on MNIST.
+  \item \emph{Smooth 3D} adds a weak bending term and a face-collapse barrier
+  to the local stress.  With
+  consistently oriented adjacent faces and unit normals $n_f,n_g$, the term is
+  \begin{equation}
+   \mathcal B(X)=\frac1{|A|}\sum_{(f,g)\in A}(1-n_f^{\trans}n_g),
+   \label{eq:bending-convention}
+  \end{equation}
+  where $A$ is the set of adjacent face pairs.  This term selects a readable
+  branch; it is not evidence about the intrinsic metric.
+  \item \emph{Free 3D} minimizes stress without bending.  It is an
+  unconstrained low-stress reference, but it may fold like origami and is
+  not used as the main visualization.
+\end{enumerate}
+For the controlled graph surface, the known height-field branch is also a
+natural display convention.  MNIST uses no target shape to select bending.
+The smooth 3D fit adds a squared hinge when
+$\sigma_{\min}(T_f)<0.45$.
+Over a fixed coefficient grid, we retain candidates whose fifth percentile of
+adjacent-normal inner products is at least $0.25$ and whose global $s_-$ is at
+least $0.35$, then select the one with lowest edge stress.
+Figure~\ref{fig:visualization-diagnostics} shows the full sweep.
+
+The primary fidelity statistic is
+\begin{equation}
+ S_Q(X)=\left[
+ \frac1{|Q|}\sum_{(i,j)\in Q}
+ \left(
+ \frac{\norm{x_i-x_j}-\widehat\ell_{ij}}
+ {\widehat\ell_{ij}}
+ \right)^2\right]^{1/2}.
+ \label{eq:reported-stress}
+\end{equation}
+The certificate reports the extreme facewise affine singular values
+$(s_-,s_+)$ and the no-cancellation curvature bound $\Delta_i$ from
+Proposition~\ref{prop:pl-certificate}.  We also report maximum relative
+triangle-edge error, interior curvature-mass RMSE, and all-pairs relative
+error of shortest paths on the edge graph.  The last statistic is an easily
+reproducible graph diagnostic; the theorem itself applies to the full
+facewise PL distance.  In the controlled problem we add rigidly aligned
+coordinate RMSE.  No coordinate RMSE is defined for MNIST.
+
+\subsection{Controlled mixed-curvature Gaussian decoder}
+\label{sec:controlled-experiment}
+
+Take a $21\times21$ grid on $[-1,1]^2$ and define
+\begin{equation}
+ \begin{aligned}
+ h(u,v)={}&0.48e^{-6.4((u+0.42)^2+1.15(v-0.24)^2)}\\
+ &+0.38e^{-7.2(1.2(u-0.38)^2+(v+0.30)^2)}
+ +0.30uv.
+ \end{aligned}
+ \label{eq:controlled-height}
+\end{equation}
+The two local peaks and saddle term produce positive and negative curvature
+in different regions.  We then declare the diagonal-Gaussian decoder
+\begin{equation}
+ K_{u,v}=\mathcal N\!\left(
+ (u,v),\diag((0.8+h(u,v))^2,0.8^2)
+ \right).
+ \label{eq:controlled-decoder}
+\end{equation}
+The first standard deviation remains positive on the entire grid.  By
+Equation~\eqref{eq:gaussian-chord},
+\begin{equation}
+ \begin{aligned}
+ W_2(K_{u,v},K_{u',v'})^2
+ ={}&(u-u')^2+(v-v')^2\\
+ &+(h(u,v)-h(u',v'))^2.
+ \end{aligned}
+ \label{eq:controlled-w2-identity}
+\end{equation}
+Thus the exact Wasserstein geometry is the chord geometry of the graph
+$(u,v,h(u,v))$, while the decoder mean alone remains flat.  The estimator is
+given local pairs within four grid steps, $14{,}060$ of the $97{,}020$ total
+pairs (14.49\%).  The hidden height is withheld until alignment.
+
+Figure~\ref{fig:controlled-visualization} makes the input and output explicit.
+The same OT-derived curvature color is drawn first on the flat input, then on
+the hidden target and reconstructed output.  The aligned overlay is an
+evaluation panel, not an estimator input.
+
+\begin{figure*}[t]
+ \centering
+ \includegraphics[width=0.96\textwidth]
+ {experiments/curvature_certified_control.png}
+ \caption{Controlled input, output, and evaluation.  Local Wasserstein
+ distances of the diagonal-Gaussian decoder encode a nonconstant graph height
+ exactly.  Red and blue denote positive and negative PL curvature density;
+ boundary values are omitted.  The bottom-right alignment uses the hidden
+ coordinates only after reconstruction.}
+ \label{fig:controlled-visualization}
+\end{figure*}
+
+\subsection{MNIST: unregularized transport of decoded ink}
+\label{sec:mnist-experiment}
+
+We train the smooth two-dimensional VAE of
+\cite{kingma2014} on 30,000 MNIST training images \cite{lecun1998} for 12
+epochs.  Its fully connected encoder has widths $784$--$128$--$64$ followed
+by two-dimensional mean and log-variance heads; its decoder has widths
+$2$--$64$--$64$--$784$, with $\tanh$ hidden activations.  We optimize mean
+squared reconstruction error plus $3\times10^{-3}$ times the KL term using
+AdamW with learning rate $2\times10^{-3}$, weight decay $10^{-6}$, and batch
+size 256.  The encoder posterior means of test-set digit 3 define a centered
+elliptical region.  A regular 317-point disk lattice is mapped into that
+ellipse and triangulated, yielding a shape-regular disk mesh.  We call this a
+\emph{digit-3-centered} region: the nearest posterior class and every decoded
+image are displayed, rather than assuming that every point remains in one
+class.
+
+For a latent point $z$, let $D_\theta(z)$ be the decoded mean image.  We clip
+it to $[0,1]$, average each $2\times2$ pixel block, and normalize the resulting
+$14\times14$ array to unit mass.  Before normalization, we add $10^{-10}$ to
+each pooled bin solely to avoid exact zero masses.  If $y_a\in[0,1]^2$ is the location of the
+$a$th pooled pixel, the declared decoded-image measure is
+\begin{equation}
+ K_z=\sum_{a=1}^{196}p_a(z)\,\delta_{y_a}.
+ \label{eq:mnist-image-measure}
+\end{equation}
+Every mesh-edge observation is the unregularized discrete Kantorovich value
+\begin{equation}
+ W_2(K_i,K_j)^2
+ =\min_{\pi\mathbf1=p_i,\,\pi^{\trans}\mathbf1=p_j}
+ \sum_{a,b}\pi_{ab}\norm{y_a-y_b}^2,
+ \label{eq:mnist-discrete-ot}
+\end{equation}
+computed by the linear-program solver in POT \cite{flamary2021}.
+It is not a pixelwise $\ell_2$ distance and has no entropic regularization
+bias.  It is also not claimed to equal the VAE likelihood distance:
+Equation~\eqref{eq:mnist-image-measure} is the declared spatial measure of
+decoded ink.  Normalization deliberately removes total ink mass; unbalanced
+OT would be needed to retain it.
+
+The fitted set $Q$ consists of the 924 Delaunay edges.  We separately compute
+direct $W_2$ on 2,036 nonedge pairs two graph hops apart.  Their displayed
+Euclidean chord error is a held-out empirical diagnostic, not a quantity
+covered by the PL intrinsic-distance certificate.  This is a transductive
+pair holdout on the same 317 vertices, not generalization to unseen images or
+latent points.
+
+\begin{figure*}[t]
+ \centering
+ \includegraphics[width=0.99\textwidth]
+ {experiments/curvature_certified_mnist.png}
+ \caption{MNIST input and output.  Left: the scaled latent-plane display of the
+ digit-3-centered VAE region.  Center: the selected smooth 3D branch, colored
+ by the nearest test-posterior digit.  Right: the same output colored by
+ interior PL curvature mass.  Numbered points are tied to the image rows
+ below: a real test input and the decoded mean from which the normalized
+ $14\times14$ OT measure is constructed.  This is a visualization of the
+ decoder-induced metric, not a recovered true MNIST shape.}
+ \label{fig:mnist-visualization}
+\end{figure*}
+
+\subsection{Results and what they mean}
+\label{sec:results}
+
+\begin{table*}[t]
+ \centering
+ \caption{Representation fidelity (top) and finite PL audit (bottom).  Query
+ RMS is Equation~\eqref{eq:reported-stress}.  The interval $[s_-,s_+]$ bounds
+ every abstract PL distance in exact arithmetic; $\Delta_i$ is the
+ no-cancellation curvature-mass bound.  Observed/display minimum angles and
+ triangle slack expose degeneracy rather than hiding it behind average loss.
+ Curvature error is measured against the PL curvature induced by the observed
+ edge-$W_2$ lengths, not an external MNIST ground truth.}
+ \resizebox{0.98\textwidth}{!}{%
+ \input{experiments/curvature_certified_visualization_table.tex}}
+ \par\smallskip
+ \resizebox{0.98\textwidth}{!}{%
+ \input{experiments/curvature_certified_visualization_certificate_table.tex}}
+ \label{tab:visualization-results}
+\end{table*}
+
+\paragraph{The controlled surface is recovered.}
+The maximum discrepancy between the analytic Gaussian $W_2$ formula and the
+hidden 3D chord is at machine precision.  The scaled latent plane retains
+$7.35\%$ query RMS, whereas the selected best-of-three height-field branch
+reaches $0.0007\%$ and
+recovers the mixed-sign curvature to numerical precision.  Its aligned
+coordinate error is also numerical.  This verifies that the pipeline does not
+require constant curvature: the positive peaks, negative transition regions,
+and saddle are all represented by one definition.
+
+\paragraph{MNIST exposes a fidelity--readability trade-off.}
+The scaled latent plane has $23.20\%$ query RMS.  Allowing every planar vertex
+to move lowers this to $10.55\%$, but the minimum display angle falls to
+$0.44^\circ$, the global $s_-$ to $0.011$, and some faces reverse orientation.
+The selected smooth 3D branch attains nearly the same query RMS, $10.58\%$,
+while retaining $[s_-,s_+]=[0.440,1.729]$ and an adjacent-normal fifth
+percentile of $0.738$;
+only $1.0\%$ of adjacent normal pairs are negative.  Its curvature-mass RMSE,
+$0.733$, is only modestly below the scaled plane's $0.772$, so we do not claim
+curvature recovery on MNIST.  Its maximum edge error is $71.7\%$ and
+$\delta/\ell_{\min}=3.383$; the result is a comparably low \emph{average}
+stress with substantially better nondegeneracy, not a uniformly low-error
+map.  On held-out two-hop nonedges, direct-$W_2$ chord RMS is $40.9\%$ for the
+scaled plane, $44.7\%$ for free 2D, $39.8\%$ for smooth 3D, and $27.5\%$ for
+free 3D.  These large errors confirm that the edge audit does not control
+direct nonedge Wasserstein chords.  Finally, the free 3D reference reaches
+$0.039\%$ query RMS but has negative adjacent normals on $27.7\%$ of pairs.
+Thus, under our declared regularization, the smooth 3D branch supplies a
+noncollapsed display at essentially the same average stress as the degenerate
+free-2D fit.  This comparison does not isolate ambient dimension from the
+display constraints, and local distance fit alone does not select a readable
+external shape.  The smooth branch's nonzero edge residual is the $\delta$ audited by
+Proposition~\ref{prop:pl-certificate}; it is not replaced by an unobservable
+coordinate error.
+
+\begin{figure*}[t]
+ \centering
+ \includegraphics[width=0.92\textwidth]
+ {experiments/curvature_certified_diagnostics.png}
+ \caption{Auditable optimization and geometry diagnostics.  The loss curves
+ show the selected deterministic runs.  The stress comparison separates the
+ scaled plane, the collapsed or flipped free-2D reference, the selected
+ smooth 3D display, and the folded free-3D reference.  The bending sweep
+ makes the fidelity--readability choice visible.  Curvature is
+ compared only at interior vertices because boundary angle defect measures
+ boundary turning.}
+ \label{fig:visualization-diagnostics}
+\end{figure*}
+
+\paragraph{What is certified.}
+For each returned surface we compute $(s_-,s_+)$ and $\Delta_i$ directly from
+the observed and displayed triangles.  Equation~\eqref{eq:distance-certificate}
+therefore bounds every distance of the abstract observed PL metric, without a
+small-residual assumption, and Equation~\eqref{eq:curvature-certificate}
+bounds every curvature-mass change in exact arithmetic.  The reported
+double-precision values are numerical diagnostics of those theoretical
+bounds, not outward-rounded interval certificates.  We
+do not claim a validated floating-point $\varepsilon$ for the MNIST OT solves;
+its numerical certificate is therefore relative to the computed
+unregularized-OT edge lengths.  A validated $\varepsilon$ would extend it to
+ideal edge-$W_2$ values through
+Equations~\eqref{eq:ideal-curvature-certificate}--
+\eqref{eq:ideal-distance-certificate}.  None of these statements makes the
+smooth branch the unique external shape of the decoder manifold.
+
+\section{Limitations and Conclusion}
+\label{sec:conclusion}
+
+The scope is intentionally two-dimensional.  A two-dimensional PL metric has
+scalar angle-defect curvature and admits a natural surface-visualization
+attempt in $\mathbb R^3$, although an exact embedded realization need not
+exist.  An intrinsically three-dimensional manifold instead has a curvature
+tensor and cannot in general be visualized without loss inside $\mathbb R^3$;
+slices or a higher ambient dimension would be required.
+
+Topology and the triangular complex are supplied.  The optimizer is not
+proved to find a global stress minimum.  The controlled problem uses a
+designed Gaussian identity, while MNIST uses one VAE seed, one digit-centered
+region, and pooled normalized image mass.  Pooling changes the measure and
+normalization discards total ink.  The bending term selects a readable
+representative but cannot resolve intrinsic nonuniqueness.  Because our free
+2D and smooth 3D fits use different display constraints, their comparison
+does not by itself identify a pure dimension effect.  The near-exact
+controlled recovery is the best of three deterministic initializations and
+is not evidence of optimizer stability.  Finally, raw
+pointwise curvature density is unstable under fine-scale noise according to
+Equation~\eqref{eq:density-scaling}; smoothing it with a statistical guarantee
+remains separate work.
+
+Within this scope, the paper's claim is simple and testable.  The ordinary
+latent plot is replaced by a surface fitted to how decoded measures actually
+move under optimal transport.  Its facewise distortion factors and
+incident-angle changes directly bound intrinsic PL distance and
+curvature-mass distortion.  That makes the 3D picture an auditable geometric
+summary rather than an unexplained rendering.

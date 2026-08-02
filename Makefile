@@ -8,16 +8,23 @@
 
 SITE := node tools/site
 
-.PHONY: help sites cuturi-site cuturi-pdf wasserstein-site clean-sites paper paper-experiments paper-all
+.PHONY: help sites cuturi-site cuturi-pdf wasserstein-site clean-sites paper paper-ja paper-experiments paper-visualization-experiment paper-surface-experiment paper-convex-experiment paper-cartography-experiment paper-distillation-experiment paper-mnist-experiment paper-geodesic-experiment paper-architecture-figure paper-all
 
 help:
 	@echo "make sites             すべてのセミナーのサイトを生成"
 	@echo "make cuturi-site       計算最適輸送のサイトを生成"
 	@echo "make cuturi-pdf        計算最適輸送の PDF を生成"
 	@echo "make wasserstein-site  Wasserstein 距離のサイトを生成（PDF は生成しない）"
-	@echo "make paper-experiments ロボット画像の潜在多様体選択実験を再実行"
-	@echo "make paper             論文の PDF を生成"
-	@echo "make paper-all         数値実験を再実行して論文の PDF を生成"
+	@echo "make paper-experiments 監査可能なWasserstein可視化実験を再実行"
+	@echo "make paper-visualization-experiment 現論文の可視化実験だけを再実行"
+	@echo "make paper-surface-experiment 曲面復元実験だけを再実行"
+	@echo "make paper-convex-experiment 同一骨格の凸面実現実験だけを再実行"
+	@echo "make paper-distillation-experiment 幾何保存蒸留の容量実験を再実行"
+	@echo "make paper-mnist-experiment MNIST/FashionMNIST VAE head圧縮実験を再実行"
+	@echo "make paper-geodesic-experiment 潜在直線・数値測地線比較を再実行"
+	@echo "make paper             英語論文の PDF を生成"
+	@echo "make paper-ja          日本語論文の PDF を生成"
+	@echo "make paper-all         数値実験を再実行して両言語の PDF を生成"
 	@echo "make clean-sites       生成したサイトを削除"
 
 sites: cuturi-site wasserstein-site
@@ -40,14 +47,44 @@ wasserstein-site:
 
 # --- 論文 ---
 # セミナー資料とは独立。既知の内容は引用で済ませ、新規の主張だけを書く。
-paper-experiments:
-	uv run --python 3.12 paper/ot-manifold-approximation/experiments/articulated_arm_manifold.py
+paper-cartography-experiment:
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/wasserstein_cartography.py
+
+paper-visualization-experiment:
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/curvature_certified_visualization.py
+
+paper-surface-experiment:
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/wasserstein_surface_reconstruction.py
+
+paper-convex-experiment:
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/convex_edge_realization_prototype.py
+
+paper-distillation-experiment:
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/geometry_distillation.py
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/lowrank_torus.py
+
+paper-mnist-experiment:
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/mnist_low_rank_geometry.py --dataset mnist
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/mnist_low_rank_geometry.py --dataset fashion-mnist
+
+paper-geodesic-experiment:
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/geodesic_interpolation.py --dataset mnist --student-ranks 8 12
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/geodesic_interpolation.py --dataset fashion-mnist --student-ranks 8 13
+
+paper-architecture-figure:
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/certified_distillation_architecture.py
+
+paper-experiments: paper-visualization-experiment
 
 paper:
 	cd paper/ot-manifold-approximation && latexmk
 	@echo "→ paper/ot-manifold-approximation/out/main.pdf"
 
-paper-all: paper-experiments paper
+paper-ja:
+	cd paper/ot-manifold-approximation && latexmk -lualatex main-ja.tex
+	@echo "→ paper/ot-manifold-approximation/out/main-ja.pdf"
+
+paper-all: paper-experiments paper paper-ja
 
 clean-sites:
 	rm -rf seminar/*/site

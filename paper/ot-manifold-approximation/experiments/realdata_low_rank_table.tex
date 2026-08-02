@@ -1,0 +1,13 @@
+\begin{tabular}{llrrrr}
+\toprule
+Dataset & Method & Rank fail $\to$ pass & $\widehat D_{\rm loc}$ fail $\to$ pass & Head reduction & Triplet \\
+\midrule
+MNIST & ordinary SVD & 59 $\to$ 60 & 6.79\% $\to$ 4.94\% & 1.00$\times$ & 99.32\% \\
+ & value-weighted SVD & 11 $\to$ 12 & 5.12\% $\to$ 4.20\% & 4.65$\times$ & 99.97\% \\
+ & value + Jacobian SVD & 11 $\to$ 12 & 5.20\% $\to$ 4.17\% & 4.65$\times$ & 99.95\% \\
+\addlinespace
+FashionMNIST & ordinary SVD & 62 $\to$ 63 & 5.44\% $\to$ 2.92\% & 1.00$\times$ & 99.98\% \\
+ & value-weighted SVD & 12 $\to$ 13 & 7.93\% $\to$ 4.83\% & 4.32$\times$ & 99.93\% \\
+ & value + Jacobian SVD & 12 $\to$ 13 & 7.49\% $\to$ 3.36\% & 4.32$\times$ & 100.00\% \\
+\bottomrule
+\end{tabular}

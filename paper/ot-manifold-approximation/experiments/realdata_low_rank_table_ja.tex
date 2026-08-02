@@ -1,0 +1,13 @@
+\begin{tabular}{llrrrr}
+\toprule
+データ & 手法 & rank 不合格 $\to$ 合格 & $\widehat D_{\mathrm{loc}}$ 不合格 $\to$ 合格 & head圧縮 & triplet \\
+\midrule
+MNIST & 通常SVD & 59 $\to$ 60 & 6.79\% $\to$ 4.94\% & 1.00$\times$ & 99.32\% \\
+ & 出力重み付きSVD & 11 $\to$ 12 & 5.12\% $\to$ 4.20\% & 4.65$\times$ & 99.97\% \\
+ & 出力＋Jacobian SVD & 11 $\to$ 12 & 5.20\% $\to$ 4.17\% & 4.65$\times$ & 99.95\% \\
+\addlinespace
+FashionMNIST & 通常SVD & 62 $\to$ 63 & 5.44\% $\to$ 2.92\% & 1.00$\times$ & 99.98\% \\
+ & 出力重み付きSVD & 12 $\to$ 13 & 7.93\% $\to$ 4.83\% & 4.32$\times$ & 99.93\% \\
+ & 出力＋Jacobian SVD & 12 $\to$ 13 & 7.49\% $\to$ 3.36\% & 4.32$\times$ & 100.00\% \\
+\bottomrule
+\end{tabular}

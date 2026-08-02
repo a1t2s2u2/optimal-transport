@@ -1,0 +1,18 @@
+\begin{tabular}{llrrrrr}
+\toprule
+Method & Rank & Head / decoder params & $\widehat D_{\mathrm{loc}}$ & Output RMSE & Chord triplet & PSNR \\
+\midrule
+ordinary SVD & 8 (fail) & 7,568 / 11,920 & 36.22\% & 0.0814 & 86.4\% & 12.52 \\
+ & 59 (fail) & 50,816 / 55,168 & 6.79\% & 0.0327 & 98.6\% & 13.08 \\
+ & 60 (pass) & 50,960 / 55,312 & 4.94\% & 0.0283 & 99.3\% & 13.11 \\
+\addlinespace
+value-weighted SVD & 8 (fail) & 7,568 / 11,920 & 57.64\% & 0.0245 & 91.9\% & 13.08 \\
+ & 11 (fail) & 10,112 / 14,464 & 5.12\% & 0.0045 & 100.0\% & 13.18 \\
+ & 12 (pass) & 10,960 / 15,312 & 4.20\% & 0.0033 & 100.0\% & 13.19 \\
+\addlinespace
+value + Jacobian SVD & 8 (fail) & 7,568 / 11,920 & 26.24\% & 0.0346 & 94.2\% & 13.02 \\
+ & 11 (fail) & 10,112 / 14,464 & 5.20\% & 0.0051 & 100.0\% & 13.18 \\
+ & 12 (pass) & 10,960 / 15,312 & 4.17\% & 0.0039 & 100.0\% & 13.19 \\
+\addlinespace
+\bottomrule
+\end{tabular}

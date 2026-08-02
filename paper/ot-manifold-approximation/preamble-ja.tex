@@ -1,7 +1,8 @@
-% Conference-style preamble for the standalone paper.
+% Japanese two-column preamble. Build main-ja.tex with LuaLaTeX.
 \usepackage[letterpaper,margin=0.72in,columnsep=0.25in]{geometry}
+\usepackage[haranoaji]{luatexja-preset}
 \usepackage{amsmath,amssymb,amsthm,mathtools,bm}
-\usepackage{graphicx,booktabs,microtype}
+\usepackage{graphicx,booktabs}
 \usepackage{enumitem}
 \usepackage{xcolor}
 \usepackage[hidelinks]{hyperref}
@@ -10,24 +11,25 @@
 \definecolor{linkblue}{RGB}{25,83,135}
 \hypersetup{colorlinks=true,linkcolor=linkblue,citecolor=linkblue,urlcolor=linkblue}
 \setlist{nosep,leftmargin=*}
-\setlength{\parindent}{1em}
+\setlength{\parindent}{1\zw}
 \setlength{\parskip}{0pt}
 \renewcommand{\dbltopfraction}{0.95}
 \renewcommand{\dblfloatpagefraction}{0.75}
 \setcounter{dbltopnumber}{2}
 
 \theoremstyle{plain}
-\newtheorem{theorem}{Theorem}[section]
-\newtheorem{proposition}[theorem]{Proposition}
-\newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{theorem}{定理}[section]
+\newtheorem{proposition}[theorem]{命題}
+\newtheorem{lemma}[theorem]{補題}
+\newtheorem{corollary}[theorem]{系}
 
 \theoremstyle{definition}
-\newtheorem{definition}[theorem]{Definition}
-\newtheorem{example}[theorem]{Example}
+\newtheorem{definition}[theorem]{定義}
+\newtheorem{example}[theorem]{例}
 
 \theoremstyle{remark}
-\newtheorem{remark}[theorem]{Remark}
+\newtheorem{remark}[theorem]{注意}
+\renewcommand{\proofname}{証明}
 
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\E}{\mathbb{E}}
