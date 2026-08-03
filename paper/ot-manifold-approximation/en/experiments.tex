@@ -186,15 +186,13 @@ evaluation panel, not an estimator input.
 \subsection{MNIST: unregularized transport of decoded ink}
 \label{sec:mnist-experiment}
 
-We train the smooth two-dimensional VAE of
-\cite{kingma2014} on 30,000 MNIST training images \cite{lecun1998} for 12
-epochs.  Its fully connected encoder has widths $784$--$128$--$64$ followed
-by two-dimensional mean and log-variance heads; its decoder has widths
-$2$--$64$--$64$--$784$, with $\tanh$ hidden activations.  We optimize mean
-squared reconstruction error plus $3\times10^{-3}$ times the KL term using
-AdamW with learning rate $2\times10^{-3}$, weight decay $10^{-6}$, and batch
-size 256.  The encoder posterior means of test-set digit 3 define a centered
-elliptical region.  A regular 317-point disk lattice is mapped into that
+We train the two-dimensional VAE of \cite{kingma2014} on 30,000 MNIST
+training images \cite{lecun1998} for 12 epochs.  Encoder and decoder are small
+fully connected networks with $\tanh$ hidden activations, trained with AdamW
+on squared reconstruction error plus a downweighted KL term; the released
+script fixes the widths, learning rate, weight decay, and batch size.  The
+encoder posterior means of test-set digit 3 define a centered elliptical
+region.  A regular 317-point disk lattice is mapped into that
 ellipse and triangulated, yielding a shape-regular disk mesh.  We call this a
 \emph{digit-3-centered} region: the nearest posterior class and every decoded
 image are displayed, rather than assuming that every point remains in one

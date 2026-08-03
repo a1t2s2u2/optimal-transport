@@ -45,7 +45,19 @@ observe the same geometry with finite measurements: the 2-Wasserstein distance
 between the measures the decoder produces at two nearby latent points.
 Collecting these along the edges of a triangulation gives a
 \emph{piecewise flat} metric, whose curvature is the angle defect at each
-vertex.  That is the pullback curvature, and it is what our figures show.
+vertex.  That is the pullback curvature, and it is what our figures show.  The
+whole construction is one chain,
+\begin{equation}
+ \begin{aligned}
+ z&\longmapsto K_z
+ \longmapsto W_2(K_z,K_{z'})
+ \longmapsto \text{piecewise flat metric}\\
+ &\longmapsto \text{angle-defect curvature}
+ \longmapsto \text{surface in }\mathbb R^3,
+ \end{aligned}
+ \label{eq:paper-chain}
+\end{equation}
+in which the first arrows measure the distortion and the last one undoes it.
 
 Undoing the distortion then means finding coordinates that realize this
 metric.  Three questions arise, and each has an exact answer.
@@ -162,7 +174,9 @@ probability measure that we define explicitly from a decoded object.  The
 latter is used for MNIST: normalized grayscale intensities are masses at pixel
 locations.  These two interpretations are not conflated.
 
-The decoder induces the pseudometric
+The decoder induces a \emph{pseudometric} on the latent region, that is, a
+distance that satisfies the triangle inequality but may vanish between
+distinct points:
 \begin{equation}
  d_K(z,z'):=W_2(K_z,K_{z'}).
  \label{eq:decoder-pseudometric}
@@ -186,8 +200,9 @@ length and its numerical observation are
 Call a positive edge-length assignment $\ell$ \emph{admissible} if the three
 lengths on every face satisfy strict triangle inequalities.  An admissible
 $\ell$ realizes each face as the Euclidean triangle with those side lengths;
-gluing these triangles along shared edges makes $\mathcal T$ a length space
-$M_\ell=(\mathcal T,d_\ell)$, in which $d_\ell(p,q)$ is the infimum of the
+gluing these triangles along shared edges makes $\mathcal T$ a space in which
+distance is measured by travelling inside the surface:
+$M_\ell=(\mathcal T,d_\ell)$, where $d_\ell(p,q)$ is the infimum of the
 Euclidean lengths of paths from $p$ to $q$ that are straight inside each face.
 This \emph{intrinsic piecewise flat metric} uses no ambient coordinates.  We
 assume $\ell^*$ is admissible; admissibility of the observed and displayed
@@ -332,8 +347,7 @@ this distance result alone.
 Section~\ref{sec:setup} turned the decoder into an intrinsic metric on the
 latent mesh.  Restoring the distortion means going back to coordinates: find
 points whose Euclidean distances reproduce that metric, in as few dimensions
-as possible.  We first ask how few dimensions can work, then when the answer
-is unique, then how faithful the answer we actually return is.
+as possible.
 
 \subsection{How many dimensions are needed}
 \label{sec:dimension}
@@ -392,8 +406,11 @@ to a rigid motion.
 \end{proposition}
 
 \begin{proof}
-Positive angle defect at every vertex makes $M_\ell$ a Euclidean cone metric
-on $S^2$ with all cone angles below $2\pi$.  Alexandrov's realization theorem
+Away from vertices $M_\ell$ is locally a Euclidean plane, and around a vertex
+it closes up after a total angle $\sum_{f\ni i}\theta_{i,f}=2\pi-\kappa_i$, so
+it looks like a cone of that angle.  Positive angle defect at every vertex
+therefore makes $M_\ell$ a Euclidean cone metric on $S^2$ with every cone
+angle below $2\pi$.  Alexandrov's realization theorem
 provides a convex polytope inducing it, and his uniqueness theorem, which
 contains Cauchy's rigidity theorem, makes it unique up to congruence
 \cite{alexandrov2005,pak2010}.
