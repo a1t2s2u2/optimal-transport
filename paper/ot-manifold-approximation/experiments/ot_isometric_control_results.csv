@@ -1,0 +1,2 @@
+vertex_count,face_count,initial_metric_deviation,corrected_metric_deviation,minimum_generalized_stretch,maximum_generalized_stretch,rigid_aligned_rmse,relative_rigid_aligned_rmse
+225,392,0.47934601548069444,0.032032089742177854,0.9162657766384876,1.0825520344183477,0.266263427170736,0.3004592442376428

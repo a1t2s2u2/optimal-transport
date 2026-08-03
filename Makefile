@@ -51,7 +51,7 @@ paper-cartography-experiment:
 	uv run --python 3.12 paper/ot-manifold-approximation/experiments/wasserstein_cartography.py
 
 paper-visualization-experiment:
-	uv run --python 3.12 paper/ot-manifold-approximation/experiments/curvature_certified_visualization.py
+	uv run --python 3.12 paper/ot-manifold-approximation/experiments/ot_isometric_visualization.py
 
 paper-surface-experiment:
 	uv run --python 3.12 paper/ot-manifold-approximation/experiments/wasserstein_surface_reconstruction.py
