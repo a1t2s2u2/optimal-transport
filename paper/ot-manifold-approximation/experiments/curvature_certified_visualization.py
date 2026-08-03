@@ -44,7 +44,7 @@ is retained as a visibly folded low-stress reference.  Unregularized discrete W2
 non-edge two-hop pairs is never optimized and is reported only as hold-out
 error.
 
-The triangular edges needed by the PL-curvature theorem are always included
+The triangular edges needed by the angle-defect curvature theorem are always included
 among the queries.  Boundary angle defects are computed for visualization but
 excluded from every reported curvature error.
 
@@ -375,7 +375,7 @@ def triangle_geometry_from_edge_lengths(
     edges: np.ndarray,
     edge_lengths: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Return PL angle-defect mass, barycentric area, and density."""
+    """Return angle-defect curvature mass, barycentric area, and density."""
 
     length_lookup = {
         tuple(edge): float(length) for edge, length in zip(edges.tolist(), edge_lengths)
@@ -628,7 +628,7 @@ def controlled_problem() -> tuple[SurfaceProblem, dict[str, float]]:
         "negative_curvature_vertex_fraction": float(np.mean(interior_density < 0.0)),
     }
     if not (np.any(interior_density > 0.0) and np.any(interior_density < 0.0)):
-        raise AssertionError("controlled PL surface must contain both curvature signs")
+        raise AssertionError("benchmark surface must contain both curvature signs")
     return (
         SurfaceProblem(
             key="controlled",
@@ -1682,11 +1682,11 @@ def write_smoothness_path(path: list[SmoothnessCandidate]) -> None:
 
 def method_label(method: str, japanese: bool) -> str:
     labels = {
-        "scaled_latent_2d": ("scaled latent R2", "尺度調整した潜在平面R2"),
-        "free_2d_reference": ("free R2 reference", "自由R2参照"),
-        "height_field_3d": ("height-field 3D", "高さ場3D"),
-        "smooth_3d": ("smooth R3", "滑らかR3"),
-        "free_3d": ("free R3 reference", "自由R3参照"),
+        "scaled_latent_2d": ("scaled latent plane", "尺度調整した潜在平面"),
+        "free_2d_reference": ("free 2D (reference)", "自由2次元（参照）"),
+        "height_field_3d": ("height-field 3D", "高さ場3次元"),
+        "smooth_3d": ("smooth 3D", "滑らか3次元"),
+        "free_3d": ("free 3D (reference)", "自由3次元（参照）"),
     }
     return labels[method][1 if japanese else 0]
 
@@ -1705,10 +1705,10 @@ def write_table(rows: list[dict[str, object]], japanese: bool) -> None:
         if not japanese
         else [
             r"データ / 表示",
-            r"query RMS",
+            r"相対ストレスRMS",
             r"辺最大誤差",
             r"曲率質量RMSE",
-            r"graph距離RMS",
+            r"グラフ距離RMS",
             r"整列RMSE",
         ]
     )
@@ -1719,7 +1719,7 @@ def write_table(rows: list[dict[str, object]], japanese: bool) -> None:
         r"\midrule",
     ]
     experiment_labels = {
-        "controlled": ("Controlled", "制御例"),
+        "controlled": ("Gaussian benchmark", "ガウス例"),
         "mnist": ("MNIST digit-3-centered", "MNIST数字3中心領域"),
     }
     for experiment_index, experiment in enumerate(("controlled", "mnist")):
@@ -1776,8 +1776,8 @@ def write_certificate_table(rows: list[dict[str, object]], japanese: bool) -> No
         if not japanese
         else [
             "データ / 表示",
-            "最小角 観測/表示",
-            "三角余裕 観測/表示",
+            "最小角 観測／表示",
+            "三角不等式の余裕 観測／表示",
             r"$\delta/\ell_{\min}$",
             r"$[s_{\min},s_{\max}]$",
             r"曲率RMSE / 最大",
@@ -1791,7 +1791,7 @@ def write_certificate_table(rows: list[dict[str, object]], japanese: bool) -> No
         r"\midrule",
     ]
     experiment_labels = {
-        "controlled": ("Controlled", "制御例"),
+        "controlled": ("Gaussian benchmark", "ガウス例"),
         "mnist": ("MNIST digit-3-centered", "MNIST数字3中心領域"),
     }
     for experiment_index, experiment in enumerate(("controlled", "mnist")):
@@ -1942,9 +1942,9 @@ def save_control_figure(
     )
     add_surface(axes[0], flat, problem.faces, target_density, norm, cmap)
     axes[0].set_title(
-        "入力：平面潜在座標 $(u,v)$\n色＝W2辺長から得る目標PL曲率"
+        "入力：平面潜在座標 $(u,v)$\n色＝W2辺長から得る目標の角欠損曲率"
         if japanese
-        else "INPUT: flat latent coordinates $(u,v)$\ncolor = target PL curvature from W2 edge lengths",
+        else "INPUT: flat latent coordinates $(u,v)$\ncolor = target angle-defect curvature from W2 edge lengths",
         fontsize=10,
     )
     add_surface(
@@ -1964,9 +1964,9 @@ def save_control_figure(
     aligned, _ = rigid_alignment(height_embedding.coordinates, problem.true_coordinates)
     add_surface(axes[2], aligned, problem.faces, recovered_density, norm, cmap)
     axes[2].set_title(
-        "出力：局所W2距離から復元した高さ場3D\n色＝復元PL曲率"
+        "出力：局所W2距離から復元した高さ場3次元\n色＝復元した角欠損曲率"
         if japanese
-        else "OUTPUT: height-field 3D fitted to local W2\ncolor = reconstructed PL curvature",
+        else "OUTPUT: height-field 3D fitted to local W2\ncolor = reconstructed angle-defect curvature",
         fontsize=10,
     )
 
@@ -2002,17 +2002,17 @@ def save_control_figure(
         ax=axes[:3],
         fraction=0.025,
         pad=0.02,
-        label="PL曲率密度" if japanese else "PL curvature density",
+        label="角欠損曲率密度" if japanese else "angle-defect curvature density",
     )
     figure.suptitle(
         (
-            "制御例：対角Gaussian W2は真の3D chordと厳密一致\n"
+            "ガウス例：対角Gaussian W2は真の3次元直線距離と厳密一致\n"
             f"局所query RMS={100.0 * float(metrics['query_relative_rms']):.3f}%, "
             f"整列RMSE={float(metrics['controlled_aligned_rmse']):.4f}"
         )
         if japanese
         else (
-            "Controlled decoder: diagonal-Gaussian W2 equals the true 3D chord exactly\n"
+            "Gaussian benchmark: diagonal-Gaussian W2 equals the true 3D distance exactly\n"
             f"local-query RMS={100.0 * float(metrics['query_relative_rms']):.3f}%, "
             f"aligned RMSE={float(metrics['controlled_aligned_rmse']):.4f}"
         ),
@@ -2116,9 +2116,9 @@ def save_mnist_figure(
     flat_axis.set_xticks([])
     flat_axis.set_yticks([])
     flat_axis.set_title(
-        "尺度調整した潜在平面R2：global scaleのみ最適化\n色＝15近傍posteriorの数字"
+        "尺度調整した潜在平面：大域スケールのみ最適化\n色＝15近傍事後分布の数字"
         if japanese
-        else "SCALED LATENT R2: one global scale fitted\ncolor = 15-NN posterior digit",
+        else "SCALED LATENT PLANE: one global scale fitted\ncolor = 15-NN posterior digit",
         fontsize=10,
     )
     add_digit_surface(
@@ -2128,9 +2128,9 @@ def save_mnist_figure(
         display.nearest_digits,
     )
     smooth_axis.set_title(
-        "滑らか出力R3：辺stress＋隣接面normal bending\n色＝15近傍posteriorの数字"
+        "滑らか3次元出力：辺ストレス＋隣接面法線の曲げ\n色＝15近傍事後分布の数字"
         if japanese
-        else "SMOOTH OUTPUT R3: edge stress + normal bending\ncolor = 15-NN posterior digit",
+        else "SMOOTH 3D OUTPUT: edge stress + normal bending\ncolor = 15-NN posterior digit",
         fontsize=10,
     )
     recovered_mass = vertex_curvature_mass(problem, smooth_embedding.coordinates)
@@ -2148,9 +2148,9 @@ def save_mnist_figure(
         cmap,
     )
     curvature_axis.set_title(
-        "同じ滑らかR3出力\n色＝角欠損PL曲率質量（radian、境界除外）"
+        "同じ滑らか3次元出力\n色＝角欠損曲率質量（ラジアン、境界除外）"
         if japanese
-        else "SAME SMOOTH R3 OUTPUT\ncolor = angle-defect PL curvature mass (rad; boundary omitted)",
+        else "SAME SMOOTH 3D OUTPUT\ncolor = angle-defect curvature mass (rad; boundary omitted)",
         fontsize=10,
     )
     for axis in (smooth_axis, curvature_axis):
@@ -2217,22 +2217,22 @@ def save_mnist_figure(
         ax=curvature_axis,
         fraction=0.045,
         pad=0.01,
-        label="PL曲率質量 (rad)" if japanese else "PL curvature mass (rad)",
+        label="角欠損曲率質量 (rad)" if japanese else "angle-defect curvature mass (rad)",
     )
     figure.suptitle(
         (
             "MNIST数字3中心posterior領域：14×14 pixel質量の非正則化離散W2で曲面化\n"
             f"観測＝{len(problem.edges)}三角辺；smooth選択規約：q05(normal内積)>=0.25かつ face s_min>=0.35；"
-            f"R2 RMS={100.0 * float(flat_metrics['query_relative_rms']):.2f}% → "
-            f"smooth R3 RMS={100.0 * float(smooth_metrics['query_relative_rms']):.2f}% "
+            f"平面 RMS={100.0 * float(flat_metrics['query_relative_rms']):.2f}% → "
+            f"滑らか3次元 RMS={100.0 * float(smooth_metrics['query_relative_rms']):.2f}% "
             f"(λ={float(smooth_metrics['smoothing_lambda']):.3g})"
         )
         if japanese
         else (
             "MNIST digit-3-centered region: unregularized discrete W2 on 14x14 pixel masses\n"
             f"observed = {len(problem.edges)} edges; smooth selection: q05(normal dot) >= 0.25 and face s_min >= 0.35; "
-            f"R2 RMS={100.0 * float(flat_metrics['query_relative_rms']):.2f}% → "
-            f"smooth R3 RMS={100.0 * float(smooth_metrics['query_relative_rms']):.2f}% "
+            f"plane RMS={100.0 * float(flat_metrics['query_relative_rms']):.2f}% -> "
+            f"smooth 3D RMS={100.0 * float(smooth_metrics['query_relative_rms']):.2f}% "
             f"(λ={float(smooth_metrics['smoothing_lambda']):.3g})"
         ),
         fontsize=12,
@@ -2271,7 +2271,7 @@ def save_diagnostics_figure(
     loss_axis.set_yscale("log")
     loss_axis.set_xlabel("optimizer evaluation" if not japanese else "最適化評価回数")
     loss_axis.set_ylabel("objective")
-    loss_axis.set_title("Controlled optimization" if not japanese else "制御例の最適化")
+    loss_axis.set_title("Gaussian benchmark optimization" if not japanese else "ガウス例の最適化")
     loss_axis.grid(alpha=0.18, which="both")
     loss_axis.legend(frameon=False, fontsize=8)
 
@@ -2340,17 +2340,17 @@ def save_diagnostics_figure(
             width=width,
             color=CONTROL_COLOR if experiment == "controlled" else MNIST_COLOR,
             alpha=0.85,
-            label="制御例"
+            label="ガウス例"
             if japanese and experiment == "controlled"
-            else ("Controlled" if experiment == "controlled" else "MNIST"),
+            else ("Gaussian benchmark" if experiment == "controlled" else "MNIST"),
         )
     axes[1, 0].set_xticks(
         x_positions,
         [
-            "scaled R2",
-            "自由R2" if japanese else "free R2",
+            "尺度調整平面" if japanese else "scaled plane",
+            "自由2次元" if japanese else "free 2D",
             "主3D" if japanese else "main 3D",
-            "自由R3" if japanese else "free R3",
+            "自由3次元" if japanese else "free 3D",
         ],
     )
     axes[1, 0].set_ylabel("query relative RMS (%)")
@@ -2404,9 +2404,9 @@ def save_diagnostics_figure(
             alpha=0.48,
             marker=markers[experiment],
             color=CONTROL_COLOR if experiment == "controlled" else MNIST_COLOR,
-            label="制御例"
+            label="ガウス例"
             if japanese and experiment == "controlled"
-            else ("Controlled" if experiment == "controlled" else "MNIST"),
+            else ("Gaussian benchmark" if experiment == "controlled" else "MNIST"),
         )
     limits = axes[1, 1].get_xlim()
     lower = min(limits[0], axes[1, 1].get_ylim()[0])
@@ -2415,10 +2415,10 @@ def save_diagnostics_figure(
     axes[1, 1].set_xlim(lower, upper)
     axes[1, 1].set_ylim(lower, upper)
     axes[1, 1].set_xlabel(
-        "観測辺W2によるPL曲率質量" if japanese else "observed edge-W2 PL curvature mass"
+        "観測辺W2による角欠損曲率質量" if japanese else "observed edge-W2 angle-defect curvature mass"
     )
     axes[1, 1].set_ylabel(
-        "表示PL曲率質量" if japanese else "displayed PL curvature mass"
+        "表示の角欠損曲率質量" if japanese else "displayed angle-defect curvature mass"
     )
     axes[1, 1].set_title(
         "辺長が曲率を保証（内部頂点のみ）"

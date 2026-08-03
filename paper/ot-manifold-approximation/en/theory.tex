@@ -4,15 +4,15 @@ encoder, not in the geometry seen by its decoder.  We study the smallest
 setting in which that distortion can be re-expressed and displayed: a known
 triangulation of a two-dimensional latent region, local 2-Wasserstein
 distances between decoded measures, and a triangular surface in
-$\mathbb R^3$.  The output is not declared to be a hidden true shape.  It is
-a three-dimensional representative of the intrinsic PL metric defined by the
+$\mathbb R^3$.  The output is not a hidden true shape.  It is
+a three-dimensional representative of the intrinsic piecewise flat metric defined by the
 decoder's Wasserstein edge lengths.
 
 Our theoretical link has two parts.  For diagonal-Gaussian decoders, the
-edge-$W_2$ PL distance converges to the continuous pullback distance at
-relative rate $O(h)$ on uniformly shape-regular mesh families.  For any
-returned realization, standard facewise affine singular values then bound
-every intrinsic PL
+distance built from edge $W_2$ values converges to the continuous pullback
+distance at relative rate $O(h)$ on uniformly shape-regular mesh families.
+For any returned realization, standard facewise affine singular values then
+bound every intrinsic
 distance, while incident angle changes bound angle-defect curvature-mass
 change.  The latter audit is computed from the input and output and needs no
 small-error assumption.  A sufficiently small validated numerical OT error
@@ -61,17 +61,19 @@ The construction continues the following finite-to-infinitesimal chain:
  \begin{aligned}
  z&\longmapsto K_z
  \longmapsto W_2(K_z,K_{z'})
- \longmapsto \text{PL metric}\\
+ \longmapsto \text{piecewise flat metric}\\
  &\longmapsto \text{curvature}
  \longmapsto \mathbb R^3\text{ display}.
  \end{aligned}
  \label{eq:paper-chain}
 \end{equation}
-Here $K_z$ is a probability measure constructed by the decoder and ``PL''
-means piecewise Euclidean on a triangular complex.  The first two arrows are
-the Wasserstein latent geometry developed for probabilistic decoders.  Our
-contribution is to couple these standard PL constructions to decoder-induced
-Wasserstein observations and a continuous Gaussian consistency limit.
+Here $K_z$ is a probability measure constructed by the decoder, and
+\emph{piecewise flat} means that every triangle carries the Euclidean metric
+fixed by its three edge lengths, with the triangles glued along shared edges.
+The first two arrows are the Wasserstein latent geometry developed for
+probabilistic decoders.  Our contribution is to couple these standard
+piecewise flat constructions to decoder-induced Wasserstein observations and a
+continuous Gaussian consistency limit.
 
 \paragraph{Contributions.}
 \begin{enumerate}
@@ -79,14 +81,14 @@ Wasserstein observations and a continuous Gaussian consistency limit.
   decoded-measure distances on a two-dimensional triangulation.  It requires
   decoder evaluations and OT solves, but no decoder derivatives.
   \item For smooth diagonal-Gaussian decoders, we prove $O(h)$ consistency of
-  the finite edge-$W_2$ PL distance with the continuous Wasserstein pullback
-  distance on uniformly shape-regular mesh families.
-  \item We adapt the standard facewise distortion audit for PL maps to this
-  setting.  Singular values bound all intrinsic distances, incident-angle
+  the finite distance built from edge $W_2$ values with the continuous
+  Wasserstein pullback distance on uniformly shape-regular mesh families.
+  \item We adapt the standard facewise distortion audit for piecewise affine
+  maps to this setting.  Singular values bound all intrinsic distances, incident-angle
   changes bound curvature mass, and a supplied OT error $\varepsilon$ extends
   the audit to ideal edge-$W_2$ values.
   \item We give two visible experiments: an exact mixed-curvature Gaussian
-  control and an MNIST digit-3 surface based on spatial transport of decoded
+  benchmark and an MNIST digit-3 surface based on spatial transport of decoded
   ink.  The latter is intentionally one digit rather than the unsupported
   assumption that all ten classes form one smooth manifold.
 \end{enumerate}
@@ -116,7 +118,7 @@ intrinsic distances also has finite-sample and asymptotic guarantees
 \cite{qiu2023,fefferman2020,hamm2025}.  All of these infer coordinates or a
 manifold from distance data.  We instead keep a prescribed two-dimensional
 mesh, specialize the observations to decoded measures, and audit the
-distortion of the returned variable-curvature PL surface; we do not claim to
+distortion of the returned variable-curvature piecewise flat surface; we do not claim to
 recover unknown sample parameters or topology.
 
 \paragraph{Piecewise-affine mesh distortion.}
@@ -131,10 +133,10 @@ Discrete Kantorovich transport gives a natural distance between images viewed
 as masses on a pixel grid \cite{peyre2019}.  We use an unregularized
 linear-program solver through POT \cite{flamary2021}, so entropic bias is absent from the
 reported MNIST distances.  Angle defect is the intrinsic curvature mass of a
-PL surface.  Its convergence to smooth Gaussian curvature requires mesh
+piecewise flat surface.  Its convergence to smooth Gaussian curvature requires mesh
 conditions and is not pointwise reliable on an arbitrary triangulation
 \cite{gawlik2020,hartig2021}.  Accordingly, our audit first treats the
-finite PL curvature mass.  Area normalization is presented only with its
+finite angle-defect curvature mass.  Area normalization is presented only with its
 stronger noise scaling made explicit.
 
 \section{Wasserstein Geometry on a Latent Mesh}
@@ -147,7 +149,7 @@ Let $\cZ\subset\mathbb R^2$ be a latent region and
 \end{equation}
 where $(\mathcal Y,d_{\mathcal Y})$ is a complete separable ground space.
 The map may be the conditional distribution of a probabilistic decoder, or a
-declared probability measure constructed from a decoded object.  The latter
+probability measure that we define explicitly from a decoded object.  The latter
 is used for MNIST: normalized grayscale intensities are masses at pixel
 locations.  These two interpretations are not conflated.
 
@@ -180,9 +182,9 @@ $G(z)=J_F(z)^{\trans}J_F(z)$ and
  \label{eq:local-w2-expansion}
 \end{equation}
 Thus local $W_2$ queries are finite observations of the same metric that a
-Jacobian calculation would produce.  The a posteriori PL audit later does not
+Jacobian calculation would produce.  The a posteriori audit later does not
 require Gaussianity or differentiability; Equation~\eqref{eq:local-w2-expansion}
-only motivates why sufficiently local Wasserstein chords are relevant.
+only motivates why sufficiently local $W_2$ values are relevant.
 
 The Gaussian case also admits a precise continuous-to-finite statement.  Let
 $\Omega\subset\mathbb R^2$ be a compact connected polygonal region and assume
@@ -202,12 +204,12 @@ Assume
  \sup_{z\in\Omega}\norm{D^2F(z)}\le H.
  \label{eq:gaussian-consistency-assumptions}
 \end{equation}
-For each mesh edge $(i,j)$, set $\ell_{h,ij}$ equal to the Wasserstein chord
+For each mesh edge $(i,j)$, set $\ell_{h,ij}$ equal to
 $W_2(K_{z_i},K_{z_j})$.  There is a constant $C_I$, depending only on the
 uniform shape-regularity bound, such that, if
 $\eta_h:=C_IHh/m<1$, these lengths form nondegenerate triangles.  Let
-$M_{\ell_h}$ be their abstract glued PL complex and let
-$\iota_h:\Omega\to M_{\ell_h}$ be the PL homeomorphism that preserves vertex
+$M_{\ell_h}$ be their abstract glued complex and let
+$\iota_h:\Omega\to M_{\ell_h}$ be the piecewise affine homeomorphism that preserves vertex
 labels and barycentric coordinates facewise.  Then
 \begin{equation}
  (1-\eta_h)d_G(p,q)
@@ -231,8 +233,8 @@ tangent vector $v$,
 The reverse triangle inequality also gives
 $\norm{D F_hv}\ge(m-C_IHh)\norm v>0$, so every affine face image is
 nondegenerate.  Equation~\eqref{eq:gaussian-chord} shows that its edge lengths
-are exactly $\ell_h$.  Consequently, each abstract PL face is isometric to the
-corresponding affine image under $F_h$, and the PL length of
+are exactly $\ell_h$.  Consequently, each abstract face is isometric to the
+corresponding affine image under $F_h$, and the length of
 $\iota_h\circ\gamma$ is
 $\int\norm{D F_h(\gamma(t))\dot\gamma(t)}\,dt$.  Integrating the displayed
 pointwise inequalities along every rectifiable parameter-space path and taking
@@ -240,13 +242,13 @@ infima gives Equation~\eqref{eq:gaussian-mesh-consistency}.
 \end{proof}
 
 Neither $F$ nor $F_h$ needs to be globally injective: the compared object is
-the abstract glued PL metric, not the ambient image with intersection
+the abstract glued metric, not the ambient image with intersection
 shortcuts.
 
 Consequently, suppose a displayed assignment $\widetilde\ell$ on the same
 abstract mesh also has nondegenerate faces.  Compute $s_-,s_+$ as defined
 below, with $\ell_h$ in place of $\widehat\ell$, let
-$\Psi_h:M_{\ell_h}\to M_{\widetilde\ell}$ be the barycentric PL homeomorphism,
+$\Psi_h:M_{\ell_h}\to M_{\widetilde\ell}$ be the barycentric piecewise affine homeomorphism,
 and set
 $\Phi_h=\Psi_h\circ\iota_h$.  Then, for all $p,q\in\Omega$,
 \begin{equation}
@@ -265,7 +267,7 @@ specific to diagonal Gaussians, so it does not by itself cover the
 discrete-image MNIST map or a general Wasserstein-valued decoder.  No
 pointwise-curvature conclusion follows from this distance result alone.
 
-\subsection{Finite input and PL curvature}
+\subsection{Finite input and angle-defect curvature}
 
 Let $\mathcal T=(V,E,F)$ be a finite, connected triangulation of a compact
 two-dimensional manifold, possibly with boundary, and associate $z_i\in\cZ$
@@ -278,7 +280,7 @@ numerical observation are
  \label{eq:true-observed-lengths}
 \end{equation}
 Any positive edge-length assignment $\ell$ whose three lengths on every face
-satisfy strict triangle inequalities defines an intrinsic PL metric
+satisfy strict triangle inequalities defines an intrinsic piecewise flat metric
 $M_\ell=(\mathcal T,d_\ell)$ by gluing the corresponding Euclidean triangles,
 without choosing coordinates in an ambient space.  We assume that $\ell^*$ is
 such an assignment; the validity of observed and displayed assignments is
@@ -289,7 +291,7 @@ nonadjacent vertices, $d_{\ell^*}(i,j)$ is in general neither the direct value
 $W_2(K_i,K_j)$ nor a continuous pullback geodesic distance;
 Proposition~\ref{prop:gaussian-mesh-consistency} closes that gap only for
 smooth diagonal-Gaussian immersions.  The finite audit below concerns
-precisely the edge-$W_2$-induced PL metric just defined.
+precisely the edge-$W_2$-induced piecewise flat metric just defined.
 
 For $f=(i,j,k)$, the angle at $i$ is fixed by the cosine law,
 \begin{equation}
@@ -328,7 +330,7 @@ stress
  +\lambda\mathcal R_{\rm display}(X).
  \label{eq:display-objective}
 \end{equation}
-The optional $\mathcal R_{\rm display}$ selects a visually smooth branch; it
+The optional $\mathcal R_{\rm display}$ selects a visually smooth solution; it
 does not enter the theorem.  A separate curvature loss is unnecessary.  If
 the three edge lengths of every face agree, all face angles and angle defects
 already agree.
@@ -376,7 +378,7 @@ Define the facewise affine distortion and its global extrema by
 \end{equation}
 Changing the planar placement of either labelled triangle only multiplies
 $T_f$ by orthogonal matrices and does not change its singular values.  At a
-vertex, define the no-cancellation angle bound
+vertex, define the angle-change bound
 \begin{equation}
  \Delta_i:=\sum_{f\ni i}
  \abs{\theta_{i,f}(\widetilde\ell)-
@@ -384,11 +386,11 @@ vertex, define the no-cancellation angle bound
  \label{eq:posterior-only-certificate}
 \end{equation}
 
-\begin{proposition}[A posteriori distortion of a fixed PL realization]
+\begin{proposition}[A posteriori distortion of a fixed realization]
 \label{prop:pl-certificate}
 Assume that both $\widehat\ell$ and $\widetilde\ell$ satisfy strict triangle
 inequalities on every face.  Let
-$\Phi:M_{\widehat\ell}\to M_{\widetilde\ell}$ be the PL homeomorphism that
+$\Phi:M_{\widehat\ell}\to M_{\widetilde\ell}$ be the piecewise affine homeomorphism that
 preserves vertex labels and barycentric coordinates within corresponding
 faces.  Then $0<s_-\le s_+<\infty$ and, for every $p,q$ in the abstract glued
 complex,
@@ -421,7 +423,7 @@ Equation~\eqref{eq:curvature-certificate}.
 
 This proposition has no small-error or shape-regularity premise: a nearly
 degenerate face is exposed by a small $s_-$ or a large $s_+$ and $\Delta_i$.
-The distances are those of the abstract PL complexes.  If displayed triangles
+The distances are those of the abstract glued complexes.  If displayed triangles
 self-intersect in $\mathbb R^3$, an intersection does not create a shortcut
 between unrelated abstract faces.
 
@@ -485,6 +487,7 @@ double-centered Gram matrix $-\frac12H(D\circ D)H$, with
 $H=I-|V|^{-1}\mathbf1\mathbf1^{\trans}$, must be positive semidefinite of rank
 at most three \cite{liberti2014}.  A general Wasserstein metric need not pass
 this test, which is unavailable from local edges alone: a zero edge residual
-does not make the unobserved complete matrix Euclidean.  The controlled
-Gaussian decoder passes it by construction; we do not apply it to MNIST, where
+does not make the unobserved complete matrix Euclidean.  The Gaussian
+benchmark of Section~\ref{sec:controlled-experiment} passes it by
+construction; we do not apply it to MNIST, where
 we claim neither a unique external shape nor a true data-manifold curvature.
