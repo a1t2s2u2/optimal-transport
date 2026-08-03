@@ -61,7 +61,7 @@ We compare up to four representations.
   unconstrained low-stress reference, but it may fold like origami and is
   not used as the main visualization.
 \end{enumerate}
-For the Gaussian benchmark, the known height field is also a
+For the mixed-curvature surface, the known height field is also a
 natural display convention.  MNIST uses no target shape to select bending.
 The smooth 3D fit adds a squared hinge when
 $\sigma_{\min}(T_f)<0.45$.
@@ -86,7 +86,7 @@ Proposition~\ref{prop:pl-certificate}.  We also report maximum relative
 triangle-edge error, interior curvature-mass RMSE, and all-pairs relative
 error of shortest paths on the edge graph.  The last statistic is an easily
 reproducible graph diagnostic; the theorem itself applies to the full
-facewise intrinsic distance.  For the Gaussian benchmark we add rigidly aligned
+facewise intrinsic distance.  For the two ideal manifolds we add rigidly aligned
 coordinate RMSE.  No coordinate RMSE is defined for MNIST.
 
 \subsection{Convex ideal manifolds: the shape itself is recovered}
@@ -175,7 +175,7 @@ evaluation panel, not an estimator input.
  \centering
  \includegraphics[width=0.96\textwidth]
  {experiments/curvature_certified_control.png}
- \caption{Gaussian benchmark: input, output, and evaluation.  Local Wasserstein
+ \caption{Mixed-curvature surface: input, output, and evaluation.  Local Wasserstein
  distances of the diagonal-Gaussian decoder encode a nonconstant graph height
  exactly.  Red and blue denote positive and negative angle-defect curvature density;
  boundary values are omitted.  The bottom-right alignment uses the hidden
@@ -333,9 +333,10 @@ tensor and cannot in general be visualized without loss inside $\mathbb R^3$;
 slices or a higher ambient dimension would be required.
 
 Topology and the triangular complex are supplied, and the optimizer is not
-proved to find a global stress minimum: the near-exact benchmark recovery is
+proved to find a global stress minimum: the near-exact recovery on the ideal
+manifolds is
 the best of three deterministic initializations, not evidence of optimizer
-stability.  The benchmark uses a designed Gaussian identity, while
+stability.  Both ideal manifolds use a designed Gaussian identity, while
 MNIST uses one VAE seed, one digit-centered region, and pooled normalized
 image mass; pooling changes the measure and normalization discards total ink.
 Because our free 2D and smooth 3D fits use different display constraints,

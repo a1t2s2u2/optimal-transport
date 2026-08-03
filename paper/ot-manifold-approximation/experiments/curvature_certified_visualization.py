@@ -1719,7 +1719,7 @@ def write_table(rows: list[dict[str, object]], japanese: bool) -> None:
         r"\midrule",
     ]
     experiment_labels = {
-        "controlled": ("Gaussian benchmark", "ガウス例"),
+        "controlled": ("Mixed-curvature surface", "混合曲率曲面"),
         "mnist": ("MNIST digit-3-centered", "MNIST数字3中心領域"),
     }
     for experiment_index, experiment in enumerate(("controlled", "mnist")):
@@ -1791,7 +1791,7 @@ def write_certificate_table(rows: list[dict[str, object]], japanese: bool) -> No
         r"\midrule",
     ]
     experiment_labels = {
-        "controlled": ("Gaussian benchmark", "ガウス例"),
+        "controlled": ("Mixed-curvature surface", "混合曲率曲面"),
         "mnist": ("MNIST digit-3-centered", "MNIST数字3中心領域"),
     }
     for experiment_index, experiment in enumerate(("controlled", "mnist")):
@@ -2006,13 +2006,13 @@ def save_control_figure(
     )
     figure.suptitle(
         (
-            "ガウス例：対角Gaussian W2は真の3次元直線距離と厳密一致\n"
+            "混合曲率曲面：対角Gaussian W2は真の3次元直線距離と厳密一致\n"
             f"局所query RMS={100.0 * float(metrics['query_relative_rms']):.3f}%, "
             f"整列RMSE={float(metrics['controlled_aligned_rmse']):.4f}"
         )
         if japanese
         else (
-            "Gaussian benchmark: diagonal-Gaussian W2 equals the true 3D distance exactly\n"
+            "Mixed-curvature surface: diagonal-Gaussian W2 equals the true 3D distance exactly\n"
             f"local-query RMS={100.0 * float(metrics['query_relative_rms']):.3f}%, "
             f"aligned RMSE={float(metrics['controlled_aligned_rmse']):.4f}"
         ),
@@ -2271,7 +2271,7 @@ def save_diagnostics_figure(
     loss_axis.set_yscale("log")
     loss_axis.set_xlabel("optimizer evaluation" if not japanese else "最適化評価回数")
     loss_axis.set_ylabel("objective")
-    loss_axis.set_title("Gaussian benchmark optimization" if not japanese else "ガウス例の最適化")
+    loss_axis.set_title("Mixed-curvature optimization" if not japanese else "混合曲率曲面の最適化")
     loss_axis.grid(alpha=0.18, which="both")
     loss_axis.legend(frameon=False, fontsize=8)
 
@@ -2340,9 +2340,9 @@ def save_diagnostics_figure(
             width=width,
             color=CONTROL_COLOR if experiment == "controlled" else MNIST_COLOR,
             alpha=0.85,
-            label="ガウス例"
+            label="混合曲率曲面"
             if japanese and experiment == "controlled"
-            else ("Gaussian benchmark" if experiment == "controlled" else "MNIST"),
+            else ("Mixed-curvature" if experiment == "controlled" else "MNIST"),
         )
     axes[1, 0].set_xticks(
         x_positions,
@@ -2404,9 +2404,9 @@ def save_diagnostics_figure(
             alpha=0.48,
             marker=markers[experiment],
             color=CONTROL_COLOR if experiment == "controlled" else MNIST_COLOR,
-            label="ガウス例"
+            label="混合曲率曲面"
             if japanese and experiment == "controlled"
-            else ("Gaussian benchmark" if experiment == "controlled" else "MNIST"),
+            else ("Mixed-curvature" if experiment == "controlled" else "MNIST"),
         )
     limits = axes[1, 1].get_xlim()
     lower = min(limits[0], axes[1, 1].get_ylim()[0])
