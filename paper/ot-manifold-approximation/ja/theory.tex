@@ -47,6 +47,7 @@
  \label{eq:paper-chain}
 \end{equation}
 であり、最初の矢印が歪みを測り、最後の矢印がそれを戻す。
+図~\ref{fig:distortion-teaser} はこの連鎖の両端を示している。
 
 歪みを戻すとは、この計量を実現する座標を見つけることである。ここで三つの問いが
 生じ、それぞれに厳密な答えがある。
@@ -68,6 +69,19 @@ Alexandrovの定理により凸実現は剛体運動を除いて一意であり�
 面ごとのアフィン写像の特異値がすべての内在距離の変化を評価し、接続面の角度変化が
 すべての曲率質量の変化を評価する（命題~\ref{prop:pl-certificate}）。いずれも入力と
 返された出力から計算でき、小誤差の仮定も正解形状も必要としない。
+
+\begin{figure*}[t]
+ \centering
+ \includegraphics[width=0.92\textwidth]
+ {experiments/distortion_teaser_ja.png}
+ \caption{扱う問題。Wasserstein幾何が閉じた形で分かっている
+ 第~\ref{sec:controlled-experiment} 節のデコーダーで描いた。経路 $A$ と $B$ は
+ 潜在プロット上では同じ長さだが、デコーダーは $A$ に沿って $B$ より $38\%$ 多くの
+ 質量を動かす。色は引き戻し計量の局所的な拡大率 $\sqrt{\det G}$ であり、左の平坦な
+ 座標では見えず、右の曲面が戻すのはまさにこれである。両経路は、等しい長さをもつ
+ すべての格子経路の中から極値として自動的に選んだものであり、手で選んではいない。}
+ \label{fig:distortion-teaser}
+\end{figure*}
 
 \paragraph{本論文の貢献}
 \begin{enumerate}

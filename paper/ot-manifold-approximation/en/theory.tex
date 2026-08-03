@@ -58,6 +58,7 @@ whole construction is one chain,
  \label{eq:paper-chain}
 \end{equation}
 in which the first arrows measure the distortion and the last one undoes it.
+Figure~\ref{fig:distortion-teaser} shows both ends of that chain.
 
 Undoing the distortion then means finding coordinates that realize this
 metric.  Three questions arise, and each has an exact answer.
@@ -82,6 +83,21 @@ Facewise affine singular values bound every intrinsic distance change, and
 incident angle changes bound every curvature-mass change
 (Proposition~\ref{prop:pl-certificate}).  Both are computed from the input and
 the returned output, with no small-error assumption and no ground truth.
+
+\begin{figure*}[t]
+ \centering
+ \includegraphics[width=0.92\textwidth]
+ {experiments/distortion_teaser.png}
+ \caption{The problem, on the decoder of
+ Section~\ref{sec:controlled-experiment}, whose Wasserstein geometry is known
+ in closed form.  Paths $A$ and $B$ have identical length on the latent plot,
+ but the decoder moves $38\%$ more mass along $A$ than along $B$.  Color is the
+ local magnification $\sqrt{\det G}$ of the pullback metric; it is invisible in
+ the flat coordinates on the left and is exactly what the surface on the right
+ restores.  Both paths were selected programmatically as the extremes over all
+ equal-length grid paths, not chosen by hand.}
+ \label{fig:distortion-teaser}
+\end{figure*}
 
 \paragraph{Contributions.}
 \begin{enumerate}
