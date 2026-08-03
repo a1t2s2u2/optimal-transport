@@ -235,9 +235,8 @@ direct nonedge Wasserstein chords.  Finally, the free 3D reference reaches
 $0.039\%$ query RMS but has negative adjacent normals on $27.7\%$ of pairs.
 Thus, under our declared regularization, the smooth 3D branch supplies a
 noncollapsed display at essentially the same average stress as the degenerate
-free-2D fit.  This comparison does not isolate ambient dimension from the
-display constraints, and local distance fit alone does not select a readable
-external shape.  The smooth branch's nonzero edge residual is the $\delta$ audited by
+free-2D fit.  Local distance fit alone does not select a readable external
+shape.  The smooth branch's nonzero edge residual is the $\delta$ audited by
 Proposition~\ref{prop:pl-certificate}; it is not replaced by an unobservable
 coordinate error.
 
@@ -257,19 +256,14 @@ coordinate error.
 
 \paragraph{What is certified.}
 For each returned surface we compute $(s_-,s_+)$ and $\Delta_i$ directly from
-the observed and displayed triangles.  Equation~\eqref{eq:distance-certificate}
-therefore bounds every distance of the abstract observed PL metric, without a
-small-residual assumption, and Equation~\eqref{eq:curvature-certificate}
-bounds every curvature-mass change in exact arithmetic.  The reported
-double-precision values are numerical diagnostics of those theoretical
-bounds, not outward-rounded interval certificates.  We
-do not claim a validated floating-point $\varepsilon$ for the MNIST OT solves;
-its numerical certificate is therefore relative to the computed
-unregularized-OT edge lengths.  A validated $\varepsilon$ would extend it to
-ideal edge-$W_2$ values through
-Equations~\eqref{eq:ideal-curvature-certificate}--
-\eqref{eq:ideal-distance-certificate}.  None of these statements makes the
-smooth branch the unique external shape of the decoder manifold.
+the observed and displayed triangles, so
+Equations~\eqref{eq:distance-certificate}--\eqref{eq:curvature-certificate}
+bound every intrinsic distance and every curvature-mass change of the observed
+PL metric.  We do not claim a validated floating-point $\varepsilon$ for the
+MNIST OT solves, so that audit is relative to the computed unregularized-OT
+edge lengths; a validated $\varepsilon$ would extend it to ideal edge-$W_2$
+values through Equations~\eqref{eq:ideal-curvature-certificate}--
+\eqref{eq:ideal-distance-certificate}.
 
 \section{Limitations and Conclusion}
 \label{sec:conclusion}
@@ -281,19 +275,17 @@ exist.  An intrinsically three-dimensional manifold instead has a curvature
 tensor and cannot in general be visualized without loss inside $\mathbb R^3$;
 slices or a higher ambient dimension would be required.
 
-Topology and the triangular complex are supplied.  The optimizer is not
-proved to find a global stress minimum.  The controlled problem uses a
-designed Gaussian identity, while MNIST uses one VAE seed, one digit-centered
-region, and pooled normalized image mass.  Pooling changes the measure and
-normalization discards total ink.  The bending term selects a readable
-representative but cannot resolve intrinsic nonuniqueness.  Because our free
-2D and smooth 3D fits use different display constraints, their comparison
-does not by itself identify a pure dimension effect.  The near-exact
-controlled recovery is the best of three deterministic initializations and
-is not evidence of optimizer stability.  Finally, raw
-pointwise curvature density is unstable under fine-scale noise according to
-Equation~\eqref{eq:density-scaling}; smoothing it with a statistical guarantee
-remains separate work.
+Topology and the triangular complex are supplied, and the optimizer is not
+proved to find a global stress minimum: the near-exact controlled recovery is
+the best of three deterministic initializations, not evidence of optimizer
+stability.  The controlled problem uses a designed Gaussian identity, while
+MNIST uses one VAE seed, one digit-centered region, and pooled normalized
+image mass; pooling changes the measure and normalization discards total ink.
+Because our free 2D and smooth 3D fits use different display constraints,
+their comparison does not by itself identify a pure dimension effect.
+Finally, raw pointwise curvature density is unstable under fine-scale noise
+according to Equation~\eqref{eq:density-scaling}; smoothing it with a
+statistical guarantee remains separate work.
 
 Within this scope, the paper's claim is simple and testable.  The ordinary
 latent plot is replaced by a surface fitted to how decoded measures actually
