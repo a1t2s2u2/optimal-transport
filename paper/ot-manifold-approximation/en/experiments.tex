@@ -1,11 +1,27 @@
-\section{Experiments: From a Flat Input to a Visible Surface}
+\section{Experiments}
 \label{sec:experiments}
 
-The experiments answer two separate questions.  The Gaussian benchmark asks
-whether the full pipeline recovers a known variable-curvature surface when
-its assumptions are exactly true.  MNIST asks what the same definition shows
-for a learned neural decoder when no external shape is known.  Ground-truth
-3D coordinates are used only in the Gaussian benchmark.
+The experiments proceed in three stages, and the order matters.  We first
+check recovery where the answer is unique and known, then where only the
+intrinsic geometry is knowable, and only then apply the pipeline to a learned
+decoder.
+
+\begin{enumerate}
+  \item \emph{Convex ideal manifolds} (Section~\ref{sec:convex-experiment}).
+  Sphere and ellipsoid, closed with positive curvature.  By
+  Proposition~\ref{prop:rigidity} the shape itself is determined by the edge
+  lengths, so ``recovered'' can be tested against ground-truth coordinates
+  without any display convention.
+  \item \emph{A mixed-curvature ideal manifold}
+  (Section~\ref{sec:controlled-experiment}).  Positive peaks and a saddle, so
+  Proposition~\ref{prop:rigidity} does not apply and a bending freedom
+  remains.  Here we test recovery of the intrinsic geometry and state plainly
+  that the embedding is pinned by a convention.
+  \item \emph{MNIST} (Section~\ref{sec:mnist-experiment}).  A learned decoder
+  with no external ground truth: the application of the verified pipeline.
+\end{enumerate}
+Ground-truth coordinates are used only in stages~1 and~2, and only after
+reconstruction.
 
 \subsection{Visualization and evaluation protocol}
 
@@ -73,10 +89,48 @@ reproducible graph diagnostic; the theorem itself applies to the full
 facewise intrinsic distance.  For the Gaussian benchmark we add rigidly aligned
 coordinate RMSE.  No coordinate RMSE is defined for MNIST.
 
-\subsection{Gaussian benchmark with exact ground truth}
+\subsection{Convex ideal manifolds: the shape itself is recovered}
+\label{sec:convex-experiment}
+
+The first stage removes every ambiguity.  We take a sphere and a linearly
+transformed ellipsoid sharing one convex triangular skeleton of $42$ vertices
+and $80$ faces.  A full-rank Gaussian with noncommuting covariances is
+attached to each vertex so that $W_2$ on every mesh edge equals the Euclidean
+distance between the two vertices; the maximum discrepancy is
+$1.1\times10^{-15}$.  The estimator receives only the vertex count, the
+oriented faces, and the measured edge lengths.
+
+Because every angle defect is positive and the surface is closed,
+Proposition~\ref{prop:rigidity} says the realization is unique up to a rigid
+motion.  Recovery of the \emph{shape}, not merely the metric, is therefore a
+well-posed test.  A spherical-MDS initializer selects the convex branch, a
+continuation method deforms it toward the observed lengths while penalizing
+locally nonconvex dihedral configurations, and a final least-squares solve
+uses mesh-edge residuals only, after one face is fixed to remove rigid
+motions.
+
+With exact edge lengths the aligned coordinate error is $2.1\times10^{-14}$
+for the sphere and $1.4\times10^{-14}$ for the ellipsoid: the distorted world
+is restored to machine precision.  Under relative edge noise we compare the
+realized error against the local rigidity estimate
+\begin{equation}
+ \norm{\widehat X-X}_F\le 2\norm{\widehat\ell-\ell}_2/s_X,
+ \label{eq:rigidity-bound}
+\end{equation}
+where $s_X$ is the smallest nonzero singular value of the edge-length rigidity
+matrix after quotienting Euclidean motions.  Table~\ref{tab:convex-edge-rigidity}
+reports three deterministic seeds per condition.  The realized error stays at
+roughly one fifth of the bound throughout, and the convex hull retains every
+vertex and exactly the input facets in all trials, so the recovered object is
+still the same polytope rather than a nearby degenerate one.
+
+\input{experiments/convex_edge_realization_prototype_table.tex}
+
+\subsection{A mixed-curvature ideal manifold}
 \label{sec:controlled-experiment}
 
-Take a $21\times21$ grid on $[-1,1]^2$ and define
+The second stage keeps an exactly known answer but gives up rigidity.  Take a
+$21\times21$ grid on $[-1,1]^2$ and define
 \begin{equation}
  \begin{aligned}
  h(u,v)={}&0.48e^{-6.4((u+0.42)^2+1.15(v-0.24)^2)}\\
@@ -104,7 +158,11 @@ Equation~\eqref{eq:gaussian-chord},
  \label{eq:controlled-w2-identity}
 \end{equation}
 Thus the exact Wasserstein geometry is the straight-line geometry of the graph
-$(u,v,h(u,v))$, while the decoder mean alone remains flat.  The estimator is
+$(u,v,h(u,v))$, while the decoder mean alone remains flat.  The two peaks and
+the saddle give both curvature signs, so Proposition~\ref{prop:rigidity} does
+not apply: the intrinsic geometry is fixed by the edge lengths but the
+embedding is not, and the height-field constraint is the display convention
+that selects one.  The estimator is
 given local pairs within four grid steps, $14{,}060$ of the $97{,}020$ total
 pairs (14.49\%).  The hidden height is withheld until alignment.
 
@@ -206,9 +264,10 @@ nothing about unseen images or latent points.
  \label{tab:visualization-results}
 \end{table*}
 
-\paragraph{The benchmark surface is recovered.}
+\paragraph{The mixed-curvature surface is recovered intrinsically.}
 The maximum discrepancy between the analytic Gaussian $W_2$ formula and the
-hidden 3D straight-line distance is at machine precision.  The scaled latent plane retains
+hidden 3D straight-line distance is at machine precision.  The scaled latent
+plane retains
 $7.35\%$ query RMS, whereas the selected best-of-three height-field fit
 reaches $0.0007\%$ and
 recovers the mixed-sign curvature to numerical precision.  Its aligned
@@ -287,9 +346,12 @@ Finally, raw pointwise curvature density is unstable under fine-scale noise
 according to Equation~\eqref{eq:density-scaling}; smoothing it with a
 statistical guarantee remains separate work.
 
-Within this scope, the paper's claim is simple and testable.  The ordinary
-latent plot is replaced by a surface fitted to how decoded measures actually
-move under optimal transport.  Its facewise distortion factors and
-incident-angle changes directly bound intrinsic distance and
-curvature-mass distortion.  That makes the 3D picture an auditable geometric
-summary rather than an unexplained rendering.
+Within this scope the claim is simple and testable.  The ordinary latent plot
+is a distorted map; we measure the distortion by pulling the decoder's
+geometry back with optimal transport, and we undo it in the smallest ambient
+dimension that carries the result.  Where curvature is nonnegative and the
+surface closed, that restoration is unique and we verify it against ground
+truth to machine precision.  Where curvature changes sign, the intrinsic
+geometry is still restored exactly and only the bend is a convention.  Where
+there is no ground truth at all, the same facewise distortion factors and
+incident-angle changes say how much of the geometry survived the picture.
