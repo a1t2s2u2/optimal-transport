@@ -1,158 +1,184 @@
 \begin{abstract}
-A two-dimensional latent plot is drawn in the coordinates chosen by an
-encoder, not in the geometry seen by its decoder.  We study the smallest
-setting in which that distortion can be re-expressed and displayed: a known
-triangulation of a two-dimensional latent region, local 2-Wasserstein
-distances between decoded measures, and a triangular surface in
-$\mathbb R^3$.  The output is not a hidden true shape.  It is
-a three-dimensional representative of the intrinsic piecewise flat metric defined by the
-decoder's Wasserstein edge lengths.
+A two-dimensional latent plot is a distorted map.  It is drawn in the
+coordinates an encoder happened to choose, not in the geometry its decoder
+actually produces, so equal steps on the plot can move very unequal amounts of
+probability mass.  This paper measures that distortion and undoes it.
 
-Our theoretical link has two parts.  For diagonal-Gaussian decoders, the
-distance built from edge $W_2$ values converges to the continuous pullback
-distance at relative rate $O(h)$ on uniformly shape-regular mesh families.
-For any returned realization, standard facewise affine singular values then
-bound every intrinsic
-distance, while incident angle changes bound angle-defect curvature-mass
-change.  The latter audit is computed from the input and output and needs no
-small-error assumption.  A sufficiently small validated numerical OT error
-$\varepsilon$ extends it to ideal edge-$W_2$ values.  The construction and
-finite a posteriori audit are optimizer-independent and require neither
-decoder derivatives, constant curvature, convexity, nor a known
-three-dimensional target.  The Gaussian consistency rate separately assumes
-derivative bounds.
+We pull the decoder's geometry back to a prescribed latent triangulation by
+computing 2-Wasserstein distances between decoded measures on mesh edges.  The
+resulting piecewise flat metric carries an angle-defect curvature, and this is
+the pullback curvature we visualize.  Undoing the distortion means realizing
+that metric with coordinates, and we use the smallest ambient dimension that
+can carry it: one added dimension, from the flat latent plane to a surface in
+$\mathbb R^3$.
 
-We evaluate the construction first on a diagonal-Gaussian decoder whose
-Wasserstein geometry is an exactly known surface with spatially varying
-positive and negative curvature.  We then train a two-dimensional VAE on
-MNIST and visualize the digit-3 region using unregularized discrete OT between
-decoded images viewed as masses on the pixel plane.  The figures show the
-flat input coordinates, decoded images, the metric-fitted surface, curvature,
-and the optimization loss in one auditable pipeline.
+Three questions are answered exactly.  How many dimensions are needed is
+decided by the rank of a centered Gram matrix.  When the restored shape is
+unique is decided by curvature sign: a closed surface with nonnegative
+angle defect is rigid by Alexandrov's theorem, while mixed curvature leaves a
+bending freedom that no amount of data removes.  How much was actually
+restored is decided by facewise singular values and incident angle changes,
+both computed from the input and output with no small-error assumption.
+
+We verify recovery on ideal manifolds before applying the construction.  On
+convex surfaces, where rigidity makes the answer unique, exact Wasserstein
+edge lengths recover the shape to machine precision and noisy ones stay well
+inside a rigidity bound.  On a mixed-curvature surface, the intrinsic geometry
+is recovered exactly while the embedding is pinned only by a display
+convention.  We then apply the same pipeline to a two-dimensional MNIST VAE
+using unregularized discrete optimal transport between decoded images.
 \end{abstract}
 
 \section{Introduction}
 
-A latent coordinate is a map coordinate.  It need not measure the change in
-the object produced by the decoder.  Two equal steps in a VAE plot can move
-very different amounts of image mass, just as equal displacements on a flat
-world map can represent different travel distances.  Pullback geometry makes
-this precise by differentiating the decoder and defining a Riemannian metric
-from its Jacobian \cite{arvanitidis2018,chen2018,roy2022}.  The resulting
-metric tensors, magnification factors, and geodesics are informative, but a
-metric tensor is not yet a visible surface.
+A latent coordinate is a map coordinate.  Like a flat world map, it is
+convenient to draw on and systematically misleading about distance: equal
+displacements in different regions of a VAE plot can move very different
+amounts of image mass.  A cartographer fixes this by knowing the distortion of
+the projection and, when the distortion matters, abandoning the flat sheet for
+a globe.  This paper does the same thing for latent spaces.
 
-We ask one deliberately narrow question:
-\begin{quote}
-Given a two-dimensional latent mesh and local Wasserstein distances between
-its decoded outputs, how faithfully can those distances and their variable
-curvature be displayed by a surface in $\mathbb R^3$?
-\end{quote}
-The word \emph{displayed} is essential.  An intrinsic metric generally does
-not select a unique embedding in three dimensions: a sheet can bend without
-changing any intrinsic length.  Conversely, an arbitrary decoder-induced
-metric need not admit an exact three-dimensional realization at all.  We
-therefore define correctness by quantities that are observable before a
-ground-truth shape is known: local OT-length residual, intrinsic-distance
-distortion, and angle-defect curvature distortion.
-
-The construction continues the following finite-to-infinitesimal chain:
+The distortion is made precise by pullback geometry, which differentiates the
+decoder and builds a Riemannian metric from its Jacobian
+\cite{arvanitidis2018,chen2018,roy2022}.  We avoid derivatives and instead
+observe the same geometry with finite measurements: the 2-Wasserstein distance
+between the measures the decoder produces at two nearby latent points.
+Collecting these along the edges of a triangulation gives a
+\emph{piecewise flat} metric, whose curvature is the angle defect at each
+vertex.  That is the pullback curvature, and it is what our figures show.  The
+whole construction is one chain,
 \begin{equation}
  \begin{aligned}
  z&\longmapsto K_z
  \longmapsto W_2(K_z,K_{z'})
  \longmapsto \text{piecewise flat metric}\\
- &\longmapsto \text{curvature}
- \longmapsto \mathbb R^3\text{ display}.
+ &\longmapsto \text{angle-defect curvature}
+ \longmapsto \text{surface in }\mathbb R^3,
  \end{aligned}
  \label{eq:paper-chain}
 \end{equation}
-Here $K_z$ is a probability measure constructed by the decoder, and
-\emph{piecewise flat} means that every triangle carries the Euclidean metric
-fixed by its three edge lengths, with the triangles glued along shared edges.
-The first two arrows are the Wasserstein latent geometry developed for
-probabilistic decoders.  Our contribution is to couple these standard
-piecewise flat constructions to decoder-induced Wasserstein observations and a
-continuous Gaussian consistency limit.
+in which the first arrows measure the distortion and the last one undoes it.
+Figure~\ref{fig:distortion-teaser} shows both ends of that chain.
+
+Undoing the distortion then means finding coordinates that realize this
+metric.  Three questions arise, and each has an exact answer.
+
+\paragraph{How many dimensions?}
+We want the flattest honest picture, so we ask for the smallest ambient
+dimension that carries the metric.  For a complete distance matrix this is the
+rank of a centered Gram matrix (Proposition~\ref{prop:dimension-test}).  A
+two-dimensional latent region needs at least three whenever its curvature is
+nonzero, and one added dimension is what we use throughout.
+
+\paragraph{Is the restored shape unique?}
+Not always, and the dividing line is curvature sign.  If the surface is closed
+and every angle defect is nonnegative, Alexandrov's theorem makes the convex
+realization unique up to a rigid motion, so \emph{restoring} is literally the
+right word.  With mixed curvature or a boundary, the surface can bend without
+changing any intrinsic length, and no estimator can select among the bent
+copies.  We say exactly which of our results falls on which side.
+
+\paragraph{How much was restored?}
+Facewise affine singular values bound every intrinsic distance change, and
+incident angle changes bound every curvature-mass change
+(Proposition~\ref{prop:pl-certificate}).  Both are computed from the input and
+the returned output, with no small-error assumption and no ground truth.
+
+\begin{figure*}[t]
+ \centering
+ \includegraphics[width=0.92\textwidth]
+ {experiments/distortion_teaser.png}
+ \caption{The problem, on the decoder of
+ Section~\ref{sec:controlled-experiment}, whose Wasserstein geometry is known
+ in closed form.  Paths $A$ and $B$ have identical length on the latent plot,
+ but the decoder moves $38\%$ more mass along $A$ than along $B$.  Color is the
+ local magnification $\sqrt{\det G}$ of the pullback metric; it is invisible in
+ the flat coordinates on the left and is exactly what the surface on the right
+ restores.  Both paths were selected programmatically as the extremes over all
+ equal-length grid paths, not chosen by hand.}
+ \label{fig:distortion-teaser}
+\end{figure*}
 
 \paragraph{Contributions.}
 \begin{enumerate}
-  \item We define a \emph{Wasserstein latent surface} directly from local
-  decoded-measure distances on a two-dimensional triangulation.  It requires
-  decoder evaluations and OT solves, but no decoder derivatives.
-  \item For smooth diagonal-Gaussian decoders, we prove $O(h)$ consistency of
-  the finite distance built from edge $W_2$ values with the continuous
-  Wasserstein pullback distance on uniformly shape-regular mesh families.
-  \item We adapt the standard facewise distortion audit for piecewise affine
-  maps to this setting.  Singular values bound all intrinsic distances, incident-angle
-  changes bound curvature mass, and a supplied OT error $\varepsilon$ extends
-  the audit to ideal edge-$W_2$ values.
-  \item We give two visible experiments: an exact mixed-curvature Gaussian
-  benchmark and an MNIST digit-3 surface based on spatial transport of decoded
-  ink.  The latter is intentionally one digit rather than the unsupported
-  assumption that all ten classes form one smooth manifold.
+  \item We define a \emph{Wasserstein latent surface}: the piecewise flat
+  metric and angle-defect curvature obtained by pulling the decoder's geometry
+  back to a prescribed two-dimensional triangulation using only decoder
+  evaluations and OT solves, with no decoder derivatives.
+  \item We settle the minimal ambient dimension by a finite rank test, and
+  separate the case in which the restored shape is unique (nonnegative
+  curvature, closed) from the case in which a bending freedom is unavoidable.
+  \item We prove $O(h)$ consistency with the continuous Wasserstein pullback
+  distance for smooth diagonal-Gaussian decoders, and give an a posteriori
+  distortion audit that holds for any returned realization.
+  \item We verify recovery on ideal manifolds first: a convex surface where
+  rigidity makes recovery of the \emph{shape} meaningful, then a
+  mixed-curvature surface where only the intrinsic geometry is recoverable.
+  MNIST is then the application of that verified pipeline.
 \end{enumerate}
 
 \section{Related Work}
 
 \paragraph{Geometry of generative models.}
-Latent Space Oddity and subsequent work pull an observation-space metric back
-through a deterministic or stochastic decoder, then compute geodesics and
-volume distortion \cite{arvanitidis2018,chen2018,arvanitidis2022}.
-Optimal Latent Transport instead pulls back Wasserstein geometry from decoder
-distributions \cite{roy2022}.  Identifiability results show that metric
-structure can remain meaningful when latent coordinates are not
-\cite{syrota2025}.  These works motivate the metric in
-Equation~\eqref{eq:paper-chain}.  Our target is different: a finite 3D
-visualization and an a posteriori curvature audit, without evaluating a
-Jacobian.
+Latent Space Oddity and its successors pull an observation-space metric back
+through a decoder and compute geodesics and volume distortion
+\cite{arvanitidis2018,chen2018,arvanitidis2022}; Optimal Latent Transport
+pulls back Wasserstein geometry instead \cite{roy2022}, and identifiability
+results show metric structure can survive when latent coordinates do not
+\cite{syrota2025}.  These works stop at the metric.  We take the further step
+of realizing it as coordinates, in the smallest dimension that fits, and of
+reporting how much the realization distorts.
 
 \paragraph{Learning from distances.}
-Isomap reconstructs low-dimensional coordinates from graph distances
-\cite{tenenbaum2000}.  Most directly, Wassmap replaces Euclidean dissimilarity
-by pairwise Wasserstein distance to obtain approximately isometric
-image-manifold coordinates \cite{hamm2023wassmap}, and LOT Wassmap accelerates
-that construction with linearized transport under an approximation guarantee
-\cite{cloninger2025}.  Recovering a manifold, or its metric, from noisy
-intrinsic distances also has finite-sample and asymptotic guarantees
-\cite{qiu2023,fefferman2020,hamm2025}.  All of these infer coordinates or a
-manifold from distance data.  We instead keep a prescribed two-dimensional
-mesh, specialize the observations to decoded measures, and audit the
-distortion of the returned variable-curvature piecewise flat surface; we do not claim to
-recover unknown sample parameters or topology.
+Isomap recovers coordinates from graph distances \cite{tenenbaum2000}; Wassmap
+replaces Euclidean dissimilarity by pairwise Wasserstein distance
+\cite{hamm2023wassmap} and LOT Wassmap accelerates it with linearized
+transport \cite{cloninger2025}.  Recovering a manifold, or its metric, from
+noisy intrinsic distances has finite-sample and asymptotic guarantees
+\cite{qiu2023,fefferman2020,hamm2025}.  All of these infer coordinates from
+distance data; we keep the latent mesh fixed, specialize the observations to
+decoded measures, and audit the returned surface.
 
-\paragraph{Piecewise-affine mesh distortion.}
-Facewise Jacobian singular values are standard tools for measuring and
-constraining distortion in triangular mesh parameterization
-\cite{lipman2012}.  We connect this established language to decoder-induced
-Wasserstein edge geometry, compose it with the continuous Gaussian pullback
-limit, and report the resulting audit together with angle-defect curvature.
+\paragraph{Polyhedral realization and rigidity.}
+Which piecewise flat metrics are realizable, and how uniquely, is classical.
+Cauchy's rigidity theorem and Alexandrov's realization theorem together make a
+nonnegatively curved polyhedral metric on the sphere the boundary of exactly
+one convex polytope \cite{alexandrov2005,pak2010}, while Burago and Zalgaller
+show that every polyhedral metric on an orientable surface, or one with
+boundary, embeds isometrically in $\mathbb R^3$ if the triangulation may be
+refined \cite{burago1995}.  Facewise singular values are the standard language
+for mesh-parameterization distortion \cite{lipman2012}.  We connect these to
+decoder-induced Wasserstein edge geometry.
 
 \paragraph{Discrete OT and curvature.}
 Discrete Kantorovich transport gives a natural distance between images viewed
-as masses on a pixel grid \cite{peyre2019}.  We use an unregularized
-linear-program solver through POT \cite{flamary2021}, so entropic bias is absent from the
-reported MNIST distances.  Angle defect is the intrinsic curvature mass of a
-piecewise flat surface.  Its convergence to smooth Gaussian curvature requires mesh
-conditions and is not pointwise reliable on an arbitrary triangulation
-\cite{gawlik2020,hartig2021}.  Accordingly, our audit first treats the
-finite angle-defect curvature mass.  Area normalization is presented only with its
-stronger noise scaling made explicit.
+as pixel masses \cite{peyre2019}; we use an unregularized linear program
+through POT \cite{flamary2021}, so no entropic bias enters.  Angle defect is
+the intrinsic curvature mass of a piecewise flat surface; its convergence to
+smooth Gaussian curvature needs mesh conditions and is not pointwise reliable
+on an arbitrary triangulation \cite{gawlik2020,hartig2021}, so curvature
+\emph{mass} is our primary quantity and density is reported only with its
+noise scaling made explicit.
 
-\section{Wasserstein Geometry on a Latent Mesh}
+\section{The Pullback Metric on a Latent Mesh}
 \label{sec:setup}
 
-Throughout, $(\mathcal Y,d_{\mathcal Y})$ is a complete separable metric
-space, $\cP_2(\mathcal Y)$ is the set of Borel probability measures with
-finite second moment, and $W_2$ is the quadratic Kantorovich distance
+The decoder does not output points; it outputs probability distributions over
+some space $\mathcal Y$ of observations, so we need a distance between
+distributions.  We use the $2$-Wasserstein distance, the cost of the cheapest
+way to transport one distribution onto the other when moving a unit of mass a
+distance $d$ costs $d^2$.  Formally, $(\mathcal Y,d_{\mathcal Y})$ is a
+complete separable metric space, $\cP_2(\mathcal Y)$ is the set of Borel
+probability measures with finite second moment, and
 \begin{equation}
  W_2(\mu,\nu)^2
  =\inf_{\gamma\in\Gamma(\mu,\nu)}
  \int d_{\mathcal Y}(y,y')^2\dd\gamma(y,y'),
  \label{eq:w2-definition}
 \end{equation}
-where $\Gamma(\mu,\nu)$ is the set of couplings of $\mu$ and $\nu$
-\cite{villani2009,peyre2019}.
+where $\Gamma(\mu,\nu)$ is the set of couplings of $\mu$ and $\nu$, that is,
+joint distributions on $\mathcal Y\times\mathcal Y$ with marginals $\mu$ and
+$\nu$ \cite{villani2009,peyre2019}.
 
 Let $\cZ\subset\mathbb R^2$ be a latent region and
 \begin{equation}
@@ -164,7 +190,9 @@ probability measure that we define explicitly from a decoded object.  The
 latter is used for MNIST: normalized grayscale intensities are masses at pixel
 locations.  These two interpretations are not conflated.
 
-The decoder induces the pseudometric
+The decoder induces a \emph{pseudometric} on the latent region, that is, a
+distance that satisfies the triangle inequality but may vanish between
+distinct points:
 \begin{equation}
  d_K(z,z'):=W_2(K_z,K_{z'}).
  \label{eq:decoder-pseudometric}
@@ -188,8 +216,9 @@ length and its numerical observation are
 Call a positive edge-length assignment $\ell$ \emph{admissible} if the three
 lengths on every face satisfy strict triangle inequalities.  An admissible
 $\ell$ realizes each face as the Euclidean triangle with those side lengths;
-gluing these triangles along shared edges makes $\mathcal T$ a length space
-$M_\ell=(\mathcal T,d_\ell)$, in which $d_\ell(p,q)$ is the infimum of the
+gluing these triangles along shared edges makes $\mathcal T$ a space in which
+distance is measured by travelling inside the surface:
+$M_\ell=(\mathcal T,d_\ell)$, where $d_\ell(p,q)$ is the infimum of the
 Euclidean lengths of paths from $p$ to $q$ that are straight inside each face.
 This \emph{intrinsic piecewise flat metric} uses no ambient coordinates.  We
 assume $\ell^*$ is admissible; admissibility of the observed and displayed
@@ -241,8 +270,11 @@ the Gaussian transport formula gives \cite{givensshortt1984,takatsu2011}
  W_2(K_z,K_{z'})=\norm{F(z)-F(z')}.
  \label{eq:gaussian-chord}
 \end{equation}
-If $F$ is a smooth immersion, its pullback metric is
-$G(z)=J_F(z)^{\trans}J_F(z)$, and for a displacement $w\to0$,
+Suppose $F$ is a smooth immersion, meaning that its Jacobian $J_F(z)$ has
+rank $2$ everywhere, so $F$ does not collapse any direction.  Measuring
+lengths of latent displacements by the lengths of their images under $F$
+defines the \emph{pullback metric} $G(z)=J_F(z)^{\trans}J_F(z)$, and for a
+displacement $w\to0$,
 \begin{equation}
  W_2(K_z,K_{z+w})^2
  =w^{\trans}G(z)w+o(\norm w^2).
@@ -282,7 +314,9 @@ For each mesh edge $(i,j)$, set $\ell_{h,ij}=W_2(K_{z_i},K_{z_j})$.  There is
 a constant $C_I$, depending only on the uniform shape-regularity bound, such
 that if $\eta_h:=C_IHh/\mu<1$ then $\ell_h$ is admissible.  Let
 $\iota_h:\Omega\to M_{\ell_h}$ be the piecewise affine homeomorphism that
-preserves vertex labels and barycentric coordinates facewise.  Then
+preserves vertex labels and, inside each face, barycentric coordinates: a
+point written as a weighted average of the three vertices is sent to the point
+with the same weights in the corresponding glued triangle.  Then
 \begin{equation}
  (1-\eta_h)d_G(p,q)
  \le d_{\ell_h}(\iota_hp,\iota_hq)
@@ -323,8 +357,91 @@ does not by itself cover the discrete-image MNIST map or a general
 Wasserstein-valued decoder.  No pointwise-curvature conclusion follows from
 this distance result alone.
 
-\section{An Auditable 3D Display}
-\label{sec:certificate}
+\section{Restoring the Distortion in Minimal Dimension}
+\label{sec:restore}
+
+Section~\ref{sec:setup} turned the decoder into an intrinsic metric on the
+latent mesh.  Restoring the distortion means going back to coordinates: find
+points whose Euclidean distances reproduce that metric, in as few dimensions
+as possible.
+
+\subsection{How many dimensions are needed}
+\label{sec:dimension}
+
+Suppose for a moment that all pairwise distances $D_{ij}=W_2(K_i,K_j)$ are
+available.  Then the minimal ambient dimension is decided exactly.  Let
+$\Pi=I-|V|^{-1}\mathbf1\mathbf1^{\trans}$ be the centering projection,
+$\circ$ the entrywise product, and
+\begin{equation}
+ B=-\tfrac12\,\Pi\,(D\circ D)\,\Pi.
+ \label{eq:centered-distance-gram}
+\end{equation}
+
+\begin{proposition}[Minimal Euclidean dimension]
+\label{prop:dimension-test}
+$D$ is realized exactly by points in $\mathbb R^q$ if and only if $B$ is
+positive semidefinite with $\rank(B)\le q$, and the smallest such $q$ is
+$\rank(B)$.  In particular one added dimension suffices, and is necessary for
+a nonflat metric, exactly when $B\succeq0$ and $\rank(B)=3$.
+\end{proposition}
+
+\begin{proof}
+If the rows of $Y$ are centered points realizing $D$, expanding
+$\norm{Y_i-Y_j}^2$ gives $B=YY^{\trans}$, which is positive semidefinite of
+rank equal to the dimension of the span of the centered points.  Conversely
+factor $B=YY^{\trans}$ through its eigendecomposition; double centering
+reverses the expansion and returns $D_{ij}^2=\norm{Y_i-Y_j}^2$
+\cite{liberti2014}.
+\end{proof}
+
+Two caveats bound what this test does for us.  It needs the complete matrix,
+so it is unavailable from local edges alone, and a general Wasserstein metric
+need not pass it: if $B$ is indefinite, no Euclidean dimension realizes $D$.
+Conversely, exactness is not the only route to a picture.  Burago and
+Zalgaller show that any piecewise flat metric on an orientable surface, or on
+one with boundary, admits an exact isometric piecewise linear embedding in
+$\mathbb R^3$ provided the triangulation may be refined \cite{burago1995}.
+One added dimension is therefore always enough in principle; what our fixed,
+unrefined mesh buys is a vertex-by-vertex correspondence with the latent plot,
+and what it costs is the residual we audit in
+Section~\ref{sec:certificate}.
+
+\subsection{When the restored shape is unique}
+\label{sec:rigidity}
+
+An intrinsic metric does not by itself determine an embedding: a sheet can
+bend without changing any length, angle, or angle defect measured inside it.
+Whether this freedom is present is decided by curvature sign.
+
+\begin{proposition}[Rigid case]
+\label{prop:rigidity}
+Let $\ell$ be an admissible assignment on a triangulation of the sphere with
+$\kappa_i(\ell)>0$ at every vertex.  Then $M_\ell$ is isometric to the
+boundary of a convex polytope in $\mathbb R^3$, and that polytope is unique up
+to a rigid motion.
+\end{proposition}
+
+\begin{proof}
+Away from vertices $M_\ell$ is locally a Euclidean plane, and around a vertex
+it closes up after a total angle $\sum_{f\ni i}\theta_{i,f}=2\pi-\kappa_i$, so
+it looks like a cone of that angle.  Positive angle defect at every vertex
+therefore makes $M_\ell$ a Euclidean cone metric on $S^2$ with every cone
+angle below $2\pi$.  Alexandrov's realization theorem
+provides a convex polytope inducing it, and his uniqueness theorem, which
+contains Cauchy's rigidity theorem, makes it unique up to congruence
+\cite{alexandrov2005,pak2010}.
+\end{proof}
+
+So on a closed nonnegatively curved surface, ``restoring the distortion'' is
+literally correct: the shape is a function of the edge lengths.  This is the
+regime of our first experiment.  Outside it, and in particular for a
+mixed-curvature surface or a disk with boundary, adjacent triangles can rotate
+about a shared edge while every intrinsic quantity stays fixed.  There a
+smoothness or height-field constraint selects one representative among many;
+it is a display convention, not geometric evidence, and we label it as such
+wherever we use one.
+
+\subsection{Fitting the surface}
 
 Let $Q\supseteq E$ be the set of local pairs queried for visualization, with
 $\widehat\ell_{ij}>0$ for every $(i,j)\in Q$.  We construct coordinates
@@ -340,10 +457,10 @@ stress
  +\lambda\mathcal R_{\rm display}(X).
  \label{eq:display-objective}
 \end{equation}
-The optional $\mathcal R_{\rm display}$ selects a visually smooth solution; it
-does not enter the theorem.  A separate curvature loss is unnecessary.  If
-the three edge lengths of every face agree, all face angles and angle defects
-already agree.
+The optional $\mathcal R_{\rm display}$ selects a representative in the sense
+of Section~\ref{sec:rigidity}; it does not enter any proposition.  A separate
+curvature loss is unnecessary: if the three edge lengths of every face agree,
+all face angles and angle defects already agree.
 
 Denote the displayed edge length by
 $\widetilde\ell_{ij}=\norm{x_i-x_j}$ and define
@@ -355,13 +472,16 @@ $\widetilde\ell_{ij}=\norm{x_i-x_j}$ and define
  &=\max_{e\in E}\abs{\widetilde\ell_e-\widehat\ell_e}.
  \label{eq:display-error}
 \end{align}
-The first term contains numerical OT approximation error for the fixed
-measures $K_i$; the second is observable after visualization.  By the triangle
-inequality, $\max_{e\in E}\abs{\widetilde\ell_e-\ell_e^*}\le\varepsilon+\delta$.
+The first is numerical OT approximation error for the fixed measures $K_i$;
+the second is observable after visualization.  By the triangle inequality,
+$\max_{e\in E}\abs{\widetilde\ell_e-\ell_e^*}\le\varepsilon+\delta$.
 
-The scalar $\delta$ is useful but unnecessarily pessimistic.  A sharper
-certificate is still finite and directly computable.  For a labelled face
-$f=(i,j,k)$ and any valid length assignment $\ell$, put
+\subsection{How much was restored}
+\label{sec:certificate}
+
+The scalar $\delta$ is unnecessarily pessimistic.  A sharper certificate is
+still finite and directly computable.  For a labelled face $f=(i,j,k)$ and any
+admissible $\ell$, put
 \begin{equation}
  P_f(\ell)=
  \begin{pmatrix}
@@ -376,10 +496,11 @@ $f=(i,j,k)$ and any valid length assignment $\ell$, put
  \end{aligned}
  \label{eq:canonical-triangle}
 \end{equation}
-Admissibility of $\ell$ makes $b_f(\ell)$ real and positive, so $P_f(\ell)$ is
-invertible.  Its columns place the edges from $i$ in a canonical Euclidean
-triangle.
-Define the facewise affine distortion and its global extrema by
+Admissibility makes $b_f(\ell)$ real and positive, so $P_f(\ell)$ is
+invertible.  Its columns place the two edges at $i$ in a canonical Euclidean
+triangle.  Write $\sigma_{\min}$ and $\sigma_{\max}$ for the smallest and
+largest singular values, that is, the least and greatest factors by which a
+linear map can stretch a vector, and define
 \begin{equation}
  \begin{aligned}
  T_f&=P_f(\widetilde\ell)P_f(\widehat\ell)^{-1},\\
@@ -388,9 +509,9 @@ Define the facewise affine distortion and its global extrema by
  \end{aligned}
  \label{eq:face-distortion}
 \end{equation}
-Changing the planar placement of either labelled triangle only multiplies
-$T_f$ by orthogonal matrices and does not change its singular values.  At a
-vertex, define the angle-change bound
+Replacing either labelled triangle's planar placement only multiplies $T_f$ by
+orthogonal matrices, leaving its singular values unchanged.  At a vertex,
+define the angle-change bound
 \begin{equation}
  \Delta_i:=\sum_{f\ni i}
  \abs{\theta_{i,f}(\widetilde\ell)-
@@ -400,12 +521,11 @@ vertex, define the angle-change bound
 
 \begin{proposition}[A posteriori distortion of a fixed realization]
 \label{prop:pl-certificate}
-Assume that both $\widehat\ell$ and $\widetilde\ell$ satisfy strict triangle
-inequalities on every face.  Let
-$\Phi:M_{\widehat\ell}\to M_{\widetilde\ell}$ be the piecewise affine homeomorphism that
-preserves vertex labels and barycentric coordinates within corresponding
-faces.  Then $0<s_-\le s_+<\infty$ and, for every $p,q$ in the abstract glued
-complex,
+Assume $\widehat\ell$ and $\widetilde\ell$ are both admissible.  Let
+$\Phi:M_{\widehat\ell}\to M_{\widetilde\ell}$ be the piecewise affine
+homeomorphism preserving vertex labels and barycentric coordinates within
+corresponding faces.  Then $0<s_-\le s_+<\infty$ and, for every $p,q$ in the
+abstract glued complex,
 \begin{equation}
  s_-d_{\widehat\ell}(p,q)
  \le d_{\widetilde\ell}(\Phi p,\Phi q)
@@ -419,25 +539,28 @@ At every interior vertex,
  \label{eq:curvature-certificate}
 \end{equation}
 The curvature inequality also holds at a boundary vertex when both sides are
-interpreted as boundary geodesic-curvature mass.
+read as boundary geodesic-curvature mass.
 \end{proposition}
 
 \begin{proof}
-Nondegeneracy makes every $T_f$ invertible.  On each face, its singular values
-bound the length change of every tangent vector.  Apply the bound face by face
-to any rectifiable path, then take the infimum over paths.  Since $\Phi$ is a
-homeomorphism, applying the same argument to all inverse-image paths gives
-both sides of Equation~\eqref{eq:distance-certificate}.  In the curvature
-difference the constants $2\pi$, or $\pi$ at the boundary, cancel.  The
-triangle inequality over incident angle changes gives
+Admissibility makes every $T_f$ invertible.  On each face its singular values
+bound the length change of every tangent vector, so any rectifiable path
+$\gamma$ satisfies $L(\Phi\gamma)\le s_+L(\gamma)$; taking the infimum over
+paths from $p$ to $q$ gives the upper bound.  Since $\Phi$ is a homeomorphism,
+every path from $\Phi p$ to $\Phi q$ is $\Phi\gamma$ for some such $\gamma$,
+and $L(\Phi\gamma)\ge s_-L(\gamma)\ge s_-d_{\widehat\ell}(p,q)$ gives the
+lower bound.  Because $s_\pm$ are global extrema, it does not matter which
+incident face is used on the shared edges.  In the curvature difference the
+constants $2\pi$, or $\pi$ at the boundary, cancel, and the triangle
+inequality over incident angle changes gives
 Equation~\eqref{eq:curvature-certificate}.
 \end{proof}
 
 This proposition has no small-error or shape-regularity premise: a nearly
-degenerate face is exposed by a small $s_-$ or a large $s_+$ and $\Delta_i$.
-The distances are those of the abstract glued complexes.  If displayed triangles
-self-intersect in $\mathbb R^3$, an intersection does not create a shortcut
-between unrelated abstract faces.
+degenerate face is exposed by a small $s_-$, or a large $s_+$ or $\Delta_i$.
+The distances are those of the abstract glued complexes, so if displayed
+triangles self-intersect in $\mathbb R^3$, the intersection does not create a
+shortcut between unrelated abstract faces.
 
 Composing with Proposition~\ref{prop:gaussian-mesh-consistency} closes the
 chain in the Gaussian case.  Compute $s_\pm$ with $\ell_h$ in place of
@@ -452,8 +575,9 @@ $\Phi_h=\Psi_h\circ\iota_h$.  Then, for all $p,q\in\Omega$,
  \end{aligned}
  \label{eq:end-to-end-gaussian-display}
 \end{equation}
-Thus a sequence of displayed metrics converges to $d_G$ only when its measured
-facewise factors also approach one; no optimizer guarantee is asserted here.
+A sequence of displayed metrics therefore converges to $d_G$ only when its
+measured facewise factors also approach one; no optimizer guarantee is
+asserted here.
 
 To connect the computed lengths to ideal Wasserstein values, suppose that
 $\ell^*$ and $\widehat\ell$ both have edges in $[\ell_{\min},\ell_{\max}]$ and
@@ -472,20 +596,20 @@ $\ell_{\max}/\ell_{\min}$ and $\alpha_0$, such that on every face
  \label{eq:ot-perturbation}
 \end{equation}
 Let $d_i$ be the number of faces incident to $i$.  Summing the first estimate
-over those faces and combining it with
+over those faces and combining with
 Equation~\eqref{eq:curvature-certificate} gives
 \begin{equation}
  \abs{\kappa_i(\widetilde\ell)-\kappa_i(\ell^*)}
  \le \Delta_i+C_\theta d_i\eta_\varepsilon.
  \label{eq:ideal-curvature-certificate}
 \end{equation}
-The second estimate confines every singular value of
+The second confines every singular value of
 $P_f(\widehat\ell)P_f(\ell^*)^{-1}$ to
 $[1-C_g\eta_\varepsilon,1+C_g\eta_\varepsilon]$, so factoring
 $P_f(\widetilde\ell)P_f(\ell^*)^{-1}
-=T_f\cdot P_f(\widehat\ell)P_f(\ell^*)^{-1}$ and repeating the proof of
-Proposition~\ref{prop:pl-certificate} gives, for the barycentric map
-$\Phi^*:M_{\ell^*}\to M_{\widetilde\ell}$ and all $p,q\in M_{\ell^*}$,
+=T_f\cdot P_f(\widehat\ell)P_f(\ell^*)^{-1}$ and repeating the proof above
+gives, for the barycentric map $\Phi^*:M_{\ell^*}\to M_{\widetilde\ell}$ and
+all $p,q\in M_{\ell^*}$,
 \begin{equation}
  \begin{aligned}
  s_-(1-C_g\eta_\varepsilon)d_{\ell^*}(p,q)
@@ -494,17 +618,17 @@ $\Phi^*:M_{\ell^*}\to M_{\widetilde\ell}$ and all $p,q\in M_{\ell^*}$,
  \end{aligned}
  \label{eq:ideal-distance-certificate}
 \end{equation}
-provided $C_g\eta_\varepsilon<1$ so that the lower factor is positive.  Thus
-the exact a posteriori quantities $(s_-,s_+,\Delta_i)$ certify the computed OT
-geometry; a validated OT error bound $\varepsilon$ extends them to the ideal
-edge-$W_2$ geometry.  Floating-point evaluations without outward rounding are
-reported as computed diagnostics of these theoretical bounds, not as formal
-interval certificates.
+provided $C_g\eta_\varepsilon<1$ so the lower factor is positive.  Thus
+$(s_-,s_+,\Delta_i)$ certify the computed OT geometry, and a validated OT
+error bound $\varepsilon$ extends them to the ideal edge-$W_2$ geometry.
+Floating-point evaluations without outward rounding are reported as computed
+diagnostics of these bounds, not as formal interval certificates.
 
 On a quasi-uniform mesh of scale $h$ with bounded degree, and if the true,
 observed, and displayed triangles remain in one uniformly shape-regular class
-with $r:=\varepsilon+\delta$ small, write $\widetilde\kappa_i=\kappa_i(\widetilde\ell)$
-and $\kappa_i^*=\kappa_i(\ell^*)$.  The same perturbation argument gives
+with $r:=\varepsilon+\delta$ small, write
+$\widetilde\kappa_i=\kappa_i(\widetilde\ell)$ and
+$\kappa_i^*=\kappa_i(\ell^*)$.  The same perturbation argument gives
 \begin{equation}
  \abs{\widetilde\kappa_i-\kappa_i^*}=O\!\left(\frac{r}{h}\right),
  \qquad
@@ -512,27 +636,7 @@ and $\kappa_i^*=\kappa_i(\ell^*)$.  The same perturbation argument gives
  \label{eq:density-scaling}
 \end{equation}
 the second from $A_i^*,\widetilde A_i\asymp h^2$,
-$\abs{\widetilde A_i-A_i^*}=O(hr)$, and $\abs{\kappa_i^*}=O(1)$.  Thus, under
-adversarial fixed-relative edge noise, refinement keeps distance distortion at
-the same order while an unsmoothed pointwise curvature heat map can become
-worse.  Our primary finite quantity is curvature mass.
-
-\subsection{What the display does not identify}
-
-Even $\varepsilon=\delta=0$ identifies only intrinsic geometry: two triangles
-sharing an edge can rotate about it while keeping every face length, angle,
-intrinsic distance, and curvature mass fixed.  A smoothness or height-field
-constraint therefore selects a representative; it is not new geometric
-evidence.
-
-Whether the \emph{complete} matrix $D_{ij}=W_2(K_i,K_j)$ is realized exactly in
-$\mathbb R^3$ is in turn decided by classical multidimensional scaling: the
-double-centered Gram matrix $-\frac12\Pi(D\circ D)\Pi$, with centering
-projection $\Pi=I-|V|^{-1}\mathbf1\mathbf1^{\trans}$ and $\circ$ the entrywise
-product, must be positive semidefinite of rank at most three
-\cite{liberti2014}.  A general Wasserstein metric need not pass
-this test, which is unavailable from local edges alone: a zero edge residual
-does not make the unobserved complete matrix Euclidean.  The Gaussian
-benchmark of Section~\ref{sec:controlled-experiment} passes it by
-construction; we do not apply it to MNIST, where
-we claim neither a unique external shape nor a true data-manifold curvature.
+$\abs{\widetilde A_i-A_i^*}=O(hr)$, and $\abs{\kappa_i^*}=O(1)$.  Under
+adversarial fixed-relative edge noise, refinement therefore keeps distance
+distortion at the same order while an unsmoothed pointwise curvature heat map
+can become worse.  Curvature mass is our primary finite quantity.
