@@ -611,52 +611,73 @@ $\Wass_p(\mu,\nu)=0\Rightarrow\mu=\nu$ では最適 coupling を用いる．
 三角不等式では，$\mu$ から $\nu$ への輸送と $\nu$ から $\xi$ への輸送を
 一つの三変数の確率測度にまとめるため，次の接着補題を用いる．
 
-\begin{lemma}{接着補題（gluing lemma；Villani pp.~23--24）}{wp-gluing}
-  $\mu,\nu,\xi\in\Prob(\mathcal{X})$，$\pi\in\Couplings(\mu,\nu)$，
+\begin{lemma}{接着補題（gluing lemma；Villani (2009) pp.~11--12）}{wp-gluing}
+  $\mathcal{X},\mathcal{Y},\mathcal{Z}$ を Polish 空間とする．
+  $\mu\in\Prob(\mathcal{X})$，$\nu\in\Prob(\mathcal{Y})$，
+  $\xi\in\Prob(\mathcal{Z})$，$\pi\in\Couplings(\mu,\nu)$，
   $\sigma\in\Couplings(\nu,\xi)$ とする．
-  このとき $\mathcal{X}^3$ 上の確率測度 $\gamma$ で，
-  任意の $A,B,C\in\Borel(\mathcal{X})$ に対し
+  このとき $\mathcal{X}\times\mathcal{Y}\times\mathcal{Z}$ 上の確率測度
+  $\gamma$ で，任意の
+  $A\in\Borel(\mathcal{X})$，$B\in\Borel(\mathcal{Y})$，
+  $C\in\Borel(\mathcal{Z})$ に対し
   \[
-    \gamma(A\times B\times \mathcal{X})=\pi(A\times B),
+    \gamma(A\times B\times \mathcal{Z})=\pi(A\times B),
     \qquad
     \gamma(\mathcal{X}\times B\times C)=\sigma(B\times C)
   \]
   をみたすものが存在する．
   すなわち，$\gamma$ の第 $1,2$ 成分の周辺分布が $\pi$ に，
   第 $2,3$ 成分の周辺分布が $\sigma$ に一致する．
+
+  \demohint{gluing}
 \end{lemma}
 
 \begin{proof}
-  発想は，共通の中間点 $y\sim\nu$ を先に取り，そのもとで
-  $x$ と $z$ を条件付き独立に取ることである．
-  測度分解定理（定理~\ref{thm:meas-disintegration}）を
-  $\pi,\sigma$ に適用すると
-  （後者には第1，第2座標を入れ替えて適用），Markov 核
-  $K_\pi,K_\sigma$ が存在して
+  $\pi$ の第2周辺分布は $\nu$，すなわち
+  $\pi(\mathcal{X}\times B)=\nu(B)$ である．測度分解定理
+  （定理~\ref{thm:meas-disintegration}）より，$\nu$-a.e.\ $y$ に対して
+  $\pi_y\in\Prob(\mathcal{X})$ があり，
   \[
-    \pi(\d x,\d y)=K_\pi(y,\d x)\,\nu(\d y),
-    \qquad
-    \sigma(\d y,\d z)=\nu(\d y)\,K_\sigma(y,\d z)
+    \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y). \tag{1}
   \]
-  と書ける．
-  Markov 核による測度の貼り合わせ
-  （定理~\ref{thm:meas-kernel-composition}）により
+  同じ定理を座標を入れ替えた $\sigma$ に適用すると，
+  $\nu$-a.e.\ $y$ に対して $\sigma_y\in\Prob(\mathcal{Z})$ があり，
   \[
-    \gamma(\d x,\d y,\d z)
-    :=K_\pi(y,\d x)\,\nu(\d y)\,K_\sigma(y,\d z)
+    \sigma(B\times C)=\int_B\sigma_y(C)\,\d\nu(y). \tag{2}
   \]
-  で定まる $\gamma\in\Prob(\mathcal{X}^3)$ を取る．
-  各 Markov 核は確率測度に値を取るから，
+  ここで $\pi_y$ は「$y$ が与えられたときの $x$ の分布」，$\sigma_y$ は
+  「$y$ が与えられたときの $z$ の分布」である．
+
+  $\gamma$ を，矩形集合上で
   \[
-    \begin{aligned}
-      \gamma(A\times B\times\mathcal{X})
-      &=\int_B K_\pi(y,A)\,\d\nu(y)=\pi(A\times B),\\
-      \gamma(\mathcal{X}\times B\times C)
-      &=\int_B K_\sigma(y,C)\,\d\nu(y)=\sigma(B\times C).
-    \end{aligned}
+    \gamma(A\times B\times C)
+    :=\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y) \tag{3}
   \]
-  よって主張を得る．
+  と定める確率測度とする．これは $y$ を共通にしたもとで
+  $x$ と $z$ を独立に選ぶ構成であり，実際に確率測度を定めることは
+  Markov 核による貼り合わせ（定理~\ref{thm:meas-kernel-composition}）で保証される．
+
+  $\sigma_y(\mathcal{Z})=1$ なので，(1) と (3) より
+  \[
+    \gamma(A\times B\times\mathcal{Z})
+    =\int_B\pi_y(A)\,\sigma_y(\mathcal{Z})\,\d\nu(y)
+    =\int_B\pi_y(A)\,\d\nu(y)
+    =\pi(A\times B).
+  \]
+  同様に $\pi_y(\mathcal{X})=1$ だから，(2) と (3) より
+  \[
+    \gamma(\mathcal{X}\times B\times C)
+    =\int_B\pi_y(\mathcal{X})\,\sigma_y(C)\,\d\nu(y)
+    =\int_B\sigma_y(C)\,\d\nu(y)
+    =\sigma(B\times C).
+  \]
 \end{proof}
+
+\begin{remark}{この証明で使う技術的事実}{wp-gluing-technical}
+  $\pi_y$，$\sigma_y$ は密度ではなく確率測度である．したがって
+  $\pi_y(\mathcal{X})=\sigma_y(\mathcal{Z})=1$ となり，これを (3) に代入するだけで
+  二つの周辺分布の式が得られる．
+\end{remark}
 
 \begin{proposition}{Wasserstein 距離は距離である（Villani Def 6.4）}{wp-metric}
   $1\leq p<\infty$ に対し，

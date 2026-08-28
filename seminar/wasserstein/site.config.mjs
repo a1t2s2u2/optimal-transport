@@ -2,6 +2,8 @@
 // 変換エンジン本体は tools/site/。ここにはこのセミナー固有の情報だけを置く。
 // 数式マクロは tex/preamble.tex から自動抽出されるので、ここに書き写す必要はない。
 
+import { gluingDiagram } from "./site-demos.mjs";
+
 export default {
   // --- 表示 ---
   title: "最適輸送問題",
@@ -82,5 +84,9 @@ export default {
       title: "結合",
       body: "二つの確率測度を周辺分布にもつ積空間上の確率測度。輸送計画とも呼ぶ。",
     },
+  },
+
+  demos: {
+    gluing: gluingDiagram,
   },
 };
