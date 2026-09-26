@@ -46,18 +46,6 @@ export default {
     },
   ],
 
-  // --- 用語集（本文の [term:表示|id] から引く）---
-  glossary: {
-    polish: {
-      title: "Polish 空間",
-      body: "完備かつ可分な距離空間。確率測度の tightness や正則条件付き確率を扱う標準的な設定。",
-    },
-    coupling: {
-      title: "結合",
-      body: "二つの確率測度を周辺分布にもつ積空間上の確率測度。輸送計画とも呼ぶ。",
-    },
-  },
-
   demos: {
     gluing: gluingDiagram,
   },

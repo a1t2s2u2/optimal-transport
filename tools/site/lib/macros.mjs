@@ -90,12 +90,11 @@ export function extractMacros(preamblePath, { warn = () => {} } = {}) {
   return macros;
 }
 
-// 抽出したマクロに設定側の上書き・除外を適用する。
+// 抽出したマクロに設定側の上書きを適用する。
 // MathJax が解釈できない綴り（stmaryrd の \llbracket など）は
 // site.config.mjs の macroOverrides で差し替える。
-export function resolveMacros(preamblePath, { overrides = {}, ignore = [], warn } = {}) {
+export function resolveMacros(preamblePath, { overrides = {}, warn } = {}) {
   const macros = extractMacros(preamblePath, { warn });
-  for (const name of ignore) delete macros[name];
   return { ...macros, ...overrides };
 }
 

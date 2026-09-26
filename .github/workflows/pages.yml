@@ -12,7 +12,6 @@ on:
       - "seminar/*/tex/**"
       - "seminar/*/site.config.mjs"
       - "seminar/*/site-demos.mjs"
-      - "seminar/*/site-assets/**"
       - "tools/site/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:

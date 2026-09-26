@@ -10,21 +10,9 @@ import { pathToFileURL } from "node:url";
 // 章に必須のキー。
 const CHAPTER_KEYS = ["tex", "md", "id", "nav", "title"];
 
-// UI 機能のフラグ。既定は「全部入り」。
-// site.config.mjs の features で個別に false にできる。
-const DEFAULT_FEATURES = {
-  chapterStats: true, // ランディングの章カードに「N 定義・M 定理」を出す
-  heroDecoration: true, // ランディング見出し背景の装飾 SVG
-  tocProgress: true, // 章内目次の現在位置インジケータ
-  fadeIn: true, // ブロックのスクロール・フェードイン
-  refPulse: true, // 参照クリック時に本文側ブロックを光らせる
-  keyboardHelp: true, // "?" でショートカット一覧を表示
-};
-
 // tex の環境名 → [サイト側コンテナ, 見出し接頭辞]。
 // 接頭辞は見出しに「Def 2.1.3: …」の形で出る。
-// コンテナ名はそのままブロック種別になり、配色・依存グラフの絞り込みに効く
-// （対応表は lib/blocks.mjs）。tex 側の環境と 1 対 1 に保つこと。
+// コンテナ名はそのままブロック種別になり、配色に使う。
 const DEFAULT_BLOCK_ENVS = {
   definition: ["definition", "Def"],
   claim: ["claim", "Clm"],
@@ -34,7 +22,6 @@ const DEFAULT_BLOCK_ENVS = {
   corollary: ["corollary", "Cor"],
   remark: ["fact", "Rem"],
   example: ["fact accent", "Ex"],
-  algorithm: ["algorithm", ""],
 };
 
 // tex の環境名 → \label の接頭辞（\ref 解決と定理番号の引き当てに使う）。
@@ -74,17 +61,6 @@ const DEFAULT_JP_TO_ABBREV = {
   Claim: "Clm",
 };
 
-// 依存グラフに載せるブロック種別。証明を伴う主張はすべて載せる
-// （注意・例はグラフの本筋ではないので除く）。
-const DEFAULT_GRAPH_TYPES = [
-  "definition",
-  "theorem",
-  "proposition",
-  "lemma",
-  "claim",
-  "corollary",
-];
-
 function fail(message) {
   throw new Error(`site.config.mjs: ${message}`);
 }
@@ -120,18 +96,16 @@ export async function loadConfig(seminarDir) {
     seenIds.add(ch.id);
   });
 
-  const texDir = path.join(dir, raw.texDir ?? "tex");
-  const siteDir = path.join(dir, raw.siteDir ?? "site");
+  const texDir = path.join(dir, "tex");
+  const siteDir = path.join(dir, "site");
 
   return {
     // --- パス ---
-    seminarDir: dir,
     texDir,
-    preamblePath: path.join(texDir, raw.preamble ?? "preamble.tex"),
+    preamblePath: path.join(texDir, "preamble.tex"),
     contentDir: path.join(siteDir, "content"),
     distDir: path.join(siteDir, "dist"),
-    // tex の走査対象サブディレクトリ（ラベル・章タイトルの解決に使う）
-    texSubdirs: raw.texSubdirs ?? ["main", "foundations"],
+    texSubdirs: ["main", "foundations"],
 
     // --- 表示 ---
     title: raw.title,
@@ -149,21 +123,14 @@ export async function loadConfig(seminarDir) {
     chapters: raw.chapters.map((ch) => ({ group: "main", eyebrow: "", ...ch })),
 
     // --- 変換規則 ---
-    blockEnvs: { ...DEFAULT_BLOCK_ENVS, ...raw.blockEnvs },
-    envToPrefix: { ...DEFAULT_ENV_TO_PREFIX, ...raw.envToPrefix },
-    labelPrefixMap: { ...DEFAULT_LABEL_PREFIX_MAP, ...raw.labelPrefixMap },
-    jpToAbbrev: { ...DEFAULT_JP_TO_ABBREV, ...raw.jpToAbbrev },
-    graphTypes: new Set(raw.graphTypes ?? DEFAULT_GRAPH_TYPES),
-
-    // --- 数式マクロ（preamble.tex から自動抽出したものへの追加・除外）---
+    blockEnvs: DEFAULT_BLOCK_ENVS,
+    envToPrefix: DEFAULT_ENV_TO_PREFIX,
+    labelPrefixMap: DEFAULT_LABEL_PREFIX_MAP,
+    jpToAbbrev: DEFAULT_JP_TO_ABBREV,
+    // --- 数式マクロ（preamble.tex から自動抽出したものへの上書き）---
     macroOverrides: raw.macroOverrides ?? {},
-    macroIgnore: raw.macroIgnore ?? [],
 
-    // --- 用語集・デモ図 ---
-    glossary: raw.glossary ?? {},
+    // --- デモ図 ---
     demos: raw.demos ?? {},
-
-    // --- 機能フラグ ---
-    features: { ...DEFAULT_FEATURES, ...raw.features },
   };
 }
