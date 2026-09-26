@@ -33,17 +33,9 @@ seminar/*/site/
 # uv
 .venv/
 uv.lock
-# proofgraph はツールなので再現性のため lock を追跡する
-!utils/proofgraph/uv.lock
 
 # editor / linter caches
 .ruff_cache/
 .DS_Store
 __pycache__/
 *.pyc
-
-# reproducible experiment downloads and learned checkpoints
-paper/ot-manifold-approximation/experiments/.cache/
-
-# proofgraph viewer smoke artifacts
-utils/proofgraph/viewer/_smoke.png
