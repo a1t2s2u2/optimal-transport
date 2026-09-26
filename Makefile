@@ -8,27 +8,34 @@
 
 SITE := node tools/site
 
-.PHONY: help sites cuturi-site wasserstein-site clean-sites
+.PHONY: help sites cuturi-site wasserstein-site quantum-ot-site clean-sites
 
 help:
 	@echo "make sites             すべてのセミナーのサイトを生成"
 	@echo "make cuturi-site       計算最適輸送のサイトを生成"
 	@echo "make wasserstein-site  Wasserstein 距離のサイトを生成"
+	@echo "make quantum-ot-site   量子最適輸送のサイトを生成"
 	@echo "make clean-sites       生成したサイトを削除"
 
-sites: cuturi-site wasserstein-site
+sites: cuturi-site wasserstein-site quantum-ot-site
 
 # --- Cuturi ---
 cuturi-site:
-	$(SITE)/tex2md.mjs seminar/cuturi
+	$(SITE)/tex2md.mjs seminar/cuturi --strict
 	$(SITE)/build.mjs seminar/cuturi
 	@echo "→ seminar/cuturi/site/dist/index.html をブラウザで開いてください"
 
 # --- Wasserstein ---
 wasserstein-site:
-	$(SITE)/tex2md.mjs seminar/wasserstein
+	$(SITE)/tex2md.mjs seminar/wasserstein --strict
 	$(SITE)/build.mjs seminar/wasserstein
 	@echo "→ seminar/wasserstein/site/dist/index.html をブラウザで開いてください"
+
+# --- Quantum Optimal Transport ---
+quantum-ot-site:
+	$(SITE)/tex2md.mjs seminar/quantum-ot --strict
+	$(SITE)/build.mjs seminar/quantum-ot
+	@echo "→ seminar/quantum-ot/site/dist/index.html をブラウザで開いてください"
 
 clean-sites:
 	rm -rf seminar/*/site

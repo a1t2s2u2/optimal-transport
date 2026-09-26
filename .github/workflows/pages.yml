@@ -2,7 +2,8 @@ name: Deploy site to GitHub Pages
 
 # seminar/*/tex/*.tex を唯一の source とし、push のたびに
 # tex → content/*.md → *.html を生成して GitHub Pages へ公開する。
-# cuturi をルート / に、wasserstein を /wasserstein/ に配置する。
+# cuturi をルート / に、wasserstein を /wasserstein/、
+# quantum-ot を /quantum-ot/ に配置する。
 # 生成物（md/html）はリポジトリに commit せず、ここで都度ビルドする。
 
 on:
@@ -47,11 +48,17 @@ jobs:
           node tools/site/tex2md.mjs seminar/wasserstein --strict
           node tools/site/build.mjs seminar/wasserstein
 
+      - name: Build site (quantum-ot)
+        run: |
+          node tools/site/tex2md.mjs seminar/quantum-ot --strict
+          node tools/site/build.mjs seminar/quantum-ot
+
       - name: Assemble combined site
         run: |
-          mkdir -p _site/wasserstein
+          mkdir -p _site/wasserstein _site/quantum-ot
           cp -R seminar/cuturi/site/dist/. _site/
           cp -R seminar/wasserstein/site/dist/. _site/wasserstein/
+          cp -R seminar/quantum-ot/site/dist/. _site/quantum-ot/
 
       - uses: actions/upload-pages-artifact@v5
         with:
