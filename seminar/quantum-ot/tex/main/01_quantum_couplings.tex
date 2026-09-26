@@ -1,0 +1,87 @@
+\chapter{量子 coupling}
+\label{ch:quantum-couplings}
+
+古典的 coupling は直積空間上の確率測度であり，二つの周辺分布を指定する．
+確率測度を量子状態に，周辺分布を部分跡に置き換えると，最も直接的な量子 coupling が得られる．
+
+\section{周辺状態を指定する coupling}
+
+\begin{definition}{量子 coupling}{q-coupling}
+  $\rho\in\States{\mathcal{H}}$，$\sigma\in\States{\mathcal{K}}$ に対し
+
+  \[
+    \Gamma(\rho,\sigma)
+    :=
+    \left\{
+      \pi\in\States{\mathcal{H}\otimes\mathcal{K}}
+      \;\middle|\;
+      \Tr_{\mathcal{K}}\pi=\rho,\qquad
+      \Tr_{\mathcal{H}}\pi=\sigma
+    \right\}
+  \]
+
+  と定める．$\pi\in\Gamma(\rho,\sigma)$ を $\rho,\sigma$ の\textbf{量子 coupling} という．
+\end{definition}
+
+\begin{proposition}{量子 coupling の存在とコンパクト性}{q-coupling-compact}
+  $\Gamma(\rho,\sigma)$ は空でない凸 compact 集合である．
+\end{proposition}
+
+\begin{proof}
+  積状態 $\rho\otimes\sigma$ の周辺状態は $\rho,\sigma$ だから，集合は空でない．
+  半正定値性，跡が $1$ であること，二つの周辺条件はいずれも凸性を保つので，
+  $\Gamma(\rho,\sigma)$ は凸である．また有限次元空間内で閉かつ有界であるため compact である．
+\end{proof}
+
+\begin{example}{積状態ではない coupling}{q-bell-coupling}
+  Bell 状態
+
+  \[
+    \ket{\Phi^+}:=\frac{\ket{00}+\ket{11}}{\sqrt2},
+    \qquad
+    \pi_{\Phi}:=\proj{\Phi^+}
+  \]
+
+  の二つの周辺状態はともに $\Id_2/2$ である．したがって
+  $\pi_\Phi\in\Gamma(\Id_2/2,\Id_2/2)$ だが，
+  $\pi_\Phi\neq(\Id_2/2)\otimes(\Id_2/2)$ である．
+  量子 coupling は古典相関だけでなく entanglement も表現する．
+\end{example}
+
+\section{コスト作用素による最適化}
+
+古典的な非負コスト関数 $c(x,y)$ に対応するものとして，合成系上の半正定値な観測量を使う．
+
+\begin{definition}{量子輸送コスト}{q-cost}
+  $C\in\Obs{\mathcal{H}\otimes\mathcal{K}}$，$C\geq0$ を\textbf{コスト作用素}とする．
+  coupling $\pi$ の平均コストを $\Tr(C\pi)$ とし，
+
+  \[
+    \mathsf{T}_C(\rho,\sigma)
+    :=\min_{\pi\in\Gamma(\rho,\sigma)}\Tr(C\pi)
+  \]
+
+  と定める．
+\end{definition}
+
+\begin{proposition}{最適 coupling の存在}{q-optimal-coupling}
+  任意の $\rho,\sigma$ と $C\geq0$ に対し，
+  $\mathsf{T}_C(\rho,\sigma)$ を達成する量子 coupling が存在する．
+\end{proposition}
+
+\begin{proof}
+  命題~\ref{prop:q-coupling-compact}より許容集合は空でない compact 集合であり，
+  $\pi\mapsto\Tr(C\pi)$ は連続だから最小値を取る．
+\end{proof}
+
+\begin{remark}{最適化問題と距離は別である}{q-cost-not-metric}
+  この定義は古典 Kantorovich 問題の形を保つが，
+  $\mathsf{T}_C$ が自動的に距離になるわけではない．距離にするには，少なくとも
+  自己距離，対称性，三角不等式をコスト作用素と coupling の構造から別々に確認する必要がある．
+  古典の「対角集合 $x=y$ に質量を置く」という議論は，基底によらない量子状態の複製が
+  一般にはできないため，そのまま移植できない．
+\end{remark}
+
+量子 coupling による定式化は半古典極限などに適している．一方，古典的な Markov kernel を
+輸送計画とみなす立場を量子化すると，次章の量子チャネルが現れる．二つの立場は関連するが，
+同一の定義ではない．

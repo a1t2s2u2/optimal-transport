@@ -1,0 +1,167 @@
+\chapter{有限次元の量子状態}
+\label{ch:quantum-states}
+
+古典的な有限集合上では，状態は確率ベクトルであり，観測量は実数値関数である．
+量子論では両者を行列に置き換える．行列積が一般には可換でないことが，
+「非可換」な確率論と最適輸送の出発点になる．本資料では有限次元だけを扱い，
+線形代数のスペクトル定理を証明なしに用いる．主たる文献は De Palma--Trevisan
+\emph{Quantum Optimal Transport: Quantum Channels and Qubits}
+（arXiv:2307.16268）である．
+
+\section{状態と観測量}
+
+\begin{definition}{作用素の基本記法}{q-operators}
+  $\mathcal{H}$ を有限次元複素 Hilbert 空間とする．
+  $\Lin{\mathcal{H}}$ を $\mathcal{H}$ 上の線形作用素全体，
+  $\Obs{\mathcal{H}}$ を Hermite 作用素，すなわち $A^*=A$ をみたす作用素全体とする．
+  $A\in\Obs{\mathcal{H}}$ が\textbf{半正定値}であるとは，
+  すべての $\psi\in\mathcal{H}$ に対して $\bra{\psi}A\ket{\psi}\geq0$ となることをいい，
+  $A\geq0$ と書く．
+
+  正規直交基底 $(\ket{e_j})_j$ に対し
+
+  \[
+    \Tr A:=\sum_j\bra{e_j}A\ket{e_j}
+  \]
+
+  を $A$ の\textbf{跡}という．この値は基底の選び方によらない．
+\end{definition}
+
+\begin{definition}{量子状態と観測量}{q-state}
+  $\mathcal{H}$ 上の\textbf{量子状態}（密度作用素）とは
+
+  \[
+    \rho\geq0,
+    \qquad
+    \Tr\rho=1
+  \]
+
+  をみたす $\rho\in\Lin{\mathcal{H}}$ である．その全体を $\States{\mathcal{H}}$ と書く．
+  $A\in\Obs{\mathcal{H}}$ を\textbf{観測量}とよび，状態 $\rho$ における期待値を
+
+  \[
+    \langle A\rangle_\rho:=\Tr(A\rho)
+  \]
+
+  と定める．単位ベクトル $\psi$ に対する $\proj{\psi}$ を\textbf{純粋状態}，
+  それ以外の状態を\textbf{混合状態}という．
+\end{definition}
+
+スペクトル定理により，任意の状態は正規直交系 $(\ket{e_j})_j$ と確率ベクトル
+$(p_j)_j$ を用いて $\rho=\sum_jp_j\proj{e_j}$ と書ける．ただし，異なる状態が
+同じ基底で同時に対角化できるとは限らない．この非可換性が古典確率との本質的な差である．
+
+\begin{definition}{跡ノルムと跡距離}{q-trace-norm}
+  $X\in\Lin{\mathcal{H}}$ に対し
+
+  \[
+    \norm{X}_1:=\Tr\sqrt{X^*X}
+  \]
+
+  を\textbf{跡ノルム}という．量子状態 $\rho,\sigma$ の\textbf{跡距離}は
+
+  \[
+    D_{\rm tr}(\rho,\sigma):=\frac12\norm{\rho-\sigma}_1
+  \]
+
+  である．
+\end{definition}
+
+\begin{lemma}{Hermite 作用素の Jordan 分解}{q-jordan}
+  $X\in\Obs{\mathcal{H}}$ に対し，$X=X_+-X_-$，$X_+,X_-\geq0$，
+  $X_+X_-=0$ となる $X_+,X_-$ が一意に存在し，
+
+  \[
+    \norm{X}_1=\Tr X_+ + \Tr X_-
+  \]
+
+  が成り立つ．特に $\Tr X=0$ ならば
+  $\Tr X_+=\Tr X_-=\norm{X}_1/2$ である．
+\end{lemma}
+
+\begin{proof}
+  スペクトル分解 $X=\sum_j\lambda_j\proj{e_j}$ に対し，正の固有値と負の固有値を分けて
+
+  \[
+    X_+:=\sum_{\lambda_j>0}\lambda_j\proj{e_j},
+    \qquad
+    X_-:=\sum_{\lambda_j<0}(-\lambda_j)\proj{e_j}
+  \]
+
+  とおけばよい．最後の主張は
+  $\Tr X=\Tr X_+-\Tr X_-=0$ から従う．
+\end{proof}
+
+\section{合成系と部分跡}
+
+二つの量子系 $\mathcal{H},\mathcal{K}$ の合成系は tensor 積
+$\mathcal{H}\otimes\mathcal{K}$ で表す．古典系の直積に対応するが，
+合成系には積状態だけでなく entangled state も存在する．
+
+\begin{definition}{部分跡と周辺状態}{q-partial-trace}
+  $X\in\Lin{\mathcal{H}\otimes\mathcal{K}}$ に対し，
+  $\mathcal{K}$ に関する\textbf{部分跡} $\Tr_{\mathcal{K}}X\in\Lin{\mathcal{H}}$ を
+
+  \[
+    \Tr\!\left[A\,\Tr_{\mathcal{K}}X\right]
+    =\Tr\!\left[(A\otimes\Id_{\mathcal{K}})X\right]
+    \qquad
+    (\forall A\in\Lin{\mathcal{H}})
+  \]
+
+  により定める．$\rho\in\States{\mathcal{H}\otimes\mathcal{K}}$ に対し
+  $\rho_{\mathcal{H}}:=\Tr_{\mathcal{K}}\rho$ と
+  $\rho_{\mathcal{K}}:=\Tr_{\mathcal{H}}\rho$ を\textbf{周辺状態}または\textbf{縮約状態}という．
+\end{definition}
+
+部分跡は線形で，半正定値性と跡を保つ．したがって合成系の状態の部分跡は再び状態である．
+
+\begin{lemma}{正写像による跡ノルムの縮小}{q-positive-contraction}
+  $\Phi$ を Hermite 作用素を Hermite 作用素へ写す線形写像とし，
+  $A\geq0$ ならば $\Phi(A)\geq0$，かつ $\Tr\Phi(A)=\Tr A$ とする．このとき
+
+  \[
+    \norm{\Phi(X)}_1\leq\norm{X}_1
+    \qquad
+    (\forall X=X^*)
+  \]
+
+  が成り立つ．特に，部分跡は Hermite 作用素の跡ノルムを増加させない．
+\end{lemma}
+
+\begin{proof}
+  補題~\ref{lem:q-jordan}の分解 $X=X_+-X_-$ を取る．跡ノルムの三角不等式と
+  $\Phi(X_\pm)\geq0$ より
+
+  \[
+    \norm{\Phi(X)}_1
+    \leq\norm{\Phi(X_+)}_1+\norm{\Phi(X_-)}_1
+    =\Tr X_++\Tr X_-
+    =\norm{X}_1.
+  \]
+\end{proof}
+
+\section{古典状態の埋め込み}
+
+$n$-qubit 系を
+
+\[
+  \mathcal{H}_n:=(\C^2)^{\otimes n}
+\]
+
+と書く．$\C^2$ の標準基底 $\ket{0},\ket{1}$ の tensor 積から得られる
+$(\ket{x})_{x\in\{0,1\}^n}$ を\textbf{計算基底}という．
+
+\begin{definition}{古典分布の対角埋め込み}{q-diagonal-embedding}
+  $\{0,1\}^n$ 上の確率分布 $p$ に対し
+
+  \[
+    \rho_p:=\sum_{x\in\{0,1\}^n}p(x)\proj{x}
+  \]
+
+  とおく．この形の状態を計算基底に関する\textbf{対角状態}という．
+\end{definition}
+
+この対応では，確率ベクトルが密度行列に，期待値が跡に，直積が tensor 積に，
+周辺分布が部分跡に移る．以降はこの辞書を保ちながら，古典的 coupling と輸送計画を
+量子系へ移す．
