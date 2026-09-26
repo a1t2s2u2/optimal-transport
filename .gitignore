@@ -29,12 +29,5 @@ seminar/wasserstein/reference/Billingsley-2eme-edition.pdf
 # 手で編集する設定は seminar/<名前>/site.config.mjs のみ。
 seminar/*/site/
 
-# uv
-.venv/
-uv.lock
-
-# editor / linter caches
-.ruff_cache/
+# editor caches
 .DS_Store
-__pycache__/
-*.pyc
