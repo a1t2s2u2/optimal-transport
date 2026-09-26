@@ -8,13 +8,12 @@
 
 SITE := node tools/site
 
-.PHONY: help sites cuturi-site cuturi-pdf wasserstein-site clean-sites
+.PHONY: help sites cuturi-site wasserstein-site clean-sites
 
 help:
 	@echo "make sites             すべてのセミナーのサイトを生成"
 	@echo "make cuturi-site       計算最適輸送のサイトを生成"
-	@echo "make cuturi-pdf        計算最適輸送の PDF を生成"
-	@echo "make wasserstein-site  Wasserstein 距離のサイトを生成（PDF は生成しない）"
+	@echo "make wasserstein-site  Wasserstein 距離のサイトを生成"
 	@echo "make clean-sites       生成したサイトを削除"
 
 sites: cuturi-site wasserstein-site
@@ -25,11 +24,7 @@ cuturi-site:
 	$(SITE)/build.mjs seminar/cuturi
 	@echo "→ seminar/cuturi/site/dist/index.html をブラウザで開いてください"
 
-cuturi-pdf:
-	cd seminar/cuturi/tex && latexmk
-
 # --- Wasserstein ---
-# PDF は生成しない（site のみ）。tex は site の source としてのみ使う。
 wasserstein-site:
 	$(SITE)/tex2md.mjs seminar/wasserstein
 	$(SITE)/build.mjs seminar/wasserstein

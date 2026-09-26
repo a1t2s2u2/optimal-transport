@@ -47,8 +47,7 @@ seminar/
 ```sh
 make sites              # すべてのセミナーの Web サイトを生成
 make cuturi-site        # 計算最適輸送の Web サイト
-make cuturi-pdf         # 計算最適輸送の PDF
-make wasserstein-site   # Wasserstein 距離の Web サイト（PDF は生成しない）
+make wasserstein-site   # Wasserstein 距離の Web サイト
 ```
 
 `main` へ push すると `.github/workflows/pages.yml` が tex からサイトを生成し

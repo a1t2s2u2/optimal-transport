@@ -1,47 +1,5 @@
-% ============================================================
-%  preamble.tex — Wasserstein 距離セミナー用 共通設定
-%  Villani (2009) を主たる文献とし、記法もこれに合わせる
-% ============================================================
-
-% --- 基本パッケージ ---
-\usepackage{amsmath,amssymb,amsthm,mathtools}
-\usepackage[dvipdfmx,hidelinks]{hyperref}
-\usepackage{pxjahyper}
-
-% --- 定理環境 (tcolorbox) ---
-\usepackage{tcolorbox}
-\tcbuselibrary{theorems,breakable}
-
-% Definition: 青系
-\newtcbtheorem[number within=section]{definition}{Def.}{
-  colback=blue!5, colframe=blue!40!black, fonttitle=\bfseries, breakable
-}{def}
-% Proposition: オレンジ系
-\newtcbtheorem[use counter from=definition]{proposition}{Prop.}{
-  colback=orange!5, colframe=orange!50!black, fonttitle=\bfseries, breakable
-}{prop}
-% Theorem: 赤系（章・節の目玉となる重要結果）
-\newtcbtheorem[use counter from=definition]{theorem}{Thm.}{
-  colback=red!5, colframe=red!40!black, fonttitle=\bfseries, breakable
-}{thm}
-% Claim: 緑系（Thm ほど深くはないが，証明を要する主張）
-\newtcbtheorem[use counter from=definition]{claim}{Claim}{
-  colback=green!5, colframe=green!45!black, fonttitle=\bfseries, breakable
-}{clm}
-% Lemma: シアン系（命題の証明に用いる補助結果）
-\newtcbtheorem[use counter from=definition]{lemma}{Lem.}{
-  colback=cyan!5, colframe=cyan!50!black, fonttitle=\bfseries, breakable
-}{lem}
-% Remark: 黄系
-\newtcbtheorem[use counter from=definition]{remark}{Rem.}{
-  colback=yellow!5, colframe=yellow!40!black, fonttitle=\bfseries, breakable
-}{rem}
-% 証明環境の装飾
-\tcolorboxenvironment{proof}{
-  colback=white, colframe=black!20,
-  leftrule=2pt, rightrule=0pt, toprule=0pt, bottomrule=0pt,
-  breakable
-}
+% サイトの数式表示に使う MathJax マクロ定義。
+% tools/site/lib/macros.mjs がこのファイルから自動抽出する。
 
 % --- 便利マクロ ---
 \newcommand{\R}{\mathbb{R}}
@@ -58,6 +16,3 @@
 \newcommand{\Id}{\mathrm{Id}}
 \newcommand{\weakto}{\rightharpoonup}       % 確率測度の弱収束
 \renewcommand{\d}{\mathrm{d}}               % 積分の d
-
-% --- サイト用デモブロック指示（PDF では無効，tex2md が :::demo に変換する）---
-\newcommand{\demohint}[1]{}

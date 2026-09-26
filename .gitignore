@@ -1,25 +1,3 @@
-# build output directories
-out/
-seminar/cuturi/reference/translation/out/
-seminar/cuturi/tex/out/
-ambrosio/tex/out/
-
-# LaTeX intermediate files
-*.aux
-*.log
-*.dvi
-*.out
-*.toc
-*.synctex.gz
-*.fdb_latexmk
-*.fls
-
-# generated PDFs
-/main.pdf
-/seminar/cuturi/reference/translation/main.pdf
-/seminar/cuturi/tex/main.pdf
-/translated_for_seminar.pdf
-
 # local copyrighted/reference scans (do not publish)
 seminar/wasserstein/reference/old_and_new/
 seminar/wasserstein/reference/Billingsley-2eme-edition.pdf

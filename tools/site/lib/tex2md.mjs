@@ -143,8 +143,8 @@ class Converter {
     return labelMap;
   }
 
-  // PDF（LaTeX）と同一の定理番号「章.節.通し番号」を再現する。
-  // 規則は preamble.tex の tcolorbox 設定に対応する：
+  // サイトの定理番号「章.節.通し番号」を作る。
+  // 規則：
   //   - 全定理環境が definition のカウンタを共有（use counter from）
   //   - カウンタは節ごとにリセット（number within=section）
   //   - 章番号は本編 1,2,…、付録 A,B,…（main.tex の \appendix による）
