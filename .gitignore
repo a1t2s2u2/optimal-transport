@@ -1,7 +1,6 @@
 # build output directories
 out/
 seminar/cuturi/reference/translation/out/
-seminar/cuturi/reference/original/out/
 seminar/cuturi/tex/out/
 ambrosio/tex/out/
 
@@ -15,7 +14,7 @@ ambrosio/tex/out/
 *.fdb_latexmk
 *.fls
 
-# generated PDFs at repo root (cuturi/original の画像は明示的に追跡)
+# generated PDFs
 /main.pdf
 /seminar/cuturi/reference/translation/main.pdf
 /seminar/cuturi/tex/main.pdf

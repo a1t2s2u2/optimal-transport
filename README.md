@@ -34,7 +34,7 @@ seminar/
     tex/              # TeX ソース（source of truth）
     site.config.mjs   # このセミナーのサイト設定
     site/             # Web サイト（tex から生成・git 管理外）
-    reference/        # 参考文献 PDF
+    reference/        # 原典の対訳と正誤表
   wasserstein/
     tex/
     site.config.mjs
