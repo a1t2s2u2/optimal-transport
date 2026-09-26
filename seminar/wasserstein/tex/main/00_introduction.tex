@@ -2,7 +2,9 @@
 \label{ch:introduction}
 
 本資料は，Wasserstein 距離の定義から出発し，
-\textbf{目標（距離性；Villani (2009) Chapter 6）}：
+次を示すことを目的とする．
+
+\textbf{目標（距離性；Villani (2009) Chapter 6）}
 Polish 空間 $\mathcal{X}$ 上で
 \[
   1\leq p<\infty
@@ -10,14 +12,6 @@ Polish 空間 $\mathcal{X}$ 上で
   \Wass_p\text{ は }\Pp{p}(\mathcal{X})\text{ 上の距離である}
 \]
 を，最適 coupling の存在定理（Villani (2009) Theorem 4.1）を経て証明する．
-その後は $p=2$ に限定し，対角 Gaussian 分布の間の $W_2$ を
-平均と標準偏差の Euclid 距離として厳密に計算する．
-この閉形式を Gaussian decoder に適用して潜在空間上の
-引き戻し Riemann 計量を導き，Christoffel 記号，Riemann 曲率，
-断面曲率へ進む．まず目標とするのは，decoder が潜在空間に作る曲率を
-実際に計算できる形にすることである．
-最後に，こうして得た幾何が何を決めて何を決めないのかを確定させ，
-潜在空間の二点を結ぶ輸送コストとして何を採るべきかを論じる．
 主たる文献は Villani
 \emph{Optimal Transport: Old and New}
 （Grundlehren der mathematischen Wissenschaften 338, Springer, 2009）であり，
@@ -30,29 +24,12 @@ Polish 空間 $\mathcal{X}$ 上で
 \section*{本資料の構成}
 
 \begin{itemize}
+  \item 第\ref{ch:introduction}章：目標，文献，記法を確認する．
   \item 第\ref{ch:wasserstein-metrics}章：
     $\Pp{p}(\mathcal{X})$，coupling，$\Wass_p$ を定義し，
     最適 coupling の存在定理を経て目標を証明する．
-  \item 第\ref{ch:gaussian-w2}章：
-    $p=2$，$\mathcal{X}=\R^n$ に限定し，1次元および対角 Gaussian
-    分布の間の $W_2$ の閉形式を最適 coupling とともに証明する．
-    Gaussian decoder が潜在空間に定める引き戻し距離を得る．
-  \item 第\ref{ch:latent-curvature}章：
-    decoder の平均・標準偏差をまとめた写像の微分から
-    引き戻し計量テンソルを導く．その正定値性を確認した後，
-    Christoffel 記号と曲率を定義し，2次元の具体例で
-    Gaussian 曲率を最後まで計算する．
-  \item 第\ref{ch:transport-cost}章：
-    曲率が恒等的に $0$ になる二つの場合を特定し，曲率が非零で
-    ありうるための必要条件を得る．引き戻し計量が decoder を
-    決定しないことを反例で示したうえで，弦長と内在距離の差が
-    第二基本形式で支配される三次の量であることを証明し，
-    輸送コストの選択に答える．
   \item 付録A：
-    距離空間と測度論の準備．
-    本編で用いる定義と補題をすべて揃え，
-    証明なしで認める標準定理（単調収束定理・一致定理・分解定理など）は
-    ステートメントを明示して文献を挙げる．
+    距離性の証明に必要な距離空間と測度論の準備をまとめる．
 \end{itemize}
 
 \section*{主な記号}
@@ -68,11 +45,4 @@ Polish 空間 $\mathcal{X}$ 上で
   \item $\norm{f}_{L^p(\mu)}$：$L^p$ ノルム（定義~\ref{def:meas-lp-norm}）．
   \item $\mu\circ T^{-1}$：写像 $T$ による $\mu$ の像測度（定義~\ref{def:meas-pushforward}）．
   \item $\mu\otimes\nu$：直積測度（定理~\ref{thm:meas-product}）．
-  \item $\mathcal{N}(m,\operatorname{diag}(\sigma^2))$：
-    平均 $m$，対角共分散 $\operatorname{diag}(\sigma^2)$ の
-    Gaussian 分布（定義~\ref{def:gw-diagonal-gaussian}）．
-  \item $G(z)$：Gaussian decoder が潜在空間に定める
-    引き戻し計量テンソル（定義~\ref{def:lc-pullback-metric}）．
-  \item $d_G(z_0,z_1)$：$G$ が定める内在距離（定義~\ref{def:lc-intrinsic-metric}）．
-  \item $B_{ij}$：immersion $F$ の第二基本形式（定理~\ref{thm:lc-gauss-equation}）．
 \end{itemize}

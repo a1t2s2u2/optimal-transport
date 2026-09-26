@@ -574,27 +574,6 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
   $f=f^+-f^-$ と分解して非負可測関数の場合を適用すればよい．
 \end{proof}
 
-\section{Lebesgue 測度}
-
-\begin{definition}{Euclid 空間上の Lebesgue 測度}{meas-lebesgue}
-  $n\in\N$ とする．半開矩形の体積を
-  \[
-    \lambda_n\left(\prod_{i=1}^n(a_i,b_i]\right)
-    :=\prod_{i=1}^n(b_i-a_i)
-    \qquad(a_i<b_i)
-  \]
-  と定め，これを $\Borel(\R^n)$ 上へ拡張して得られる測度
-  $\lambda_n$ を $\R^n$ 上の\textbf{Lebesgue 測度}という．
-  その存在と一意性は測度論の標準定理として認める．
-  $\lambda_n$ に関する積分を
-  \[
-    \int_{\R^n}f(x)\,\d x
-    :=\int_{\R^n}f\,\d\lambda_n
-  \]
-  と略記する．連続関数の（広義）Riemann 積分と Lebesgue 積分の一致，
-  および微積分学の基本定理も既知として用いる．
-\end{definition}
-
 \section{直積測度と測度の分解}
 
 \begin{theorem}{直積確率測度と Tonelli の定理}{meas-product}

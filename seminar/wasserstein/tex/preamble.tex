@@ -8,13 +8,6 @@
 \usepackage[dvipdfmx,hidelinks]{hyperref}
 \usepackage{pxjahyper}
 
-% --- 図・表 ---
-\usepackage{tikz}
-\usepackage{float}
-\usetikzlibrary{decorations.pathreplacing,calc,arrows.meta,patterns,positioning}
-\usepackage{graphicx}
-\graphicspath{{fig/}}
-
 % --- 定理環境 (tcolorbox) ---
 \usepackage{tcolorbox}
 \tcbuselibrary{theorems,breakable}
@@ -43,20 +36,6 @@
 \newtcbtheorem[use counter from=definition]{remark}{Rem.}{
   colback=yellow!5, colframe=yellow!40!black, fonttitle=\bfseries, breakable
 }{rem}
-% Example: 灰色系
-\newtcbtheorem[use counter from=definition]{example}{Ex.}{
-  colback=gray!5, colframe=gray!50!black, fonttitle=\bfseries, breakable
-}{ex}
-% Corollary: 紫系
-\newtcbtheorem[use counter from=definition]{corollary}{Cor.}{
-  colback=purple!5, colframe=purple!40!black, fonttitle=\bfseries, breakable
-}{cor}
-% Memo: 薄い黒系（番号なし，発展的補足）
-\newtcolorbox{memo*}{
-  colback=black!7, colframe=black!40,
-  fonttitle=\bfseries, title={Memo},
-  breakable
-}
 % 証明環境の装飾
 \tcolorboxenvironment{proof}{
   colback=white, colframe=black!20,
