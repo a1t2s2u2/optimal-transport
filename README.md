@@ -2,8 +2,6 @@
 
 最適輸送のセミナー発表資料（TeX / Web サイト）を管理するリポジトリ。
 
-理論論文は `paper/ot-manifold-approximation/` に置き、数値実験は含めない。
-
 ## セミナー
 
 ### `seminar/cuturi/` — Computational Optimal Transport
@@ -27,8 +25,6 @@ Wasserstein 距離を定義し、最適 coupling の存在を経て距離性を�
 ```
 tools/
   site/               # tex → Web サイトの変換エンジン（全セミナー共通）
-paper/
-  ot-manifold-approximation/ # Wasserstein 潜在幾何の理論論文（英語・日本語）
 seminar/
   cuturi/
     tex/              # TeX ソース（source of truth）
@@ -53,7 +49,6 @@ make sites              # すべてのセミナーの Web サイトを生成
 make cuturi-site        # 計算最適輸送の Web サイト
 make cuturi-pdf         # 計算最適輸送の PDF
 make wasserstein-site   # Wasserstein 距離の Web サイト（PDF は生成しない）
-make paper-all          # 理論論文の英語版・日本語版 PDF
 ```
 
 `main` へ push すると `.github/workflows/pages.yml` が tex からサイトを生成し

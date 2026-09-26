@@ -4,7 +4,6 @@
 
 - `seminar/cuturi/` — Peyré–Cuturi _Computational Optimal Transport_ に基づく資料（詳細は `seminar/cuturi/CLAUDE.md`）
 - `seminar/wasserstein/` — Wasserstein 距離の定義と距離性（詳細は `seminar/wasserstein/CLAUDE.md`）
-- `paper/ot-manifold-approximation/` — Wasserstein 潜在幾何の理論論文（英語・日本語）
 - `tools/site/` — tex から Web サイトを生成するエンジン（全セミナー共通。詳細は `tools/site/README.md`）
 
 ## セミナー方針（共通）
