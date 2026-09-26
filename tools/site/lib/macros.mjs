@@ -13,7 +13,7 @@ import { readFileSync } from "node:fs";
 //   \DeclareMathOperator{\NAME}{TEXT}   -> \operatorname{TEXT}
 //   \DeclareMathOperator*{\NAME}{TEXT}  -> \operatorname*{TEXT}
 //
-// 本文が空のもの（\blockmeta, \demohint のような PDF 側で無効化する指示マクロ）は
+// 本文が空のもの（\demohint のような PDF 側で無効化する指示マクロ）は
 // 数式マクロではないので除く。
 
 // start（'{' の位置）から波括弧の対応を取って中身と次位置を返す。
@@ -70,7 +70,7 @@ export function extractMacros(preamblePath, { warn = () => {} } = {}) {
       continue;
     }
     const text = body[0].trim();
-    if (text === "") continue; // 指示マクロ（\blockmeta 等）は数式マクロではない
+    if (text === "") continue; // 指示マクロは数式マクロではない
     macros[name] = argc > 0 ? [text, argc] : text;
   }
 

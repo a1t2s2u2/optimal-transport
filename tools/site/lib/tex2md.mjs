@@ -275,9 +275,6 @@ class Converter {
 
   // 行内レベルの変換をまとめて適用する。
   applyInline(text, convertReferences = true) {
-    // \blockmeta{...} は proofgraph 用のメタデータ。PDF に出ない以上、
-    // サイトの markdown にも漏らさない。
-    text = text.replace(/\\blockmeta\{[^}]*\}/g, "");
     text = stripLabel(text);
     if (convertReferences && Object.keys(this.labelMap).length > 0) {
       text = this.convertRefs(text);

@@ -69,11 +69,6 @@
   breakable
 }
 
-% ブロックの機械可読メタデータ（proofgraph ツールが解析する）。
-% PDF には一切出力されない。各ブロックの \begin{env}{title}{label} 直後に置く：
-%   \blockmeta{space=polish; uses=prop:foo; route.A=prop:bar}
-\newcommand{\blockmeta}[1]{}
-
 % --- アルゴリズム環境 ---
 \newcounter{algcounter}[section]
 \newtcolorbox{algorithm}[1]{

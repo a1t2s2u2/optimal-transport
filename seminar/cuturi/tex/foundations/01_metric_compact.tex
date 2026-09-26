@@ -2,7 +2,6 @@
 \label{ch:found-metric}
 
 \begin{definition}{距離空間}{sem-metric-space}
-\blockmeta{space=metric}
   集合 $\Omega$ と関数 $d \colon \Omega \times \Omega \to [0, \infty)$ の組
   $(\Omega, d)$ が\textbf{距離空間}であるとは，
   次の3条件がすべての $x, y, z \in \Omega$ に対して成り立つことをいう：
@@ -15,7 +14,6 @@
 \end{definition}
 
 \begin{definition}{ノルム空間}{sem-normed-space}
-\blockmeta{space=normed}
   実ベクトル空間 $V$ と関数 $\|\cdot\| \colon V \to [0, \infty)$ の組
   $(V, \|\cdot\|)$ が\textbf{ノルム空間}であるとは，
   次の3条件がすべての $x, y \in V$ と $\lambda \in \R$ に対して
@@ -114,7 +112,6 @@ $\Omega$ 上の開集合全体が位相 $\mathcal{O}_d$ をなす．}
 \end{definition}
 
 \begin{definition}{完備性}{sem-complete-metric}
-\blockmeta{space=complete_metric}
   距離空間 $(\Omega, d)$ の列 $(x_n)_{n \geq 1} \subset \Omega$ が
   \textbf{Cauchy 列}であるとは，
   任意の $\varepsilon > 0$ に対してある $N \in \N$ が存在して
@@ -196,7 +193,6 @@ $\Omega'$ の外に逃げ，完備でない．}
 \end{figure}
 
 \begin{definition}{Polish 空間}{sem-polish}
-\blockmeta{space=polish}
   完備（定義~\ref{def:sem-complete-metric}）かつ
   可分（定義~\ref{def:sem-separable}）な
   距離空間（定義~\ref{def:sem-metric-space}）を\textbf{Polish 空間}という．
