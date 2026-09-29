@@ -5,3 +5,5 @@ Peyré–Cuturi _Computational Optimal Transport_ に基づくセミナー資料
 ## 参考文献
 
 - [Computational Optimal Transport, G. Peyré & M. Cuturi](https://arxiv.org/abs/1803.00567)
+
+原典の配布元一式はリポジトリへ複製しない。`reference/` には対訳と正誤表のみを置く。

@@ -4,7 +4,7 @@
 本編で用いる実数・距離空間・測度論の道具をまとめる．
 本資料では，使う用語はすべて定義し，
 証明なしに用いる標準定理はステートメントを明示したうえで文献を挙げる
-（単調収束定理・一致定理・Tonelli の定理・分解定理・
+（単調収束定理・一致定理・Tonelli の定理・
 Prokhorov の定理など）．
 それ以外の主張にはすべて証明を付ける．
 証明を省略した定理については，
@@ -157,18 +157,32 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
   \end{itemize}
 \end{remark}
 
-\begin{theorem}{有限測度の一致定理}{meas-uniqueness}
+\begin{theorem}{Dynkin の $\pi$-$\lambda$ 定理}{meas-pi-lambda}
   集合 $\Omega$ 上の集合族 $\mathcal{C}$ が
   \textbf{$\pi$-系}であるとは，空でなく，
   $A,B\in\mathcal{C}$ ならば $A\cap B\in\mathcal{C}$
   が成り立つことをいう．
+  $\Omega$ 上の集合族 $\mathcal{D}$ が
+  \textbf{$\lambda$-系}であるとは，次の三つが成り立つことをいう：
+  $\Omega\in\mathcal{D}$；
+  $A\in\mathcal{D}$ ならば $\Omega\setminus A\in\mathcal{D}$；
+  互いに素な $A_1,A_2,\ldots\in\mathcal{D}$ に対し
+  $\bigcup_{n}A_n\in\mathcal{D}$．
 
+  $\pi$-系 $\mathcal{C}$ が $\lambda$-系 $\mathcal{D}$ に含まれるならば，
+  $\sigma(\mathcal{C})\subset\mathcal{D}$ である．
+
+  （標準的な結果．証明は省略する．）
+\end{theorem}
+
+\begin{theorem}{有限測度の一致定理}{meas-uniqueness}
   $\mathcal{C}$ を $\Omega$ 上の $\pi$-系とし，
   $\mu,\nu$ を $(\Omega,\sigma(\mathcal{C}))$ 上の有限測度とする．
   $\mu(\Omega)=\nu(\Omega)$ かつ，すべての $A\in\mathcal{C}$ で
   $\mu(A)=\nu(A)$ ならば，$\sigma(\mathcal{C})$ 上で $\mu=\nu$ である．
 
-  （Dynkin の $\pi$-$\lambda$ 定理から従う標準的な結果．証明は省略する．）
+  （Dynkin の $\pi$-$\lambda$ 定理（定理~\ref{thm:meas-pi-lambda}）から従う
+  標準的な結果．証明は省略する．）
 \end{theorem}
 
 \section{指示関数と a.e.}
@@ -377,64 +391,26 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
   (2nd ed., 1999) Theorems 5.1, 5.2 にある．）
 \end{theorem}
 
-\section{$L^p$ ノルムと積分不等式}
+\section{積分不等式}
 
-\begin{definition}{$L^p$ ノルム}{meas-lp-norm}
-  測度空間 $(\Omega,\mathcal{A},\mu)$ 上の可測関数 $f\colon\Omega\to\R$ と
-  $1\leq p<\infty$ に対し
-  \[
-    \norm{f}_{L^p(\mu)}
-    :=
-    \left(\int_\Omega\abs{f}^p\,\d\mu\right)^{1/p}
-  \]
-  と定める．
-\end{definition}
-
-\begin{remark}{記法 $\norm{f}_{L^p(\mu)}$}{meas-lp-norm-notation}
-  添字 $L^p(\mu)$ は，冪 $p$ と積分に用いる測度 $\mu$ の指定である：
-  \[
-    \norm{f}_{L^2(\mu)}=\left(\int_\Omega\abs{f}^2\,\d\mu\right)^{1/2},
-    \qquad
-    \norm{f}_{L^1(\nu)}=\int_\Omega\abs{f}\,\d\nu .
-  \]
-  同じ $f$ でも測度が異なれば値は異なる．
-  本編では coupling $\pi\in\Couplings(\mu,\nu)$ に対する
-  \[
-    \norm{d}_{L^p(\pi)}
-    =\left(\int_{\mathcal{X}\times \mathcal{X}}d(x,y)^p\,\d\pi(x,y)\right)^{1/p}
-  \]
-  の形で用い，
-  \[
-    \Wass_p(\mu,\nu)=\inf_{\pi\in\Couplings(\mu,\nu)}\norm{d}_{L^p(\pi)}
-  \]
-  と書ける（注意~\ref{rem:wp-welldef}）．
-\end{remark}
+以下，$(\Omega,\mathcal{A},\mu)$ を測度空間とし，
+$f,g\colon\Omega\to\R$ を可測関数とする．
 
 \begin{theorem}{Hölder の不等式}{meas-holder}
-  $1<r,r'<\infty$，$1/r+1/r'=1$ とする．可測関数 $f,g$ に対し
+  $1<r,r'<\infty$，$1/r+1/r'=1$ とし，
+  $\int_\Omega\abs{f}^r\,\d\mu$，$\int_\Omega\abs{g}^{r'}\,\d\mu$ は有限とする．このとき
   \[
     \int_\Omega\abs{fg}\,\d\mu
     \leq
-    \norm{f}_{L^r(\mu)}\,\norm{g}_{L^{r'}(\mu)}.
+    \left(\int_\Omega\abs{f}^r\,\d\mu\right)^{1/r}
+    \left(\int_\Omega\abs{g}^{r'}\,\d\mu\right)^{1/r'}.
   \]
   （標準的な結果．証明は省略する．Dudley (2002) §5.1 参照．）
 \end{theorem}
 
-\begin{claim}{$L^p$ ノルムの単調性}{meas-lp-monotone}
-  可測関数 $f,g$ が $\abs{f}\leq\abs{g}$ $\mu$-a.e. をみたすならば，
-  $1\leq p<\infty$ に対し
-  $\norm{f}_{L^p(\mu)}\leq\norm{g}_{L^p(\mu)}$ である．
-\end{claim}
-
-\begin{proof}
-  $\abs{f}^p\leq\abs{g}^p$ $\mu$-a.e. だから，
-  積分の単調性より
-  $\int\abs{f}^p\,\d\mu\leq\int\abs{g}^p\,\d\mu$．
-  両辺の $1/p$ 乗を取ればよい．
-\end{proof}
-
 \begin{theorem}{Minkowski の不等式}{meas-minkowski}
-  可測関数 $f,g$ と $1\leq p<\infty$ に対し
+  $1\leq p<\infty$ とし，
+  $\int_\Omega\abs{f}^p\,\d\mu$，$\int_\Omega\abs{g}^p\,\d\mu$ は有限とする．このとき
   \[
     \left(\int_\Omega\abs{f+g}^p\,\d\mu\right)^{1/p}
     \leq
@@ -574,28 +550,7 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
   $f=f^+-f^-$ と分解して非負可測関数の場合を適用すればよい．
 \end{proof}
 
-\section{Lebesgue 測度}
-
-\begin{definition}{Euclid 空間上の Lebesgue 測度}{meas-lebesgue}
-  $n\in\N$ とする．半開矩形の体積を
-  \[
-    \lambda_n\left(\prod_{i=1}^n(a_i,b_i]\right)
-    :=\prod_{i=1}^n(b_i-a_i)
-    \qquad(a_i<b_i)
-  \]
-  と定め，これを $\Borel(\R^n)$ 上へ拡張して得られる測度
-  $\lambda_n$ を $\R^n$ 上の\textbf{Lebesgue 測度}という．
-  その存在と一意性は測度論の標準定理として認める．
-  $\lambda_n$ に関する積分を
-  \[
-    \int_{\R^n}f(x)\,\d x
-    :=\int_{\R^n}f\,\d\lambda_n
-  \]
-  と略記する．連続関数の（広義）Riemann 積分と Lebesgue 積分の一致，
-  および微積分学の基本定理も既知として用いる．
-\end{definition}
-
-\section{直積測度と測度の分解}
+\section{確率測度の直積と積分表示}
 
 \begin{theorem}{直積確率測度と Tonelli の定理}{meas-product}
   $\mathcal{X},\mathcal{Y}$ を可分距離空間，
@@ -618,39 +573,21 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
   （標準的な結果．証明は省略する．Dudley (2002) §4.4 参照．）
 \end{theorem}
 
-\begin{theorem}{測度分解定理（正則条件付き確率）}{meas-disintegration}
+\begin{theorem}{周辺分布を用いた積分表示}{meas-disintegration}
   $\mathcal{X},\mathcal{Y}$ を Polish 空間，$\pi\in\Prob(\mathcal{X}\times \mathcal{Y})$ とし，
   $\nu$ を $\pi$ の第2周辺分布とする．
-  このとき写像 $K\colon \mathcal{Y}\times\Borel(\mathcal{X})\to[0,1]$ で
-  次をみたすものが存在する：
+  このとき，各 $y\in\mathcal{Y}$ に確率測度 $\pi_y\in\Prob(\mathcal{X})$ を
+  対応させ，次の二つをみたすようにできる：
   \begin{enumerate}
-    \item 各 $y\in \mathcal{Y}$ で $K(y,\cdot)\in\Prob(\mathcal{X})$，
-    \item 各 $A\in\Borel(\mathcal{X})$ で $y\mapsto K(y,A)$ は可測，
+    \item 各 $A\in\Borel(\mathcal{X})$ で $y\mapsto\pi_y(A)$ は可測，
     \item すべての $A\in\Borel(\mathcal{X})$，$B\in\Borel(\mathcal{Y})$ に対し
       \[
-        \pi(A\times B)=\int_B K(y,A)\,\d\nu(y).
+        \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y).
       \]
   \end{enumerate}
-  (i)(ii) をみたす $K$ を（$\mathcal{Y}$ から $\mathcal{X}$ への）\textbf{Markov 核}といい，
-  (iii) を $\pi(\d x,\d y)=K(y,\d x)\,\nu(\d y)$ と書く．
-  $K$ は $\nu$-a.e. の意味で一意である．
+  $\pi_y$ は「$y$ が与えられたときの $x$ の分布」にあたり，
+  $\nu$-a.e. の意味で一意である．
   （Polish 空間上の標準的な結果．証明は省略する．
   Dudley (2002) Chapter 10，Villani (2009) Chapter 1，
   桑江ほか (2015) 補題 1.32 参照．）
-\end{theorem}
-
-\begin{theorem}{Markov 核による測度の貼り合わせ（前提とする事実）}{meas-kernel-composition}
-  $\mathcal{X},\mathcal{Y},\mathcal{Z}$ を Polish 空間，$\nu\in\Prob(\mathcal{Y})$ とし，
-  $K_1$ を $\mathcal{Y}$ から $\mathcal{X}$ への，$K_2$ を $\mathcal{Y}$ から $\mathcal{Z}$ への Markov 核とする．
-  このとき $\Borel(\mathcal{X}\times \mathcal{Y}\times \mathcal{Z})$ 上の確率測度 $\gamma$ で
-  \[
-    \gamma(A\times B\times C)
-    =\int_B K_1(y,A)\,K_2(y,C)\,\d\nu(y)
-    \qquad(A\in\Borel(\mathcal{X}),\,B\in\Borel(\mathcal{Y}),\,C\in\Borel(\mathcal{Z}))
-  \]
-  をみたすものがただ一つ存在する．
-  これを $\gamma(\d x,\d y,\d z)=K_1(y,\d x)\,\nu(\d y)\,K_2(y,\d z)$ と書く．
-  （直積測度の構成と同様の標準的な手順（単調族論法）による．
-  証明は省略する．一意性は矩形集合が $\pi$-系をなすことと
-  一致定理（定理~\ref{thm:meas-uniqueness}）から従う．）
 \end{theorem}

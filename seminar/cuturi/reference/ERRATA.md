@@ -1,12 +1,12 @@
 # Cuturi-Peyré "Computational Optimal Transport" 既知の誤り
 
-本リポジトリ `cuturi/original/` と `cuturi/translation/` は原典に忠実に保持しており，以下の数学的誤りも修正していない．`seminar/` 側では正しい記述を採用している．
+`translation/` は原典に忠実な対訳であり，以下の数学的誤りも修正していない．セミナー本文では正しい記述を採用している．
 
 ## 1. §3.1 LP 標準形における Kronecker 積の不整合
 
 **該当箇所**：
-- `cuturi/original/chapters/algo-basics.tex` L19-25
-- `cuturi/translation/03_algorithmic_foundations.tex` L34-38
+- 原典配布物 `chapters/algo-basics.tex` L19-25
+- `translation/03_algorithmic_foundations.tex` L19-27
 
 **原典の記述**：
 
@@ -53,7 +53,7 @@ $$
 
 **注**：階数の議論「最初の $n$ 行と残りの $m$ 行の和は共に $\ones_{nm}^\top$」は，正しい formula のもとでも成立する（Cuturi 原典の証明文は誤った formula を前提とすると次元が合わないが，正しい formula なら自然に整合する）．
 
-**seminar 側の対応**：`seminar/ch03_algorithmic_foundations.tex` §3.1 で正しい formula に修正済み．
+**セミナー本文の対応**：`../tex/main/03_kantorovich.tex` では行和・列和制約を直接記述している．
 
 ---
 

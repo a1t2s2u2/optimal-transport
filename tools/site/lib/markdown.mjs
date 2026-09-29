@@ -1,10 +1,10 @@
 // content/*.md（tex2md が出す中間 markdown）を HTML に変換する。
 //
 // 対応する記法は素の markdown ではなく、この資料専用の方言：
-//   - 見出し ## / ### / ####、箇条書き、番号付きリスト、コードフェンス
+//   - 見出し ## / ### / ####、箇条書き、番号付きリスト
 //   - \( \) と \[ \] の数式（MathJax がそのまま描画する）
 //   - ::: で開閉するコンテナ（定義・定理・証明の折りたたみ など）
-//   - [ref:表示|参照名] と [term:表示|用語 id] のリンク
+//   - [ref:表示|参照名] のリンク
 
 import { BLOCK_TYPES, ID_PREFIX } from "./blocks.mjs";
 
@@ -20,9 +20,6 @@ export function escapeHtml(value) {
 // cssClass が null の種別（注意・例）は専用のガワを持つ。
 function containerSpecs() {
   const specs = {
-    "grid two": { open: '<div class="grid two">', close: "</div>" },
-    compare: { open: '<div class="compare">', close: "</div>" },
-    column: { open: "<div>", close: "</div>" },
     fact: { open: '<aside class="margin-note">', close: "</aside>", type: "remark" },
     "fact accent": {
       open: '<div class="example-band"><article class="example-band__inner">',
@@ -96,11 +93,6 @@ export class MarkdownRenderer {
     const result = escapeHtml(shielded)
       .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
       .replace(/\*([^*]+)\*/g, "<em>$1</em>")
-      .replace(
-        /\[term:([^|\]]+)\|([a-z0-9-]+)\]/g,
-        (_m, label, term) =>
-          `<button type="button" class="term" data-term="${term}">${label}</button>`
-      )
       .replace(/\[ref:([^|\]]+?)(?:\|([^\]]+))?\]/g, (_m, first, second) => {
         const refName = second || first;
         // 旧形式「Lem: タイトル」は種別だけに短縮。新形式「補題 2.2.3」はそのまま。
@@ -176,12 +168,6 @@ export class MarkdownRenderer {
         stack.push("</details>");
         return;
       }
-      if (spec.startsWith("details ")) {
-        const title = spec.slice("details ".length);
-        html.push(`<details class="fold"><summary>${this.renderInline(title)}</summary>`);
-        stack.push("</details>");
-        return;
-      }
       if (spec.startsWith("demo ")) {
         // セミナー固有の図。site.config.mjs の demos から差し込む。
         const name = spec.slice("demo ".length).trim();
@@ -215,27 +201,6 @@ export class MarkdownRenderer {
           (listType === "ul" && /^[-*]\s+/.test(next));
         if (continuesList) continue;
         closeList();
-        continue;
-      }
-
-      if (trimmed.startsWith("```")) {
-        flushParagraph();
-        closeList();
-        const language = trimmed.slice(3).trim();
-        const code = [];
-        i += 1;
-        while (i < lines.length && !lines[i].trim().startsWith("```")) {
-          code.push(lines[i]);
-          i += 1;
-        }
-        if (i >= lines.length) throw new Error("閉じられていないコードフェンス (```)");
-        if (language === "mermaid") {
-          html.push(`<div class="map-wrap"><pre class="mermaid">${escapeHtml(code.join("\n"))}</pre></div>`);
-        } else if (language === "rawhtml") {
-          html.push(code.join("\n"));
-        } else {
-          html.push(`<pre class="code-block"><code>${escapeHtml(code.join("\n"))}</code></pre>`);
-        }
         continue;
       }
 
@@ -289,13 +254,6 @@ export class MarkdownRenderer {
             .replace(/-+/g, "-")
             .replace(/^-|-$/g, "");
           html.push(`<h2 id="sec-${slug}">${this.renderInline(heading[2])}</h2>`);
-        } else if (
-          level === 3 &&
-          currentBlock &&
-          this.config.graphTypes.has(currentBlock.type) &&
-          currentBlock.id
-        ) {
-          html.push(`<h3>${this.renderInline(heading[2])}${graphLink(currentBlock.id)}</h3>`);
         } else {
           html.push(`<h${level}>${this.renderInline(heading[2])}</h${level}>`);
         }
@@ -329,9 +287,4 @@ export class MarkdownRenderer {
 
     return html.join("\n");
   }
-}
-
-// 依存グラフへのリンク。__GRAPH_BASE__ は出力時にページ相対 URL へ差し替える。
-function graphLink(blockId) {
-  return `<a class="block__graph-link" href="__GRAPH_BASE__?focus=${encodeURIComponent(blockId)}" title="依存グラフで表示"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><line x1="12" y1="7.5" x2="5" y2="16.5"/><line x1="12" y1="7.5" x2="19" y2="16.5"/></svg></a>`;
 }

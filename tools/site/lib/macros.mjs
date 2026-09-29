@@ -13,7 +13,7 @@ import { readFileSync } from "node:fs";
 //   \DeclareMathOperator{\NAME}{TEXT}   -> \operatorname{TEXT}
 //   \DeclareMathOperator*{\NAME}{TEXT}  -> \operatorname*{TEXT}
 //
-// 本文が空のもの（\blockmeta, \demohint のような PDF 側で無効化する指示マクロ）は
+// 本文が空のもの（\demohint のような PDF 側で無効化する指示マクロ）は
 // 数式マクロではないので除く。
 
 // start（'{' の位置）から波括弧の対応を取って中身と次位置を返す。
@@ -70,7 +70,7 @@ export function extractMacros(preamblePath, { warn = () => {} } = {}) {
       continue;
     }
     const text = body[0].trim();
-    if (text === "") continue; // 指示マクロ（\blockmeta 等）は数式マクロではない
+    if (text === "") continue; // 指示マクロは数式マクロではない
     macros[name] = argc > 0 ? [text, argc] : text;
   }
 
@@ -90,12 +90,11 @@ export function extractMacros(preamblePath, { warn = () => {} } = {}) {
   return macros;
 }
 
-// 抽出したマクロに設定側の上書き・除外を適用する。
+// 抽出したマクロに設定側の上書きを適用する。
 // MathJax が解釈できない綴り（stmaryrd の \llbracket など）は
 // site.config.mjs の macroOverrides で差し替える。
-export function resolveMacros(preamblePath, { overrides = {}, ignore = [], warn } = {}) {
+export function resolveMacros(preamblePath, { overrides = {}, warn } = {}) {
   const macros = extractMacros(preamblePath, { warn });
-  for (const name of ignore) delete macros[name];
   return { ...macros, ...overrides };
 }
 

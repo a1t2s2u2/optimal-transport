@@ -97,30 +97,6 @@ export default {
     range: ["{\\lbrack\\!\\lbrack}#1{\\rbrack\\!\\rbrack}", 1],
   },
 
-  // --- 用語集（本文の [term:表示|id] から引く）---
-  glossary: {
-    polish: {
-      title: "Polish 空間",
-      body: "完備かつ可分な距離空間。確率測度の弱収束やカップリングの存在を扱いやすい。",
-    },
-    coupling: {
-      title: "カップリング",
-      body: "二つの周辺分布を固定した積空間上の確率測度。Kantorovich 緩和の未知量。",
-    },
-    entropy: {
-      title: "離散エントロピー / エントロピー正則化",
-      body: "離散エントロピーは \\(H(P)=-\\sum_{ij}P_{ij}(\\log P_{ij}-1)\\)。正則化では線形コストに \\(-\\varepsilon H(P)\\) を加える。",
-    },
-    kl: {
-      title: "KL ダイバージェンス",
-      body: "非負行列 \\(P,K\\) の差を測る量。\\(\\sum_{ij}P_{ij}\\log(P_{ij}/K_{ij})-P_{ij}+K_{ij}\\) で定義する。",
-    },
-    gibbs: {
-      title: "Gibbs カーネル",
-      body: "コスト行列から作る正行列。\\(K_{ij}=\\exp(-C_{ij}/\\varepsilon)\\)。正則化解は \\(P_\\varepsilon = \\mathrm{diag}(u) K \\mathrm{diag}(v)\\) の形をとる。",
-    },
-  },
-
   // --- tex 側の \demohint{名前} から差し込む図 ---
   demos: {
     "transport-cost": transportCostDiagram,

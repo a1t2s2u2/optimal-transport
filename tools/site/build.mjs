@@ -14,13 +14,12 @@ import { fileURLToPath } from "node:url";
 
 import { loadConfig } from "./lib/config.mjs";
 import { MarkdownRenderer } from "./lib/markdown.mjs";
-import { buildGraphData } from "./lib/graph.mjs";
 import { resolveMacros } from "./lib/macros.mjs";
-import { chapterTemplate, landingTemplate, graphTemplate, outPathOf } from "./lib/templates.mjs";
+import { chapterTemplate, landingTemplate, outPathOf } from "./lib/templates.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ASSETS_DIR = path.join(__dirname, "assets");
-const ASSETS = ["styles.css", "app.js", "graph.js"];
+const ASSETS = ["styles.css", "app.js"];
 
 const seminarDir = process.argv.slice(2).find((a) => !a.startsWith("--"));
 if (!seminarDir) {
@@ -93,7 +92,6 @@ for (const section of sections) {
 const macroWarnings = [];
 const macros = resolveMacros(config.preamblePath, {
   overrides: config.macroOverrides,
-  ignore: config.macroIgnore,
   warn: (m) => macroWarnings.push(m),
 });
 for (const w of macroWarnings) console.warn(`  ⚠ macro: ${w}`);
@@ -101,7 +99,6 @@ for (const w of macroWarnings) console.warn(`  ⚠ macro: ${w}`);
 // --- 出力 ---
 
 const blocks = renderer.blocks;
-const graphData = buildGraphData(blocks, config.graphTypes);
 
 rmSync(config.distDir, { recursive: true, force: true });
 mkdirSync(path.join(config.distDir, "main"), { recursive: true });
@@ -109,7 +106,7 @@ mkdirSync(path.join(config.distDir, "appendix"), { recursive: true });
 
 writeFileSync(
   path.join(config.distDir, "index.html"),
-  landingTemplate(config, sections, blocks),
+  landingTemplate(config, sections),
   "utf8"
 );
 sections.forEach((section, i) => {
@@ -120,27 +117,13 @@ sections.forEach((section, i) => {
   );
 });
 
-writeFileSync(
-  path.join(config.distDir, "graph-data.json"),
-  JSON.stringify(graphData),
-  "utf8"
-);
-writeFileSync(
-  path.join(config.distDir, "graph.html"),
-  graphTemplate(config, sections, graphData, macros),
-  "utf8"
-);
-
 // html から相対参照される静的アセットを dist へコピーする。
-// セミナー側に同名ファイルがあればそちらを優先し、個別の上書きを可能にする。
 for (const asset of ASSETS) {
-  const override = path.join(config.seminarDir, "site-assets", asset);
-  const src = existsSync(override) ? override : path.join(ASSETS_DIR, asset);
-  copyFileSync(src, path.join(config.distDir, asset));
+  copyFileSync(path.join(ASSETS_DIR, asset), path.join(config.distDir, asset));
 }
 
 const nMain = sections.filter((s) => s.data.group !== "appendix").length;
 console.log(
-  `Built dist/ : index.html + graph.html + main/(${nMain}) + appendix/(${sections.length - nMain}) — ` +
-  `${blocks.length} blocks, ${graphData.edges.length} edges, ${Object.keys(macros).length} macros.`
+  `Built dist/ : index.html + main/(${nMain}) + appendix/(${sections.length - nMain}) — ` +
+  `${blocks.length} blocks, ${Object.keys(macros).length} macros.`
 );

@@ -1,0 +1,208 @@
+\chapter{多体系の量子 Wasserstein 距離 \texorpdfstring{$W_1$}{W1}}
+\label{ch:quantum-w1}
+
+本章では De Palma--Marvian--Trevisan--Lloyd
+\emph{The Quantum Wasserstein Distance of Order 1}
+（arXiv:2009.04469）の量子 $W_1$ を導入する．この定義は $n$-qubit 系の tensor 積構造，
+すなわち「どの場所を変更したか」を幾何として使う．
+
+\section{局所的な差}
+
+以下
+
+\[
+  \mathcal{H}_n=(\C^2)^{\otimes n},
+  \qquad
+  \mathcal{O}_n^0
+  :=\{X\in\Obs{\mathcal{H}_n}\mid\Tr X=0\}
+\]
+
+とおく．二つの量子状態の差は必ず $\mathcal{O}_n^0$ に属する．
+
+\begin{definition}{隣接する量子状態}{q-neighboring}
+  $\rho,\sigma\in\States{\mathcal{H}_n}$ が\textbf{隣接する}とは，ある $i\in\{1,\ldots,n\}$ で
+
+  \[
+    \Tr_i\rho=\Tr_i\sigma
+  \]
+
+  となることをいう．すなわち，第 $i$ qubit を捨てれば二状態を区別できない．
+\end{definition}
+
+一般の $X\in\mathcal{O}_n^0$ を，一つの場所だけに局所化された差の和へ分解する．
+
+\begin{definition}{量子 $W_1$ ノルム}{q-w1-norm}
+  $X\in\mathcal{O}_n^0$ に対し
+
+  \[
+    \norm{X}_{W_1}
+    :=\frac12
+    \min\left\{
+      \sum_{i=1}^n\norm{X^{(i)}}_1
+      \;\middle|\;
+      X=\sum_{i=1}^nX^{(i)},\quad
+      X^{(i)}\in\mathcal{O}_n^0,\quad
+      \Tr_iX^{(i)}=0
+    \right\}
+  \]
+
+  と定める．
+\end{definition}
+
+まず，この最小化が常に意味をもつことを確認する．
+
+\begin{lemma}{局所分解の存在}{q-local-decomposition}
+  任意の $X\in\mathcal{O}_n^0$ に対し，定義~\ref{def:q-w1-norm}の制約をみたす
+  $(X^{(i)})_{i=1}^n$ が存在し，最小値は達成される．
+\end{lemma}
+
+\begin{proof}
+  第 $i$ qubit を最大混合状態で置き換える線形写像を
+
+  \[
+    \mathcal{E}_i(X):=\frac{\Id_2}{2}\otimes\Tr_iX
+  \]
+
+  と書く．tensor 因子は元の順序に戻すものとする．異なる $\mathcal{E}_i$ は可換であり，
+  $\Tr_i\mathcal{E}_i(X)=\Tr_iX$ である．
+  $\mathcal{E}_{1:i}:=\mathcal{E}_1\cdots\mathcal{E}_i$，
+  $\mathcal{E}_{1:0}:=\Id$ とおき
+
+  \[
+    X^{(i)}:=\mathcal{E}_{1:i-1}(X)-\mathcal{E}_{1:i}(X)
+  \]
+
+  と定めると，$\Tr_iX^{(i)}=0$ である．また
+  $\mathcal{E}_{1:n}(X)=(\Tr X)\Id_{2^n}/2^n=0$ だから，望む telescope 和
+
+  \[
+    \sum_{i=1}^nX^{(i)}=X-\mathcal{E}_{1:n}(X)=X
+  \]
+
+  を得る．よって許容集合は空でない．
+
+  最小化列は目的関数がある定数以下となるように取れる．すると各 $\norm{X^{(i)}}_1$ が
+  一様に有界である．有限次元なので収束部分列が取れ，線形な制約は極限でも保たれる．
+  跡ノルムの連続性から極限が最小値を達成する．
+\end{proof}
+
+\begin{proposition}{隣接状態による表示}{q-neighbor-form}
+  定義~\ref{def:q-w1-norm}は
+
+  \[
+    \norm{X}_{W_1}
+    =\min\left\{
+      \sum_{i=1}^nc_i
+      \;\middle|\;
+      X=\sum_{i=1}^nc_i(\rho^{(i)}-\sigma^{(i)}),\quad
+      c_i\geq0,\quad
+      \Tr_i\rho^{(i)}=\Tr_i\sigma^{(i)}
+    \right\}
+  \]
+
+  と同値である．ここで $\rho^{(i)},\sigma^{(i)}\in\States{\mathcal{H}_n}$ である．
+\end{proposition}
+
+\begin{proof}
+  許容な $X^{(i)}$ の Jordan 分解を
+  $X^{(i)}=X^{(i)}_+-X^{(i)}_-$ とし，
+  $c_i:=\norm{X^{(i)}}_1/2$ とおく．$c_i>0$ なら
+
+  \[
+    \rho^{(i)}:=X^{(i)}_+/c_i,
+    \qquad
+    \sigma^{(i)}:=X^{(i)}_-/c_i
+  \]
+
+  は状態である．さらに $\Tr_iX^{(i)}=0$ より両者の部分跡は等しい．
+  逆に $X^{(i)}=c_i(\rho^{(i)}-\sigma^{(i)})$ とおけば
+  $\Tr_iX^{(i)}=0$ かつ $\norm{X^{(i)}}_1\leq2c_i$ である．
+  両方向の表示に対して最小値を取れば等号を得る．
+\end{proof}
+
+\section{ノルムと距離性}
+
+\begin{lemma}{跡ノルムによる下界}{q-w1-lower-bound}
+  任意の $X\in\mathcal{O}_n^0$ に対し
+
+  \[
+    \frac12\norm{X}_1\leq\norm{X}_{W_1}
+  \]
+
+  が成り立つ．
+\end{lemma}
+
+\begin{proof}
+  任意の許容分解について跡ノルムの三角不等式から
+
+  \[
+    \norm{X}_1
+    =\norm{\sum_iX^{(i)}}_1
+    \leq\sum_i\norm{X^{(i)}}_1
+  \]
+
+  である．右辺の半分について最小値を取ればよい．
+\end{proof}
+
+\begin{theorem}{量子 $W_1$ はノルムである}{q-w1-is-norm}
+  $X\mapsto\norm{X}_{W_1}$ は実線形空間 $\mathcal{O}_n^0$ 上のノルムである．
+\end{theorem}
+
+\begin{proof}
+  有限性は補題~\ref{lem:q-local-decomposition}による．定義から非負であり，
+  補題~\ref{lem:q-w1-lower-bound}より
+  $\norm{X}_{W_1}=0$ なら $\norm{X}_1=0$，したがって $X=0$ である．
+
+  $a\in\R$ と許容分解 $(X^{(i)})_i$ に対し $(aX^{(i)})_i$ は $aX$ の許容分解だから
+  $\norm{aX}_{W_1}\leq\abs{a}\norm{X}_{W_1}$ である．$a\neq0$ のとき $1/a$ を
+  $aX$ に適用すれば逆向きの不等式を得る．$a=0$ は明らかである．
+
+  最後に $X,Y$ の最小分解をそれぞれ $(X^{(i)})_i,(Y^{(i)})_i$ とすると，
+  $(X^{(i)}+Y^{(i)})_i$ は $X+Y$ の許容分解である．よって
+
+  \[
+    \norm{X+Y}_{W_1}
+    \leq\frac12\sum_i\norm{X^{(i)}+Y^{(i)}}_1
+    \leq\norm{X}_{W_1}+\norm{Y}_{W_1}.
+  \]
+
+  以上で正定値性，絶対斉次性，三角不等式が示された．
+\end{proof}
+
+\begin{definition}{量子 Wasserstein 距離 $W_1$}{q-w1-distance}
+  $\rho,\sigma\in\States{\mathcal{H}_n}$ に対し
+
+  \[
+    \Wass_1^{\rm q}(\rho,\sigma):=\norm{\rho-\sigma}_{W_1}
+  \]
+
+  と定める．
+\end{definition}
+
+\begin{corollary}{量子 $W_1$ の距離性}{q-w1-metric}
+  $\Wass_1^{\rm q}$ は $\States{\mathcal{H}_n}$ 上の距離である．
+\end{corollary}
+
+\begin{proof}
+  非負性と対称性はノルムから従う．また
+  $\Wass_1^{\rm q}(\rho,\sigma)=0$ なら
+  $\rho-\sigma=0$ だから $\rho=\sigma$ であり，逆は明らかである．三角不等式は
+
+  \[
+    \norm{\rho-\tau}_{W_1}
+    \leq\norm{\rho-\sigma}_{W_1}+\norm{\sigma-\tau}_{W_1}
+  \]
+
+  そのものである．
+\end{proof}
+
+\begin{example}{一つの qubit}{q-one-qubit}
+  $n=1$ では許容分解は $X^{(1)}=X$ しかないので
+
+  \[
+    \Wass_1^{\rm q}(\rho,\sigma)=\frac12\norm{\rho-\sigma}_1
+    =D_{\rm tr}(\rho,\sigma).
+  \]
+
+  多体系では，各場所に局所化した差のコストを足すため，単なる跡距離とは異なる幾何になる．
+\end{example}

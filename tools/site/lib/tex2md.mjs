@@ -102,9 +102,6 @@ class Converter {
     this.numberMap = {};
     this.warnings = [];
     this.currentFile = null;
-    // 「数式の外に出ても安全」と確認できたマクロだけここに足す。既定は空。
-    // 埋めると \emph 級の素通りバグを隠してしまう。
-    this.macroWhitelist = new Set(config.macroWhitelist ?? []);
   }
 
   warn(entry) {
@@ -146,8 +143,8 @@ class Converter {
     return labelMap;
   }
 
-  // PDF（LaTeX）と同一の定理番号「章.節.通し番号」を再現する。
-  // 規則は preamble.tex の tcolorbox 設定に対応する：
+  // サイトの定理番号「章.節.通し番号」を作る。
+  // 規則：
   //   - 全定理環境が definition のカウンタを共有（use counter from）
   //   - カウンタは節ごとにリセット（number within=section）
   //   - 章番号は本編 1,2,…、付録 A,B,…（main.tex の \appendix による）
@@ -275,9 +272,6 @@ class Converter {
 
   // 行内レベルの変換をまとめて適用する。
   applyInline(text, convertReferences = true) {
-    // \blockmeta{...} は proofgraph 用のメタデータ。PDF に出ない以上、
-    // サイトの markdown にも漏らさない。
-    text = text.replace(/\\blockmeta\{[^}]*\}/g, "");
     text = stripLabel(text);
     if (convertReferences && Object.keys(this.labelMap).length > 0) {
       text = this.convertRefs(text);
@@ -400,15 +394,6 @@ class Converter {
         continue;
       }
 
-      if (kind === "memo") {
-        output.push(":::fact");
-        const bodyText = this.renderNodes(node[1]).join("\n").trim();
-        if (bodyText) output.push(bodyText);
-        output.push(":::");
-        output.push("");
-        continue;
-      }
-
       if (kind === "standalone_proof") {
         output.push(":::details-embedded 証明");
         const proofText = this.renderNodes(node[1]).join("\n").trim();
@@ -492,7 +477,6 @@ class Converter {
         .replace(/\\\([^]*?\\\)/g, " ") // インライン数式
         .replace(/\\\[[^]*?\\\]/g, " "); // 保険: 単一行の表示数式
       for (const m of shielded.matchAll(/\\[a-zA-Z]+/g)) {
-        if (this.macroWhitelist.has(m[0])) continue;
         this.warn({
           kind: "leftover-macro",
           file: mdFilename,
@@ -687,32 +671,6 @@ class TexParser {
         continue;
       }
 
-      // \begin{algorithm}{label} ... \end{algorithm}（引数はラベル）
-      const mAlg = stripped.match(/^\\begin\{algorithm\}\{(.+?)\}/);
-      if (mAlg) {
-        this.advance();
-        const raw = [];
-        while (!this.atEnd() && this.peek().trim() !== "\\end{algorithm}") {
-          raw.push(this.advance());
-        }
-        if (!this.atEnd()) this.advance();
-        // 行末の '\\'（改行）を空行＝段落区切りに変換し、各ステップを
-        // 別行で描画する（生の <br> は markdown.mjs に escape されるため使えない）。
-        const processed = [];
-        for (const ln of raw) {
-          const s = ln.replace(/\s+$/, "");
-          if (s.endsWith("\\\\")) {
-            processed.push(s.slice(0, -2).replace(/\s+$/, ""));
-            processed.push("");
-          } else {
-            processed.push(ln);
-          }
-        }
-        const blockNodes = new TexParser(processed, this.config).parse();
-        nodes.push(["block", "algorithm", "アルゴリズム", blockNodes, null]);
-        continue;
-      }
-
       // 定理系の環境: \begin{ENV}{タイトル}{ラベル}
       m = stripped.match(/^\\begin\{(\w+)\}\{(.+?)\}\{(.+?)\}/);
       if (m && m[1] in this.config.blockEnvs) {
@@ -724,14 +682,6 @@ class TexParser {
         this.parseBody(blockNodes, envName);
         const proofNodes = this.tryParseProof();
         nodes.push(["block", envName, title, blockNodes, proofNodes, label]);
-        continue;
-      }
-
-      if (stripped === "\\begin{memo*}") {
-        this.advance();
-        const blockNodes = [];
-        this.parseBody(blockNodes, "memo*");
-        nodes.push(["memo", blockNodes]);
         continue;
       }
 
