@@ -411,21 +411,23 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   \textbf{3. 三角不等式．}
   $\xi\in\Pp{p}(\mathcal{X})$ を取る．
   $\mu$ から $\nu$，$\nu$ から $\xi$ への輸送をつなぎ，
-  $x$ から $z$ への距離を，$x$ から $y$，$y$ から $z$ への距離の和で抑える．
+  $x,y,z\in\mathcal{X}$ に対し，$x$ から $z$ への距離を，
+  $x$ から $y$，$y$ から $z$ への距離の和で抑える．
   それぞれの最適 coupling
   $\pi\in\Couplings(\mu,\nu)$，$\sigma\in\Couplings(\nu,\xi)$ を取る．
   接着補題（補題~\ref{lem:wp-gluing}）により，この二つを周辺分布にもつ
   $\gamma\in\Prob(\mathcal{X}^3)$ を取る．
+  $\gamma$ のもとで $(x,y,z)\in\mathcal{X}^3$ の
   送り元 $x$ と送り先 $z$ だけを見ると，その分布は $\mu,\xi$ の coupling になる．
   したがって
   \[
     \begin{aligned}
       \Wass_p(\mu,\xi)
-      &\leq\left(\int_{\mathcal{X}^3}d(x,z)^p\,\d\gamma\right)^{1/p}\\
-      &\leq\left(\int_{\mathcal{X}^3}\bigl(d(x,y)+d(y,z)\bigr)^p\,\d\gamma\right)^{1/p}\\
+      &\leq\left(\int_{\mathcal{X}^3}d(x,z)^p\,\d\gamma(x,y,z)\right)^{1/p}\\
+      &\leq\left(\int_{\mathcal{X}^3}\bigl(d(x,y)+d(y,z)\bigr)^p\,\d\gamma(x,y,z)\right)^{1/p}\\
       &\leq
-      \left(\int_{\mathcal{X}^3}d(x,y)^p\,\d\gamma\right)^{1/p}
-      +\left(\int_{\mathcal{X}^3}d(y,z)^p\,\d\gamma\right)^{1/p}\\
+      \left(\int_{\mathcal{X}^3}d(x,y)^p\,\d\gamma(x,y,z)\right)^{1/p}
+      +\left(\int_{\mathcal{X}^3}d(y,z)^p\,\d\gamma(x,y,z)\right)^{1/p}\\
       &=\Wass_p(\mu,\nu)+\Wass_p(\nu,\xi).
     \end{aligned}
   \]
