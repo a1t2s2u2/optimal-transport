@@ -4,7 +4,7 @@
 本編で用いる実数・距離空間・測度論の道具をまとめる．
 本資料では，使う用語はすべて定義し，
 証明なしに用いる標準定理はステートメントを明示したうえで文献を挙げる
-（単調収束定理・一致定理・Tonelli の定理・分解定理・
+（単調収束定理・一致定理・Tonelli の定理・
 Prokhorov の定理など）．
 それ以外の主張にはすべて証明を付ける．
 証明を省略した定理については，
@@ -574,7 +574,7 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
   $f=f^+-f^-$ と分解して非負可測関数の場合を適用すればよい．
 \end{proof}
 
-\section{直積測度と測度の分解}
+\section{確率測度の直積と積分表示}
 
 \begin{theorem}{直積確率測度と Tonelli の定理}{meas-product}
   $\mathcal{X},\mathcal{Y}$ を可分距離空間，
@@ -597,38 +597,38 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
   （標準的な結果．証明は省略する．Dudley (2002) §4.4 参照．）
 \end{theorem}
 
-\begin{theorem}{測度分解定理（正則条件付き確率）}{meas-disintegration}
+\begin{theorem}{周辺分布を用いた積分表示}{meas-disintegration}
   $\mathcal{X},\mathcal{Y}$ を Polish 空間，$\pi\in\Prob(\mathcal{X}\times \mathcal{Y})$ とし，
   $\nu$ を $\pi$ の第2周辺分布とする．
-  このとき写像 $K\colon \mathcal{Y}\times\Borel(\mathcal{X})\to[0,1]$ で
-  次をみたすものが存在する：
+  このとき，各 $y\in\mathcal{Y}$ に確率測度 $\pi_y\in\Prob(\mathcal{X})$ を
+  対応させ，次の二つをみたすようにできる：
   \begin{enumerate}
-    \item 各 $y\in \mathcal{Y}$ で $K(y,\cdot)\in\Prob(\mathcal{X})$，
-    \item 各 $A\in\Borel(\mathcal{X})$ で $y\mapsto K(y,A)$ は可測，
+    \item 各 $A\in\Borel(\mathcal{X})$ で $y\mapsto\pi_y(A)$ は可測，
     \item すべての $A\in\Borel(\mathcal{X})$，$B\in\Borel(\mathcal{Y})$ に対し
       \[
-        \pi(A\times B)=\int_B K(y,A)\,\d\nu(y).
+        \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y).
       \]
   \end{enumerate}
-  (i)(ii) をみたす $K$ を（$\mathcal{Y}$ から $\mathcal{X}$ への）\textbf{Markov 核}といい，
-  (iii) を $\pi(\d x,\d y)=K(y,\d x)\,\nu(\d y)$ と書く．
-  $K$ は $\nu$-a.e. の意味で一意である．
+  $\pi_y$ は「$y$ が与えられたときの $x$ の分布」にあたり，
+  $\nu$-a.e. の意味で一意である．
   （Polish 空間上の標準的な結果．証明は省略する．
   Dudley (2002) Chapter 10，Villani (2009) Chapter 1，
   桑江ほか (2015) 補題 1.32 参照．）
 \end{theorem}
 
-\begin{theorem}{Markov 核による測度の貼り合わせ（前提とする事実）}{meas-kernel-composition}
+\begin{theorem}{確率測度の積を平均する構成（前提とする事実）}{meas-kernel-composition}
   $\mathcal{X},\mathcal{Y},\mathcal{Z}$ を Polish 空間，$\nu\in\Prob(\mathcal{Y})$ とし，
-  $K_1$ を $\mathcal{Y}$ から $\mathcal{X}$ への，$K_2$ を $\mathcal{Y}$ から $\mathcal{Z}$ への Markov 核とする．
+  各 $y\in\mathcal{Y}$ に対して確率測度
+  $\pi_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ が与えられているとする．
+  任意の $A\in\Borel(\mathcal{X})$，$C\in\Borel(\mathcal{Z})$ について，
+  $y\mapsto\pi_y(A)$，$y\mapsto\sigma_y(C)$ は可測と仮定する．
   このとき $\Borel(\mathcal{X}\times \mathcal{Y}\times \mathcal{Z})$ 上の確率測度 $\gamma$ で
   \[
     \gamma(A\times B\times C)
-    =\int_B K_1(y,A)\,K_2(y,C)\,\d\nu(y)
+    =\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y)
     \qquad(A\in\Borel(\mathcal{X}),\,B\in\Borel(\mathcal{Y}),\,C\in\Borel(\mathcal{Z}))
   \]
   をみたすものがただ一つ存在する．
-  これを $\gamma(\d x,\d y,\d z)=K_1(y,\d x)\,\nu(\d y)\,K_2(y,\d z)$ と書く．
   （直積測度の構成と同様の標準的な手順（単調族論法）による．
   証明は省略する．一意性は矩形集合が $\pi$-系をなすことと
   一致定理（定理~\ref{thm:meas-uniqueness}）から従う．）

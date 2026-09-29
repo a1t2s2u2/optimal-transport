@@ -630,16 +630,17 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 \end{lemma}
 
 \begin{proof}
-  測度分解定理（定理~\ref{thm:meas-disintegration}）により，
-  共通の周辺分布 $\nu$ に沿って，Markov 核
-  $\pi_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ を用いて
+  まず，$y$ が与えられたときの $x,z$ の分布にあたる確率測度
+  $\pi_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ を，
   \[
-    \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y),
-    \qquad
-    \sigma(B\times C)=\int_B\sigma_y(C)\,\d\nu(y)
+    \begin{aligned}
+      \pi(A\times B)&=\int_B\pi_y(A)\,\d\nu(y),\\
+      \sigma(B\times C)&=\int_B\sigma_y(C)\,\d\nu(y)
+    \end{aligned}
   \]
-  と分解できる．$\pi_y,\sigma_y$ は，それぞれ $y$ が与えられたときの
-  $x,z$ の分布である．
+  をみたすように取る．つまり，$y$ ごとの分布を $\nu$ で平均すると，
+  元の $\pi,\sigma$ が得られる．このように，積分ができる形で
+  $\pi_y,\sigma_y$ を選べることは，定理~\ref{thm:meas-disintegration}による．
 
   そこで，$y$ を共有してこの二つの分布の積を取り，
   \[
