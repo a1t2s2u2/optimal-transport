@@ -337,29 +337,54 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 \end{lemma}
 
 \begin{proof}
-  まず，各 $y\in\mathcal{Y}$ に対し，第2成分が $y$ であるときの
-  第1成分 $x\in\mathcal{X}$，第3成分 $z\in\mathcal{Z}$ の分布にあたる確率測度
-  $\pi_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ を，
-  \[
-    \begin{aligned}
-      \pi(A\times B)&=\int_B\pi_y(A)\,\d\nu(y),\\
-      \sigma(B\times C)&=\int_B\sigma_y(C)\,\d\nu(y)
-    \end{aligned}
-  \]
-  をみたすように取る．つまり，$y\in\mathcal{Y}$ ごとの分布を $\nu$ で平均すると，
-  元の $\pi,\sigma$ が得られる．このように，積分ができる形で
-  $\pi_y,\sigma_y$ を選べることは，定理~\ref{thm:meas-disintegration}による．
+  方針を先に述べる．点 $(x,y,z)\in\mathcal{X}\times\mathcal{Y}\times\mathcal{Z}$ を，
+  まず $y\in\mathcal{Y}$ を $\nu$ に従って選び，次にその $y$ に応じて
+  $x\in\mathcal{X}$ と $z\in\mathcal{Z}$ を互いに独立に選ぶことで定める．
+  $x$ の選び方は $\pi$ から，$z$ の選び方は $\sigma$ から取り出す．
 
-  そこで，$y$ を共有してこの二つの分布の積を取り，
+  \textbf{1. $\pi$ から $x$ の選び方を取り出す．}
+  $\pi$ の第2周辺分布は $\nu$ なので，定理~\ref{thm:meas-disintegration}により，
+  各 $y\in\mathcal{Y}$ に確率測度 $\pi_y\in\Prob(\mathcal{X})$ を対応させて，
+  $y\mapsto\pi_y(A)$ が可測であり，かつ
   \[
-    \gamma(A\times B\times C)
-    :=\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y)
+    \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y)
+    \qquad(A\in\Borel(\mathcal{X}),\,B\in\Borel(\mathcal{Y}))
   \]
-  と定める．これが確率測度を定めることは
-  定理~\ref{thm:meas-kernel-composition}による．
-  $\pi_y(\mathcal{X})=\sigma_y(\mathcal{Z})=1$ なので，
-  $C=\mathcal{Z}$，$A=\mathcal{X}$ をそれぞれ代入すれば，
-  求める二つの周辺分布の等式を得る．
+  となるようにできる．
+
+  \textbf{2. $\sigma$ から $z$ の選び方を取り出す．}
+  $\sigma$ では $\nu$ は第1周辺分布なので，成分の順序を入れ替えてから同じ定理を用いる．
+  $S\colon\mathcal{Y}\times\mathcal{Z}\to\mathcal{Z}\times\mathcal{Y}$ を
+  $S(y,z)=(z,y)$ で定めると，$S^{-1}(C\times B)=B\times C$ である．
+  よって像測度 $\sigma\circ S^{-1}\in\Prob(\mathcal{Z}\times\mathcal{Y})$ について
+  $(\sigma\circ S^{-1})(\mathcal{Z}\times B)=\sigma(B\times\mathcal{Z})=\nu(B)$
+  となり，その第2周辺分布は $\nu$ である．
+  これに定理~\ref{thm:meas-disintegration}を適用すると，
+  各 $y\in\mathcal{Y}$ に確率測度 $\sigma_y\in\Prob(\mathcal{Z})$ を対応させて，
+  $y\mapsto\sigma_y(C)$ が可測であり，かつ
+  \[
+    \sigma(B\times C)=(\sigma\circ S^{-1})(C\times B)=\int_B\sigma_y(C)\,\d\nu(y)
+    \qquad(B\in\Borel(\mathcal{Y}),\,C\in\Borel(\mathcal{Z}))
+  \]
+  となるようにできる．
+
+  \textbf{3. $y$ を共有して組み合わせる．}
+  1, 2 で得た $\pi_y,\sigma_y$ に定理~\ref{thm:meas-kernel-composition}を適用すると，
+  \[
+    \gamma(A\times B\times C)=\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y)
+  \]
+  をみたす $\gamma\in\Prob(\mathcal{X}\times\mathcal{Y}\times\mathcal{Z})$ が存在する．
+
+  \textbf{4. 周辺分布を確かめる．}
+  $\sigma_y(\mathcal{Z})=1$ と 1 より
+  \[
+    \gamma(A\times B\times\mathcal{Z})=\int_B\pi_y(A)\,\d\nu(y)=\pi(A\times B)
+  \]
+  である．同様に $\pi_y(\mathcal{X})=1$ と 2 より
+  \[
+    \gamma(\mathcal{X}\times B\times C)=\int_B\sigma_y(C)\,\d\nu(y)=\sigma(B\times C)
+  \]
+  である．
 \end{proof}
 
 \begin{proposition}{Wasserstein 距離は距離である（Villani Def 6.4）}{wp-metric}
@@ -373,7 +398,8 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   残る距離の公理（定義~\ref{def:meas-metric-space}）を確かめる．
 
   \textbf{1. 対称性．}
-  $\mu$ から $\nu$ への coupling で，送り元 $x$ と送り先 $y$ を入れ替えると，
+  $\mu$ から $\nu$ への coupling で，送り元 $x\in\mathcal{X}$ と
+  送り先 $y\in\mathcal{X}$ を入れ替えると，
   $\nu$ から $\mu$ への coupling になる．
   $d(x,y)^p=d(y,x)^p$ なので，輸送コストは変わらない．
   逆向きにも同じことができるから，取りうる輸送コストは同じであり，
@@ -384,7 +410,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 
   \textbf{2. 一致の公理．}
   $\mu=\nu$ なら，各点の質量を動かさない coupling を取ればよい．
-  どの点でも $d(x,x)=0$ なので，
+  すべての $x\in\mathcal{X}$ で $d(x,x)=0$ なので，
   \[
     0\leq\Wass_p(\mu,\mu)
     \leq\left(\int_\mathcal{X}d(x,x)^p\,\d\mu(x)\right)^{1/p}=0.
@@ -394,16 +420,17 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   $\pi^*\in\Couplings(\mu,\nu)$ を取ると
   （定理~\ref{thm:wp-optimal-coupling-existence}），
   \[
-    \int d(x,y)^p\,\d\pi^*(x,y)=\Wass_p(\mu,\nu)^p=0.
+    \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi^*(x,y)=\Wass_p(\mu,\nu)^p=0.
   \]
   コストは非負なので，積分が $0$ なら，正の距離を動く質量はない．
-  すなわち $x=y$ が $\pi^*$-ほとんど至るところで成り立つ．
+  すなわち $(x,y)\in\mathcal{X}\times\mathcal{X}$ について，
+  $x=y$ が $\pi^*$-ほとんど至るところで成り立つ．
   したがって任意の $A\in\Borel(\mathcal{X})$ に対し，周辺積分公式
   （補題~\ref{lem:meas-marginal-integral}）から
   \[
     \mu(A)
-    =\int\mathbf{1}_A(x)\,\d\pi^*(x,y)
-    =\int\mathbf{1}_A(y)\,\d\pi^*(x,y)
+    =\int_{\mathcal{X}\times\mathcal{X}}\mathbf{1}_A(x)\,\d\pi^*(x,y)
+    =\int_{\mathcal{X}\times\mathcal{X}}\mathbf{1}_A(y)\,\d\pi^*(x,y)
     =\nu(A)
   \]
   となり，$\mu=\nu$ を得る．
