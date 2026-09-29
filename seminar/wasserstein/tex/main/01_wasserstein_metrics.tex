@@ -371,73 +371,114 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 
 \begin{proof}
   $\mu,\nu\in\Pp{p}(\mathcal{X})$ を任意に取る．
-  非負性は定義から，有限性は補題~\ref{lem:wp-finite}から従う．
-  残る距離の公理（定義~\ref{def:meas-metric-space}）を確かめる．
+  距離の公理（定義~\ref{def:meas-metric-space}）を順に確かめる．
 
-  \textbf{1. 対称性．}
-  $\mu$ から $\nu$ への coupling で，送り元 $x\in\mathcal{X}$ と
-  送り先 $y\in\mathcal{X}$ を入れ替えると，
-  $\nu$ から $\mu$ への coupling になる．
-  $d(x,y)^p=d(y,x)^p$ なので，輸送コストは変わらない．
-  逆向きにも同じことができるから，取りうる輸送コストは同じであり，
-  その下限も等しい．したがって
-  \[
-    \Wass_p(\mu,\nu)=\Wass_p(\nu,\mu).
-  \]
+  \textbf{1. 非負性．}
+  すべての $x,y\in\mathcal{X}$ で $d(x,y)\geq0$ なので，
+  任意の $\pi\in\Couplings(\mu,\nu)$ に対し
+  $\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)\geq0$ であり，
+  $\Wass_p(\mu,\nu)\geq0$ である．
+  なお，$\pi$ として直積測度 $\mu\otimes\nu$ を用いれば
+  $\Wass_p(\mu,\nu)<\infty$ も従う（補題~\ref{lem:wp-finite}）．
 
   \textbf{2. 一致の公理．}
-  $\mu=\nu$ なら，各点の質量を動かさない coupling を取ればよい．
-  すべての $x\in\mathcal{X}$ で $d(x,x)=0$ なので，
-  \[
-    0\leq\Wass_p(\mu,\mu)
-    \leq\left(\int_\mathcal{X}d(x,x)^p\,\d\mu(x)\right)^{1/p}=0.
-  \]
+  $\Wass_p(\mu,\nu)=0\iff\mu=\nu$ を示す．
+  対角集合を $\Delta:=\{(x,x)\mid x\in\mathcal{X}\}$ とおく．
+  $\Delta=\{(x,y)\in\mathcal{X}\times\mathcal{X}\mid d(x,y)=0\}$ であり，
+  $d$ は連続なので（注意~\ref{rem:wp-welldef}），$\Delta$ は閉集合，特に Borel 集合である．
 
-  逆に $\Wass_p(\mu,\nu)=0$ とする．最適 coupling
-  $\pi^*\in\Couplings(\mu,\nu)$ を取ると
-  （定理~\ref{thm:wp-optimal-coupling-existence}），
+  ($\Leftarrow$) $\mu=\nu$ とする．$T(x):=(x,x)$ による像測度
+  $\pi:=\mu\circ T^{-1}$ を取ると，
+  $\pi(A\times\mathcal{X})=\pi(\mathcal{X}\times A)=\mu(A)$
+  （$A\in\Borel(\mathcal{X})$）より $\pi\in\Couplings(\mu,\mu)$ であり，
+  $\pi(\Delta)=\mu(\mathcal{X})=1$ である．
+  $\Delta$ 上で $d(x,y)=0$ なので，
   \[
-    \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi^*(x,y)=\Wass_p(\mu,\nu)^p=0.
+    \Wass_p(\mu,\mu)^p
+    \leq\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)=0.
   \]
-  コストは非負なので，積分が $0$ なら，正の距離を動く質量はない．
-  すなわち $(x,y)\in\mathcal{X}\times\mathcal{X}$ について，
-  $x=y$ が $\pi^*$-ほとんど至るところで成り立つ．
-  したがって任意の $A\in\Borel(\mathcal{X})$ に対し，周辺積分公式
-  （補題~\ref{lem:meas-marginal-integral}）から
-  \[
-    \mu(A)
-    =\int_{\mathcal{X}\times\mathcal{X}}\mathbf{1}_A(x)\,\d\pi^*(x,y)
-    =\int_{\mathcal{X}\times\mathcal{X}}\mathbf{1}_A(y)\,\d\pi^*(x,y)
-    =\nu(A)
-  \]
-  となり，$\mu=\nu$ を得る．
+  1 の非負性とあわせて $\Wass_p(\mu,\mu)=0$ である．
 
-  \textbf{3. 三角不等式．}
-  $\xi\in\Pp{p}(\mathcal{X})$ を取る．
-  $\mu$ から $\nu$，$\nu$ から $\xi$ への輸送をつなぎ，
-  $x,y,z\in\mathcal{X}$ に対し，$x$ から $z$ への距離を，
-  $x$ から $y$，$y$ から $z$ への距離の和で抑える．
-  それぞれの最適 coupling
-  $\pi\in\Couplings(\mu,\nu)$，$\sigma\in\Couplings(\nu,\xi)$ を取る．
-  接着補題（補題~\ref{lem:wp-gluing}）により，この二つを周辺分布にもつ
-  $\gamma\in\Prob(\mathcal{X}^3)$ を取る．
-  $\gamma$ のもとで $(x,y,z)\in\mathcal{X}^3$ の
-  送り元 $x$ と送り先 $z$ だけを見ると，その分布は $\mu,\xi$ の coupling になる．
-  したがって
+  ($\Rightarrow$) $\Wass_p(\mu,\nu)=0$ とする．
+  最適 coupling の存在（定理~\ref{thm:wp-optimal-coupling-existence}）より，
+  ある $\pi^*\in\Couplings(\mu,\nu)$ が存在して
+  \[
+    \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi^*(x,y)=0
+  \]
+  となる．被積分関数は非負なので，$d(x,y)=0$ が $\pi^*$-a.e. で成り立つ．
+  よって $x=y$ が $\pi^*$-a.e. で成り立ち，$\pi^*(\Delta)=1$ である．
+  任意の $A\in\Borel(\mathcal{X})$ に対し，
+  $A\times(\mathcal{X}\setminus A)$ と $(\mathcal{X}\setminus A)\times A$ は
+  $\Delta$ と交わらないので，
+  \[
+    \begin{aligned}
+      \mu(A)&=\pi^*(A\times\mathcal{X})
+      =\pi^*(A\times A)+\pi^*\bigl(A\times(\mathcal{X}\setminus A)\bigr)
+      =\pi^*(A\times A),\\
+      \nu(A)&=\pi^*(\mathcal{X}\times A)
+      =\pi^*(A\times A)+\pi^*\bigl((\mathcal{X}\setminus A)\times A\bigr)
+      =\pi^*(A\times A).
+    \end{aligned}
+  \]
+  $A$ は任意なので $\mu=\nu$ である．
+
+  \textbf{3. 対称性．}
+  $S(x,y):=(y,x)$ とし，$\pi\in\Couplings(\mu,\nu)$ に対し
+  $\pi^\top:=\pi\circ S^{-1}$ と定める．
+  $\pi^\top(A\times B)=\pi(B\times A)$ より $\pi^\top\in\Couplings(\nu,\mu)$ である．
+  $d$ の対称性と変数変換公式（補題~\ref{lem:meas-change-of-variables}）より
+  \[
+    \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)
+    =\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi^\top(x,y)
+  \]
+  であるから，$\pi$ について下限を取れば $\Wass_p(\nu,\mu)\leq\Wass_p(\mu,\nu)$ を得る．
+  $\mu,\nu$ を入れ替えれば逆向きの不等式も従い，$\Wass_p(\mu,\nu)=\Wass_p(\nu,\mu)$ である．
+
+  \textbf{4. 三角不等式．}
+  $\xi\in\Pp{p}(\mathcal{X})$ を取り，
+  $\Wass_p(\mu,\xi)\leq\Wass_p(\mu,\nu)+\Wass_p(\nu,\xi)$ を示す．
+  最適 coupling の存在（定理~\ref{thm:wp-optimal-coupling-existence}）より，
+  最適 coupling $\pi\in\Couplings(\mu,\nu)$，$\sigma\in\Couplings(\nu,\xi)$ を取る．
+  接着補題（補題~\ref{lem:wp-gluing}）より，ある $\gamma\in\Prob(\mathcal{X}^3)$ が存在して
+  \[
+    \gamma(A\times B\times\mathcal{X})=\pi(A\times B),\qquad
+    \gamma(\mathcal{X}\times B\times C)=\sigma(B\times C)
+  \]
+  をみたす．ここで，$\gamma$ の第1成分と第3成分を取り出した確率測度 $\rho$ を
+  \[
+    \rho(E):=\gamma\bigl(\{(x,y,z)\in\mathcal{X}^3\mid(x,z)\in E\}\bigr)
+    \qquad(E\in\Borel(\mathcal{X}\times\mathcal{X}))
+  \]
+  と定める．このとき $\rho(A\times C)=\gamma(A\times\mathcal{X}\times C)$ であり，
+  \[
+    \rho(A\times\mathcal{X})=\gamma(A\times\mathcal{X}\times\mathcal{X})
+    =\pi(A\times\mathcal{X})=\mu(A),\qquad
+    \rho(\mathcal{X}\times C)=\gamma(\mathcal{X}\times\mathcal{X}\times C)
+    =\sigma(\mathcal{X}\times C)=\xi(C)
+  \]
+  より $\rho\in\Couplings(\mu,\xi)$ である．したがって
   \[
     \begin{aligned}
       \Wass_p(\mu,\xi)
-      &\leq\left(\int_{\mathcal{X}^3}d(x,z)^p\,\d\gamma(x,y,z)\right)^{1/p}\\
+      &\leq\left(\int_{\mathcal{X}^2}d(x,z)^p\,\d\rho(x,z)\right)^{1/p}\\
+      &=\left(\int_{\mathcal{X}^3}d(x,z)^p\,\d\gamma(x,y,z)\right)^{1/p}\\
       &\leq\left(\int_{\mathcal{X}^3}\bigl(d(x,y)+d(y,z)\bigr)^p\,\d\gamma(x,y,z)\right)^{1/p}\\
       &\leq
       \left(\int_{\mathcal{X}^3}d(x,y)^p\,\d\gamma(x,y,z)\right)^{1/p}
       +\left(\int_{\mathcal{X}^3}d(y,z)^p\,\d\gamma(x,y,z)\right)^{1/p}\\
+      &=\left(\int_{\mathcal{X}^2}d(x,y)^p\,\d\pi(x,y)\right)^{1/p}
+      +\left(\int_{\mathcal{X}^2}d(y,z)^p\,\d\sigma(y,z)\right)^{1/p}\\
       &=\Wass_p(\mu,\nu)+\Wass_p(\nu,\xi).
     \end{aligned}
   \]
-  順に，$\Wass_p$ の定義，$d$ の三角不等式と積分の単調性，Minkowski の不等式
-  （定理~\ref{thm:meas-minkowski}）を用いた．
-  最後の等号は周辺積分公式と $\pi,\sigma$ の最適性による．
+  順に，下限の定義（$\rho\in\Couplings(\mu,\xi)$），
+  $\rho$ の定義と変数変換公式（補題~\ref{lem:meas-change-of-variables}），
+  $d$ の三角不等式，Minkowski の不等式（定理~\ref{thm:meas-minkowski}），
+  $\gamma$ の第 $1,2$ 成分の周辺分布が $\pi$，第 $2,3$ 成分の周辺分布が $\sigma$ であること
+  と周辺積分公式（補題~\ref{lem:meas-marginal-integral}），
+  $\pi,\sigma$ の最適性を用いた．
+
+  1--4 より，$(\Pp{p}(\mathcal{X}),\Wass_p)$ は距離空間である．
 \end{proof}
 
 \begin{definition}{Wasserstein 空間（Villani Def 6.4）}{wp-wasserstein-space}
