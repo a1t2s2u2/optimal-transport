@@ -604,26 +604,23 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 \section{Wasserstein 距離の距離性}
 \label{sec:metric-property}
 
-前節で最適 coupling の存在が分かったので，$\Wass_p$ が
-$\Pp{p}(\mathcal{X})$ 上の距離の公理をみたすことを示す．
-非負性と対称性は定義から直接従う．一致の公理の逆向き
-$\Wass_p(\mu,\nu)=0\Rightarrow\mu=\nu$ では最適 coupling を用いる．
-三角不等式では，$\mu$ から $\nu$ への輸送と $\nu$ から $\xi$ への輸送を
-一つの三変数の確率測度にまとめるため，次の接着補題を用いる．
+前節の最適 coupling の存在を用いて，$\Wass_p$ の距離性を示す．
+三角不等式の鍵は，共通の周辺分布をもつ二つの coupling を
+一つの三変数の確率測度にまとめる，次の接着補題である．
 
 \begin{lemma}{接着補題（gluing lemma；Villani (2009) pp.~11--12）}{wp-gluing}
   $\mathcal{X},\mathcal{Y},\mathcal{Z}$ を Polish 空間とする．
   $\mu\in\Prob(\mathcal{X})$，$\nu\in\Prob(\mathcal{Y})$，
   $\xi\in\Prob(\mathcal{Z})$，$\pi\in\Couplings(\mu,\nu)$，
   $\sigma\in\Couplings(\nu,\xi)$ とする．
-  このとき $\mathcal{X}\times\mathcal{Y}\times\mathcal{Z}$ 上の確率測度
-  $\gamma$ で，任意の
+  このとき $\gamma\in\Prob(\mathcal{X}\times\mathcal{Y}\times\mathcal{Z})$ で，任意の
   $A\in\Borel(\mathcal{X})$，$B\in\Borel(\mathcal{Y})$，
   $C\in\Borel(\mathcal{Z})$ に対し
   \[
-    \gamma(A\times B\times \mathcal{Z})=\pi(A\times B),
-    \qquad
-    \gamma(\mathcal{X}\times B\times C)=\sigma(B\times C)
+    \begin{aligned}
+      \gamma(A\times B\times\mathcal{Z})&=\pi(A\times B),\\
+      \gamma(\mathcal{X}\times B\times C)&=\sigma(B\times C)
+    \end{aligned}
   \]
   をみたすものが存在する．
   すなわち，$\gamma$ の第 $1,2$ 成分の周辺分布が $\pi$ に，
@@ -633,51 +630,28 @@ $\Wass_p(\mu,\nu)=0\Rightarrow\mu=\nu$ では最適 coupling を用いる．
 \end{lemma}
 
 \begin{proof}
-  $\pi$ の第2周辺分布は $\nu$，すなわち
-  $\pi(\mathcal{X}\times B)=\nu(B)$ である．測度分解定理
-  （定理~\ref{thm:meas-disintegration}）より，$\nu$-a.e.\ $y$ に対して
-  $\pi_y\in\Prob(\mathcal{X})$ があり，
+  測度分解定理（定理~\ref{thm:meas-disintegration}）により，
+  共通の周辺分布 $\nu$ に沿って，Markov 核
+  $\pi_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ を用いて
   \[
-    \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y). \tag{1}
+    \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y),
+    \qquad
+    \sigma(B\times C)=\int_B\sigma_y(C)\,\d\nu(y)
   \]
-  同じ定理を座標を入れ替えた $\sigma$ に適用すると，
-  $\nu$-a.e.\ $y$ に対して $\sigma_y\in\Prob(\mathcal{Z})$ があり，
-  \[
-    \sigma(B\times C)=\int_B\sigma_y(C)\,\d\nu(y). \tag{2}
-  \]
-  ここで $\pi_y$ は「$y$ が与えられたときの $x$ の分布」，$\sigma_y$ は
-  「$y$ が与えられたときの $z$ の分布」である．
+  と分解できる．$\pi_y,\sigma_y$ は，それぞれ $y$ が与えられたときの
+  $x,z$ の分布である．
 
-  $\gamma$ を，矩形集合上で
+  そこで，$y$ を共有してこの二つの分布の積を取り，
   \[
     \gamma(A\times B\times C)
-    :=\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y) \tag{3}
+    :=\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y)
   \]
-  と定める確率測度とする．これは $y$ を共通にしたもとで
-  $x$ と $z$ を独立に選ぶ構成であり，実際に確率測度を定めることは
-  Markov 核による貼り合わせ（定理~\ref{thm:meas-kernel-composition}）で保証される．
-
-  $\sigma_y(\mathcal{Z})=1$ なので，(1) と (3) より
-  \[
-    \gamma(A\times B\times\mathcal{Z})
-    =\int_B\pi_y(A)\,\sigma_y(\mathcal{Z})\,\d\nu(y)
-    =\int_B\pi_y(A)\,\d\nu(y)
-    =\pi(A\times B).
-  \]
-  同様に $\pi_y(\mathcal{X})=1$ だから，(2) と (3) より
-  \[
-    \gamma(\mathcal{X}\times B\times C)
-    =\int_B\pi_y(\mathcal{X})\,\sigma_y(C)\,\d\nu(y)
-    =\int_B\sigma_y(C)\,\d\nu(y)
-    =\sigma(B\times C).
-  \]
+  と定める．これが確率測度を定めることは
+  定理~\ref{thm:meas-kernel-composition}による．
+  $\pi_y(\mathcal{X})=\sigma_y(\mathcal{Z})=1$ なので，
+  $C=\mathcal{Z}$，$A=\mathcal{X}$ をそれぞれ代入すれば，
+  求める二つの周辺分布の等式を得る．
 \end{proof}
-
-\begin{remark}{この証明で使う技術的事実}{wp-gluing-technical}
-  $\pi_y$，$\sigma_y$ は密度ではなく確率測度である．したがって
-  $\pi_y(\mathcal{X})=\sigma_y(\mathcal{Z})=1$ となり，これを (3) に代入するだけで
-  二つの周辺分布の式が得られる．
-\end{remark}
 
 \begin{proposition}{Wasserstein 距離は距離である（Villani Def 6.4）}{wp-metric}
   $1\leq p<\infty$ に対し，
@@ -686,193 +660,62 @@ $\Wass_p(\mu,\nu)=0\Rightarrow\mu=\nu$ では最適 coupling を用いる．
 
 \begin{proof}
   $\mu,\nu\in\Pp{p}(\mathcal{X})$ を任意に取る．
-  距離の公理（定義~\ref{def:meas-metric-space}）を順に確かめる．
+  非負性は定義から，有限性は補題~\ref{lem:wp-finite}から従う．
+  残る距離の公理（定義~\ref{def:meas-metric-space}）を確かめる．
 
-  \textbf{1. 有限性と非負性．}
-
-  任意の $\pi\in\Couplings(\mu,\nu)$ に対して
-  \[
-    \left(\int d(x,y)^p\,\d\pi(x,y)\right)^{1/p}\geq0
-  \]
-  だから，その下限も $\Wass_p(\mu,\nu)\geq0$ である．
-  また，補題~\ref{lem:wp-finite}より $\Wass_p(\mu,\nu)<\infty$ である．
-
-  \textbf{2. 対称性．}
-
-  $s(x,y):=(y,x)$ とおく．$\pi\in\Couplings(\mu,\nu)$ に対し
-  像測度 $\pi':=\pi\circ s^{-1}$ を考える．任意の
-  $A,B\in\Borel(\mathcal{X})$ に対して
-  \[
-    \begin{aligned}
-      \pi'(A\times\mathcal{X})
-      &=\pi(\mathcal{X}\times A)=\nu(A),\\
-      \pi'(\mathcal{X}\times B)
-      &=\pi(B\times\mathcal{X})=\mu(B).
-    \end{aligned}
-  \]
-  よって $\pi'\in\Couplings(\nu,\mu)$ である．
-  像測度の変数変換公式（補題~\ref{lem:meas-change-of-variables}）と
-  距離の対称性 $d(y,x)=d(x,y)$ より
-  \[
-    \begin{aligned}
-      \int d(x,y)^p\,\d\pi'(x,y)
-      &=\int (d^p\circ s)(x,y)\,\d\pi(x,y)\\
-      &=\int d(y,x)^p\,\d\pi(x,y)\\
-      &=\int d(x,y)^p\,\d\pi(x,y).
-    \end{aligned}
-  \]
-  $s\circ s=\Id$ だから $\pi\mapsto\pi\circ s^{-1}$ は
+  \textbf{1. 対称性．}
+  座標交換 $s(x,y):=(y,x)$ による対応 $\pi\mapsto\pi\circ s^{-1}$ は，
   $\Couplings(\mu,\nu)$ と $\Couplings(\nu,\mu)$ の間の全単射であり，
-  対応する coupling の輸送コストは等しい．したがって両集合上で下限を取れば
-  $\Wass_p(\mu,\nu)=\Wass_p(\nu,\mu)$ を得る．
+  $d(x,y)=d(y,x)$ より輸送コストを保つ
+  （変数変換公式，補題~\ref{lem:meas-change-of-variables}）．
+  したがって $\Wass_p(\mu,\nu)=\Wass_p(\nu,\mu)$ である．
 
-  \textbf{3. 一致の公理：$\mu=\nu\Rightarrow\Wass_p(\mu,\nu)=0$．}
-
-  対角写像 $\iota(x):=(x,x)$ と，その像測度
-  $\pi_\Delta:=\mu\circ\iota^{-1}$ を考える．任意の
-  $A,B\in\Borel(\mathcal{X})$ に対して
+  \textbf{2. 一致の公理．}
+  対角写像 $\iota(x):=(x,x)$ による像測度
+  $\pi_\Delta:=\mu\circ\iota^{-1}$ は $\Couplings(\mu,\mu)$ に属し，
   \[
-    \begin{aligned}
-      \pi_\Delta(A\times\mathcal{X})
-      &=\mu\bigl(\iota^{-1}(A\times\mathcal{X})\bigr)=\mu(A),\\
-      \pi_\Delta(\mathcal{X}\times B)
-      &=\mu\bigl(\iota^{-1}(\mathcal{X}\times B)\bigr)=\mu(B).
-    \end{aligned}
+    0\leq\Wass_p(\mu,\mu)
+    \leq\left(\int_\mathcal{X}d(x,x)^p\,\d\mu(x)\right)^{1/p}=0.
   \]
-  よって $\pi_\Delta\in\Couplings(\mu,\mu)$ である．さらに，
-  像測度の積分公式と $d(x,x)=0$ より
+
+  逆に $\Wass_p(\mu,\nu)=0$ とする．最適 coupling
+  $\pi^*\in\Couplings(\mu,\nu)$ を取ると
+  （定理~\ref{thm:wp-optimal-coupling-existence}），
   \[
-    \int d(x,y)^p\,\d\pi_\Delta(x,y)
-    =\int_\mathcal{X}d(x,x)^p\,\d\mu(x)
-    =0.
+    \int d(x,y)^p\,\d\pi^*(x,y)=\Wass_p(\mu,\nu)^p=0.
   \]
-  $\Wass_p$ は非負であり，コスト $0$ の coupling が存在するから
-  $\Wass_p(\mu,\mu)=0$ である．
-
-  \textbf{4. 一致の公理：$\Wass_p(\mu,\nu)=0\Rightarrow\mu=\nu$．}
-
-  $\Wass_p(\mu,\nu)=0$ と仮定する．最適 coupling の存在定理
-  （定理~\ref{thm:wp-optimal-coupling-existence}）より，ある
-  $\pi^*\in\Couplings(\mu,\nu)$ が存在して
-  \[
-    0=\Wass_p(\mu,\nu)^p
-    =\int d(x,y)^p\,\d\pi^*(x,y)
-  \]
-  が成り立つ．被積分関数 $d^p$ は非負だから，積分が $0$ であることから
-  $d(x,y)^p=0$，したがって $d(x,y)=0$ が $\pi^*$-a.e. で成り立つ．
-  距離の一致の公理より，これは $x=y$ が $\pi^*$-a.e. であることを意味する．
-
-  対角集合を $\Delta:=\{(x,x)\mid x\in\mathcal{X}\}$ とおく．
-  $\Delta=\{(x,y)\mid d(x,y)=0\}$ は連続関数 $d$ による閉集合
-  $\{0\}$ の逆像なので閉集合，特に Borel 集合であり，
-  $\pi^*(\Delta)=1$ である．したがって任意の $A\in\Borel(\mathcal{X})$ に対し
+  $d^p\geq0$ より $x=y$ が $\pi^*$-a.e. で成り立つ．
+  したがって任意の $A\in\Borel(\mathcal{X})$ に対し，周辺積分公式
+  （補題~\ref{lem:meas-marginal-integral}）から
   \[
     \mu(A)
-    =\pi^*(A\times \mathcal{X})
-    =\pi^*((A\times\mathcal{X})\cap\Delta)
-    =\pi^*((\mathcal{X}\times A)\cap\Delta)
-    =\pi^*(\mathcal{X}\times A)
-    =\nu(A).
+    =\int\mathbf{1}_A(x)\,\d\pi^*(x,y)
+    =\int\mathbf{1}_A(y)\,\d\pi^*(x,y)
+    =\nu(A)
   \]
-  よって $\mu=\nu$ である．
+  となり，$\mu=\nu$ を得る．
 
-  \textbf{5. 三角不等式．}
-
-  $\xi\in\Pp{p}(\mathcal{X})$ を任意に取る．最適 coupling の存在定理より，
-  最適 coupling
-  $\pi\in\Couplings(\mu,\nu)$，$\sigma\in\Couplings(\nu,\xi)$ を
-  それぞれ取ることができる．したがって
-  \[
-    \begin{aligned}
-      \Wass_p(\mu,\nu)
-      &=\left(\int d(x,y)^p\,\d\pi(x,y)\right)^{1/p},\\
-      \Wass_p(\nu,\xi)
-      &=\left(\int d(y,z)^p\,\d\sigma(y,z)\right)^{1/p}.
-    \end{aligned}
-  \]
-
-  接着補題（補題~\ref{lem:wp-gluing}）により，
-  $\gamma\in\Prob(\mathcal{X}^3)$ で
-  \[
-    \gamma(A\times B\times\mathcal{X})=\pi(A\times B),
-    \qquad
-    \gamma(\mathcal{X}\times B\times C)=\sigma(B\times C)
-  \]
-  （$A,B,C\in\Borel(\mathcal{X})$）となるものがある．
-
-  $\gamma$ の第1，第3成分の周辺分布を
-  $\tau\in\Prob(\mathcal{X}\times\mathcal{X})$ とする．
-  任意の $A,C\in\Borel(\mathcal{X})$ に対して
-  \[
-    \begin{aligned}
-      \tau(A\times\mathcal{X})
-      &=\gamma(A\times\mathcal{X}\times\mathcal{X})\\
-      &=\pi(A\times\mathcal{X})=\mu(A),\\
-      \tau(\mathcal{X}\times C)
-      &=\gamma(\mathcal{X}\times\mathcal{X}\times C)\\
-      &=\sigma(\mathcal{X}\times C)=\xi(C).
-    \end{aligned}
-  \]
-  したがって $\tau\in\Couplings(\mu,\xi)$ である．
-
-  距離 $d$ の三角不等式より，すべての $(x,y,z)\in\mathcal{X}^3$ で
-  \[
-    0\leq d(x,z)\leq d(x,y)+d(y,z).
-  \]
-  両辺の $L^p(\gamma)$ ノルムを取り，$L^p$ ノルムの単調性
-  （主張~\ref{clm:meas-lp-monotone}）と Minkowski の不等式
-  （定理~\ref{thm:meas-minkowski}）を順に用いると
-  \[
-    \norm{d(x,z)}_{L^p(\gamma)}
-    \leq
-    \norm{d(x,y)}_{L^p(\gamma)}
-    +
-    \norm{d(y,z)}_{L^p(\gamma)}.
-  \]
-  ここで $\gamma$ の第1，第2成分の周辺分布は $\pi$，
-  第2，第3成分の周辺分布は $\sigma$ だから，周辺積分公式
-  （補題~\ref{lem:meas-marginal-integral}）より
-  \[
-    \begin{aligned}
-      \norm{d(x,y)}_{L^p(\gamma)}^p
-      &=\int_{\mathcal{X}^3}d(x,y)^p\,\d\gamma(x,y,z)\\
-      &=\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y),\\
-      \norm{d(y,z)}_{L^p(\gamma)}^p
-      &=\int_{\mathcal{X}^3}d(y,z)^p\,\d\gamma(x,y,z)\\
-      &=\int_{\mathcal{X}\times\mathcal{X}}d(y,z)^p\,\d\sigma(y,z).
-    \end{aligned}
-  \]
-  よって $\pi,\sigma$ の最適性から
-  \[
-    \norm{d(x,y)}_{L^p(\gamma)}=\Wass_p(\mu,\nu),
-    \qquad
-    \norm{d(y,z)}_{L^p(\gamma)}=\Wass_p(\nu,\xi).
-  \]
-
-  一方，$\tau$ は $\mu,\xi$ の coupling だから，$\Wass_p$ の定義より
-  \[
-    \Wass_p(\mu,\xi)
-    \leq
-    \left(
-      \int_{\mathcal{X}\times\mathcal{X}}d(x,z)^p\,\d\tau(x,z)
-    \right)^{1/p}.
-  \]
-  $\tau$ は $\gamma$ の第1，第3成分の周辺分布なので，
-  再び周辺積分公式を用いると，右辺は
-  $\norm{d(x,z)}_{L^p(\gamma)}$ に等しい．以上をまとめて
+  \textbf{3. 三角不等式．}
+  $\xi\in\Pp{p}(\mathcal{X})$ に対し，最適 coupling
+  $\pi\in\Couplings(\mu,\nu)$，$\sigma\in\Couplings(\nu,\xi)$ を取る．
+  接着補題（補題~\ref{lem:wp-gluing}）により，この二つを周辺分布にもつ
+  $\gamma\in\Prob(\mathcal{X}^3)$ を取る．
+  その第1，第3成分の周辺分布は $\mu,\xi$ の coupling なので，
   \[
     \begin{aligned}
       \Wass_p(\mu,\xi)
       &\leq\norm{d(x,z)}_{L^p(\gamma)}\\
+      &\leq\norm{d(x,y)+d(y,z)}_{L^p(\gamma)}\\
       &\leq
       \norm{d(x,y)}_{L^p(\gamma)}
       +\norm{d(y,z)}_{L^p(\gamma)}\\
-      &=\Wass_p(\mu,\nu)+\Wass_p(\nu,\xi)
+      &=\Wass_p(\mu,\nu)+\Wass_p(\nu,\xi).
     \end{aligned}
   \]
-  を得る．これは $\Wass_p$ の三角不等式である．
-
-  以上で距離の公理がすべて示された．
+  順に，$\Wass_p$ の定義，$d$ の三角不等式とノルムの単調性
+  （主張~\ref{clm:meas-lp-monotone}），Minkowski の不等式
+  （定理~\ref{thm:meas-minkowski}）を用いた．
+  最後の等号は周辺積分公式と $\pi,\sigma$ の最適性による．
 \end{proof}
 
 \begin{definition}{Wasserstein 空間（Villani Def 6.4）}{wp-wasserstein-space}
