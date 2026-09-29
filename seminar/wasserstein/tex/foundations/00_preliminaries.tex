@@ -157,18 +157,32 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
   \end{itemize}
 \end{remark}
 
-\begin{theorem}{有限測度の一致定理}{meas-uniqueness}
+\begin{theorem}{Dynkin の $\pi$-$\lambda$ 定理}{meas-pi-lambda}
   集合 $\Omega$ 上の集合族 $\mathcal{C}$ が
   \textbf{$\pi$-系}であるとは，空でなく，
   $A,B\in\mathcal{C}$ ならば $A\cap B\in\mathcal{C}$
   が成り立つことをいう．
+  $\Omega$ 上の集合族 $\mathcal{D}$ が
+  \textbf{$\lambda$-系}であるとは，次の三つが成り立つことをいう：
+  $\Omega\in\mathcal{D}$；
+  $A\in\mathcal{D}$ ならば $\Omega\setminus A\in\mathcal{D}$；
+  互いに素な $A_1,A_2,\ldots\in\mathcal{D}$ に対し
+  $\bigcup_{n}A_n\in\mathcal{D}$．
 
+  $\pi$-系 $\mathcal{C}$ が $\lambda$-系 $\mathcal{D}$ に含まれるならば，
+  $\sigma(\mathcal{C})\subset\mathcal{D}$ である．
+
+  （標準的な結果．証明は省略する．）
+\end{theorem}
+
+\begin{theorem}{有限測度の一致定理}{meas-uniqueness}
   $\mathcal{C}$ を $\Omega$ 上の $\pi$-系とし，
   $\mu,\nu$ を $(\Omega,\sigma(\mathcal{C}))$ 上の有限測度とする．
   $\mu(\Omega)=\nu(\Omega)$ かつ，すべての $A\in\mathcal{C}$ で
   $\mu(A)=\nu(A)$ ならば，$\sigma(\mathcal{C})$ 上で $\mu=\nu$ である．
 
-  （Dynkin の $\pi$-$\lambda$ 定理から従う標準的な結果．証明は省略する．）
+  （Dynkin の $\pi$-$\lambda$ 定理（定理~\ref{thm:meas-pi-lambda}）から従う
+  標準的な結果．証明は省略する．）
 \end{theorem}
 
 \section{指示関数と a.e.}
@@ -576,22 +590,4 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
   （Polish 空間上の標準的な結果．証明は省略する．
   Dudley (2002) Chapter 10，Villani (2009) Chapter 1，
   桑江ほか (2015) 補題 1.32 参照．）
-\end{theorem}
-
-\begin{theorem}{確率測度の積を平均する構成（前提とする事実）}{meas-kernel-composition}
-  $\mathcal{X},\mathcal{Y},\mathcal{Z}$ を Polish 空間，$\nu\in\Prob(\mathcal{Y})$ とし，
-  各 $y\in\mathcal{Y}$ に対して確率測度
-  $\pi_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ が与えられているとする．
-  任意の $A\in\Borel(\mathcal{X})$，$C\in\Borel(\mathcal{Z})$ について，
-  $y\mapsto\pi_y(A)$，$y\mapsto\sigma_y(C)$ は可測と仮定する．
-  このとき $\Borel(\mathcal{X}\times \mathcal{Y}\times \mathcal{Z})$ 上の確率測度 $\gamma$ で
-  \[
-    \gamma(A\times B\times C)
-    =\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y)
-    \qquad(A\in\Borel(\mathcal{X}),\,B\in\Borel(\mathcal{Y}),\,C\in\Borel(\mathcal{Z}))
-  \]
-  をみたすものがただ一つ存在する．
-  （直積測度の構成と同様の標準的な手順（単調族論法）による．
-  証明は省略する．一意性は矩形集合が $\pi$-系をなすことと
-  一致定理（定理~\ref{thm:meas-uniqueness}）から従う．）
 \end{theorem}

@@ -350,11 +350,43 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   \[
     \sigma(B\times C)=\int_B\sigma_y(C)\,\d\nu(y)
   \]
-  をみたすものが取れる．そこで定理~\ref{thm:meas-kernel-composition}により，
+  をみたすものが取れる．
+
+  この $\pi_y,\sigma_y$ から $\gamma$ を作る．各 $y\in\mathcal{Y}$ に対し
+  直積測度 $\pi_y\otimes\sigma_y\in\Prob(\mathcal{X}\times\mathcal{Z})$
+  （定理~\ref{thm:meas-product}）を取り，
+  $E\in\Borel(\mathcal{X}\times\mathcal{Y}\times\mathcal{Z})$ に対し
+  \[
+    E_y:=\{(x,z)\in\mathcal{X}\times\mathcal{Z}\mid(x,y,z)\in E\},\qquad
+    f_E(y):=(\pi_y\otimes\sigma_y)(E_y)
+  \]
+  とおく．$E_y$ は連続写像 $(x,z)\mapsto(x,y,z)$ による $E$ の逆像なので，
+  Borel 集合である．
+
+  まず $f_E$ が可測であることを示す．$f_E$ が可測となる $E$ の全体を $\mathcal{D}$ とする．
+  $E=A\times B\times C$
+  （$A\in\Borel(\mathcal{X})$，$B\in\Borel(\mathcal{Y})$，$C\in\Borel(\mathcal{Z})$）
+  ならば $f_E(y)=\mathbf{1}_B(y)\,\pi_y(A)\,\sigma_y(C)$ は可測なので，$E\in\mathcal{D}$ である．
+  また $f_{E^c}=1-f_E$ であり，互いに素な $E_1,E_2,\ldots$ に対し
+  $f_{\bigcup_nE_n}=\sum_nf_{E_n}$ であるから，$\mathcal{D}$ は $\lambda$-系である．
+  矩形集合 $A\times B\times C$ の全体は $\Borel(\mathcal{X}\times\mathcal{Y}\times\mathcal{Z})$
+  を生成する $\pi$-系なので（注意~\ref{rem:meas-borel-product}），
+  Dynkin の $\pi$-$\lambda$ 定理（定理~\ref{thm:meas-pi-lambda}）より
+  $\mathcal{D}=\Borel(\mathcal{X}\times\mathcal{Y}\times\mathcal{Z})$ である．
+
+  そこで
+  \[
+    \gamma(E):=\int_\mathcal{Y}f_E(y)\,\d\nu(y)
+  \]
+  と定める．$\gamma(\mathcal{X}\times\mathcal{Y}\times\mathcal{Z})=1$ であり，
+  互いに素な $E_1,E_2,\ldots$ に対しては
+  $f_{\bigcup_nE_n}=\sum_nf_{E_n}$ と単調収束定理（定理~\ref{thm:meas-mct}）より
+  $\gamma(\bigcup_nE_n)=\sum_n\gamma(E_n)$ である．
+  よって $\gamma$ は確率測度であり，
   \[
     \gamma(A\times B\times C)=\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y)
   \]
-  をみたす $\gamma\in\Prob(\mathcal{X}\times\mathcal{Y}\times\mathcal{Z})$ を取る．
+  をみたす．
   $\sigma_y(\mathcal{Z})=1$ より $C=\mathcal{Z}$ とすれば
   $\gamma(A\times B\times\mathcal{Z})=\pi(A\times B)$ を，
   $\pi_y(\mathcal{X})=1$ より $A=\mathcal{X}$ とすれば
