@@ -337,7 +337,8 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 \end{lemma}
 
 \begin{proof}
-  まず，$y$ が与えられたときの $x,z$ の分布にあたる確率測度
+  まず，各 $y\in\mathcal{Y}$ に対し，第2成分が $y$ であるときの
+  第1成分 $x\in\mathcal{X}$，第3成分 $z\in\mathcal{Z}$ の分布にあたる確率測度
   $\pi_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ を，
   \[
     \begin{aligned}
@@ -345,7 +346,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
       \sigma(B\times C)&=\int_B\sigma_y(C)\,\d\nu(y)
     \end{aligned}
   \]
-  をみたすように取る．つまり，$y$ ごとの分布を $\nu$ で平均すると，
+  をみたすように取る．つまり，$y\in\mathcal{Y}$ ごとの分布を $\nu$ で平均すると，
   元の $\pi,\sigma$ が得られる．このように，積分ができる形で
   $\pi_y,\sigma_y$ を選べることは，定理~\ref{thm:meas-disintegration}による．
 
