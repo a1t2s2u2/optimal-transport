@@ -44,28 +44,16 @@ Borel $\sigma$-代数 $\Borel(\mathcal{X})$ 上の確率測度全体を
 \end{lemma}
 
 \begin{proof}
-  $x_0,x_0'\in \mathcal{X}$ と $\mu\in\Prob(\mathcal{X})$ を任意に取り，
-  $\int_\mathcal{X} d(x,x_0)^p\,\d\mu(x)<\infty$ を仮定して，
-  もう一方の積分が有限であることを示す．
-  $a:=d(x,x_0)$，$b:=d(x_0,x_0')$ とおくと，三角不等式
-  $d(x,x_0')\leq a+b$ と，$t\mapsto t^p$ が
-  $[0,\infty)$ 上で凸であること（注意~\ref{rem:meas-real-facts}）から
+  基点を $x_0$ から $x_0'$ に変えても，距離は高々 $d(x_0,x_0')$ しか増えない．
+  三角不等式と，凸性から従う評価
+  $(a+b)^p\leq2^{p-1}(a^p+b^p)$（$a,b\geq0$；注意~\ref{rem:meas-real-facts}）により，
   \[
-    d(x,x_0')^p
-    \leq (a+b)^p
-    = 2^p\left(\frac{a}{2}+\frac{b}{2}\right)^p
-    \leq 2^p\cdot\frac{a^p+b^p}{2}
-    = 2^{p-1}\bigl(d(x,x_0)^p+d(x_0,x_0')^p\bigr).
-  \]
-  両辺を $\d\mu(x)$ で積分すると
-  （右辺第2項は定数なので，$\mu(\mathcal{X})=1$ より積分値は $d(x_0,x_0')^p$）
-  \[
-    \int_\mathcal{X} d(x,x_0')^p\,\d\mu(x)
+    \int_\mathcal{X}d(x,x_0')^p\,\d\mu(x)
     \leq
-    2^{p-1}\left(\int_\mathcal{X} d(x,x_0)^p\,\d\mu(x)+d(x_0,x_0')^p\right)
-    <\infty
+    2^{p-1}\left(\int_\mathcal{X}d(x,x_0)^p\,\d\mu(x)+d(x_0,x_0')^p\right).
   \]
-  を得る．$x_0$ と $x_0'$ を入れ替えれば逆向きの含意も同様に従う．
+  したがって，$x_0$ を基点とする積分が有限なら，$x_0'$ を基点とする積分も有限である．
+  $x_0,x_0'$ を入れ替えれば逆も従う．
 \end{proof}
 
 \begin{definition}{Coupling（Villani Def 1.1）}{wp-coupling}
@@ -85,6 +73,7 @@ Borel $\sigma$-代数 $\Borel(\mathcal{X})$ 上の確率測度全体を
   \]
   と定め，$\pi\in\Couplings(\mu,\nu)$ を $\mu$ と $\nu$ の
   \textbf{coupling} という．
+  二つの条件は，送り元の分布が $\mu$，送り先の分布が $\nu$ であることを表す．
 \end{definition}
 
 \begin{definition}{Wasserstein 距離（Villani Def 6.1）}{wp-wasserstein}
@@ -115,113 +104,37 @@ Borel $\sigma$-代数 $\Borel(\mathcal{X})$ 上の確率測度全体を
 \end{lemma}
 
 \begin{proof}
-  \textbf{1. coupling を一つ取る．}
-
-  直積確率測度（定理~\ref{thm:meas-product}）
-  $\pi_0:=\mu\otimes\nu$ を取る．任意の
-  $A,B\in\Borel(\mathcal{X})$ に対し，
+  輸送コストを，送り元と送り先から基点 $x_0$ までの距離で抑える．
+  三角不等式と補題~\ref{lem:wp-p-indep}の証明で用いた凸性の評価から，
+  \[
+    d(x,y)^p\leq2^{p-1}\bigl(d(x,x_0)^p+d(x_0,y)^p\bigr).
+  \]
+  直積確率測度 $\pi_0:=\mu\otimes\nu$ は $\mu,\nu$ の coupling である
+  （定理~\ref{thm:meas-product}）．その周辺分布は $\mu,\nu$ なので，
+  周辺積分公式（補題~\ref{lem:meas-marginal-integral}）より
   \[
     \begin{aligned}
-      \pi_0(A\times\mathcal{X})
-      &=\mu(A)\nu(\mathcal{X})=\mu(A),\\
-      \pi_0(\mathcal{X}\times B)
-      &=\mu(\mathcal{X})\nu(B)=\nu(B).
+      \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi_0(x,y)
+      &\leq2^{p-1}\left(
+        \int_\mathcal{X}d(x,x_0)^p\,\d\mu(x)
+        +\int_\mathcal{X}d(x_0,y)^p\,\d\nu(y)
+      \right)\\
+      &<\infty.
     \end{aligned}
   \]
-  したがって，coupling の定義（定義~\ref{def:wp-coupling}）より
-  $\pi_0\in\Couplings(\mu,\nu)$ である．
-
-  \textbf{2. $\pi_0$ に関する積分を $\mu,\nu$ に関する積分に直す．}
-
-  $x_0\in\mathcal{X}$ を定義~\ref{def:wp-p-space}の基点とする．
-  $d(x,x_0)^p$ は $x$ のみ，$d(x_0,y)^p$ は $y$ のみの
-  非負可測関数である．$\pi_0=\mu\otimes\nu$ と Tonelli の定理
-  （定理~\ref{thm:meas-product}）より
-  \[
-    \begin{aligned}
-      &\int_{\mathcal{X}\times\mathcal{X}}
-        d(x,x_0)^p\,\d\pi_0(x,y)\\
-      &\quad=
-      \int_{\mathcal{X}}
-      \left(\int_{\mathcal{X}}d(x,x_0)^p\,\d\nu(y)\right)\d\mu(x)\\
-      &\quad=
-      \int_{\mathcal{X}}d(x,x_0)^p\,\nu(\mathcal{X})\,\d\mu(x)\\
-      &\quad=
-      \int_{\mathcal{X}}d(x,x_0)^p\,\d\mu(x)\\
-      &\quad<\infty.
-    \end{aligned}
-  \]
-  同様に，
-  \[
-    \begin{aligned}
-      &\int_{\mathcal{X}\times\mathcal{X}}
-        d(x_0,y)^p\,\d\pi_0(x,y)\\
-      &\quad=
-      \int_{\mathcal{X}}
-      \left(\int_{\mathcal{X}}d(x_0,y)^p\,\d\mu(x)\right)\d\nu(y)\\
-      &\quad=
-      \int_{\mathcal{X}}\mu(\mathcal{X})\,d(x_0,y)^p\,\d\nu(y)\\
-      &\quad=
-      \int_{\mathcal{X}}d(x_0,y)^p\,\d\nu(y)\\
-      &\quad<\infty.
-    \end{aligned}
-  \]
-  ここで $\mu(\mathcal{X})=\nu(\mathcal{X})=1$ を用いた．
-  また，各表示の最後の不等式は
-  $\mu,\nu\in\Pp{p}(\mathcal{X})$ による．
-
-  \textbf{3. 輸送コストを評価する．}
-
-  任意の $(x,y)\in\mathcal{X}\times\mathcal{X}$ に対し，
-  三角不等式より
-  \[
-    0\leq d(x,y)\leq d(x,x_0)+d(x_0,y).
-  \]
-  この不等式の両辺を $p$ 乗して $\pi_0$ で積分し，
-  $1/p$ 乗を取る．さらに Minkowski の不等式
-  （定理~\ref{thm:meas-minkowski}）を用いると，
-  \[
-    \begin{aligned}
-      &\Bigl(\int_{\mathcal{X}\times\mathcal{X}}
-        d(x,y)^p\,\d\pi_0(x,y)\Bigr)^{1/p}\\
-      &\quad\leq
-      \Bigl(\int_{\mathcal{X}\times\mathcal{X}}
-        \bigl(d(x,x_0)+d(x_0,y)\bigr)^p\,\d\pi_0(x,y)\Bigr)^{1/p}\\
-      &\quad\leq
-      \Bigl(\int_{\mathcal{X}\times\mathcal{X}}d(x,x_0)^p\,\d\pi_0\Bigr)^{1/p}
-      +
-      \Bigl(\int_{\mathcal{X}\times\mathcal{X}}d(x_0,y)^p\,\d\pi_0\Bigr)^{1/p}\\
-      &\quad=
-      \Bigl(\int_{\mathcal{X}}d(x,x_0)^p\,\d\mu(x)\Bigr)^{1/p}
-      +
-      \Bigl(\int_{\mathcal{X}}d(x_0,y)^p\,\d\nu(y)\Bigr)^{1/p}\\
-      &\quad<\infty.
-    \end{aligned}
-  \]
-  2番目の不等式が Minkowski の不等式である．距離は非負だから，
-  同定理に現れる絶対値は省略できる．また，等号と最後の不等式は
-  2で確かめた計算による．
-
-  \textbf{4. $\Wass_p$ の定義に戻る．}
-
-  $\pi_0\in\Couplings(\mu,\nu)$ だから，$\Wass_p$ の定義と
-  3の評価より
-  \[
-    0\leq\Wass_p(\mu,\nu)
-    \leq
-    \Bigl(\int_{\mathcal{X}\times\mathcal{X}}
-      d(x,y)^p\,\d\pi_0(x,y)\Bigr)^{1/p}
-    <\infty.
-  \]
+  最後の不等式は $\mu,\nu\in\Pp{p}(\mathcal{X})$ による．
+  こうして有限のコストをもつ coupling が一つ得られたので，
+  その下限から定まる $\Wass_p(\mu,\nu)$ も有限である．
 \end{proof}
 
 \section{最適 coupling の存在}
 \label{sec:wp-existence}
 
-この節では，$\Wass_p$ の定義に現れる下限を実際に達成する coupling の存在を示す．
-証明は，変分問題に対する直接法の次の四段階からなる．
+この節では，コストが下限に近づく coupling の列を取り，
+その極限で下限を達成する coupling を得る．
+証明は次の四段階からなる．
 \begin{enumerate}
-  \item 輸送コストの下限に近づく最小化列 $(\pi_k)$ を取る．
+  \item コストが下限に近づく coupling の列 $(\pi_k)$ を取る．
   \item coupling の tightness と Prokhorov の定理を用いて，
     弱収束部分列 $\pi_{k_j}\weakto\pi^*$ を取る．
   \item 弱極限 $\pi^*$ の二つの周辺分布が $\mu,\nu$ のままであることを示す．
@@ -254,90 +167,24 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 \end{lemma}
 
 \begin{proof}
-  $d^p$ は連続だが有界とは限らないので，弱収束の定義をそのまま使うことは
-  できない．そこで各 $m\in\N$ に対し
+  弱収束で積分の収束が分かるのは有界連続関数なので，
+  まず $d^p$ の大きい値を $m\in\N$ で切り捨て，
   \[
     c_m(x,y):=\min\{d(x,y)^p,m\}
   \]
-  と切り捨てた関数を考え，$m\to\infty$ とする．
-  $d$ は連続（注意~\ref{rem:wp-welldef}）だから $c_m$ も連続であり，
-  $0\leq c_m\leq m$ より有界である．
-
-  以下 $m$ を固定する．$c_m$ は有界連続だから，弱収束の定義
-  （定義~\ref{def:meas-weak-convergence}）より
-  \[
-    \lim_{k\to\infty}\int c_m\,\d\pi_k=\int c_m\,\d\pi.
-  \]
-  一方 $c_m\leq d^p$ だから，各 $k$ で
-  $\int c_m\,\d\pi_k\leq\int d^p\,\d\pi_k$ である．
-  よって $\liminf$ の単調性（定義~\ref{def:meas-limsup}）を
-  $a_k=\int c_m\,\d\pi_k$，$b_k=\int d^p\,\d\pi_k$ に適用すると，
-  $(a_k)$ は収束するので $\lim_ka_k=\liminf_ka_k\leq\liminf_kb_k$，すなわち
-  \[
-    \int c_m\,\d\pi\leq\liminf_{k\to\infty}\int d^p\,\d\pi_k.
-  \]
-
-  最後に $m\to\infty$ とする．ここで用いる単調収束定理
-  （定理~\ref{thm:meas-mct}）の主張は，測度空間
-  $(\Omega,\mathcal{F},\lambda)$ 上の非負可測関数列 $(f_m)$ が
-
-  \[
-    f_m(\omega)\leq f_{m+1}(\omega),
-    \qquad
-    f_m(\omega)\longrightarrow f(\omega)
-    \quad(\forall\omega\in\Omega)
-  \]
-
-  をみたすならば，
-
-  \[
-    \lim_{m\to\infty}\int_\Omega f_m\,\d\lambda
-    =\int_\Omega f\,\d\lambda
-  \]
-
-  が成り立つ，というものである．積分値は $+\infty$ でもよい．
-  今回は
-
-  \[
-    \Omega=\mathcal{X}\times\mathcal{X},
-    \qquad
-    \mathcal{F}=\Borel(\mathcal{X}\times\mathcal{X}),
-    \qquad
-    \lambda=\pi,
-  \]
-  \[
-    f_m=c_m=\min\{d^p,m\},
-    \qquad
-    f=d^p
-  \]
-
-  として適用する．実際，$c_m$ は非負可測で，すべての $(x,y)$ に対して
-
-  \[
-    0\leq c_m(x,y)\leq c_{m+1}(x,y),
-    \qquad
-    c_m(x,y)\longrightarrow d(x,y)^p
-  \]
-
-  が成り立つ．したがって
-
-  \[
-    \lim_{m\to\infty}\int c_m\,\d\pi
-    =\int d^p\,\d\pi.
-  \]
-
-  一方，先ほど得た不等式
-
+  とおく．$d$ は連続（注意~\ref{rem:wp-welldef}）だから $c_m$ は有界連続である．
+  各 $m$ について，弱収束の定義（定義~\ref{def:meas-weak-convergence}）と
+  $c_m\leq d^p$ より
   \[
     \int c_m\,\d\pi
-    \leq
-    \liminf_{k\to\infty}\int d^p\,\d\pi_k
+    =\lim_{k\to\infty}\int c_m\,\d\pi_k
+    \leq\liminf_{k\to\infty}\int d^p\,\d\pi_k.
   \]
-
-  の右辺は $m$ によらない．よって両辺で $m\to\infty$ とし，
-  上の単調収束定理の適用結果を用いると
+  $m$ を増やすと $c_m$ は単調に増加して $d^p$ に近づく．
+  右辺は $m$ によらないので，単調収束定理（定理~\ref{thm:meas-mct}）から
   \[
     \int d^p\,\d\pi
+    =\lim_{m\to\infty}\int c_m\,\d\pi
     \leq\liminf_{k\to\infty}\int d^p\,\d\pi_k
   \]
   を得る．
@@ -364,7 +211,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 
 \begin{proof}
   $\varepsilon>0$ とする．$A,B$ の tightness より，compact 集合
-  $K\subset\mathcal{X}$，$L\subset\mathcal{Y}$ で
+  $K\subset\mathcal{X}$，$L\subset\mathcal{Y}$ を
   \[
     \eta(\mathcal{X}\setminus K)\leq\frac{\varepsilon}{2}
     \quad(\forall\eta\in A),
@@ -372,66 +219,20 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
     \rho(\mathcal{Y}\setminus L)\leq\frac{\varepsilon}{2}
     \quad(\forall\rho\in B)
   \]
-  をみたすものが存在する．$K,L$ は $\pi$ の選び方によらず，
-  族 $A,B$ に対して一様に選ばれていることが重要である．
-
-  ここで $\pi\in\Couplings(A,B)$ を任意に取る．
-  $\Couplings(A,B)$ の定義より，
-
-  \[
-    \eta_\pi\in A,\qquad \rho_\pi\in B,\qquad
-    \pi\in\Couplings(\eta_\pi,\rho_\pi)
-  \]
-
-  をみたす $\eta_\pi,\rho_\pi$ が存在する．上で選んだ $K,L$ に対して
-  \[
-    \eta_\pi(\mathcal{X}\setminus K)\leq\frac{\varepsilon}{2},
-    \qquad
-    \rho_\pi(\mathcal{Y}\setminus L)\leq\frac{\varepsilon}{2}.
-  \]
-
-  $\pi\in\Couplings(\eta_\pi,\rho_\pi)$ だから，
+  となるように選ぶ．
+  任意の $\pi\in\Couplings(A,B)$ を取り，その二つの周辺分布を
+  $\eta\in A$，$\rho\in B$ とする．
+  $(x,y)$ が $K\times L$ の外にあるなら，$x$ が $K$ の外にあるか，
+  $y$ が $L$ の外にある．したがって
   \[
     \begin{aligned}
-      \pi\bigl((\mathcal{X}\setminus K)\times\mathcal{Y}\bigr)
-      &=\eta_\pi(\mathcal{X}\setminus K)
-      \leq\frac{\varepsilon}{2},\\
-      \pi\bigl(\mathcal{X}\times(\mathcal{Y}\setminus L)\bigr)
-      &=\rho_\pi(\mathcal{Y}\setminus L)
-      \leq\frac{\varepsilon}{2}.
+      \pi\bigl((\mathcal{X}\times\mathcal{Y})\setminus(K\times L)\bigr)
+      &\leq\eta(\mathcal{X}\setminus K)+\rho(\mathcal{Y}\setminus L)\\
+      &\leq\varepsilon.
     \end{aligned}
   \]
-
-  集合の恒等式
-  \[
-    (\mathcal{X}\times\mathcal{Y})\setminus(K\times L)
-    =\bigl((\mathcal{X}\setminus K)\times\mathcal{Y}\bigr)
-      \cup
-      \bigl(\mathcal{X}\times(\mathcal{Y}\setminus L)\bigr)
-  \]
-  と測度の劣加法性より，
-  \[
-    \begin{aligned}
-      \pi\bigl((\mathcal{X}\times\mathcal{Y})
-        \setminus(K\times L)\bigr)
-      &\leq
-      \pi\bigl((\mathcal{X}\setminus K)\times\mathcal{Y}\bigr)
-      +\pi\bigl(\mathcal{X}\times(\mathcal{Y}\setminus L)\bigr)
-      \\
-      &\leq
-      \frac{\varepsilon}{2}+\frac{\varepsilon}{2}\\
-      &=\varepsilon.
-    \end{aligned}
-  \]
-  $K,L$ は compact だから $K\times L$ も compact であり，
-  上の評価は任意の $\pi\in\Couplings(A,B)$ に対して成り立つ．
-  よって
-  \[
-    \pi\bigl((\mathcal{X}\times\mathcal{Y})\setminus(K\times L)\bigr)
-    \leq\varepsilon
-    \qquad(\forall\pi\in\Couplings(A,B)).
-  \]
-  定義~\ref{def:meas-tight}より $\Couplings(A,B)$ は tight である．
+  同じ compact 集合 $K\times L$ で，すべての $\pi\in\Couplings(A,B)$ に
+  対してこの評価が成り立つので，$\Couplings(A,B)$ は tight である．
 \end{proof}
 
 \begin{theorem}{$\Wass_p$ の最適 coupling の存在（Villani Thm 4.1；pp.~43--45）}{wp-optimal-coupling-existence}
@@ -452,145 +253,59 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 \end{theorem}
 
 \begin{proof}
-  各 $\pi\in\Couplings(\mu,\nu)$ に対して
+  輸送コストとその下限を
   \[
-    J(\pi)
-    :=
-    \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y),
+    J(\pi):=\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y),
     \qquad
-    I
-    :=
-    \inf_{\pi\in\Couplings(\mu,\nu)}J(\pi)
+    I:=\inf_{\pi\in\Couplings(\mu,\nu)}J(\pi)
   \]
-  とおく．$\Couplings(\mu,\nu)$ は空でない
-  （補題~\ref{lem:wp-finite}の証明で $\mu\otimes\nu$ を構成した）．
-  また $t\mapsto t^{1/p}$ は $[0,\infty]$ 上で単調増加だから，
-  $\Wass_p$ の定義より
-  \[
-    \Wass_p(\mu,\nu)^p
-    =
-    \left(
-      \inf_{\pi\in\Couplings(\mu,\nu)}J(\pi)^{1/p}
-    \right)^p
-    =
-    \inf_{\pi\in\Couplings(\mu,\nu)}J(\pi)
-    =I.
-  \]
-  補題~\ref{lem:wp-finite}より $\Wass_p(\mu,\nu)<\infty$ なので，
-  \[
-    0\leq I=\Wass_p(\mu,\nu)^p<\infty.
-  \]
+  とおく．補題~\ref{lem:wp-finite}の証明より，coupling は存在し，$I<\infty$ である．
+  $t\mapsto t^{1/p}$ は連続かつ単調増加なので，$I=\Wass_p(\mu,\nu)^p$ である．
 
-  \textbf{1. 最小化列を取る．}
+  \textbf{1. コストを下限に近づける．}
   下限の定義より，各 $k\in\N$ に対して
   \[
     \pi_k\in\Couplings(\mu,\nu),
     \qquad
     I\leq J(\pi_k)<I+\frac1k
   \]
-  となる $\pi_k$ を取ることができる．$I<\infty$ だから
-  \[
-    0\leq J(\pi_k)-I<\frac1k,
-    \qquad
-    J(\pi_k)\longrightarrow I.
-  \]
+  となる $\pi_k$ を取る．これで $J(\pi_k)\to I$ となる．
 
-  \textbf{2. 最小化列から弱収束部分列を取る．}
-  一点族 $\{\mu\}$ の任意の列は定数列であり，$\mu$ に弱収束する．
-  $\mathcal{X}$ は Polish 空間だから，Prokhorov の定理
+  \textbf{2. 収束する部分列を取る．}
+  $\{\mu\}$ の列は定数列なので，Prokhorov の定理
   （定理~\ref{thm:meas-prokhorov}）より $\{\mu\}$ は tight である．
-  同様に $\{\nu\}$ も tight である．
-  したがって補題~\ref{lem:wp-plans-tight}より
-  \[
-    \Couplings(\mu,\nu)
-    =\Couplings(\{\mu\},\{\nu\})
-    \quad\text{は tight}.
-  \]
-  特に $(\pi_k)_{k\in\N}$ は tight である．
-  $\mathcal{X}\times\mathcal{X}$ は Polish 空間なので，
-  Prokhorov の定理より，ある部分列 $(\pi_{k_j})$ と
-  $\pi^*\in\Prob(\mathcal{X}\times\mathcal{X})$ が存在して
+  $\{\nu\}$ も同様であり，補題~\ref{lem:wp-plans-tight}から
+  $\Couplings(\mu,\nu)$ は tight である．
+  $\mathcal{X}\times\mathcal{X}$ は Polish 空間なので，再び Prokhorov の定理により，
+  ある部分列と $\pi^*\in\Prob(\mathcal{X}\times\mathcal{X})$ に対して
   \[
     \pi_{k_j}\weakto\pi^*
   \]
-  が成り立つ．
+  となる．
 
-  \textbf{3. $\pi^*$ も $\mu,\nu$ の coupling である．}
-  任意の $\varphi\in C_b(\mathcal{X})$ に対し，
-  \[
-    F_\varphi(x,y):=\varphi(x)
-  \]
-  とおくと，$F_\varphi\in C_b(\mathcal{X}\times\mathcal{X})$ である．
-  したがって $\pi_{k_j}\weakto\pi^*$ と弱収束の定義より
-  \[
-    \int_{\mathcal{X}\times\mathcal{X}}
-    \varphi(x)\,\d\pi_{k_j}(x,y)
-    \longrightarrow
-    \int_{\mathcal{X}\times\mathcal{X}}
-    \varphi(x)\,\d\pi^*(x,y).
-  \]
-  一方，各 $\pi_{k_j}\in\Couplings(\mu,\nu)$ の第1周辺分布は
-  $\mu$ だから，周辺積分公式（補題~\ref{lem:meas-marginal-integral}）より
-  \[
-    \int_{\mathcal{X}\times\mathcal{X}}
-    \varphi(x)\,\d\pi_{k_j}(x,y)
-    =
-    \int_{\mathcal{X}}\varphi(x)\,\d\mu(x)
-    \qquad(\forall j\in\N).
-  \]
-  よって
-  \[
-    \int_{\mathcal{X}\times\mathcal{X}}
-    \varphi(x)\,\d\pi^*(x,y)
-    =
-    \int_{\mathcal{X}}\varphi(x)\,\d\mu(x).
-  \]
-  有界連続関数による測度の判定
-  （定理~\ref{thm:meas-cb-determines}）より，
-  $\pi^*$ の第1周辺分布は $\mu$ である．同様に，
-  任意の $\psi\in C_b(\mathcal{X})$ に対して
-  \[
-    \int_{\mathcal{X}\times\mathcal{X}}
-    \psi(y)\,\d\pi^*(x,y)
-    =
-    \int_{\mathcal{X}}\psi(y)\,\d\nu(y)
-  \]
-  が成り立つから，第2周辺分布は $\nu$ である．したがって
-  \[
-    \pi^*\in\Couplings(\mu,\nu).
-  \]
-
-  \textbf{4. $\pi^*$ が最小値を達成する．}
-  $(x,y)\mapsto d(x,y)^p$ は非負連続関数なので，
-  補題~\ref{lem:wp-cost-lsc}より
-  \[
-    J(\pi^*)
-    \leq
-    \liminf_{j\to\infty}J(\pi_{k_j}).
-  \]
-  一方，$\pi^*\in\Couplings(\mu,\nu)$ だから
-  $I\leq J(\pi^*)$ である．また，
-  $J(\pi_k)\to I$ より $J(\pi_{k_j})\to I$ である．したがって
-  \[
-    I
-    \leq J(\pi^*)
-    \leq\liminf_{j\to\infty}J(\pi_{k_j})
-    =I.
-  \]
-  ゆえに $J(\pi^*)=I$ である．以上より
+  \textbf{3. 極限でも送り元と送り先の分布は変わらない．}
+  任意の有界連続関数 $\varphi\in C_b(\mathcal{X})$ に対し，
+  $(x,y)\mapsto\varphi(x)$ も有界連続である．弱収束と周辺積分公式
+  （補題~\ref{lem:meas-marginal-integral}）から
   \[
     \begin{aligned}
-      \Wass_p(\mu,\nu)
-      &=I^{1/p}\\
-      &=J(\pi^*)^{1/p}\\
-      &=
-      \left(
-        \int_{\mathcal{X}\times\mathcal{X}}
-        d(x,y)^p\,\d\pi^*(x,y)
-      \right)^{1/p}.
+      \int_{\mathcal{X}\times\mathcal{X}}\varphi(x)\,\d\pi^*(x,y)
+      &=\lim_{j\to\infty}
+        \int_{\mathcal{X}\times\mathcal{X}}\varphi(x)\,\d\pi_{k_j}(x,y)\\
+      &=\int_\mathcal{X}\varphi(x)\,\d\mu(x).
     \end{aligned}
   \]
-  よって $\pi^*$ は $\Wass_p(\mu,\nu)$ の最適 coupling である．
+  有界連続関数による測度の判定（定理~\ref{thm:meas-cb-determines}）より，
+  $\pi^*$ の第1周辺分布は $\mu$ である．$y$ だけの関数で同様に調べれば，
+  第2周辺分布は $\nu$ である．したがって $\pi^*\in\Couplings(\mu,\nu)$ である．
+
+  \textbf{4. 極限のコストが下限に一致する．}
+  $\pi^*$ も coupling なので $I\leq J(\pi^*)$ である．
+  一方，コストの下半連続性（補題~\ref{lem:wp-cost-lsc}）と $J(\pi_{k_j})\to I$ より
+  \[
+    I\leq J(\pi^*)\leq\liminf_{j\to\infty}J(\pi_{k_j})=I.
+  \]
+  よって $J(\pi^*)=I=\Wass_p(\mu,\nu)^p$ となり，$\pi^*$ が最適 coupling である．
 \end{proof}
 
 \section{Wasserstein 距離の距離性}
@@ -667,8 +382,8 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   \]
 
   \textbf{2. 一致の公理．}
-  対角写像 $\iota(x):=(x,x)$ による像測度
-  $\pi_\Delta:=\mu\circ\iota^{-1}$ は $\Couplings(\mu,\mu)$ に属し，
+  $\mu=\nu$ なら，各点の質量を動かさない coupling を取ればよい．
+  どの点でも $d(x,x)=0$ なので，
   \[
     0\leq\Wass_p(\mu,\mu)
     \leq\left(\int_\mathcal{X}d(x,x)^p\,\d\mu(x)\right)^{1/p}=0.
@@ -680,7 +395,8 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   \[
     \int d(x,y)^p\,\d\pi^*(x,y)=\Wass_p(\mu,\nu)^p=0.
   \]
-  $d^p\geq0$ より $x=y$ が $\pi^*$-a.e. で成り立つ．
+  コストは非負なので，積分が $0$ なら，正の距離を動く質量はない．
+  すなわち $x=y$ が $\pi^*$-ほとんど至るところで成り立つ．
   したがって任意の $A\in\Borel(\mathcal{X})$ に対し，周辺積分公式
   （補題~\ref{lem:meas-marginal-integral}）から
   \[
@@ -692,11 +408,15 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   となり，$\mu=\nu$ を得る．
 
   \textbf{3. 三角不等式．}
-  $\xi\in\Pp{p}(\mathcal{X})$ に対し，最適 coupling
+  $\xi\in\Pp{p}(\mathcal{X})$ を取る．
+  $\mu$ から $\nu$，$\nu$ から $\xi$ への輸送をつなぎ，
+  $x$ から $z$ への距離を，$x$ から $y$，$y$ から $z$ への距離の和で抑える．
+  それぞれの最適 coupling
   $\pi\in\Couplings(\mu,\nu)$，$\sigma\in\Couplings(\nu,\xi)$ を取る．
   接着補題（補題~\ref{lem:wp-gluing}）により，この二つを周辺分布にもつ
   $\gamma\in\Prob(\mathcal{X}^3)$ を取る．
-  その第1，第3成分の周辺分布は $\mu,\xi$ の coupling なので，
+  送り元 $x$ と送り先 $z$ だけを見ると，その分布は $\mu,\xi$ の coupling になる．
+  したがって
   \[
     \begin{aligned}
       \Wass_p(\mu,\xi)
