@@ -657,11 +657,14 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   残る距離の公理（定義~\ref{def:meas-metric-space}）を確かめる．
 
   \textbf{1. 対称性．}
-  座標交換 $s(x,y):=(y,x)$ による対応 $\pi\mapsto\pi\circ s^{-1}$ は，
-  $\Couplings(\mu,\nu)$ と $\Couplings(\nu,\mu)$ の間の全単射であり，
-  $d(x,y)=d(y,x)$ より輸送コストを保つ
-  （変数変換公式，補題~\ref{lem:meas-change-of-variables}）．
-  したがって $\Wass_p(\mu,\nu)=\Wass_p(\nu,\mu)$ である．
+  $\mu$ から $\nu$ への coupling で，送り元 $x$ と送り先 $y$ を入れ替えると，
+  $\nu$ から $\mu$ への coupling になる．
+  $d(x,y)^p=d(y,x)^p$ なので，輸送コストは変わらない．
+  逆向きにも同じことができるから，取りうる輸送コストは同じであり，
+  その下限も等しい．したがって
+  \[
+    \Wass_p(\mu,\nu)=\Wass_p(\nu,\mu).
+  \]
 
   \textbf{2. 一致の公理．}
   対角写像 $\iota(x):=(x,x)$ による像測度
