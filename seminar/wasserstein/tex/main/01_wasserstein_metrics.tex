@@ -100,21 +100,13 @@ Borel $\sigma$-代数 $\Borel(\mathcal{X})$ 上の確率測度全体を
   と定める．
 \end{definition}
 
-\begin{remark}{記法と可測性}{wp-welldef}
+\begin{remark}{距離関数の可測性}{wp-welldef}
   距離関数 $d\colon \mathcal{X}\times \mathcal{X}\to[0,\infty)$ は，三角不等式から従う評価
   \[
     \abs{d(x,y)-d(x',y')}\leq d(x,x')+d(y,y')
   \]
   により連続，したがって Borel 可測である
   （注意~\ref{rem:meas-measurable-ops}）．
-  $d\geq0$ より
-  $\norm{d}_{L^p(\pi)}=\bigl(\int d^p\,\d\pi\bigr)^{1/p}$
-  （$L^p$ ノルムは定義~\ref{def:meas-lp-norm}）だから，
-  \[
-    \Wass_p(\mu,\nu)
-    =\inf_{\pi\in\Couplings(\mu,\nu)}\norm{d}_{L^p(\pi)}
-  \]
-  と書ける．
 \end{remark}
 
 \begin{lemma}{$\Wass_p$ の有限性（Villani Def 6.4）}{wp-finite}
@@ -705,16 +697,15 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   \[
     \begin{aligned}
       \Wass_p(\mu,\xi)
-      &\leq\norm{d(x,z)}_{L^p(\gamma)}\\
-      &\leq\norm{d(x,y)+d(y,z)}_{L^p(\gamma)}\\
+      &\leq\left(\int_{\mathcal{X}^3}d(x,z)^p\,\d\gamma\right)^{1/p}\\
+      &\leq\left(\int_{\mathcal{X}^3}\bigl(d(x,y)+d(y,z)\bigr)^p\,\d\gamma\right)^{1/p}\\
       &\leq
-      \norm{d(x,y)}_{L^p(\gamma)}
-      +\norm{d(y,z)}_{L^p(\gamma)}\\
+      \left(\int_{\mathcal{X}^3}d(x,y)^p\,\d\gamma\right)^{1/p}
+      +\left(\int_{\mathcal{X}^3}d(y,z)^p\,\d\gamma\right)^{1/p}\\
       &=\Wass_p(\mu,\nu)+\Wass_p(\nu,\xi).
     \end{aligned}
   \]
-  順に，$\Wass_p$ の定義，$d$ の三角不等式とノルムの単調性
-  （主張~\ref{clm:meas-lp-monotone}），Minkowski の不等式
+  順に，$\Wass_p$ の定義，$d$ の三角不等式と積分の単調性，Minkowski の不等式
   （定理~\ref{thm:meas-minkowski}）を用いた．
   最後の等号は周辺積分公式と $\pi,\sigma$ の最適性による．
 \end{proof}

@@ -377,64 +377,26 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
   (2nd ed., 1999) Theorems 5.1, 5.2 にある．）
 \end{theorem}
 
-\section{$L^p$ ノルムと積分不等式}
+\section{積分不等式}
 
-\begin{definition}{$L^p$ ノルム}{meas-lp-norm}
-  測度空間 $(\Omega,\mathcal{A},\mu)$ 上の可測関数 $f\colon\Omega\to\R$ と
-  $1\leq p<\infty$ に対し
-  \[
-    \norm{f}_{L^p(\mu)}
-    :=
-    \left(\int_\Omega\abs{f}^p\,\d\mu\right)^{1/p}
-  \]
-  と定める．
-\end{definition}
-
-\begin{remark}{記法 $\norm{f}_{L^p(\mu)}$}{meas-lp-norm-notation}
-  添字 $L^p(\mu)$ は，冪 $p$ と積分に用いる測度 $\mu$ の指定である：
-  \[
-    \norm{f}_{L^2(\mu)}=\left(\int_\Omega\abs{f}^2\,\d\mu\right)^{1/2},
-    \qquad
-    \norm{f}_{L^1(\nu)}=\int_\Omega\abs{f}\,\d\nu .
-  \]
-  同じ $f$ でも測度が異なれば値は異なる．
-  本編では coupling $\pi\in\Couplings(\mu,\nu)$ に対する
-  \[
-    \norm{d}_{L^p(\pi)}
-    =\left(\int_{\mathcal{X}\times \mathcal{X}}d(x,y)^p\,\d\pi(x,y)\right)^{1/p}
-  \]
-  の形で用い，
-  \[
-    \Wass_p(\mu,\nu)=\inf_{\pi\in\Couplings(\mu,\nu)}\norm{d}_{L^p(\pi)}
-  \]
-  と書ける（注意~\ref{rem:wp-welldef}）．
-\end{remark}
+以下，$(\Omega,\mathcal{A},\mu)$ を測度空間とし，
+$f,g\colon\Omega\to\R$ を可測関数とする．
 
 \begin{theorem}{Hölder の不等式}{meas-holder}
-  $1<r,r'<\infty$，$1/r+1/r'=1$ とする．可測関数 $f,g$ に対し
+  $1<r,r'<\infty$，$1/r+1/r'=1$ とし，
+  $\int_\Omega\abs{f}^r\,\d\mu$，$\int_\Omega\abs{g}^{r'}\,\d\mu$ は有限とする．このとき
   \[
     \int_\Omega\abs{fg}\,\d\mu
     \leq
-    \norm{f}_{L^r(\mu)}\,\norm{g}_{L^{r'}(\mu)}.
+    \left(\int_\Omega\abs{f}^r\,\d\mu\right)^{1/r}
+    \left(\int_\Omega\abs{g}^{r'}\,\d\mu\right)^{1/r'}.
   \]
   （標準的な結果．証明は省略する．Dudley (2002) §5.1 参照．）
 \end{theorem}
 
-\begin{claim}{$L^p$ ノルムの単調性}{meas-lp-monotone}
-  可測関数 $f,g$ が $\abs{f}\leq\abs{g}$ $\mu$-a.e. をみたすならば，
-  $1\leq p<\infty$ に対し
-  $\norm{f}_{L^p(\mu)}\leq\norm{g}_{L^p(\mu)}$ である．
-\end{claim}
-
-\begin{proof}
-  $\abs{f}^p\leq\abs{g}^p$ $\mu$-a.e. だから，
-  積分の単調性より
-  $\int\abs{f}^p\,\d\mu\leq\int\abs{g}^p\,\d\mu$．
-  両辺の $1/p$ 乗を取ればよい．
-\end{proof}
-
 \begin{theorem}{Minkowski の不等式}{meas-minkowski}
-  可測関数 $f,g$ と $1\leq p<\infty$ に対し
+  $1\leq p<\infty$ とし，
+  $\int_\Omega\abs{f}^p\,\d\mu$，$\int_\Omega\abs{g}^p\,\d\mu$ は有限とする．このとき
   \[
     \left(\int_\Omega\abs{f+g}^p\,\d\mu\right)^{1/p}
     \leq
