@@ -9,3 +9,6 @@ seminar/*/site/
 
 # editor caches
 .DS_Store
+
+# LaTeX の中間生成物
+卒業研究/**/out/
