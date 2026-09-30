@@ -344,7 +344,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
     \qquad(A\in\Borel(\mathcal{X}),\,B\in\Borel(\mathcal{Y}))
   \]
   をみたす $\pi_y\in\Prob(\mathcal{X})$ が取れる．
-  同様に，$\sigma$ の第1周辺分布は $\nu$ なので
+  同様に，$\sigma$ の第1周辺分布は $\nu$ なので，同じ定理により
   \[
     \sigma(B\times C)=\int_B\sigma_y(C)\,\d\nu(y)
     \qquad(B\in\Borel(\mathcal{Y}),\,C\in\Borel(\mathcal{Z}))
@@ -355,7 +355,9 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   \[
     \gamma(A\times B\times C):=\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y)
   \]
-  と定める．$\sigma_y(\mathcal{Z})=1$ より，$C=\mathcal{Z}$ とすると
+  と定める．このような確率測度がただ一つ存在することは
+  定理~\ref{thm:meas-kernel-composition}による．
+  $\sigma_y(\mathcal{Z})=1$ より，$C=\mathcal{Z}$ とすると
   \[
     \gamma(A\times B\times\mathcal{Z})=\int_B\pi_y(A)\,\d\nu(y)=\pi(A\times B)
   \]
