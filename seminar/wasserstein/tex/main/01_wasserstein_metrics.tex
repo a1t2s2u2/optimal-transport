@@ -387,11 +387,12 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   $\Delta=\{(x,y)\in\mathcal{X}\times\mathcal{X}\mid d(x,y)=0\}$ であり，
   $d$ は連続なので（注意~\ref{rem:wp-welldef}），$\Delta$ は閉集合，特に Borel 集合である．
 
-  ($\Leftarrow$) $\mu=\nu$ とする．$T(x):=(x,x)$ による像測度
-  $\pi:=\mu\circ T^{-1}$ を取ると，
-  $\pi(A\times\mathcal{X})=\pi(\mathcal{X}\times A)=\mu(A)$
-  （$A\in\Borel(\mathcal{X})$）より $\pi\in\Couplings(\mu,\mu)$ であり，
-  $\pi(\Delta)=\mu(\mathcal{X})=1$ である．
+  ($\Leftarrow$) $\mu=\nu$ とする．
+  $\pi(\Delta)=1$ となる（$\Delta$ に集中する）$\pi\in\Couplings(\mu,\mu)$ を取る．
+  実際，$T(x):=(x,x)$ による像測度 $\pi:=\mu\circ T^{-1}$ がそのような coupling である．
+  $A\in\Borel(\mathcal{X})$ に対し $T^{-1}(A\times\mathcal{X})=T^{-1}(\mathcal{X}\times A)=A$
+  より $\pi(A\times\mathcal{X})=\pi(\mathcal{X}\times A)=\mu(A)$ であり，
+  $T^{-1}(\Delta)=\mathcal{X}$ より $\pi(\Delta)=1$ である．
   $\Delta$ 上で $d(x,y)=0$ なので，
   \[
     \Wass_p(\mu,\mu)^p
