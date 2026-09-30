@@ -587,7 +587,30 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
   \end{enumerate}
   $\pi_y$ は「$y$ が与えられたときの $x$ の分布」にあたり，
   $\nu$-a.e. の意味で一意である．
+  第1周辺分布を用いた同様の表示も成り立つ．
   （Polish 空間上の標準的な結果．証明は省略する．
-  Dudley (2002) Chapter 10，Villani (2009) Chapter 1，
-  桑江ほか (2015) 補題 1.32 参照．）
+  桑江ほか (2015) 補題 1.32（測度分解定理）に証明がある．
+  同書は一般の Borel 写像 $\Pi$ による分解として述べており，
+  $\Pi$ を第2成分（第1周辺分布の場合は第1成分）への射影としたものが本定理である．
+  Dudley (2002) Chapter 10 も参照．
+  なお Villani (2009) p.~12 は，接着補題の説明でこの分解を非形式的に用いている．）
+\end{theorem}
+
+\begin{theorem}{確率測度の族を平均した確率測度（前提とする事実）}{meas-kernel-composition}
+  $\mathcal{X},\mathcal{Y},\mathcal{Z}$ を Polish 空間，$\nu\in\Prob(\mathcal{Y})$ とし，
+  各 $y\in\mathcal{Y}$ に対して確率測度
+  $\pi_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ が与えられているとする．
+  任意の $A\in\Borel(\mathcal{X})$，$C\in\Borel(\mathcal{Z})$ について，
+  $y\mapsto\pi_y(A)$，$y\mapsto\sigma_y(C)$ は可測と仮定する．
+  このとき $\gamma\in\Prob(\mathcal{X}\times\mathcal{Y}\times\mathcal{Z})$ で
+  \[
+    \gamma(A\times B\times C)
+    =\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y)
+    \qquad(A\in\Borel(\mathcal{X}),\,B\in\Borel(\mathcal{Y}),\,C\in\Borel(\mathcal{Z}))
+  \]
+  をみたすものがただ一つ存在する．
+  （単調族定理による標準的な構成．証明は省略する．
+  桑江ほか (2015) 定義 1.31 と式 (1.32) 参照．
+  一意性は，矩形集合が $\pi$-系をなすこと（注意~\ref{rem:meas-borel-product}）と
+  一致定理（定理~\ref{thm:meas-uniqueness}）から従う．）
 \end{theorem}
