@@ -20,6 +20,9 @@ Wasserstein 距離を定義し、最適 coupling の存在を経て距離性を�
   - [Optimal Transport: Old and New, C. Villani (2009)](https://doi.org/10.1007/978-3-540-71050-9)
   - [最適輸送理論とリッチ曲率, 桑江ほか (Encounter with Mathematics 第63回, 2015)](https://www.math.chuo-u.ac.jp/ENCwMATH/EwM63resume.pdf)
 
+Villani の[2006年公開草稿](seminar/wasserstein/reference/villani-old-and-new-draft-2006-09-27.pdf)を全文検索・通読用に保存している。
+定理番号・ページ番号などの引用は正式版（2009）で確認する（[版情報と引用方針](seminar/wasserstein/reference/README.md)）。
+
 ### `seminar/quantum-ot/` — 量子最適輸送
 
 有限次元量子系の状態・coupling・チャネルを導入し、多体系の量子 Wasserstein 距離

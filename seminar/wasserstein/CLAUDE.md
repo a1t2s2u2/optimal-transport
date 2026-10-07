@@ -9,6 +9,8 @@ Wasserstein 距離の定義と距離性を扱う。Villani (2009) を主たる�
 - [最適輸送理論とリッチ曲率, 桑江ほか (Encounter with Mathematics 第63回, 2015)](https://www.math.chuo-u.ac.jp/ENCwMATH/EwM63resume.pdf) — 日本語の解説、定義の補完（§1.4 が Wasserstein 距離）
 
 参照 PDF は `reference/` にある（kuwae-etal-2015.pdf、Billingsley-2eme-edition.pdf［Prokhorov の出典 Th 5.1。著作権のため git 追跡対象外］）。
+Villani の出版前草稿（2006年9月27日版）は `reference/villani-old-and-new-draft-2006-09-27.pdf` に保存してある。全文検索・通読・関連箇所の探索に利用する。入手元と版情報は `reference/README.md` を参照。
+**定理・補題・定義・式・章節の番号、および引用ページ番号は、必ず正式版（2009）で確認したものを使う。** 草稿の番号やページを正式版のものとして引用しない。草稿で見つけた主張は、正式版の該当本文と照合してから引用する。正式版で未確認の対応は推測で補わず、未確認と明示する。草稿の検索結果だけで、正式版に記載がないとは判断しない。
 Villani の該当ページのスキャンは `reference/old_and_new/pNNN.jpg` にある（**ファイル名＝印刷ページ番号**）。距離性までに対応するのは pp.11–12, 43–46, 49, 93–111 であり，ほかに Definition 1.1 の切り抜き `def1-1_coupling.jpg` がある。著作権のため git 追跡対象外。追加時も同じ命名にする。
 
 ## 記法
