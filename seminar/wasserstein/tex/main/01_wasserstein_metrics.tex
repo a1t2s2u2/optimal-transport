@@ -341,97 +341,74 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 
 \begin{proof}
   \textbf{1. $\mathcal{X}$ が compact の場合：積分の候補を作る．}
-  この段階では $\pi$ は零でない有限測度でもよい．
-  $f\in C(\mathcal{X})$ に対して
+  ここでは $\pi$ は零でない有限測度でもよい．
+  $1$ を含む可算な稠密 $\mathbb{Q}$-ベクトル部分空間 $\mathcal{C}\subset C(\mathcal{X})$ を取り，
+  各 $f\in\mathcal{C}$ に対して
   \[
     \nu_f(B):=\int_{\mathcal{X}\times B}f(x)\,\d\pi(x,y)
     \qquad(B\in\Borel(\mathcal{Y}))
   \]
-  とおく．$f^+:=\max\{f,0\}$，$f^-:=\max\{-f,0\}$ により
-  $\nu_f=\nu_{f^+}-\nu_{f^-}$ は二つの有限測度の差であり，
+  とおく．$f$ の正部分・負部分に分ければ $\nu_f$ は有限符号付き測度であり，
+  $\abs{\nu_f(B)}\leq\lVert f\rVert_\infty\nu(B)$ より $\nu_f\ll\nu$ である．
+  Radon--Nikodym の定理の符号付きの場合から，Borel 可測な密度 $l_f:=\d\nu_f/\d\nu$ を取れる．
+  密度の一意性と上の評価より，
+  共通の Borel $\nu$-零集合 $N$ の外で
   \[
-    \abs{\nu_f(B)}\leq\lVert f\rVert_\infty\nu(B)
+    l_{af+bg}=a l_f+b l_g,\qquad l_1=1,\qquad
+    \abs{l_f}\leq\lVert f\rVert_\infty
   \]
-  より $\nu_f\ll\nu$ である（定義~\ref{def:meas-absolute-continuity}で
-  $\delta=\varepsilon/(1+\lVert f\rVert_\infty)$ とすればよい）．
-  Radon--Nikodym の定理の符号付きの場合により，
-  Borel 可測な密度 $l_f:=\d\nu_f/\d\nu$ を取る．
-
-  注意~\ref{rem:meas-compact-continuous}の可算な稠密部分空間
-  $\mathcal{C}\subset C(\mathcal{X})$ を取る．
-  Radon--Nikodym 微分の一意性と積分の単調性より，
-  各 $f,g\in\mathcal{C}$，$a,b\in\mathbb{Q}$ について，$\nu$-a.e. に
-  \[
-    \begin{gathered}
-      l_{af+bg}=a l_f+b l_g,\qquad l_1=1,\\
-      f\geq0\ \Longrightarrow\ l_f\geq0,\qquad
-      \abs{l_f}\leq\lVert f\rVert_\infty
-    \end{gathered}
-  \]
-  が成り立つ．例えば最初の等式は $\nu_{af+bg}=a\nu_f+b\nu_g$ による．
-  条件は可算個しかないので，その例外集合を合併すれば，
-  一つの Borel 零集合 $N$ の外ですべてが同時に成り立つ．
+  がすべての $f,g\in\mathcal{C}$，$a,b\in\mathbb{Q}$ で成り立つ．
+  ここで，条件は可算個なので，各条件の例外集合の合併も零集合である．
 
   \textbf{2. 積分の候補から測度を得る．}
-  $y\notin N$ では，$\abs{l_f(y)-l_g(y)}\leq\lVert f-g\rVert_\infty$ より，
-  $f\mapsto l_f(y)$ は一様近似によって $C(\mathcal{X})$ 上の実線形汎関数 $L_y$ に延長できる．
-  この延長も正である：$f\geq0$ に一様収束する $g_n\in\mathcal{C}$ と，
-  $r_n>\lVert g_n-f\rVert_\infty$，$r_n\to0$ となる有理数を取ると，
-  $g_n+r_n\geq0$ より $L_y(f)=\lim_n l_{g_n+r_n}(y)\geq0$ となる．
-  $L_y(1)=1$ なので，Riesz の表現定理により
+  $y\notin N$ では，$f\mapsto l_f(y)$ は一様近似により $C(\mathcal{X})$ 上の
+  実線形汎関数 $L_y$ に延長でき，$L_y(1)=1$，$\abs{L_y(f)}\leq\lVert f\rVert_\infty$ をみたす．
+  $f\geq0$ なら，$m:=\lVert f\rVert_\infty$ とおくと $\lVert m-f\rVert_\infty\leq m$ より
   \[
-    L_y(f)=\int_{\mathcal{X}}f\,\d\pi_y\qquad(f\in C(\mathcal{X}))
+    L_y(f)=m-L_y(m-f)\geq0.
   \]
-  をみたす $\pi_y\in\Prob(\mathcal{X})$ が得られる．
-  $y\in N$ では，固定した $x_0\in\mathcal{X}$ に対する Dirac 測度
+  したがって Riesz の表現定理により $L_y(f)=\int_{\mathcal{X}}f\,\d\pi_y$ となる
+  $\pi_y\in\Prob(\mathcal{X})$ が得られる．$N$ 上では，固定した $x_0\in\mathcal{X}$ に対し
   $\pi_y:=\delta_{x_0}$（$\delta_{x_0}(A):=\mathbf{1}_A(x_0)$）とする．
 
-  $f\in\mathcal{C}$ では $\int f\,\d\pi_y=l_f(y)$ が $N$ の外で成り立つから，
-  左辺は $y$ の Borel 可測関数で，
+  密度の公式と一様近似より，すべての $f\in C(\mathcal{X})$ に対し
+  $y\mapsto\int_{\mathcal{X}}f\,\d\pi_y$ は Borel 可測で，
   \[
     \int_B\left(\int_{\mathcal{X}}f\,\d\pi_y\right)\d\nu(y)
-    =\int_{\mathcal{X}\times B}f(x)\,\d\pi(x,y)
-    \qquad(B\in\Borel(\mathcal{Y}))
+    =\int_{\mathcal{X}\times B}f(x)\,\d\pi(x,y).
   \]
-  をみたす．一様近似により，すべての $f\in C(\mathcal{X})$ でも同様である．
-  閉集合 $A\neq\emptyset$ について
-  $f_m(x):=\max\{1-m\,d(x,A),0\}\to\mathbf{1}_A(x)$ と有界収束定理を用いると，
-  定理の条件 1，2 を得る（$A=\emptyset$ も明らか）．
-  両条件をみたす $A$ の全体は $\lambda$-系であり，閉集合は Borel 集合を生成する
-  $\pi$-系なので，Dynkin の定理（定理~\ref{thm:meas-pi-lambda}）からすべての Borel 集合 $A$ で成り立つ．
+  閉集合 $A\neq\emptyset$ では $\max\{1-k\,d(x,A),0\}\to\mathbf{1}_A(x)$（$k\to\infty$）と
+  有界収束定理から条件 1，2 を得る（$A=\emptyset$ も明らか）．
+  両条件をみたす $A$ の全体は $\lambda$-系で，閉集合は Borel 集合を生成する $\pi$-系なので，
+  Dynkin の定理（定理~\ref{thm:meas-pi-lambda}）によりすべての Borel 集合 $A$ で成り立つ．
 
-  \textbf{3. 一般の Polish 空間へ拡張する．}
-  第1周辺分布 $\mu(A):=\pi(A\times\mathcal{Y})$ は tight なので
-  （定理~\ref{thm:meas-prokhorov}を $\{\mu\}$ に適用），
-  増大する compact 集合列 $(K_n)$ で $\mu(\bigcup_nK_n)=1$ となるものが取れる．
+  \textbf{3. $\mathcal{X}$ が compact とは限らない場合．}
+  第1周辺分布 $\mu(A):=\pi(A\times\mathcal{Y})$ の tightness
+  （定理~\ref{thm:meas-prokhorov}を $\{\mu\}$ に適用）から，
+  増大する compact 集合列 $(K_n)$ で $\mu(\bigcup_nK_n)=1$ となるものを取る．
   $K_0:=\emptyset$，$E_n:=K_n\setminus K_{n-1}$ とし，
-  $\pi$ を $E_n\times\mathcal{Y}$ に制限した測度を $K_n\times\mathcal{Y}$ 上の
-  有限測度とみなす．その第2周辺分布を $\nu_n(B):=\pi(E_n\times B)$ とすると，
-  $\sum_n\nu_n=\nu$ である．零測度の項は以下で除く．
-  1--2 を各制限測度に適用し，得られた確率測度を $K_n$ の外で質量 $0$ として
-  $\mathcal{X}$ 上に延長すると，$y\mapsto\rho_y^{(n)}(A)$ が Borel 可測な確率測度の族で
+  $\pi$ の $E_n\times\mathcal{Y}$ への制限を $K_n\times\mathcal{Y}$ 上の有限測度とみなして
+  1--2 を適用する（零測度の項は除く）．第2周辺分布を $\nu_n(B):=\pi(E_n\times B)$ と書けば，
   \[
     \pi((A\cap E_n)\times B)=\int_B\rho_y^{(n)}(A)\,\d\nu_n(y)
   \]
-  をみたすものを得る．$\nu_n\leq\nu$ より非負の Borel 可測な密度 $h_n:=\d\nu_n/\d\nu$ を取ると，
-  単調収束定理と密度の一意性から $\sum_nh_n=1$ が $\nu$-a.e. に成り立つ．そこで
+  と条件 1 をみたす確率測度の族 $(\rho_y^{(n)})$ を得る．ここでは $K_n$ の外の質量を $0$ としている．
+  $\sum_n\nu_n=\nu$ より，非負の Borel 可測な密度 $h_n:=\d\nu_n/\d\nu$ は
+  $\sum_nh_n=1$ を $\nu$-a.e. にみたす（単調収束定理と密度の一意性）．そこで
   \[
     \pi_y(A):=\sum_n h_n(y)\rho_y^{(n)}(A)
   \]
-  と定める．$\sum_nh_n\neq1$ となる Borel 零集合上では，
-  固定した $x_0\in\mathcal{X}$ に対して $\pi_y:=\delta_{x_0}$ とする．
-  これは各 $y$ で確率測度となり，$y\mapsto\pi_y(A)$ は Borel 可測である．
-  単調収束定理より
+  と定め，$\sum_nh_n\neq1$ となる Borel 零集合上では，固定した $x_0\in\mathcal{X}$ に対する
+  $\delta_{x_0}$ に置き換える．これは条件 1 をみたす確率測度の族である．
+  密度の公式を非負単関数近似で拡張し，単調収束定理を用いると
   \[
     \begin{aligned}
       \int_B\pi_y(A)\,\d\nu
-      &=\sum_n\int_B h_n(y)\rho_y^{(n)}(A)\,\d\nu(y)\\
       &=\sum_n\int_B\rho_y^{(n)}(A)\,\d\nu_n(y)\\
       &=\sum_n\pi((A\cap E_n)\times B)=\pi(A\times B).
     \end{aligned}
   \]
-  2 番目の等号は，$\nu_n(B)=\int_Bh_n\,\d\nu$ を非負単関数による近似で拡張したものである．
-  よって両条件を得る．
+  よって条件 2 も成り立つ．
 \end{proof}
 
 \subsection{接着補題}
