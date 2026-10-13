@@ -318,8 +318,8 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 
 \subsection{測度分解定理}
 
-接着補題では，二変数の分布 $\pi$ を，$y$ の分布 $\nu$ と，
-$y$ を固定したときの $x$ の分布 $\pi_y$ に分ける．
+測度分解定理は，測度 $\mu$ を写像 $T$ の値 $y$ ごとに分ける定理である．
+接着補題では，$T$ として共通の変数 $y$ を取り出す写像を用いる．
 証明は北別府悠『最適輸送理論入門〜兼非標準的関数解析入門〜』
 Theorem 5.3.1 の証明（提供資料）に沿って，
 まず compact な場合に測度を構成し，次に一般の Polish 空間へ拡張する．
@@ -327,42 +327,44 @@ Theorem 5.3.1 の証明（提供資料）に沿って，
 Riesz の表現定理（定理~\ref{thm:meas-riesz-representation}）である．
 $C(K)$ の記法と可分性は注意~\ref{rem:meas-compact-continuous}にまとめた．
 
-\begin{theorem}{測度分解定理（周辺分布を用いた積分表示）}{meas-disintegration}
-  $\mathcal{X},\mathcal{Y}$ を Polish 空間，$\pi\in\Prob(\mathcal{X}\times\mathcal{Y})$ とし，
-  $\nu(B):=\pi(\mathcal{X}\times B)$ を第2周辺分布とする．
-  このとき，確率測度の族 $(\pi_y)_{y\in\mathcal{Y}}$ で，次をみたすものが存在する．
+\begin{theorem}{測度分解定理（北別府 Theorem 5.3.1）}{meas-disintegration}
+  $\mathcal{X},\mathcal{Y}$ を Polish 空間，$\mu\in\Prob(\mathcal{X})$，
+  $T\colon\mathcal{X}\to\mathcal{Y}$ を Borel 可測写像とし，
+  $\nu:=\mu\circ T^{-1}$ とおく．
+  このとき，確率測度の族 $(\mu_y)_{y\in\mathcal{Y}}$ で，次をみたすものが存在する．
   \begin{enumerate}
-    \item すべての $y\in\mathcal{Y}$ で $\pi_y\in\Prob(\mathcal{X})$ であり，
-      各 $A\in\Borel(\mathcal{X})$ に対して $y\mapsto\pi_y(A)$ は Borel 可測である．
-    \item 任意の $A\in\Borel(\mathcal{X})$，$B\in\Borel(\mathcal{Y})$ に対して
+    \item すべての $y\in\mathcal{Y}$ で $\mu_y\in\Prob(\mathcal{X})$ であり，
+      各 $A\in\Borel(\mathcal{X})$ に対して $y\mapsto\mu_y(A)$ は Borel 可測である．
+    \item $\nu$-a.e. の $y$ について，$\mu_y$ は $T^{-1}(\{y\})$ に集中する．すなわち
       \[
-        \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y).
+        \mu_y\bigl(T^{-1}(\{y\})\bigr)=1.
+      \]
+    \item 任意の非負 Borel 可測関数 $f\colon\mathcal{X}\to[0,+\infty]$ に対し，
+      $y\mapsto\int_{\mathcal{X}}f\,\d\mu_y$ は Borel 可測で，
+      すべての $B\in\Borel(\mathcal{Y})$ について
+      \[
+        \int_{T^{-1}(B)}f\,\d\mu
+        =\int_B\left(\int_{\mathcal{X}}f\,\d\mu_y\right)\d\nu(y).
       \]
   \end{enumerate}
-  さらに，任意の非負 Borel 可測関数
-  $F\colon\mathcal{X}\times\mathcal{Y}\to[0,+\infty]$ に対し，
-  $y\mapsto\int_{\mathcal{X}}F(x,y)\,\d\pi_y(x)$ は Borel 可測で，
-  \[
-    \int_{\mathcal{X}\times\mathcal{Y}}F(x,y)\,\d\pi(x,y)
-    =\int_{\mathcal{Y}}\left(\int_{\mathcal{X}}F(x,y)\,\d\pi_y(x)\right)\d\nu(y).
-  \]
-  $F$ が $\pi$-可積分な実数値 Borel 関数の場合も，内側の積分は
+  特に $B=\mathcal{Y}$ とすれば，$\mu$ による積分は $\mu_y$ による積分の
+  $\nu$ に関する平均として表される．この族を $\mu$ の $T$ による\textbf{測度分解}という．
+  $f$ が $\mu$-可積分な実数値 Borel 関数の場合も，内側の積分は
   $\nu$-a.e. に絶対収束し，同じ公式が成り立つ．
-  同じ条件をみたす族 $(\widetilde\pi_y)$ があれば，ある Borel 集合
-  $N\subset\mathcal{Y}$，$\nu(N)=0$ が存在し，
+  また，同じ条件をみたす族 $(\widetilde\mu_y)$ があれば，ある Borel 集合
+  $N\subset\mathcal{Y}$，$\nu(N)=0$ が存在して
   \[
-    \pi_y=\widetilde\pi_y\qquad(\text{すべての }y\notin N)
+    \mu_y=\widetilde\mu_y\qquad(\text{すべての }y\notin N)
   \]
-  が成り立つ．すなわち，例外集合は $A$ によらず共通に取れる．
-  第1周辺分布を用いた表示も，二つの座標を入れ替えれば得られる．
+  となる．すなわち，例外集合は $A$ によらず共通に取れる．
 \end{theorem}
 
 \begin{proof}
   \textbf{1. $\mathcal{X}$ が compact の場合：積分の候補を作る．}
-  この段階では $\pi$ は零でない有限測度でもよい．
+  この段階では $\mu$ は零でない有限測度でもよい．
   $f\in C(\mathcal{X})$ に対して
   \[
-    \nu_f(B):=\int_{\mathcal{X}\times B}f(x)\,\d\pi(x,y)
+    \nu_f(B):=\int_{T^{-1}(B)}f\,\d\mu
     \qquad(B\in\Borel(\mathcal{Y}))
   \]
   とおく．$\nu_f$ は有限符号付き測度であり，
@@ -398,134 +400,94 @@ $C(K)$ の記法と可分性は注意~\ref{rem:meas-compact-continuous}にまと
   また $L_y(1)=1$ である．
   Riesz の表現定理（定理~\ref{thm:meas-riesz-representation}）により
   \[
-    L_y(f)=\int_{\mathcal{X}}f\,\d\pi_y\qquad(f\in C(\mathcal{X}))
+    L_y(f)=\int_{\mathcal{X}}f\,\d\mu_y\qquad(f\in C(\mathcal{X}))
   \]
-  をみたす $\pi_y\in\Prob(\mathcal{X})$ が得られる．
+  をみたす $\mu_y\in\Prob(\mathcal{X})$ が得られる．
   $y\in N$ では，固定した $x_0\in\mathcal{X}$ に対する
-  Dirac 測度 $\pi_y:=\delta_{x_0}$，$\delta_{x_0}(A):=\mathbf{1}_A(x_0)$ と定める．
+  Dirac 測度 $\mu_y:=\delta_{x_0}$，$\delta_{x_0}(A):=\mathbf{1}_A(x_0)$ と定める．
 
-  $f\in\mathcal{C}$ について $\int f\,\d\pi_y=l_f(y)$ が $N$ の外で成り立つから，
+  $f\in\mathcal{C}$ について $\int f\,\d\mu_y=l_f(y)$ が $N$ の外で成り立つから，
   左辺は $y$ の Borel 可測関数であり，
   \[
-    \int_B\left(\int_{\mathcal{X}}f\,\d\pi_y\right)\d\nu(y)
-    =\int_{\mathcal{X}\times B}f(x)\,\d\pi(x,y)
+    \int_B\left(\int_{\mathcal{X}}f\,\d\mu_y\right)\d\nu(y)
+    =\int_{T^{-1}(B)}f\,\d\mu
     \qquad(B\in\Borel(\mathcal{Y}))
   \]
   をみたす．一様近似により，同じことがすべての $f\in C(\mathcal{X})$ に成り立つ．
   閉集合 $A\neq\emptyset$ の指示関数は
   $f_m(x):=\max\{1-m\,d(x,A),0\}\to\mathbf{1}_A(x)$ と近似できるので，
-  有界収束定理から $y\mapsto\pi_y(A)$ の可測性と
-  $\pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y)$ が従う（$A=\emptyset$ も明らか）．
+  有界収束定理から $y\mapsto\mu_y(A)$ の可測性と
+  \[
+    \mu(A\cap T^{-1}(B))=\int_B\mu_y(A)\,\d\nu(y)
+  \]
+  が従う（$A=\emptyset$ も明らか）．
   この二つの性質をみたす $A$ の全体は，補集合と互いに素な可算合併で閉じた
   $\lambda$-系である．閉集合は Borel 集合を生成する $\pi$-系なので，
   Dynkin の定理（定理~\ref{thm:meas-pi-lambda}）から，すべての Borel 集合 $A$ で成り立つ．
 
   \textbf{3. 一般の Polish 空間へ拡張する．}
-  第1周辺分布 $\mu(A):=\pi(A\times\mathcal{Y})$ は tight である
-  （定理~\ref{thm:meas-prokhorov}を $\{\mu\}$ に適用）．
+  $\mu$ は tight である（定理~\ref{thm:meas-prokhorov}を $\{\mu\}$ に適用）．
   したがって，増大する compact 集合列 $(K_n)$ で
   $\mu(\bigcup_nK_n)=1$ となるものが取れる．
   $K_0:=\emptyset$，$E_n:=K_n\setminus K_{n-1}$ とおき，
-  $\pi$ を $E_n\times\mathcal{Y}$ に制限した有限測度を
-  $K_n\times\mathcal{Y}$ 上の測度 $\pi^{(n)}$ とみなす．
-  その第2周辺測度は $\nu_n(B):=\pi(E_n\times B)$ であり，$\sum_n\nu_n=\nu$ である．
+  $\mu^{(n)}(A):=\mu(A\cap E_n)$ を $K_n$ 上の有限測度とみなす．
+  $T$ を $K_n$ に制限した写像による像測度を
+  $\nu_n(B):=\mu(E_n\cap T^{-1}(B))$ とすると，$\sum_n\nu_n=\nu$ である．
   零測度となる項は以下の和から除く．
 
-  1--2 を $\pi^{(n)}$ に適用して得られる族を，$K_n$ の外では質量 $0$ として
-  $\mathcal{X}$ 上に延長し，$(\rho_y^{(n)})$ と書く．すると
+  1--2 を $\mu^{(n)}$ と $T$ の制限に適用して得られる族を，
+  $K_n$ の外では質量 $0$ として $\mathcal{X}$ 上に延長し，$(\rho_y^{(n)})$ と書く．すると
   \[
-    \pi\bigl((A\cap E_n)\times B\bigr)
-    =\int_B\rho_y^{(n)}(A)\,\d\nu_n(y).
+    \mu(A\cap E_n\cap T^{-1}(B))=\int_B\rho_y^{(n)}(A)\,\d\nu_n(y).
   \]
   $\nu_n\ll\nu$ なので非負の Borel 可測関数 $h_n:=\d\nu_n/\d\nu$ を取ると，
   単調収束定理と微分の一意性から $\sum_nh_n=1$ が $\nu$-a.e. に成り立つ．
   この等式が成り立つ $y$ では
   \[
-    \pi_y(A):=\sum_n h_n(y)\rho_y^{(n)}(A)
+    \mu_y(A):=\sum_n h_n(y)\rho_y^{(n)}(A)
   \]
   と定め，残りの Borel 零集合上では，固定した $x_0\in\mathcal{X}$ に対して
-  $\pi_y:=\delta_{x_0}$ とする．
-  これは各 $y$ で確率測度を定め，$y\mapsto\pi_y(A)$ は Borel 可測である．
+  $\mu_y:=\delta_{x_0}$ とする．これは各 $y$ で確率測度を定め，$y\mapsto\mu_y(A)$ は Borel 可測である．
   $\d\nu_n=h_n\,\d\nu$ と単調収束定理より
   \[
     \begin{aligned}
-      \int_B\pi_y(A)\,\d\nu
+      \int_B\mu_y(A)\,\d\nu
       &=\sum_n\int_B h_n(y)\rho_y^{(n)}(A)\,\d\nu(y)\\
       &=\sum_n\int_B\rho_y^{(n)}(A)\,\d\nu_n(y)\\
-      &=\sum_n\pi\bigl((A\cap E_n)\times B\bigr)
-      =\pi(A\times B).
+      &=\sum_n\mu(A\cap E_n\cap T^{-1}(B))
+      =\mu(A\cap T^{-1}(B)).
     \end{aligned}
   \]
   ここで密度による積分の置き換えは，指示関数に対する
   $\nu_n(B)=\int_Bh_n\,\d\nu$ を単関数近似で拡張したものである．
+  得られた公式も，非負単関数による近似と単調収束定理により
+  任意の非負 Borel 関数 $f$ に拡張でき，条件 3 を得る．
+  可積分な $f$ については，$\abs{f}$ の公式から内側の絶対可積分性が分かり，
+  正部分・負部分の公式の差を取ればよい．
 
-  \textbf{4. 積分表示と一意性．}
-  $D\in\Borel(\mathcal{X}\times\mathcal{Y})$ に対して
-  $y\mapsto\int_{\mathcal{X}}\mathbf{1}_D(x,y)\,\d\pi_y(x)$ が可測であり，
-  その $\nu$ による積分が $\pi(D)$ に等しくなることを示す．
-  この性質をもつ $D$ の全体は，単調収束定理により $\lambda$-系をなし，
-  2 の矩形上の公式（一般の場合は 3）によりすべての矩形を含む．
-  よって Dynkin の定理と注意~\ref{rem:meas-borel-product}から，すべての Borel 集合で成り立つ．
-  非負単関数による近似と単調収束定理で，主張した $F$ の積分表示を得る．
-  可積分な $F$ については，$\abs{F}$ にこの公式を適用すれば内側の絶対可積分性が分かり，
-  $F$ の正部分・負部分の公式の差を取ればよい．
+  \textbf{4. $T^{-1}(\{y\})$ への集中と一意性．}
+  可分距離空間では，可算稠密集合を中心とする有理数半径の開球の有限交叉と
+  全空間からなる族は，Borel 集合を生成する可算な $\pi$-系である．
+  $\mathcal{Y}$ 上のこの族を $\mathcal{H}$ とする．各 $C\in\mathcal{H}$ について，
+  3 の公式に $A=T^{-1}(C)$ を代入すると
+  \[
+    \int_B\mu_y(T^{-1}(C))\,\d\nu(y)
+    =\nu(B\cap C)=\int_B\mathbf{1}_C(y)\,\d\nu(y)
+    \qquad(B\in\Borel(\mathcal{Y})).
+  \]
+  Radon--Nikodym 微分の一意性より
+  $\mu_y(T^{-1}(C))=\mathbf{1}_C(y)$ が $\nu$-a.e. に成り立つ．
+  $\mathcal{H}$ は可算なので，共通の Borel 零集合の外で，二つの確率測度
+  $\mu_y\circ T^{-1}$ と $\delta_y$ は $\mathcal{H}$ 上で一致する．
+  有限測度の一致定理（定理~\ref{thm:meas-uniqueness}）から
+  $\mu_y\circ T^{-1}=\delta_y$ であり，$\{y\}$ の測度を比べれば条件 2 を得る．
 
-  最後に，同じ条件をみたす族 $(\widetilde\pi_y)$ を取る．
-  $\mathcal{X}$ の可算稠密集合を中心とする有理数半径の開球の有限交叉と
-  $\mathcal{X}$ 全体からなる族 $\mathcal{G}$ は，
-  $\Borel(\mathcal{X})$ を生成する可算な $\pi$-系である．
-  各 $A\in\mathcal{G}$ について，$\pi_y(A)$ と $\widetilde\pi_y(A)$ はともに
-  $B\mapsto\pi(A\times B)$ の $\nu$ に関する Radon--Nikodym 微分なので，$\nu$-a.e. に一致する．
-  $\mathcal{G}$ は可算だから，共通の Borel 零集合 $N$ の外で
-  すべての $A\in\mathcal{G}$ について一致する．
-  各 $y\notin N$ で有限測度の一致定理（定理~\ref{thm:meas-uniqueness}）を適用すれば，
-  $\pi_y=\widetilde\pi_y$ を得る．
+  最後に，同じ条件をみたす族 $(\widetilde\mu_y)$ を取る．
+  各 $A\in\Borel(\mathcal{X})$ について，$\mu_y(A)$ と $\widetilde\mu_y(A)$ はともに
+  $B\mapsto\mu(A\cap T^{-1}(B))$ の $\nu$ に関する Radon--Nikodym 微分なので，$\nu$-a.e. に一致する．
+  $\mathcal{X}$ の Borel 集合を生成する可算な $\pi$-系上で共通の Borel 零集合 $N$ を取り，
+  各 $y\notin N$ で再び有限測度の一致定理を適用すれば，$\mu_y=\widetilde\mu_y$ を得る．
 \end{proof}
-
-\begin{corollary}{Borel 写像による測度分解（北別府 Theorem 5.3.1）}{meas-disintegration-map}
-  $\mathcal{X},\mathcal{Y}$ を Polish 空間，$\mu\in\Prob(\mathcal{X})$，
-  $T\colon\mathcal{X}\to\mathcal{Y}$ を Borel 可測写像，$\nu:=\mu\circ T^{-1}$ とする．
-  このとき，$\mu_y\in\Prob(\mathcal{X})$ の族 $(\mu_y)_{y\in\mathcal{Y}}$ で，
-  各 $A\in\Borel(\mathcal{X})$ に対して $y\mapsto\mu_y(A)$ が Borel 可測であり，
-  \[
-    \mu_y\bigl(T^{-1}(\{y\})\bigr)=1\quad(\nu\text{-a.e. }y),
-  \]
-  \[
-    \int_{\mathcal{X}}f\,\d\mu
-    =\int_{\mathcal{Y}}\left(\int_{\mathcal{X}}f\,\d\mu_y\right)\d\nu(y)
-  \]
-  をみたすものが存在する（$f$ は任意の非負 Borel 可測関数）．
-  これを $\mu$ の $T$ による\textbf{測度分解}という．
-  この族は，共通の $\nu$-零集合の外で一意である．
-\end{corollary}
-
-\begin{proof}
-  $G(x):=(x,T(x))$ による像測度 $\pi:=\mu\circ G^{-1}$ に
-  定理~\ref{thm:meas-disintegration}を適用し，得られる族を $(\mu_y)$ とする．
-  $F(x,y)=f(x)$ に対する積分表示が，主張の積分公式を与える．
-  $T$ のグラフ $\Gamma_T:=\{(x,y)\mid T(x)=y\}$ は
-  Borel 関数 $(x,y)\mapsto d_{\mathcal{Y}}(T(x),y)$ の零点集合なので Borel 集合である．
-  $\pi(\Gamma_T)=1$ より，$F=\mathbf{1}_{\Gamma_T}$ に対する積分表示から
-  \[
-    1=\int_{\mathcal{Y}}\mu_y\bigl(T^{-1}(\{y\})\bigr)\,\d\nu(y)
-  \]
-  を得る．被積分関数は $[0,1]$ に値を取るので，$\nu$-a.e. に $1$ である．
-  また，任意の分解について，$T^{-1}(\{y\})$ に集中することと
-  $f=\mathbf{1}_{A\cap T^{-1}(B)}$ に対する公式から
-  $\mu(A\cap T^{-1}(B))=\int_B\mu_y(A)\,\d\nu(y)$ を得る．
-  したがって一意性も定理~\ref{thm:meas-disintegration}から従う．
-\end{proof}
-
-\begin{remark}{参考資料との対応}{meas-disintegration-references}
-  北別府の証明の「Radon--Nikodym 微分，可算個の条件の同時成立，
-  Riesz の表現定理，compact な部分への分割」という流れを用いた．
-  ここでは接着補題に必要な直積上の形を先に証明したので，
-  compact な場合にも $\mathcal{Y}$ の compact 性を要さず，
-  一般の場合への拡張には第1周辺分布の tightness だけで足りる．
-  一般の Borel 写像による形は直前の系で得られる．
-  桑江ほか (2015) 補題 1.32 も測度分解定理であり，
-  Villani (2009) p.~12 は接着補題の説明でこの分解を用いている．
-\end{remark}
 
 \subsection{接着補題}
 
@@ -552,20 +514,22 @@ $C(K)$ の記法と可分性は注意~\ref{rem:meas-compact-continuous}にまと
 
 \begin{proof}
   共通の変数 $y$ に沿って二つの測度を分解し，得られた分布を直積にしてから $\nu$ で平均する．
-  各 $y\in\mathcal{Y}$ について，次のように確率測度 $\pi_y,\sigma_y$ を取る．
-  $\pi$ の第2周辺分布は $\nu$ なので，定理~\ref{thm:meas-disintegration}により
+  $\pi$ と写像 $T(x,y):=y$ に定理~\ref{thm:meas-disintegration}を適用すると，
+  $\mathcal{X}\times\mathcal{Y}$ 上の確率測度の族 $(\lambda_y)$ が得られる．
+  その第1周辺分布を $\pi_y(A):=\lambda_y(A\times\mathcal{Y})$ とおく．
+  定理の積分公式に $f=\mathbf{1}_{A\times\mathcal{Y}}$ を用いると
   \[
     \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y)
     \qquad(A\in\Borel(\mathcal{X}),\,B\in\Borel(\mathcal{Y}))
   \]
-  をみたす $\pi_y\in\Prob(\mathcal{X})$ が取れる．
-  同様に，$\sigma$ の第1周辺分布は $\nu$ なので，同じ定理により
+  を得る．同様に，$\sigma$ と写像 $(y,z)\mapsto y$ に同定理を適用し，
+  得られた分解の第2周辺分布を $\sigma_y\in\Prob(\mathcal{Z})$ とすれば
   \[
     \sigma(B\times C)=\int_B\sigma_y(C)\,\d\nu(y)
     \qquad(B\in\Borel(\mathcal{Y}),\,C\in\Borel(\mathcal{Z}))
   \]
-  をみたす $\sigma_y\in\Prob(\mathcal{Z})$ が取れる．
-  同定理により，$y\mapsto\pi_y(A)$ と $y\mapsto\sigma_y(C)$ はともに Borel 可測である．
+  が成り立つ．同定理の条件 1 により，$y\mapsto\pi_y(A)$ と
+  $y\mapsto\sigma_y(C)$ はともに Borel 可測である．
 
   そこで，$\gamma\in\Prob(\mathcal{X}\times\mathcal{Y}\times\mathcal{Z})$ を
   \[
