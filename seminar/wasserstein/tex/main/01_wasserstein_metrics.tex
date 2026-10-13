@@ -327,12 +327,16 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 
 \begin{theorem}{測度分解定理（接着補題で用いる形）}{meas-disintegration}
   $\mathcal{X},\mathcal{Y}$ を Polish 空間，$\pi\in\Prob(\mathcal{X}\times\mathcal{Y})$ とし，
-  $\nu(B):=\pi(\mathcal{X}\times B)$ を第2周辺分布とする．
+  第2周辺分布 $\nu\in\Prob(\mathcal{Y})$ を
+  \[
+    \nu(B):=\pi(\mathcal{X}\times B)\qquad(B\in\Borel(\mathcal{Y}))
+  \]
+  で定める．
   このとき，確率測度の族 $(\pi_y)_{y\in\mathcal{Y}}$，$\pi_y\in\Prob(\mathcal{X})$ で，
   次をみたすものが存在する．
   \begin{enumerate}
-    \item 各 $A\in\Borel(\mathcal{X})$ に対して $y\mapsto\pi_y(A)$ は Borel 可測である．
-    \item 任意の $A\in\Borel(\mathcal{X})$，$B\in\Borel(\mathcal{Y})$ に対して
+    \item 各 Borel 集合 $A\in\Borel(\mathcal{X})$ に対して $y\mapsto\pi_y(A)$ は Borel 可測である．
+    \item 任意の Borel 集合 $A\in\Borel(\mathcal{X})$，$B\in\Borel(\mathcal{Y})$ に対して
       \[
         \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y).
       \]
