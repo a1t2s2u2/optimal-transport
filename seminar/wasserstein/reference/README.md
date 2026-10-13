@@ -3,6 +3,26 @@
 主たる文献は Cédric Villani, *Optimal Transport: Old and New*, Springer, 2009
 （[正式版の書誌情報](https://doi.org/10.1007/978-3-540-71050-9)）。
 
+## 北別府先生の測度分解定理の資料
+
+`北別府先生/` の提供写真は，北別府悠『最適輸送理論入門〜兼非標準的関数解析入門〜』
+Theorem 5.3.1 とその証明に対応する（著者名・表題・定理番号は写真で確認）．
+
+- `IMG_3490.JPG`：測度分解の定義と Theorem 5.3.1（存在・本質的一意性）．
+- `IMG_3491.JPG`：compact な場合の構成，Radon–Nikodym 微分，可算稠密部分空間．
+- `IMG_3492.JPG`：可算個の条件を共通の零集合の外で成立させる議論（印刷 p.77）．
+- `IMG_3493.JPG`：Riesz–Markov–Kakutani の表現定理，可測性・積分表示・一意性，一般の場合への拡張．
+
+付録の証明はこの流れに沿い，接着補題で使う直積上の形を先に示す．
+一般の Polish 空間への拡張では，第1周辺分布の tightness により compact 集合列を取り，
+各部分の周辺測度の Radon–Nikodym 微分を重みとして分解を足し合わせる．
+一般の Borel 写像による形は，グラフへの像測度を使う系として記載した．
+
+前提とする Radon–Nikodym の定理と Riesz の表現定理は，
+Rudin *Real and Complex Analysis* も参照．両定理の主張は
+[Arun Ram の講義ノート](https://math.soimeme.org/~arunram/Notes/RadonNikodymContent.html)
+でも確認できる．
+
 ## Villani の公開草稿
 
 - ファイル：[villani-old-and-new-draft-2006-09-27.pdf](villani-old-and-new-draft-2006-09-27.pdf)

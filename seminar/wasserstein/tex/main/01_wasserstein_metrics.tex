@@ -337,6 +337,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 \end{lemma}
 
 \begin{proof}
+  共通の変数 $y$ に沿って二つの測度を分解し，得られた分布を直積にしてから $\nu$ で平均する．
   各 $y\in\mathcal{Y}$ について，次のように確率測度 $\pi_y,\sigma_y$ を取る．
   $\pi$ の第2周辺分布は $\nu$ なので，定理~\ref{thm:meas-disintegration}により
   \[
@@ -350,6 +351,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
     \qquad(B\in\Borel(\mathcal{Y}),\,C\in\Borel(\mathcal{Z}))
   \]
   をみたす $\sigma_y\in\Prob(\mathcal{Z})$ が取れる．
+  同定理により，$y\mapsto\pi_y(A)$ と $y\mapsto\sigma_y(C)$ はともに Borel 可測である．
 
   そこで，$\gamma\in\Prob(\mathcal{X}\times\mathcal{Y}\times\mathcal{Z})$ を
   \[
