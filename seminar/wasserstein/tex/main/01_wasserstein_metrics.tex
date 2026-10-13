@@ -367,9 +367,17 @@ $C(K)$ の記法と可分性は注意~\ref{rem:meas-compact-continuous}にまと
     \nu_f(B):=\int_{T^{-1}(B)}f\,\d\mu
     \qquad(B\in\Borel(\mathcal{Y}))
   \]
-  とおく．$\nu_f$ は有限符号付き測度であり，
-  $\abs{\nu_f(B)}\leq\lVert f\rVert_\infty\nu(B)$ より $\nu_f\ll\nu$ である．
-  Radon--Nikodym の定理（定理~\ref{thm:meas-radon-nikodym}）から，
+  とおく．$f^+:=\max\{f,0\}$，$f^-:=\max\{-f,0\}$ とすると，
+  $\nu_f=\nu_{f^+}-\nu_{f^-}$ であり，$\nu_{f^+},\nu_{f^-}$ はともに有限測度なので，
+  $\nu_f$ は有限符号付き測度である．また
+  \[
+    \abs{\nu_f(B)}\leq\lVert f\rVert_\infty\nu(B)
+  \]
+  より，任意の $\varepsilon>0$ に対して
+  $\delta:=\varepsilon/(1+\lVert f\rVert_\infty)$ とすれば
+  $\nu(B)<\delta$ のとき $\abs{\nu_f(B)}<\varepsilon$ となる．
+  したがって $\nu_f\ll\nu$（定義~\ref{def:meas-absolute-continuity}）である．
+  Radon--Nikodym の定理（定理~\ref{thm:meas-radon-nikodym}）の符号付きの場合を適用し，
   Borel 可測関数 $l_f$ で $\nu_f(B)=\int_B l_f\,\d\nu$ となるものを取る．
 
   注意~\ref{rem:meas-compact-continuous}の可算な稠密部分空間

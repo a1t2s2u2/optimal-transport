@@ -579,21 +579,50 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
 これらは北別府悠『最適輸送理論入門〜兼非標準的関数解析入門〜』
 Theorem 5.3.1 の証明（提供資料）でも用いられる．
 
-\begin{theorem}{Radon--Nikodym の定理（有限測度の場合）}{meas-radon-nikodym}
+\begin{definition}{測度の絶対連続性（北別府 p.~57）}{meas-absolute-continuity}
   可測空間 $(\Omega,\mathcal{A})$ 上の有限測度 $\nu$ と，
   有限符号付き測度 $\alpha$（二つの有限測度の差）を考える．
-  $\nu(B)=0$ ならば $\alpha(B)=0$ となるとき，
-  $\alpha$ は $\nu$ に\textbf{絶対連続}であるといい，$\alpha\ll\nu$ と書く．
-  このとき，$\nu$-可積分な可測関数 $h\colon\Omega\to\R$ が存在して
+  $\alpha$ が $\nu$ に\textbf{絶対連続}であるとは，
+  任意の $\varepsilon>0$ に対してある $\delta>0$ が存在し，
   \[
-    \alpha(B)=\int_B h\,\d\nu\qquad(B\in\mathcal{A})
+    \nu(B)<\delta\quad\Longrightarrow\quad\abs{\alpha(B)}<\varepsilon
+    \qquad(B\in\mathcal{A})
   \]
-  が成り立つ．$h$ は $\nu$-a.e. の意味で一意であり，
+  が成り立つことをいう．このとき $\alpha\ll\nu$ と書く．
+  北別府の資料では，この定義を実数値の集合関数に対して与えている．
+  本資料で用いるのは有限符号付き測度の場合である．
+\end{definition}
+
+\begin{theorem}{Radon--Nikodym の定理（北別府 Cor 4.6.2, 4.6.3）}{meas-radon-nikodym}
+  可測空間 $(\Omega,\mathcal{A})$ 上の二つの有限測度 $\nu,\alpha$ に対し，
+  次の三つは同値である．
+  \begin{enumerate}
+    \item $\alpha\ll\nu$，すなわち $\alpha$ は $\nu$ に絶対連続である．
+    \item すべての $B\in\mathcal{A}$ に対して，
+      $\nu(B)=0$ ならば $\alpha(B)=0$ である．
+    \item 非負の $\nu$-可積分な可測関数 $h$ が存在し，
+      \[
+        \alpha(B)=\int_B h\,\d\nu\qquad(B\in\mathcal{A})
+      \]
+      が成り立つ．
+  \end{enumerate}
+  さらに，$\alpha$ が有限符号付き測度の場合も，条件 3 の $h$ を
+  実数値の可積分関数として，同じ同値関係が成り立つ．
+  いずれの場合も $h$ は $\nu$-a.e. の意味で一意であり，
   \textbf{Radon--Nikodym 微分} $\d\alpha/\d\nu$ とよぶ．
-  $\alpha$ が非負の測度なら $h\geq0$ と選べる．
-  （標準的な定理．北別府の上記証明でも用いられる．
-  例えば Rudin \emph{Real and Complex Analysis} の Radon--Nikodym の定理を参照．）
+
+  （存在と三条件の同値性は標準定理として証明なしに用いる．
+  非負測度の場合は北別府 Corollary 4.6.2（p.~57）であり，
+  資料では Lebesgue 分解定理（Theorem 4.6.1，pp.~56--57）から導いている．
+  符号付きの場合の存在は同 Corollary 4.6.3 を有限符号付き測度に適用した形である．
+  同系は，より一般の有限加法的な集合関数を扱っている．）
 \end{theorem}
+
+密度の一意性は，符号によらず次のように確かめられる．
+二つの可積分関数 $h,k$ がすべての $B\in\mathcal{A}$ で同じ積分値をもつなら，
+$B=\{h>k\}$ として $\int_B(h-k)\,\d\nu=0$ を得る．
+$h-k$ は $B$ 上で正なので $\nu(B)=0$ である．
+$h,k$ を入れ替えて $\nu(\{k>h\})=0$ も得られ，$h=k$ が $\nu$-a.e. に成り立つ．
 
 \begin{remark}{記法：compact 空間上の連続関数}{meas-compact-continuous}
   空でない compact 距離空間 $K$ 上の実数値連続関数全体を $C(K)$ と書き，
