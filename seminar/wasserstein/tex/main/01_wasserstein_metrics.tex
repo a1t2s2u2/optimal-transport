@@ -325,11 +325,18 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 それぞれ付録の定理~\ref{thm:meas-radon-nikodym}，注意~\ref{rem:meas-compact-continuous}，
 定理~\ref{thm:meas-riesz-representation}にまとめた．
 
-\begin{remark}{記法：測度の絶対連続性}{wp-absolute-continuity-notation}
-  同じ可測空間上の有限測度 $\nu$ と有限符号付き測度 $\alpha$ に対して，
-  $\alpha\ll\nu$ は「$\alpha$ が $\nu$ に絶対連続である」ことを表す．
-  これは，任意の可測集合 $B$ について $\nu(B)=0$ ならば $\alpha(B)=0$ となることと同値である
-  （定義~\ref{def:meas-absolute-continuity}，定理~\ref{thm:meas-radon-nikodym}）．
+\begin{remark}{記法と定義：測度の絶対連続性}{wp-absolute-continuity-notation}
+  可測空間 $(\Omega,\mathcal{A})$ 上の有限測度 $\nu$ と，
+  有限符号付き測度 $\alpha$（二つの有限測度の差）を考える．
+  $\alpha$ が $\nu$ に\textbf{絶対連続}であるとは，
+  任意の $\varepsilon>0$ に対してある $\delta>0$ が存在し，
+  \[
+    \nu(B)<\delta\quad\Longrightarrow\quad\abs{\alpha(B)}<\varepsilon
+    \qquad(B\in\mathcal{A})
+  \]
+  が成り立つことをいう．このとき $\alpha\ll\nu$ と書く（定義~\ref{def:meas-absolute-continuity}）．
+  この定義は，すべての $B\in\mathcal{A}$ について $\nu(B)=0$ ならば $\alpha(B)=0$ となる条件と
+  同値である（定理~\ref{thm:meas-radon-nikodym}）．
 \end{remark}
 
 \begin{theorem}{測度分解定理（接着補題で用いる形）}{meas-disintegration}
