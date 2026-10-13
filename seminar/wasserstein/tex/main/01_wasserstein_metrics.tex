@@ -574,12 +574,48 @@ $C(K)$ の記法と可分性は注意~\ref{rem:meas-compact-continuous}にまと
   $d$ は連続なので（注意~\ref{rem:wp-welldef}），$\Delta$ は閉集合，特に Borel 集合である．
 
   ($\Leftarrow$) $\mu=\nu$ とする．
-  $\pi(\Delta)=1$ となる（$\Delta$ に集中する）$\pi\in\Couplings(\mu,\mu)$ を取る．
-  実際，$T(x):=(x,x)$ による像測度 $\pi:=\mu\circ T^{-1}$ がそのような coupling である．
-  $A\in\Borel(\mathcal{X})$ に対し $T^{-1}(A\times\mathcal{X})=T^{-1}(\mathcal{X}\times A)=A$
-  より $\pi(A\times\mathcal{X})=\pi(\mathcal{X}\times A)=\mu(A)$ であり，
-  $T^{-1}(\Delta)=\mathcal{X}$ より $\pi(\Delta)=1$ である．
-  $\Delta$ 上で $d(x,y)=0$ なので，
+  $\mu$ を写像 $T\colon\mathcal{X}\to\mathcal{X}\times\mathcal{X}$，$T(x):=(x,x)$ で移し，
+  対角集合に集中する coupling を構成する．
+  直積の距離について
+  \[
+    d_{\mathcal{X}\times\mathcal{X}}(T(x),T(x'))
+    =\max\{d(x,x'),d(x,x')\}=d(x,x')
+  \]
+  なので，$T$ は連続，したがって Borel 可測である．
+  そこで，\textbf{すべての} $E\in\Borel(\mathcal{X}\times\mathcal{X})$ に対して
+  \[
+    \pi(E):=\mu(T^{-1}(E))
+    =\mu\bigl(\{x\in\mathcal{X}\mid(x,x)\in E\}\bigr)
+  \]
+  と定める．逆像 $T^{-1}(E)$ は Borel 集合なので，右辺は定義できる．
+  これは像測度 $\mu\circ T^{-1}$（定義~\ref{def:meas-pushforward}）であり，
+  確かに確率測度である．実際，$\pi(\emptyset)=0$ であり，
+  互いに素な Borel 集合列 $(E_n)$ に対し，逆像も互いに素なので
+  \[
+    \pi\left(\bigcup_nE_n\right)
+    =\mu\left(\bigcup_nT^{-1}(E_n)\right)
+    =\sum_n\mu(T^{-1}(E_n))
+    =\sum_n\pi(E_n).
+  \]
+  また，$\pi(\mathcal{X}\times\mathcal{X})=\mu(\mathcal{X})=1$ である．
+
+  次に，$A,B\in\Borel(\mathcal{X})$ に対して
+  \[
+    T^{-1}(A\times B)
+    =\{x\in\mathcal{X}\mid x\in A,\ x\in B\}=A\cap B
+  \]
+  だから，$\pi(A\times B)=\mu(A\cap B)$ である．特に
+  \[
+    \pi(A\times\mathcal{X})=\mu(A),\qquad
+    \pi(\mathcal{X}\times B)=\mu(B)
+  \]
+  となり，$\pi\in\Couplings(\mu,\mu)$ が確認できる．
+  さらに，すべての $x\in\mathcal{X}$ で $(x,x)\in\Delta$ なので
+  \[
+    \pi(\Delta)=\mu(T^{-1}(\Delta))=\mu(\mathcal{X})=1.
+  \]
+  よって，この $\pi$ は $\Delta$ に集中する．
+  $d(x,y)=0$ が $\pi$-a.e. に成り立つから，
   \[
     \Wass_p(\mu,\mu)^p
     \leq\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)=0.
