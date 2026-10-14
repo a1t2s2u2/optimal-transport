@@ -247,11 +247,15 @@ $P$ は \textbf{$\mu$-a.e.} に成り立つという．
 \begin{thm}[収束定理]\label{thm:convergence}
   $(\Omega,\mathcal{A},\mu)$ を測度空間とする．
   \begin{enumerate}
-    \item （単調収束定理）非負可測関数の列が $f_n\uparrow f$（各点で単調増加に収束）ならば，
-      $\int_\Omega f_n\,\d\mu\to\int_\Omega f\,\d\mu$．
+    \item （単調収束定理）非負可測関数の列が $f_n\uparrow f$（各点で単調増加に収束）ならば
+      \[
+        \int_\Omega f_n\,\d\mu\longrightarrow\int_\Omega f\,\d\mu.
+      \]
     \item （有界収束定理）$\mu$ が有限測度で，可測関数の列 $(f_n)$ が各点収束し，
-      ある定数 $M$ で $\abs{f_n}\leq M$ ならば，
-      $\int_\Omega f_n\,\d\mu\to\int_\Omega\lim_nf_n\,\d\mu$．
+      ある定数 $M$ で $\abs{f_n}\leq M$ ならば
+      \[
+        \int_\Omega f_n\,\d\mu\longrightarrow\int_\Omega\lim_{n\to\infty}f_n\,\d\mu.
+      \]
   \end{enumerate}
 \end{thm}
 
@@ -307,8 +311,11 @@ $P$ は \textbf{$\mu$-a.e.} に成り立つという．
 
 \begin{thm}[直積測度と Tonelli の定理]\label{thm:product}
   $\X,\Y$ を可分距離空間，$\mu\in\Prob(\X)$，$\nu\in\Prob(\Y)$ とする．
-  $(\mu\otimes\nu)(A\times B)=\mu(A)\nu(B)$ をみたす
-  $\mu\otimes\nu\in\Prob(\X\times\Y)$ がただ一つ存在し，
+  \[
+    (\mu\otimes\nu)(A\times B)=\mu(A)\nu(B)
+    \qquad(A\in\Borel(\X),\ B\in\Borel(\Y))
+  \]
+  をみたす $\mu\otimes\nu\in\Prob(\X\times\Y)$ がただ一つ存在し，
   非負可測関数 $f$ に対し
   \[
     \int_{\X\times\Y}f\,\d(\mu\otimes\nu)
@@ -322,31 +329,48 @@ $P$ は \textbf{$\mu$-a.e.} に成り立つという．
 距離空間 $\X$ 上の有界連続関数全体を $C_b(\X)$ と書く．
 
 \begin{dfn}[弱収束]\label{dfn:weak}
-  $\eta_k,\eta\in\Prob(\X)$ について，すべての $f\in C_b(\X)$ で
-  $\int_\X f\,\d\eta_k\to\int_\X f\,\d\eta$ となるとき，
+  $\eta_k,\eta\in\Prob(\X)$ について
+  \[
+    \int_\X f\,\d\eta_k\longrightarrow\int_\X f\,\d\eta
+    \qquad(\forall f\in C_b(\X))
+  \]
+  となるとき，
   $(\eta_k)$ は $\eta$ に\textbf{弱収束}するといい，$\eta_k\weakto\eta$ と書く．
 \end{dfn}
 
 \begin{prop}[有界連続関数による確率測度の判定]\label{prop:cb-determines}
-  $\eta,\rho\in\Prob(\X)$ がすべての $f\in C_b(\X)$ で
-  $\int_\X f\,\d\eta=\int_\X f\,\d\rho$ をみたせば，$\eta=\rho$ である．
+  $\eta,\rho\in\Prob(\X)$ が
+  \[
+    \int_\X f\,\d\eta=\int_\X f\,\d\rho\qquad(\forall f\in C_b(\X))
+  \]
+  をみたせば，$\eta=\rho$ である．
 \end{prop}
 
 \begin{proof}
-  空でない閉集合 $F$ に対し $d(x,F):=\inf_{a\in F}d(x,a)$ とおくと，
-  三角不等式より $x\mapsto d(x,F)$ は連続であり，
+  空でない閉集合 $F$ に対し
+  \[
+    d(x,F):=\inf_{a\in F}d(x,a),\qquad
+    f_k(x):=\max\{1-k\,d(x,F),0\}\quad(k\in\N)
+  \]
+  とおく．三角不等式より $x\mapsto d(x,F)$ は連続なので $f_k\in C_b(\X)$ であり，
   $F$ が閉集合なので $d(x,F)=0\iff x\in F$ である．
-  よって $f_k(x):=\max\{1-k\,d(x,F),0\}\in C_b(\X)$ は
-  $\mathbf{1}_F$ に各点収束し，有界収束定理（定理~\ref{thm:convergence}）から
-  $\eta(F)=\lim_k\int f_k\,\d\eta=\lim_k\int f_k\,\d\rho=\rho(F)$ を得る．
+  よって $f_k$ は $\mathbf{1}_F$ に各点収束し，有界収束定理（定理~\ref{thm:convergence}）から
+  \[
+    \eta(F)=\lim_{k\to\infty}\int_\X f_k\,\d\eta
+    =\lim_{k\to\infty}\int_\X f_k\,\d\rho=\rho(F)
+  \]
+  を得る．
   閉集合全体は $\Borel(\X)$ を生成する $\pi$-系なので，
   一致定理（定理~\ref{thm:dynkin}）より $\eta=\rho$ である．
 \end{proof}
 
 \begin{dfn}[tight]\label{dfn:tight}
   $\mathcal{F}\subset\Prob(\X)$ が \textbf{tight} であるとは，
-  任意の $\varepsilon>0$ に対し compact 集合 $K\subset\X$ が存在して，
-  すべての $\eta\in\mathcal{F}$ で $\eta(\X\setminus K)\leq\varepsilon$ となることをいう．
+  任意の $\varepsilon>0$ に対し compact 集合 $K\subset\X$ が存在して
+  \[
+    \eta(\X\setminus K)\leq\varepsilon\qquad(\forall\eta\in\mathcal{F})
+  \]
+  となることをいう．
 \end{dfn}
 
 \begin{thm}[Prokhorov の定理]\label{thm:prokhorov}
@@ -391,8 +415,10 @@ $h,k$ を入れ替えれば，$h=k$ が $\nu$-a.e. に成り立つ．
 \begin{thm}[Riesz の表現定理]\label{thm:riesz}
   $K$ を空でない compact 距離空間とする．線形写像 $L\colon C(K)\to\R$ が
   $f\geq0\Rightarrow L(f)\geq0$ と $L(1)=1$ をみたすならば，
-  $L(f)=\int_Kf\,\d\rho$（$f\in C(K)$）となる $\rho\in\Prob(K)$ がただ一つ存在する
-  （\cite{Rudin}*{Theorem 2.14}）．
+  \[
+    L(f)=\int_Kf\,\d\rho\qquad(f\in C(K))
+  \]
+  となる $\rho\in\Prob(K)$ がただ一つ存在する（\cite{Rudin}*{Theorem 2.14}）．
 \end{thm}
 
 \begin{thm}[確率測度の族を平均した確率測度]\label{thm:kernel}
@@ -410,11 +436,17 @@ $h,k$ を入れ替えれば，$h=k$ が $\nu$-a.e. に成り立つ．
 \begin{proof}
   各 $y$ について直積確率測度 $\lambda_y:=\pi_y\otimes\delta_y\otimes\sigma_y$ を考える．
   矩形集合 $D=A\times B\times C$ について
-  $\lambda_y(D)=\pi_y(A)\mathbf{1}_B(y)\sigma_y(C)$ は $y$ の可測関数である．
+  \[
+    \lambda_y(D)=\pi_y(A)\,\mathbf{1}_B(y)\,\sigma_y(C)
+  \]
+  は $y$ の可測関数である．
   $y\mapsto\lambda_y(D)$ が可測となる Borel 集合 $D$ の全体は $\lambda$-系なので，
   Dynkin の定理（定理~\ref{thm:dynkin}）と注意~\ref{rem:product-space}より
   すべての Borel 集合 $D$ で可測となる．そこで
-  $\gamma(D):=\int_\Y\lambda_y(D)\,\d\nu(y)$ と定めれば，
+  \[
+    \gamma(D):=\int_\Y\lambda_y(D)\,\d\nu(y)
+  \]
+  と定めれば，
   単調収束定理から可算加法性が従い，$\gamma$ は求める確率測度である．
   一意性は一致定理（定理~\ref{thm:dynkin}）による．
 \end{proof}
@@ -473,13 +505,18 @@ $\Couplings(\mu,\nu)$ は空でない．
 \section{離散測度の場合}
 
 $x_1,\dots,x_n\in\X$ を相異なる点，$\mathbf{a}=(a_i)\in\R^n$ を
-$a_i>0$，$\sum_ia_i=1$ をみたすベクトルとし，
-$\mu:=\sum_{i=1}^na_i\delta_{x_i}$ とおく．
-同様に相異なる $y_1,\dots,y_m\in\Y$ と $\mathbf{b}\in\R^m$ に対し
-$\nu:=\sum_{j=1}^mb_j\delta_{y_j}$ とおく．
-コスト行列を $\mathbf{C}:=(c(x_i,y_j))_{i,j}$ とし，
+$a_i>0$，$\sum_ia_i=1$ をみたすベクトルとする．
+同様に相異なる点 $y_1,\dots,y_m\in\Y$ とベクトル $\mathbf{b}=(b_j)\in\R^m$ を取り，
+\[
+  \mu:=\sum_{i=1}^na_i\delta_{x_i},\qquad
+  \nu:=\sum_{j=1}^mb_j\delta_{y_j}
+\]
+とおく．コスト行列を $\mathbf{C}:=(c(x_i,y_j))_{i,j}$ とし，
 $n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
-$\inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}$ と書く．
+\[
+  \inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}
+\]
+と書く．
 
 \begin{prop}[離散 Kantorovich 問題（\cite{PeyreCuturi}*{Chapter 2}）]\label{prop:discrete}
   \[
@@ -493,8 +530,10 @@ $\inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}$ と書く．
     \right\}
   \]
   とおく．このとき
-  $\mathbf{P}\mapsto\pi_{\mathbf{P}}:=\sum_{i,j}P_{i,j}\delta_{(x_i,y_j)}$ は
-  $U(\mathbf{a},\mathbf{b})$ から $\Couplings(\mu,\nu)$ への全単射であり，
+  \[
+    \mathbf{P}\longmapsto\pi_{\mathbf{P}}:=\sum_{i,j}P_{i,j}\delta_{(x_i,y_j)}
+  \]
+  は $U(\mathbf{a},\mathbf{b})$ から $\Couplings(\mu,\nu)$ への全単射であり，
   \[
     \int_{\X\times\Y}c\,\d\pi_{\mathbf{P}}=\inner{\mathbf{C}}{\mathbf{P}}
   \]
@@ -507,19 +546,33 @@ $\inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}$ と書く．
 \end{prop}
 
 \begin{proof}
-  $\pi_{\mathbf{P}}(A\times\Y)=\sum_{i:\,x_i\in A}\sum_jP_{i,j}=\sum_{i:\,x_i\in A}a_i=\mu(A)$
+  $A\in\Borel(\X)$ に対し
+  \[
+    \pi_{\mathbf{P}}(A\times\Y)
+    =\sum_{i:\,x_i\in A}\sum_{j=1}^mP_{i,j}
+    =\sum_{i:\,x_i\in A}a_i
+    =\mu(A)
+  \]
   であり，第2周辺分布も同様なので $\pi_{\mathbf{P}}\in\Couplings(\mu,\nu)$ である．
   点 $(x_i,y_j)$ は相異なるので $P_{i,j}=\pi_{\mathbf{P}}(\{(x_i,y_j)\})$ となり，単射である．
 
   全射性を示す．$\pi\in\Couplings(\mu,\nu)$ とし，
   $S:=\{x_1,\dots,x_n\}$，$T:=\{y_1,\dots,y_m\}$ とおく．
-  $\pi((\X\setminus S)\times\Y)=\mu(\X\setminus S)=0$，
-  $\pi(\X\times(\Y\setminus T))=\nu(\Y\setminus T)=0$ より，
-  $\pi$ は $S\times T$ の外で $0$ である．
+  \[
+    \pi((\X\setminus S)\times\Y)=\mu(\X\setminus S)=0,\qquad
+    \pi(\X\times(\Y\setminus T))=\nu(\Y\setminus T)=0
+  \]
+  より，$\pi$ は $S\times T$ の外で $0$ である．
   よって $P_{i,j}:=\pi(\{(x_i,y_j)\})$ とおけば，任意の Borel 集合 $E$ について
-  $\pi(E)=\pi(E\cap(S\times T))=\pi_{\mathbf{P}}(E)$ であり，
-  $\sum_jP_{i,j}=\pi(\{x_i\}\times\Y)=a_i$，$\sum_iP_{i,j}=b_j$ より
-  $\mathbf{P}\in U(\mathbf{a},\mathbf{b})$ である．
+  \[
+    \pi(E)=\pi(E\cap(S\times T))=\pi_{\mathbf{P}}(E)
+  \]
+  である．さらに
+  \[
+    \sum_{j=1}^mP_{i,j}=\pi(\{x_i\}\times\Y)=a_i,\qquad
+    \sum_{i=1}^nP_{i,j}=\pi(\X\times\{y_j\})=b_j
+  \]
+  より $\mathbf{P}\in U(\mathbf{a},\mathbf{b})$ である．
 
   $\int c\,\d\delta_{(x_i,y_j)}=c(x_i,y_j)$ からコストの等式が従う．
   最後に，$U(\mathbf{a},\mathbf{b})$ は $(a_ib_j)_{i,j}$ を含み，
@@ -553,8 +606,11 @@ $\inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}$ と書く．
 \end{lem}
 
 \begin{proof}
-  $x_0'\in\X$ とする．三角不等式と $t\mapsto t^p$ の凸性から従う
-  $(s+t)^p\leq2^{p-1}(s^p+t^p)$（$s,t\geq0$）より
+  $x_0'\in\X$ とする．$t\mapsto t^p$ の凸性から
+  \[
+    (s+t)^p\leq2^{p-1}(s^p+t^p)\qquad(s,t\geq0)
+  \]
+  が従うので，三角不等式とあわせて
   \[
     \int_\X d(x,x_0')^p\,\d\mu(x)
     \leq2^{p-1}\left(\int_\X d(x,x_0)^p\,\d\mu(x)+d(x_0,x_0')^p\right).
@@ -579,11 +635,17 @@ $\inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}$ と書く．
 
 \begin{proof}
   補題~\ref{lem:pp-indep}の証明と同様に
-  $d(x,y)^p\leq2^{p-1}(d(x,x_0)^p+d(x_0,y)^p)$ である．
+  \[
+    d(x,y)^p\leq2^{p-1}\bigl(d(x,x_0)^p+d(x_0,y)^p\bigr)
+  \]
+  である．
   $\mu\otimes\nu\in\Couplings(\mu,\nu)$ に周辺積分公式（注意~\ref{rem:marginal}）を用いて
   \[
-    \int_{\X\times\X}d(x,y)^p\,\d(\mu\otimes\nu)
-    \leq2^{p-1}\left(\int_\X d(x,x_0)^p\,\d\mu(x)+\int_\X d(x_0,y)^p\,\d\nu(y)\right)<\infty.
+    \begin{aligned}
+      \int_{\X\times\X}d(x,y)^p\,\d(\mu\otimes\nu)
+      &\leq2^{p-1}\left(\int_\X d(x,x_0)^p\,\d\mu(x)+\int_\X d(x_0,y)^p\,\d\nu(y)\right)\\
+      &<\infty.
+    \end{aligned}
     \qedhere
   \]
 \end{proof}
@@ -607,24 +669,39 @@ $\inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}$ と書く．
 \end{lem}
 
 \begin{proof}
-  $m\in\N$ に対し $c_m:=\min\{d^p,m\}$ とおくと，
+  $m\in\N$ に対し
+  \[
+    c_m(x,y):=\min\{d(x,y)^p,m\}
+  \]
+  とおくと，
   $d$ の連続性（注意~\ref{rem:product-space}）より $c_m$ は有界連続である．
   弱収束の定義と $c_m\leq d^p$ より
   \[
     \int c_m\,\d\pi=\lim_{k\to\infty}\int c_m\,\d\pi_k\leq\liminf_{k\to\infty}\int d^p\,\d\pi_k.
   \]
-  $c_m\uparrow d^p$（$m\to\infty$）なので，単調収束定理（定理~\ref{thm:convergence}）から結論を得る．
+  $c_m\uparrow d^p$（$m\to\infty$）であり，右辺は $m$ によらないので，
+  単調収束定理（定理~\ref{thm:convergence}）から
+  \[
+    \int d^p\,\d\pi=\lim_{m\to\infty}\int c_m\,\d\pi\leq\liminf_{k\to\infty}\int d^p\,\d\pi_k
+    \qedhere
+  \]
 \end{proof}
 
 \begin{lem}[輸送計画の tightness（\cite{Villani}*{Lemma 4.4}）]\label{lem:plans-tight}
   $A\subset\Prob(\X)$，$B\subset\Prob(\Y)$ が tight ならば，
-  $\Couplings(A,B):=\bigcup_{\mu\in A,\,\nu\in B}\Couplings(\mu,\nu)$ も tight である．
+  \[
+    \Couplings(A,B):=\bigcup_{\mu\in A,\,\nu\in B}\Couplings(\mu,\nu)
+  \]
+  も tight である．
 \end{lem}
 
 \begin{proof}
   $\varepsilon>0$ に対し，compact 集合 $K\subset\X$，$L\subset\Y$ を
-  すべての $\eta\in A$，$\rho\in B$ で
-  $\eta(\X\setminus K)\leq\varepsilon/2$，$\rho(\Y\setminus L)\leq\varepsilon/2$ となるように取る．
+  \[
+    \eta(\X\setminus K)\leq\frac{\varepsilon}{2}\quad(\forall\eta\in A),\qquad
+    \rho(\Y\setminus L)\leq\frac{\varepsilon}{2}\quad(\forall\rho\in B)
+  \]
+  となるように取る．
   $\pi\in\Couplings(\eta,\rho)$（$\eta\in A$，$\rho\in B$）とすると，
   $K\times L$ の外の点は $x\notin K$ または $y\notin L$ をみたすので
   \[
@@ -647,8 +724,11 @@ $\inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}$ と書く．
   $I:=\Wass_p(\mu,\nu)^p$ とおくと，補題~\ref{lem:wp-finite}より $I<\infty$ である．
 
   \textbf{1. 最小化列．}
-  下限の定義より，$\pi_k\in\Couplings(\mu,\nu)$ で
-  $\int d^p\,\d\pi_k<I+1/k$ となるものが取れる．
+  下限の定義より，各 $k\in\N$ に対して
+  \[
+    \pi_k\in\Couplings(\mu,\nu),\qquad\int d^p\,\d\pi_k<I+\frac1k
+  \]
+  となる $\pi_k$ が取れる．
 
   \textbf{2. 部分列の抽出．}
   一点集合 $\{\mu\}$ の列は定数列なので $\mu$ に弱収束し，
@@ -656,7 +736,11 @@ $\inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}$ と書く．
   $\{\nu\}$ も同様であり，補題~\ref{lem:plans-tight}より
   $\Couplings(\mu,\nu)$ は tight である．
   $\X\times\X$ は Polish 空間なので，再び Prokhorov の定理により，
-  部分列 $\pi_{k_j}$ と $\pi^*\in\Prob(\X\times\X)$ で $\pi_{k_j}\weakto\pi^*$ となるものがある．
+  ある部分列と $\pi^*\in\Prob(\X\times\X)$ に対して
+  \[
+    \pi_{k_j}\weakto\pi^*
+  \]
+  となる．
 
   \textbf{3. 極限も coupling である．}
   $\varphi\in C_b(\X)$ に対し $(x,y)\mapsto\varphi(x)$ も有界連続なので，
@@ -671,8 +755,11 @@ $\inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}$ と書く．
   第2周辺分布も同様に $\nu$ であり，$\pi^*\in\Couplings(\mu,\nu)$ である．
 
   \textbf{4. 下限の達成．}
-  補題~\ref{lem:cost-lsc}より
-  $I\leq\int d^p\,\d\pi^*\leq\liminf_j\int d^p\,\d\pi_{k_j}=I$ である．
+  $\pi^*\in\Couplings(\mu,\nu)$ と補題~\ref{lem:cost-lsc}より
+  \[
+    I\leq\int d^p\,\d\pi^*\leq\liminf_{j\to\infty}\int d^p\,\d\pi_{k_j}=I.
+    \qedhere
+  \]
 \end{proof}
 
 
@@ -706,8 +793,10 @@ $\inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}$ と書く．
   $1$ を含む可算な稠密 $\mathbb{Q}$-ベクトル部分空間 $\mathcal{C}\subset C(\X)$ を取る
   （注意~\ref{rem:compact-continuous}）．
   $f\in\mathcal{C}$ に対し
-  $\nu_f(B):=\int_{\X\times B}f(x)\,\d\pi(x,y)$ とおくと，
-  $\nu_f$ は有限符号付き測度であり，
+  \[
+    \nu_f(B):=\int_{\X\times B}f(x)\,\d\pi(x,y)\qquad(B\in\Borel(\Y))
+  \]
+  とおくと，$\nu_f$ は有限符号付き測度であり，
   $\abs{\nu_f(B)}\leq\lVert f\rVert_\infty\nu(B)$ より $\nu_f\ll\nu$ である．
   Radon--Nikodym の定理（定理~\ref{thm:radon-nikodym}）から
   密度 $l_f:=\d\nu_f/\d\nu$ を取り，$f\geq0$ のときは $l_f\geq0$ に選ぶ．
@@ -724,19 +813,31 @@ $\inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}$ と書く．
   $y\notin N$ では $f\mapsto l_f(y)$ は $\mathbb{Q}$-線形で
   $\abs{l_f(y)-l_g(y)}\leq\lVert f-g\rVert_\infty$ をみたすので，
   一様近似により $C(\X)$ 上の実線形汎関数 $L_y$ に延長でき，
-  $L_y(1)=1$，$\abs{L_y(f)}\leq\lVert f\rVert_\infty$ をみたす．
-  $f\geq0$ なら $m:=\lVert f\rVert_\infty$ について $\lVert m-f\rVert_\infty\leq m$ なので
-  $L_y(f)=m-L_y(m-f)\geq0$ である．
+  \[
+    L_y(1)=1,\qquad\abs{L_y(f)}\leq\lVert f\rVert_\infty
+  \]
+  をみたす．$f\geq0$ なら $m:=\lVert f\rVert_\infty$ について
+  $\lVert m-f\rVert_\infty\leq m$ なので
+  \[
+    L_y(f)=m-L_y(m-f)\geq0
+  \]
+  である．
   Riesz の表現定理（定理~\ref{thm:riesz}）により
-  $L_y(f)=\int_\X f\,\d\pi_y$ となる $\pi_y\in\Prob(\X)$ を取り，
+  \[
+    L_y(f)=\int_\X f\,\d\pi_y\qquad(f\in C(\X))
+  \]
+  となる $\pi_y\in\Prob(\X)$ を取り，
   $y\in N$ では $\pi_y:=\delta_{x_0}$ とする．
   密度の定義と一様近似より，すべての $f\in C(\X)$ で
   $y\mapsto\int_\X f\,\d\pi_y$ は可測であり，
   \[
     \int_B\left(\int_\X f\,\d\pi_y\right)\d\nu(y)=\int_{\X\times B}f(x)\,\d\pi(x,y).
   \]
-  空でない閉集合 $A$ に対し $f_k:=\max\{1-k\,d(\cdot,A),0\}\to\mathbf{1}_A$ なので
-  （命題~\ref{prop:cb-determines}の証明），有界収束定理から
+  空でない閉集合 $A$ に対し，命題~\ref{prop:cb-determines}の証明と同様に
+  \[
+    \max\{1-k\,d(x,A),0\}\longrightarrow\mathbf{1}_A(x)\qquad(k\to\infty)
+  \]
+  なので，有界収束定理から
   閉集合 $A$ について条件 1，2 を得る．
   条件 1，2 をみたす $A$ の全体は $\lambda$-系であり
   （補集合には $\pi_y(\X\setminus A)=1-\pi_y(A)$ を，
@@ -748,13 +849,16 @@ $\inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}$ と書く．
   $\mu(A):=\pi(A\times\Y)$ は，第\ref{ch:existence}章と同様に Prokhorov の定理より tight である．
   よって compact 集合の増大列 $K_1\subset K_2\subset\cdots$ で
   $\mu(\X\setminus K_n)\leq1/n$ となるものが取れる．
-  $K_0:=\emptyset$，$E_n:=K_n\setminus K_{n-1}$，$\nu_n(B):=\pi(E_n\times B)$ とおくと，
-  $\mu(\X\setminus\bigcup_nK_n)=0$ より $\sum_n\nu_n=\nu$ である．
+  $K_0:=\emptyset$ とし，
+  \[
+    E_n:=K_n\setminus K_{n-1},\qquad\nu_n(B):=\pi(E_n\times B)
+  \]
+  とおく．$\mu(\X\setminus\bigcup_nK_n)=0$ より $\sum_n\nu_n=\nu$ である．
 
   $\nu_n\neq0$ となる各 $n$ について，$\pi$ の $E_n\times\Y$ への制限を
-  $K_n\times\Y$ 上の有限測度とみて 1，2 を適用し，
-  得た測度を $A\mapsto(\text{その測度})(A\cap K_n)$ により $\X$ 上に延長したものを
-  $\rho^{(n)}_y$ と書く．すると
+  $K_n\times\Y$ 上の有限測度とみて 1，2 を適用する．
+  得た $K_n$ 上の測度を，$A\in\Borel(\X)$ に $A\cap K_n$ の測度を対応させて
+  $\X$ 上に延長したものを $\rho^{(n)}_y$ と書く．すると
   \[
     \pi((A\cap E_n)\times B)=\int_B\rho^{(n)}_y(A)\,\d\nu_n(y)
   \]
@@ -800,8 +904,12 @@ $\inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}$ と書く．
   \]
   をみたす可測な確率測度の族 $(\pi_y)$，$(\sigma_y)$ を得る．
   定理~\ref{thm:kernel}により
-  $\gamma(A\times B\times C)=\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y)$ となる
-  $\gamma$ を取れば，$\sigma_y(\mathcal{Z})=1$，$\pi_y(\X)=1$ より求める等式が従う．
+  \[
+    \gamma(A\times B\times C)=\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y)
+  \]
+  となる $\gamma$ を取る．$C=\mathcal{Z}$ とすれば $\sigma_y(\mathcal{Z})=1$ より
+  $\gamma(A\times B\times\mathcal{Z})=\pi(A\times B)$，
+  $A=\X$ とすれば $\pi_y(\X)=1$ より $\gamma(\X\times B\times C)=\sigma(B\times C)$ である．
 \end{proof}
 
 \section{対角集合に集中する coupling}
@@ -822,8 +930,10 @@ $\inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}$ と書く．
 
   \textbf{coupling であること．}
   $A,B\in\Borel(\X)$ に対し
-  $\pi(A\times B)=\mu(\{x\mid x\in A,\ x\in B\})=\mu(A\cap B)$ である．
-  $B=\X$ とすれば $\pi(A\times\X)=\mu(A)$，
+  \[
+    \pi(A\times B)=\mu\bigl(\{x\in\X\mid x\in A,\ x\in B\}\bigr)=\mu(A\cap B)
+  \]
+  である．$B=\X$ とすれば $\pi(A\times\X)=\mu(A)$，
   $A=\X$ とすれば $\pi(\X\times B)=\mu(B)$ なので，$\pi\in\Couplings(\mu,\mu)$ である．
 
   \textbf{$\pi(\Delta)=1$ であること．}
@@ -916,9 +1026,14 @@ $\inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}$ と書く．
     \rho(E):=\gamma\bigl(\{(x,y,z)\in\X^3\mid(x,z)\in E\}\bigr)
     \qquad(E\in\Borel(\X\times\X))
   \]
-  について，$\rho(A\times\X)=\gamma(A\times\X\times\X)=\pi(A\times\X)=\mu(A)$，
-  $\rho(\X\times C)=\gamma(\X\times\X\times C)=\sigma(\X\times C)=\xi(C)$ より
-  $\rho\in\Couplings(\mu,\xi)$ である．したがって
+  について，
+  \[
+    \begin{aligned}
+      \rho(A\times\X)&=\gamma(A\times\X\times\X)=\pi(A\times\X)=\mu(A),\\
+      \rho(\X\times C)&=\gamma(\X\times\X\times C)=\sigma(\X\times C)=\xi(C)
+    \end{aligned}
+  \]
+  より $\rho\in\Couplings(\mu,\xi)$ である．したがって
   \[
     \begin{aligned}
       \Wass_p(\mu,\xi)
