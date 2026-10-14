@@ -505,6 +505,46 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 
 \subsection{距離の公理の確認}
 
+\begin{proposition}{対角集合に集中する coupling}{wp-diagonal-coupling}
+  $\mathcal{X}$ を Polish 空間，$\mu\in\Prob(\mathcal{X})$ とし，
+  対角集合を $\Delta:=\{(x,x)\mid x\in\mathcal{X}\}$ とおく．
+  このとき，$\pi(\Delta)=1$ をみたす $\pi\in\Couplings(\mu,\mu)$ が存在する．
+\end{proposition}
+
+\begin{proof}
+  $\Delta=\{(x,y)\in\mathcal{X}\times\mathcal{X}\mid d(x,y)=0\}$ であり，
+  $d$ は連続なので（注意~\ref{rem:wp-welldef}），$\Delta$ は閉集合，特に Borel 集合である．
+  $E\in\Borel(\mathcal{X}\times\mathcal{X})$ に対して
+  \[
+    \pi(E):=\mu\bigl(\{x\in\mathcal{X}\mid(x,x)\in E\}\bigr)
+  \]
+  と定める．これは連続写像 $T(x):=(x,x)$ による像測度 $\mu\circ T^{-1}$
+  （定義~\ref{def:meas-pushforward}）であり，
+  $\pi(\mathcal{X}\times\mathcal{X})=\mu(\mathcal{X})=1$ より確率測度である．
+
+  \textbf{coupling であること．}
+  $A,B\in\Borel(\mathcal{X})$ に対し
+  \[
+    \pi(A\times B)
+    =\mu\bigl(\{x\in\mathcal{X}\mid x\in A,\ x\in B\}\bigr)
+    =\mu(A\cap B).
+  \]
+  $B=\mathcal{X}$ とすれば $\pi(A\times\mathcal{X})=\mu(A)$，
+  $A=\mathcal{X}$ とすれば $\pi(\mathcal{X}\times B)=\mu(B)$ であるから，
+  $\pi\in\Couplings(\mu,\mu)$ である．
+
+  \textbf{$\pi(\Delta)=1$ であること．}
+  $A:=\{x\in\mathcal{X}\mid(x,x)\in\Delta\}$ とおくと $\pi(\Delta)=\mu(A)$ である．
+  $A\subset\mathcal{X}$ より $\mu(A)\leq\mu(\mathcal{X})$．
+  逆に，任意の $a\in\mathcal{X}$ について $(a,a)\in\Delta$ だから $a\in A$，
+  すなわち $\mathcal{X}\subset A$ であり，$\mu(\mathcal{X})\leq\mu(A)$．
+  したがって
+  \[
+    \mu(\mathcal{X})\leq\pi(\Delta)\leq\mu(\mathcal{X})
+  \]
+  であり，$\mu(\mathcal{X})=1$ より $\pi(\Delta)=1$ である．
+\end{proof}
+
 \begin{proposition}{Wasserstein 距離は距離である（Villani Def 6.4）}{wp-metric}
   $1\leq p<\infty$ に対し，
   $\Wass_p$ は $\Pp{p}(\mathcal{X})$ 上の距離である．
@@ -525,55 +565,15 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   \textbf{2. 一致の公理．}
   $\Wass_p(\mu,\nu)=0\iff\mu=\nu$ を示す．
   対角集合を $\Delta:=\{(x,x)\mid x\in\mathcal{X}\}$ とおく．
-  $\Delta=\{(x,y)\in\mathcal{X}\times\mathcal{X}\mid d(x,y)=0\}$ であり，
-  $d$ は連続なので（注意~\ref{rem:wp-welldef}），$\Delta$ は閉集合，特に Borel 集合である．
 
   ($\Leftarrow$) $\mu=\nu$ とする．
-  $\mu$ を写像 $T\colon\mathcal{X}\to\mathcal{X}\times\mathcal{X}$，$T(x):=(x,x)$ で移し，
-  対角集合に集中する coupling を構成する．
-  直積の距離について
-  \[
-    d_{\mathcal{X}\times\mathcal{X}}(T(x),T(x'))
-    =\max\{d(x,x'),d(x,x')\}=d(x,x')
-  \]
-  なので，$T$ は連続，したがって Borel 可測である．
-  そこで，\textbf{すべての} $E\in\Borel(\mathcal{X}\times\mathcal{X})$ に対して
-  \[
-    \pi(E):=\mu(T^{-1}(E))
-    =\mu\bigl(\{x\in\mathcal{X}\mid(x,x)\in E\}\bigr)
-  \]
-  と定める．逆像 $T^{-1}(E)$ は Borel 集合なので，右辺は定義できる．
-  これは像測度 $\mu\circ T^{-1}$（定義~\ref{def:meas-pushforward}）であり，
-  確かに確率測度である．実際，$\pi(\emptyset)=0$ であり，
-  互いに素な Borel 集合列 $(E_n)$ に対し，逆像も互いに素なので
-  \[
-    \pi\left(\bigcup_nE_n\right)
-    =\mu\left(\bigcup_nT^{-1}(E_n)\right)
-    =\sum_n\mu(T^{-1}(E_n))
-    =\sum_n\pi(E_n).
-  \]
-  また，$\pi(\mathcal{X}\times\mathcal{X})=\mu(\mathcal{X})=1$ である．
-
-  次に，$A,B\in\Borel(\mathcal{X})$ に対して
-  \[
-    T^{-1}(A\times B)
-    =\{x\in\mathcal{X}\mid x\in A,\ x\in B\}=A\cap B
-  \]
-  だから，$\pi(A\times B)=\mu(A\cap B)$ である．特に
-  \[
-    \pi(A\times\mathcal{X})=\mu(A),\qquad
-    \pi(\mathcal{X}\times B)=\mu(B)
-  \]
-  となり，$\pi\in\Couplings(\mu,\mu)$ が確認できる．
-  さらに，すべての $x\in\mathcal{X}$ で $(x,x)\in\Delta$ なので
-  \[
-    \pi(\Delta)=\mu(T^{-1}(\Delta))=\mu(\mathcal{X})=1.
-  \]
-  よって，この $\pi$ は $\Delta$ に集中する．
-  $d(x,y)=0$ が $\pi$-a.e. に成り立つから，
+  命題~\ref{prop:wp-diagonal-coupling}より，$\pi(\Delta)=1$ をみたす
+  $\pi\in\Couplings(\mu,\mu)$ を取る．
+  $\pi$ は $\Delta$ の外に質量をもたず，$\Delta$ 上では $d(x,x)=0$ なので
   \[
     \Wass_p(\mu,\mu)^p
-    \leq\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)=0.
+    \leq\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)
+    =\int_{\Delta}d(x,y)^p\,\d\pi(x,y)=0.
   \]
   1 の非負性とあわせて $\Wass_p(\mu,\mu)=0$ である．
 
@@ -587,7 +587,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   よって $x=y$ が $\pi^*$-a.e. で成り立ち，$\pi^*(\Delta)=1$ である．
   任意の $A\in\Borel(\mathcal{X})$ に対し，
   $A\times(\mathcal{X}\setminus A)$ と $(\mathcal{X}\setminus A)\times A$ は
-  $\Delta$ と交わらないので，
+  $\Delta$ と交わらないので，周辺分布の条件と有限加法性より
   \[
     \begin{aligned}
       \mu(A)&=\pi^*(A\times\mathcal{X})
@@ -603,14 +603,32 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   \textbf{3. 対称性．}
   $S(x,y):=(y,x)$ とし，$\pi\in\Couplings(\mu,\nu)$ に対し
   $\pi^\top:=\pi\circ S^{-1}$ と定める．
-  $\pi^\top(A\times B)=\pi(B\times A)$ より $\pi^\top\in\Couplings(\nu,\mu)$ である．
-  $d$ の対称性と変数変換公式（補題~\ref{lem:meas-change-of-variables}）より
+  $\pi^\top(A\times B)=\pi(B\times A)$ より
   \[
-    \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)
-    =\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi^\top(x,y)
+    \pi^\top(A\times\mathcal{X})=\pi(\mathcal{X}\times A)=\nu(A),\qquad
+    \pi^\top(\mathcal{X}\times B)=\pi(B\times\mathcal{X})=\mu(B)
   \]
-  であるから，$\pi$ について下限を取れば $\Wass_p(\nu,\mu)\leq\Wass_p(\mu,\nu)$ を得る．
-  $\mu,\nu$ を入れ替えれば逆向きの不等式も従い，$\Wass_p(\mu,\nu)=\Wass_p(\nu,\mu)$ である．
+  なので $\pi^\top\in\Couplings(\nu,\mu)$ である．
+  $(\pi^\top)^\top=\pi$ より，$\pi\mapsto\pi^\top$ は
+  $\Couplings(\mu,\nu)$ から $\Couplings(\nu,\mu)$ への全単射である．
+  変数変換公式（補題~\ref{lem:meas-change-of-variables}）と $d$ の対称性より
+  \[
+    \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi^\top(x,y)
+    =\int_{\mathcal{X}\times\mathcal{X}}d(y,x)^p\,\d\pi(x,y)
+    =\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)
+  \]
+  であるから，
+  \[
+    \begin{aligned}
+      \Wass_p(\mu,\nu)^p
+      &=\inf_{\pi\in\Couplings(\mu,\nu)}
+        \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi^\top(x,y)\\
+      &=\inf_{\pi'\in\Couplings(\nu,\mu)}
+        \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi'(x,y)
+      =\Wass_p(\nu,\mu)^p.
+    \end{aligned}
+  \]
+  よって $\Wass_p(\mu,\nu)=\Wass_p(\nu,\mu)$ である．
 
   \textbf{4. 三角不等式．}
   $\xi\in\Pp{p}(\mathcal{X})$ を取り，
