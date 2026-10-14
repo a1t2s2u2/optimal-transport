@@ -123,7 +123,7 @@
 
 %======================================
 \title{ %表紙
-\huge Wasserstein 距離の距離性と\\ \huge 離散最適輸送のエントロピー正則化 \\[5cm] % 仮題
+\huge Wasserstein 距離の距離性 \\[5cm] % 仮題
 }
 \author{228s1341　江嶋 宏優 \\
 \qquad\qquad\quad Ejima Atsuhiro\\[1cm]
@@ -178,10 +178,6 @@ $\Wass_p$ が $\Pp{p}(\X)$ 上の距離であること（定理~\ref{thm:wp-metr
     最適解の存在が直ちに従うことも見る．
   \item 第\ref{ch:existence}章：一般の Polish 空間で最適 coupling の存在を示す．
   \item 第\ref{ch:metric}章：測度分解定理と接着補題を経て，主定理を証明する．
-  \item 第\ref{ch:entropic}章：寄り道として，離散の場合のエントロピー正則化を扱う．
-    正則化問題の解は一意で特別な積の形をもち，
-    正則化パラメータ $\varepsilon\to0$ で元の問題の値，
-    特に $\Wass_p^p$ に収束する（Peyr\'e--Cuturi~\cite{PeyreCuturi} 第4章）．
 \end{itemize}
 
 \section{記法と前提}
@@ -942,199 +938,6 @@ $\inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}$ と書く．
   $\gamma$ の第 $1,2$ 成分と第 $2,3$ 成分の像測度がそれぞれ $\pi,\sigma$ であること
   （矩形集合上で一致するので定理~\ref{thm:dynkin}による）と変数変換公式，
   $\pi,\sigma$ の最適性を用いた．
-\end{proof}
-
-
-%======================================
-\chapter{寄り道：離散最適輸送のエントロピー正則化}
-\label{ch:entropic}
-%======================================
-
-離散 Kantorovich 問題 $L_{\mathbf{C}}(\mathbf{a},\mathbf{b})$
-（命題~\ref{prop:discrete}）は線形計画問題であり，最適解は一意とは限らない．
-本章では目的関数にエントロピー項を加えた問題を考え，
-その解が一意で積の形をもち，正則化を弱める極限で元の問題に戻ることを示す
-（\cite{PeyreCuturi}*{Chapter 4}）．
-以下 $\mathbf{a}\in\R^n$，$\mathbf{b}\in\R^m$ は成分が正で和が $1$ のベクトル，
-$\mathbf{C}\in[0,\infty)^{n\times m}$ とする．
-
-\section{エントロピー正則化問題}
-
-\begin{dfn}[エントロピー正則化]\label{dfn:entropic}
-  $\mathbf{P}\in[0,\infty)^{n\times m}$ の\textbf{離散エントロピー}を
-  \[
-    \mathrm{H}(\mathbf{P}):=-\sum_{i,j}P_{i,j}(\log P_{i,j}-1)
-  \]
-  で定める（$0\log0:=0$）．$\varepsilon>0$ に対し
-  \[
-    L^\varepsilon_{\mathbf{C}}(\mathbf{a},\mathbf{b})
-    :=\min_{\mathbf{P}\in U(\mathbf{a},\mathbf{b})}
-    \bigl(\inner{\mathbf{C}}{\mathbf{P}}-\varepsilon\mathrm{H}(\mathbf{P})\bigr)
-  \]
-  を\textbf{エントロピー正則化問題}という．
-\end{dfn}
-
-$\varphi(x):=x\log x-x$（$\varphi(0):=0$）とおくと
-$-\mathrm{H}(\mathbf{P})=\sum_{i,j}\varphi(P_{i,j})$ である．
-$\lim_{x\to+0}x\log x=0$ より $\varphi$ は $[0,\infty)$ 上で連続であり，
-$(0,\infty)$ 上で $\varphi'(x)=\log x$ である．
-
-\begin{lem}\label{lem:entropy-convex}
-  $\varphi$ は $[0,\infty)$ 上で狭義凸である．
-  したがって $-\mathrm{H}$ は $[0,\infty)^{n\times m}$ 上で狭義凸である．
-\end{lem}
-
-\begin{proof}
-  $0\leq x_1<x_2$，$\lambda\in(0,1)$ とし，$x^*:=\lambda x_1+(1-\lambda)x_2$ とおく．
-  平均値の定理より，$c_1\in(x_1,x^*)$，$c_2\in(x^*,x_2)$ で
-  $\varphi(x^*)-\varphi(x_1)=\varphi'(c_1)(x^*-x_1)$，
-  $\varphi(x_2)-\varphi(x^*)=\varphi'(c_2)(x_2-x^*)$ となるものがある．
-  $x^*-x_1=(1-\lambda)(x_2-x_1)$，$x_2-x^*=\lambda(x_2-x_1)$ を代入すると
-  \[
-    \lambda\varphi(x_1)+(1-\lambda)\varphi(x_2)-\varphi(x^*)
-    =\lambda(1-\lambda)(x_2-x_1)\bigl(\varphi'(c_2)-\varphi'(c_1)\bigr)>0
-  \]
-  である．最後の不等号は $c_1<c_2$ と $\log$ の狭義単調性による．
-  $\mathbf{P}\neq\mathbf{Q}$ なら少なくとも一つの成分で狭義不等号となるので，
-  $-\mathrm{H}=\sum_{i,j}\varphi(P_{i,j})$ も狭義凸である．
-\end{proof}
-
-\begin{prop}[正則化解の存在と一意性]\label{prop:entropic-unique}
-  $L^\varepsilon_{\mathbf{C}}(\mathbf{a},\mathbf{b})$ の最小値を達成する
-  $\mathbf{P}_\varepsilon\in U(\mathbf{a},\mathbf{b})$ がただ一つ存在する．
-\end{prop}
-
-\begin{proof}
-  $F(\mathbf{P}):=\inner{\mathbf{C}}{\mathbf{P}}-\varepsilon\mathrm{H}(\mathbf{P})$ は連続であり，
-  $U(\mathbf{a},\mathbf{b})$ は空でない compact 集合なので（命題~\ref{prop:discrete}の証明），
-  最小値を達成する点が存在する．
-  $\mathbf{P}\neq\mathbf{Q}$ がともに最小点なら，凸集合 $U(\mathbf{a},\mathbf{b})$ に属する
-  中点 $\mathbf{R}:=(\mathbf{P}+\mathbf{Q})/2$ について，
-  $\inner{\mathbf{C}}{\cdot}$ の線形性と補題~\ref{lem:entropy-convex}より
-  $F(\mathbf{R})<(F(\mathbf{P})+F(\mathbf{Q}))/2=\min F$ となり矛盾する．
-\end{proof}
-
-\section{正則化解の形}
-
-\begin{lem}[正則化解の正値性]\label{lem:positivity}
-  $\mathbf{P}_\varepsilon$ の成分はすべて正である．
-\end{lem}
-
-\begin{proof}
-  $\mathbf{Q}:=(a_ib_j)_{i,j}\in U(\mathbf{a},\mathbf{b})$ とし，
-  $t\in[0,1]$ に対し $\mathbf{P}^t:=(1-t)\mathbf{P}_\varepsilon+t\mathbf{Q}\in U(\mathbf{a},\mathbf{b})$ とおく．
-  $t\in(0,1]$ では $P^t_{i,j}\geq ta_ib_j>0$ なので
-  \[
-    \frac{\d}{\d t}F(\mathbf{P}^t)
-    =\sum_{i,j}\bigl(C_{i,j}+\varepsilon\log P^t_{i,j}\bigr)
-      \bigl(a_ib_j-(\mathbf{P}_\varepsilon)_{i,j}\bigr)
-  \]
-  である．$(\mathbf{P}_\varepsilon)_{i,j}>0$ の項は $t\to+0$ で有界にとどまり，
-  $(\mathbf{P}_\varepsilon)_{i,j}=0$ の項は
-  $(C_{i,j}+\varepsilon\log(ta_ib_j))a_ib_j\to-\infty$ となる．
-  よって $(\mathbf{P}_\varepsilon)_{i,j}=0$ となる成分があれば，
-  ある $\delta>0$ について $(0,\delta)$ 上で $\frac{\d}{\d t}F(\mathbf{P}^t)<0$ となり，
-  平均値の定理から $F(\mathbf{P}^t)<F(\mathbf{P}^0)=F(\mathbf{P}_\varepsilon)$（$0<t<\delta$）を得る．
-  これは $\mathbf{P}_\varepsilon$ の最小性に反する．
-\end{proof}
-
-\begin{thm}[正則化解のスケーリング形]\label{thm:scaling}
-  $K_{i,j}:=e^{-C_{i,j}/\varepsilon}$ とおく．正の数 $u_1,\dots,u_n$，$v_1,\dots,v_m$ が存在して
-  \[
-    (\mathbf{P}_\varepsilon)_{i,j}=u_iK_{i,j}v_j\qquad(\forall i,j)
-  \]
-  が成り立つ．
-\end{thm}
-
-\begin{proof}
-  行和と列和がすべて $0$ である $n\times m$ 行列全体を $V$ とし，
-  $W:=\{(\alpha_i+\beta_j)_{i,j}\mid\alpha\in\R^n,\ \beta\in\R^m\}$ とおく．
-  $W$ は第 $i$ 行だけが $1$ の行列と第 $j$ 列だけが $1$ の行列で張られ，
-  これらと $\mathbf{H}$ との内積は $\mathbf{H}$ の第 $i$ 行和，第 $j$ 列和なので，
-  $V$ は $W$ の直交補空間である．有限次元なので $V$ の直交補空間は $W$ である．
-
-  $\mathbf{H}\in V$ とする．補題~\ref{lem:positivity}より，
-  $\abs{t}$ が十分小さければ $\mathbf{P}_\varepsilon+t\mathbf{H}$ は成分が正で
-  $U(\mathbf{a},\mathbf{b})$ に属する．
-  $t\mapsto F(\mathbf{P}_\varepsilon+t\mathbf{H})$ は $t=0$ で最小なので，
-  \[
-    0=\frac{\d}{\d t}F(\mathbf{P}_\varepsilon+t\mathbf{H})\Big|_{t=0}
-    =\sum_{i,j}\bigl(C_{i,j}+\varepsilon\log(\mathbf{P}_\varepsilon)_{i,j}\bigr)H_{i,j}.
-  \]
-  よって行列 $(C_{i,j}+\varepsilon\log(\mathbf{P}_\varepsilon)_{i,j})_{i,j}$ は $V$ に直交し，$W$ に属する．
-  すなわち $C_{i,j}+\varepsilon\log(\mathbf{P}_\varepsilon)_{i,j}=\alpha_i+\beta_j$ となる
-  $\alpha,\beta$ が存在する．$u_i:=e^{\alpha_i/\varepsilon}$，$v_j:=e^{\beta_j/\varepsilon}$ とおけばよい．
-\end{proof}
-
-\begin{rem}[Sinkhorn 反復]\label{rem:sinkhorn}
-  定理~\ref{thm:scaling}の形を周辺条件に代入すると
-  \[
-    u_i\sum_jK_{i,j}v_j=a_i,\qquad v_j\sum_iK_{i,j}u_i=b_j
-  \]
-  となる．この二式を交互に解く更新
-  $u_i\leftarrow a_i/\sum_jK_{i,j}v_j$，$v_j\leftarrow b_j/\sum_iK_{i,j}u_i$
-  を \textbf{Sinkhorn 反復}という．
-  その収束は本稿では扱わない（\cite{PeyreCuturi}*{\S4.2}）．
-\end{rem}
-
-\section{正則化パラメータの極限}
-
-\begin{thm}[$\varepsilon\to0$ の極限]\label{thm:eps-limit}
-  $S^*:=\{\mathbf{P}\in U(\mathbf{a},\mathbf{b})\mid
-  \inner{\mathbf{C}}{\mathbf{P}}=L_{\mathbf{C}}(\mathbf{a},\mathbf{b})\}$ とおく．$\varepsilon\to0$ のとき
-  \begin{enumerate}
-    \item $L^\varepsilon_{\mathbf{C}}(\mathbf{a},\mathbf{b})\to L_{\mathbf{C}}(\mathbf{a},\mathbf{b})$，
-    \item $\mathbf{P}_\varepsilon$ は $S^*$ 上で $\mathrm{H}$ を最大化するただ一つの元に収束する．
-  \end{enumerate}
-\end{thm}
-
-\begin{proof}
-  $\mathrm{H}$ は compact 集合 $U(\mathbf{a},\mathbf{b})$ 上で連続なので有界である．
-  $\mathbf{P}^*\in S^*$ とすると，$\mathbf{P}_\varepsilon$ の最小性と
-  $L_{\mathbf{C}}(\mathbf{a},\mathbf{b})$ の定義より
-  \[
-    0\leq\inner{\mathbf{C}}{\mathbf{P}_\varepsilon}-L_{\mathbf{C}}(\mathbf{a},\mathbf{b})
-    \leq\varepsilon\bigl(\mathrm{H}(\mathbf{P}_\varepsilon)-\mathrm{H}(\mathbf{P}^*)\bigr).
-    \tag{$*$}
-  \]
-
-  (1) $(*)$ の右辺は $0$ に収束するので
-  $\inner{\mathbf{C}}{\mathbf{P}_\varepsilon}\to L_{\mathbf{C}}(\mathbf{a},\mathbf{b})$ であり，
-  $\varepsilon\mathrm{H}(\mathbf{P}_\varepsilon)\to0$ とあわせて
-  $L^\varepsilon_{\mathbf{C}}(\mathbf{a},\mathbf{b})
-  =\inner{\mathbf{C}}{\mathbf{P}_\varepsilon}-\varepsilon\mathrm{H}(\mathbf{P}_\varepsilon)
-  \to L_{\mathbf{C}}(\mathbf{a},\mathbf{b})$ を得る．
-
-  (2) $S^*$ は空でない凸 compact 集合であり，
-  補題~\ref{lem:entropy-convex}より $\mathrm{H}$ は $S^*$ 上で最大値をただ一点
-  $\widehat{\mathbf{P}}$ でとる．
-  $(*)$ の左辺は非負なので $\mathrm{H}(\mathbf{P}_\varepsilon)\geq\mathrm{H}(\widehat{\mathbf{P}})$ である．
-  $\varepsilon_k\to0$ とし，$\mathbf{P}_{\varepsilon_k}$ の収束部分列の極限を $\overline{\mathbf{P}}$ とすると，
-  (1) より $\inner{\mathbf{C}}{\overline{\mathbf{P}}}=L_{\mathbf{C}}(\mathbf{a},\mathbf{b})$，
-  すなわち $\overline{\mathbf{P}}\in S^*$ であり，
-  $\mathrm{H}(\overline{\mathbf{P}})\geq\mathrm{H}(\widehat{\mathbf{P}})$ より
-  $\overline{\mathbf{P}}=\widehat{\mathbf{P}}$ である．
-  もし $\mathbf{P}_\varepsilon\not\to\widehat{\mathbf{P}}$ なら，
-  ある $\delta>0$ と $\varepsilon_k\to0$ で
-  $\lVert\mathbf{P}_{\varepsilon_k}-\widehat{\mathbf{P}}\rVert\geq\delta$ となるが，
-  compact 性からその収束部分列の極限は $\widehat{\mathbf{P}}$ であり矛盾する．
-\end{proof}
-
-主結果に戻ると，離散測度の Wasserstein 距離はエントロピー正則化で近似できる．
-
-\begin{cor}\label{cor:discrete-wp}
-  $\mu=\sum_ia_i\delta_{x_i}$，$\nu=\sum_jb_j\delta_{y_j}$ を $\X$ 上の離散測度とし，
-  $C_{i,j}:=d(x_i,y_j)^p$ とおく．このとき $\mu,\nu\in\Pp{p}(\X)$ であり，
-  \[
-    \Wass_p(\mu,\nu)^p
-    =L_{\mathbf{C}}(\mathbf{a},\mathbf{b})
-    =\lim_{\varepsilon\to0}L^\varepsilon_{\mathbf{C}}(\mathbf{a},\mathbf{b}).
-  \]
-\end{cor}
-
-\begin{proof}
-  $\int_\X d(x,x_0)^p\,\d\mu=\sum_ia_id(x_i,x_0)^p<\infty$ より $\mu\in\Pp{p}(\X)$ であり，$\nu$ も同様である．
-  第1の等号は命題~\ref{prop:discrete}，第2の等号は定理~\ref{thm:eps-limit}による．
 \end{proof}
 
 
