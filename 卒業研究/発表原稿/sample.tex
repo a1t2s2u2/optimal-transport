@@ -354,10 +354,16 @@ $P$ は \textbf{$\mu$-a.e.} に成り立つという．
   \]
   とおく．三角不等式より $x\mapsto d(x,F)$ は連続なので $f_k\in C_b(\X)$ であり，
   $F$ が閉集合なので $d(x,F)=0\iff x\in F$ である．
-  よって $f_k$ は $\mathbf{1}_F$ に各点収束し，有界収束定理（定理~\ref{thm:convergence}）から
+  よって $f_k$ は $\mathbf{1}_F$ に各点収束し，$0\leq f_k\leq1$ なので
   \[
-    \eta(F)=\lim_{k\to\infty}\int_\X f_k\,\d\eta
-    =\lim_{k\to\infty}\int_\X f_k\,\d\rho=\rho(F)
+    \begin{aligned}
+      \eta(F)&=\lim_{k\to\infty}\int_\X f_k\,\d\eta
+        &&\text{（有界収束定理，定理~\ref{thm:convergence}）}\\
+      &=\lim_{k\to\infty}\int_\X f_k\,\d\rho
+        &&\text{（仮定）}\\
+      &=\rho(F)
+        &&\text{（有界収束定理）}
+    \end{aligned}
   \]
   を得る．
   閉集合全体は $\Borel(\X)$ を生成する $\pi$-系なので，
@@ -548,10 +554,15 @@ $n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
 \begin{proof}
   $A\in\Borel(\X)$ に対し
   \[
-    \pi_{\mathbf{P}}(A\times\Y)
-    =\sum_{i:\,x_i\in A}\sum_{j=1}^mP_{i,j}
-    =\sum_{i:\,x_i\in A}a_i
-    =\mu(A)
+    \begin{aligned}
+      \pi_{\mathbf{P}}(A\times\Y)
+      &=\sum_{i:\,x_i\in A}\sum_{j=1}^mP_{i,j}
+        &&\text{（$\pi_{\mathbf{P}}$ の定義）}\\
+      &=\sum_{i:\,x_i\in A}a_i
+        &&\text{（行和の条件）}\\
+      &=\mu(A)
+        &&\text{（$\mu$ の定義）}
+    \end{aligned}
   \]
   であり，第2周辺分布も同様なので $\pi_{\mathbf{P}}\in\Couplings(\mu,\nu)$ である．
   点 $(x_i,y_j)$ は相異なるので $P_{i,j}=\pi_{\mathbf{P}}(\{(x_i,y_j)\})$ となり，単射である．
@@ -639,15 +650,19 @@ $n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
     d(x,y)^p\leq2^{p-1}\bigl(d(x,x_0)^p+d(x_0,y)^p\bigr)
   \]
   である．
-  $\mu\otimes\nu\in\Couplings(\mu,\nu)$ に周辺積分公式（注意~\ref{rem:marginal}）を用いて
+  $\mu\otimes\nu\in\Couplings(\mu,\nu)$ について
   \[
     \begin{aligned}
-      \int_{\X\times\X}d(x,y)^p\,\d(\mu\otimes\nu)
-      &\leq2^{p-1}\left(\int_\X d(x,x_0)^p\,\d\mu(x)+\int_\X d(x_0,y)^p\,\d\nu(y)\right)\\
-      &<\infty.
+      &\int_{\X\times\X}d(x,y)^p\,\d(\mu\otimes\nu)\\
+      &\quad\leq2^{p-1}\int_{\X\times\X}\bigl(d(x,x_0)^p+d(x_0,y)^p\bigr)\,\d(\mu\otimes\nu)
+        &&\text{（上の不等式）}\\
+      &\quad=2^{p-1}\left(\int_\X d(x,x_0)^p\,\d\mu+\int_\X d(x_0,y)^p\,\d\nu\right)
+        &&\text{（注意~\ref{rem:marginal}）}\\
+      &\quad<\infty
+        &&\text{（$\mu,\nu\in\Pp{p}(\X)$）}
     \end{aligned}
-    \qedhere
   \]
+  である．$\Wass_p(\mu,\nu)^p$ はこの値以下なので有限である．
 \end{proof}
 
 
@@ -675,14 +690,23 @@ $n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
   \]
   とおくと，
   $d$ の連続性（注意~\ref{rem:product-space}）より $c_m$ は有界連続である．
-  弱収束の定義と $c_m\leq d^p$ より
+  よって
   \[
-    \int c_m\,\d\pi=\lim_{k\to\infty}\int c_m\,\d\pi_k\leq\liminf_{k\to\infty}\int d^p\,\d\pi_k.
+    \begin{aligned}
+      \int c_m\,\d\pi&=\lim_{k\to\infty}\int c_m\,\d\pi_k
+        &&\text{（弱収束の定義）}\\
+      &\leq\liminf_{k\to\infty}\int d^p\,\d\pi_k
+        &&\text{（$c_m\leq d^p$）}.
+    \end{aligned}
   \]
-  $c_m\uparrow d^p$（$m\to\infty$）であり，右辺は $m$ によらないので，
-  単調収束定理（定理~\ref{thm:convergence}）から
+  $c_m\uparrow d^p$（$m\to\infty$）であり，右辺は $m$ によらないので
   \[
-    \int d^p\,\d\pi=\lim_{m\to\infty}\int c_m\,\d\pi\leq\liminf_{k\to\infty}\int d^p\,\d\pi_k
+    \begin{aligned}
+      \int d^p\,\d\pi&=\lim_{m\to\infty}\int c_m\,\d\pi
+        &&\text{（単調収束定理，定理~\ref{thm:convergence}）}\\
+      &\leq\liminf_{k\to\infty}\int d^p\,\d\pi_k
+        &&\text{（上の不等式）}.
+    \end{aligned}
     \qedhere
   \]
 \end{proof}
@@ -705,8 +729,15 @@ $n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
   $\pi\in\Couplings(\eta,\rho)$（$\eta\in A$，$\rho\in B$）とすると，
   $K\times L$ の外の点は $x\notin K$ または $y\notin L$ をみたすので
   \[
-    \pi((\X\times\Y)\setminus(K\times L))
-    \leq\eta(\X\setminus K)+\rho(\Y\setminus L)\leq\varepsilon.
+    \begin{aligned}
+      \pi((\X\times\Y)\setminus(K\times L))
+      &\leq\pi((\X\setminus K)\times\Y)+\pi(\X\times(\Y\setminus L))
+        &&\text{（劣加法性）}\\
+      &=\eta(\X\setminus K)+\rho(\Y\setminus L)
+        &&\text{（周辺分布の条件）}\\
+      &\leq\varepsilon
+        &&\text{（$K,L$ の選び方）}.
+    \end{aligned}
   \]
   $K\times L$ は compact なので，$\Couplings(A,B)$ は tight である．
 \end{proof}
@@ -744,20 +775,29 @@ $n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
 
   \textbf{3. 極限も coupling である．}
   $\varphi\in C_b(\X)$ に対し $(x,y)\mapsto\varphi(x)$ も有界連続なので，
-  弱収束と周辺積分公式（注意~\ref{rem:marginal}）より
   \[
-    \int\varphi(x)\,\d\pi^*(x,y)
-    =\lim_{j\to\infty}\int\varphi(x)\,\d\pi_{k_j}(x,y)
-    =\int_\X\varphi\,\d\mu.
+    \begin{aligned}
+      \int\varphi(x)\,\d\pi^*(x,y)
+      &=\lim_{j\to\infty}\int\varphi(x)\,\d\pi_{k_j}(x,y)
+        &&\text{（弱収束の定義）}\\
+      &=\int_\X\varphi\,\d\mu
+        &&\text{（周辺積分公式，注意~\ref{rem:marginal}）}.
+    \end{aligned}
   \]
   左辺は $\pi^*$ の第1周辺分布による $\varphi$ の積分なので，
   命題~\ref{prop:cb-determines}よりその周辺分布は $\mu$ である．
   第2周辺分布も同様に $\nu$ であり，$\pi^*\in\Couplings(\mu,\nu)$ である．
 
   \textbf{4. 下限の達成．}
-  $\pi^*\in\Couplings(\mu,\nu)$ と補題~\ref{lem:cost-lsc}より
   \[
-    I\leq\int d^p\,\d\pi^*\leq\liminf_{j\to\infty}\int d^p\,\d\pi_{k_j}=I.
+    \begin{aligned}
+      I&\leq\int d^p\,\d\pi^*
+        &&\text{（$\pi^*\in\Couplings(\mu,\nu)$ と下限の定義）}\\
+      &\leq\liminf_{j\to\infty}\int d^p\,\d\pi_{k_j}
+        &&\text{（補題~\ref{lem:cost-lsc}）}\\
+      &=I
+        &&\text{（手順 1）}.
+    \end{aligned}
     \qedhere
   \]
 \end{proof}
@@ -870,14 +910,22 @@ $n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
     \pi_y(A):=\sum_nh_n(y)\rho^{(n)}_y(A)
   \]
   と定める（$\sum_nh_n(y)\neq1$ となる Borel 零集合上では $\pi_y:=\delta_{x_0}$ とする）．
-  これは条件 1 をみたす確率測度の族であり，単調収束定理より
+  これは条件 1 をみたす確率測度の族であり，
   \[
-    \int_B\pi_y(A)\,\d\nu(y)
-    =\sum_n\int_B\rho^{(n)}_y(A)\,\d\nu_n(y)
-    =\sum_n\pi((A\cap E_n)\times B)
-    =\pi(A\times B).
+    \begin{aligned}
+      \int_B\pi_y(A)\,\d\nu(y)
+      &=\sum_n\int_Bh_n(y)\rho^{(n)}_y(A)\,\d\nu(y)
+        &&\text{（$\pi_y$ の定義と単調収束定理）}\\
+      &=\sum_n\int_B\rho^{(n)}_y(A)\,\d\nu_n(y)
+        &&\text{（$h_n=\d\nu_n/\d\nu$）}\\
+      &=\sum_n\pi((A\cap E_n)\times B)
+        &&\text{（上の公式）}\\
+      &=\pi(A\times B)
+        &&\text{（$E_n$ は $\textstyle\bigcup_nK_n$ の分割）}.
+    \end{aligned}
     \qedhere
   \]
+  第2の等号では，密度の公式を非負単関数で近似して非負可測関数に拡張した．
 \end{proof}
 
 \section{接着補題}
@@ -962,11 +1010,16 @@ $n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
   \textbf{1. 一致の公理．}
   ($\Leftarrow$) $\mu=\nu$ とする．
   命題~\ref{prop:diagonal}より，$\pi(\Delta)=1$ をみたす $\pi\in\Couplings(\mu,\mu)$ を取る．
-  $\pi$ は $\Delta$ の外に質量をもたず，$\Delta$ 上では $d(x,x)=0$ なので
   \[
-    \Wass_p(\mu,\mu)^p
-    \leq\int_{\X\times\X}d(x,y)^p\,\d\pi(x,y)
-    =\int_\Delta d(x,y)^p\,\d\pi(x,y)=0.
+    \begin{aligned}
+      \Wass_p(\mu,\mu)^p
+      &\leq\int_{\X\times\X}d(x,y)^p\,\d\pi(x,y)
+        &&\text{（下限の定義）}\\
+      &=\int_\Delta d(x,y)^p\,\d\pi(x,y)
+        &&\text{（$\pi(\Delta)=1$）}\\
+      &=0
+        &&\text{（$\Delta$ 上で $d(x,x)=0$）}.
+    \end{aligned}
   \]
 
   ($\Rightarrow$) $\Wass_p(\mu,\nu)=0$ とする．
@@ -974,19 +1027,17 @@ $n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
   $\pi^*\in\Couplings(\mu,\nu)$ が存在する．
   被積分関数は非負なので $d(x,y)=0$ が $\pi^*$-a.e. に成り立ち，$\pi^*(\Delta)=1$ である．
   任意の $A\in\Borel(\X)$ に対し，
-  $A\times(\X\setminus A)$ と $(\X\setminus A)\times A$ は $\Delta$ と交わらないので，
-  周辺分布の条件と有限加法性より
   \[
     \begin{aligned}
       \mu(A)&=\pi^*(A\times\X)
-      =\pi^*(A\times A)+\pi^*\bigl(A\times(\X\setminus A)\bigr)
-      =\pi^*(A\times A),\\
-      \nu(A)&=\pi^*(\X\times A)
-      =\pi^*(A\times A)+\pi^*\bigl((\X\setminus A)\times A\bigr)
-      =\pi^*(A\times A).
+        &&\text{（周辺分布の条件）}\\
+      &=\pi^*(A\times A)+\pi^*\bigl(A\times(\X\setminus A)\bigr)
+        &&\text{（有限加法性）}\\
+      &=\pi^*(A\times A)
+        &&\text{（$A\times(\X\setminus A)$ は $\Delta$ と交わらない）}.
     \end{aligned}
   \]
-  よって $\mu=\nu$ である．
+  同様に $\nu(A)=\pi^*(\X\times A)=\pi^*(A\times A)$ であるから，$\mu=\nu$ である．
 
   \textbf{2. 対称性．}
   $S(x,y):=(y,x)$ とし，$\pi\in\Couplings(\mu,\nu)$ に対し
@@ -999,21 +1050,27 @@ $n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
   なので $\pi^\top\in\Couplings(\nu,\mu)$ である．
   $(\pi^\top)^\top=\pi$ より，$\pi\mapsto\pi^\top$ は
   $\Couplings(\mu,\nu)$ から $\Couplings(\nu,\mu)$ への全単射である．
-  変数変換公式（補題~\ref{lem:change-of-variables}）と $d$ の対称性より
   \[
-    \int_{\X\times\X}d(x,y)^p\,\d\pi^\top(x,y)
-    =\int_{\X\times\X}d(y,x)^p\,\d\pi(x,y)
-    =\int_{\X\times\X}d(x,y)^p\,\d\pi(x,y)
+    \begin{aligned}
+      \int_{\X\times\X}d(x,y)^p\,\d\pi^\top(x,y)
+      &=\int_{\X\times\X}d(y,x)^p\,\d\pi(x,y)
+        &&\text{（変数変換公式，補題~\ref{lem:change-of-variables}）}\\
+      &=\int_{\X\times\X}d(x,y)^p\,\d\pi(x,y)
+        &&\text{（$d$ の対称性）}
+    \end{aligned}
   \]
   であるから，
   \[
     \begin{aligned}
       \Wass_p(\mu,\nu)^p
       &=\inf_{\pi\in\Couplings(\mu,\nu)}
-        \int_{\X\times\X}d(x,y)^p\,\d\pi^\top(x,y)\\
+        \int_{\X\times\X}d(x,y)^p\,\d\pi^\top(x,y)
+        &&\text{（上の等式）}\\
       &=\inf_{\pi'\in\Couplings(\nu,\mu)}
         \int_{\X\times\X}d(x,y)^p\,\d\pi'(x,y)
-      =\Wass_p(\nu,\mu)^p.
+        &&\text{（$\pi\mapsto\pi^\top$ は全単射）}\\
+      &=\Wass_p(\nu,\mu)^p
+        &&\text{（$\Wass_p$ の定義）}.
     \end{aligned}
   \]
 
@@ -1029,30 +1086,38 @@ $n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
   について，
   \[
     \begin{aligned}
-      \rho(A\times\X)&=\gamma(A\times\X\times\X)=\pi(A\times\X)=\mu(A),\\
-      \rho(\X\times C)&=\gamma(\X\times\X\times C)=\sigma(\X\times C)=\xi(C)
+      \rho(A\times\X)&=\gamma(A\times\X\times\X)
+        &&\text{（$\rho$ の定義）}\\
+      &=\pi(A\times\X)
+        &&\text{（接着補題）}\\
+      &=\mu(A)
+        &&\text{（$\pi\in\Couplings(\mu,\nu)$）}
     \end{aligned}
   \]
-  より $\rho\in\Couplings(\mu,\xi)$ である．したがって
+  であり，同様に $\rho(\X\times C)=\sigma(\X\times C)=\xi(C)$ であるから，
+  $\rho\in\Couplings(\mu,\xi)$ である．したがって
   \[
     \begin{aligned}
       \Wass_p(\mu,\xi)
-      &\leq\left(\int_{\X^2}d(x,z)^p\,\d\rho(x,z)\right)^{1/p}
-      =\left(\int_{\X^3}d(x,z)^p\,\d\gamma(x,y,z)\right)^{1/p}\\
-      &\leq\left(\int_{\X^3}\bigl(d(x,y)+d(y,z)\bigr)^p\,\d\gamma(x,y,z)\right)^{1/p}\\
-      &\leq
-      \left(\int_{\X^3}d(x,y)^p\,\d\gamma\right)^{1/p}
-      +\left(\int_{\X^3}d(y,z)^p\,\d\gamma\right)^{1/p}\\
-      &=\left(\int_{\X^2}d(x,y)^p\,\d\pi(x,y)\right)^{1/p}
-      +\left(\int_{\X^2}d(y,z)^p\,\d\sigma(y,z)\right)^{1/p}\\
-      &=\Wass_p(\mu,\nu)+\Wass_p(\nu,\xi).
+      &\leq\left(\int_{\X^2}d(x,z)^p\,\d\rho\right)^{1/p}
+        &&\text{（下限の定義）}\\
+      &=\left(\int_{\X^3}d(x,z)^p\,\d\gamma\right)^{1/p}
+        &&\text{（変数変換公式）}\\
+      &\leq\left(\int_{\X^3}\bigl(d(x,y)+d(y,z)\bigr)^p\,\d\gamma\right)^{1/p}
+        &&\text{（$d$ の三角不等式）}\\
+      &\leq\left(\int_{\X^3}d(x,y)^p\,\d\gamma\right)^{1/p}
+      +\left(\int_{\X^3}d(y,z)^p\,\d\gamma\right)^{1/p}
+        &&\text{（Minkowski，定理~\ref{thm:minkowski}）}\\
+      &=\left(\int_{\X^2}d(x,y)^p\,\d\pi\right)^{1/p}
+      +\left(\int_{\X^2}d(y,z)^p\,\d\sigma\right)^{1/p}
+        &&\text{（$\gamma$ の周辺分布）}\\
+      &=\Wass_p(\mu,\nu)+\Wass_p(\nu,\xi)
+        &&\text{（$\pi,\sigma$ の最適性）}.
     \end{aligned}
   \]
-  順に，下限の定義と変数変換公式，$d$ の三角不等式，
-  Minkowski の不等式（定理~\ref{thm:minkowski}），
-  $\gamma$ の第 $1,2$ 成分と第 $2,3$ 成分の像測度がそれぞれ $\pi,\sigma$ であること
-  （矩形集合上で一致するので定理~\ref{thm:dynkin}による）と変数変換公式，
-  $\pi,\sigma$ の最適性を用いた．
+  「$\gamma$ の周辺分布」の等号では，$\gamma$ の第 $1,2$ 成分の像測度が $\pi$ と
+  矩形集合上で一致するので一致定理（定理~\ref{thm:dynkin}）より等しいこと
+  （第 $2,3$ 成分と $\sigma$ も同様）と，変数変換公式を用いた．
 \end{proof}
 
 
