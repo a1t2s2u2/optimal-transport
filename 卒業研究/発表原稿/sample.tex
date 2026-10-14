@@ -173,11 +173,10 @@ $\Wass_p$ が $\Pp{p}(\X)$ 上の距離であること（定理~\ref{thm:wp-metr
 
 \begin{itemize}
   \item 第\ref{ch:prelim}章：距離空間と測度論の準備をまとめる．
-  \item 第\ref{ch:wasserstein}章：Kantorovich 問題と $\Wass_p$ を定義する．
-    離散測度の場合には Kantorovich 問題が行列の最適化に帰着し，
-    最適解の存在が直ちに従うことも見る．
-  \item 第\ref{ch:existence}章：一般の Polish 空間で最適 coupling の存在を示す．
-  \item 第\ref{ch:metric}章：測度分解定理と接着補題を経て，主定理を証明する．
+  \item 第\ref{ch:kantorovich}章：Kantorovich 問題を定義し，最適 coupling の存在を示す．
+    離散測度の場合には行列の最適化に帰着して存在が直ちに従い，
+    一般の Polish 空間では弱収束と Prokhorov の定理を用いる．
+  \item 第\ref{ch:metric}章：$\Wass_p$ を定義し，測度分解定理と接着補題を経て主定理を証明する．
 \end{itemize}
 
 \section{記法と前提}
@@ -459,11 +458,11 @@ $h,k$ を入れ替えれば，$h=k$ が $\nu$-a.e. に成り立つ．
 
 
 %======================================
-\chapter{Kantorovich 問題と Wasserstein 距離}
-\label{ch:wasserstein}
+\chapter{Kantorovich 問題と最適 coupling の存在}
+\label{ch:kantorovich}
 %======================================
 
-以下，$\X,\Y$ は Polish 空間とし，$\X$ の距離を $d$ と書く．
+以下，$\X,\Y$ は Polish 空間とする．
 
 \section{coupling と Kantorovich 問題}
 
@@ -594,9 +593,156 @@ $n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
 離散の場合は coupling 全体が有限次元の compact 集合と同一視できるので，
 最適 coupling の存在は直ちに従う．
 一般の Polish 空間ではこの議論が使えないため，
-第\ref{ch:existence}章では弱収束と Prokhorov の定理を用いる．
+次節では弱収束と Prokhorov の定理を用いる．
 
-\section{Wasserstein 距離}
+\section{最適 coupling の存在}
+
+一般の Polish 空間では coupling 全体を有限次元の集合と同一視できないので，
+コストが下限に近づく coupling の列を取り，その弱収束極限が下限を達成することを示す．
+そのために，部分列を取り出すための tightness（補題~\ref{lem:plans-tight}）と，
+極限でコストが増えないことを保証する下半連続性（補題~\ref{lem:cost-lsc}）を準備する．
+以下，コスト $c\colon\X\times\Y\to[0,\infty)$ は連続とし，
+$\int_{\X\times\Y}c(x,y)\,\d\pi(x,y)$ を $\int c\,\d\pi$ と略記する．
+
+\begin{lem}[輸送コストの下半連続性（\cite{Villani}*{Lemma 4.3}）]\label{lem:cost-lsc}
+  $\pi_k,\pi\in\Prob(\X\times\Y)$ が $\pi_k\weakto\pi$ をみたすならば
+  \[
+    \int c\,\d\pi\leq\liminf_{k\to\infty}\int c\,\d\pi_k.
+  \]
+\end{lem}
+
+\begin{proof}
+  $m\in\N$ に対し
+  \[
+    c_m(x,y):=\min\{c(x,y),m\}
+  \]
+  とおくと，$c$ の連続性より $c_m$ は有界連続である．よって
+  \[
+    \begin{aligned}
+      \int c_m\,\d\pi&=\lim_{k\to\infty}\int c_m\,\d\pi_k
+        &&\text{（弱収束の定義）}\\
+      &\leq\liminf_{k\to\infty}\int c\,\d\pi_k
+        &&\text{（$c_m\leq c$）}.
+    \end{aligned}
+  \]
+  $c_m\uparrow c$（$m\to\infty$）であり，右辺は $m$ によらないので
+  \[
+    \begin{aligned}
+      \int c\,\d\pi&=\lim_{m\to\infty}\int c_m\,\d\pi
+        &&\text{（単調収束定理，定理~\ref{thm:convergence}）}\\
+      &\leq\liminf_{k\to\infty}\int c\,\d\pi_k
+        &&\text{（上の不等式）}.
+    \end{aligned}
+    \qedhere
+  \]
+\end{proof}
+
+\begin{lem}[輸送計画の tightness（\cite{Villani}*{Lemma 4.4}）]\label{lem:plans-tight}
+  $A\subset\Prob(\X)$，$B\subset\Prob(\Y)$ が tight ならば，
+  \[
+    \Couplings(A,B):=\bigcup_{\mu\in A,\,\nu\in B}\Couplings(\mu,\nu)
+  \]
+  も tight である．
+\end{lem}
+
+\begin{proof}
+  $\varepsilon>0$ に対し，compact 集合 $K\subset\X$，$L\subset\Y$ を
+  \[
+    \eta(\X\setminus K)\leq\frac{\varepsilon}{2}\quad(\forall\eta\in A),\qquad
+    \rho(\Y\setminus L)\leq\frac{\varepsilon}{2}\quad(\forall\rho\in B)
+  \]
+  となるように取る．
+  $\pi\in\Couplings(\eta,\rho)$（$\eta\in A$，$\rho\in B$）とすると，
+  $K\times L$ の外の点は $x\notin K$ または $y\notin L$ をみたすので
+  \[
+    \begin{aligned}
+      \pi((\X\times\Y)\setminus(K\times L))
+      &\leq\pi((\X\setminus K)\times\Y)+\pi(\X\times(\Y\setminus L))
+        &&\text{（劣加法性）}\\
+      &=\eta(\X\setminus K)+\rho(\Y\setminus L)
+        &&\text{（周辺分布の条件）}\\
+      &\leq\varepsilon
+        &&\text{（$K,L$ の選び方）}.
+    \end{aligned}
+  \]
+  $K\times L$ は compact なので，$\Couplings(A,B)$ は tight である．
+\end{proof}
+
+\begin{thm}[最適 coupling の存在（\cite{Villani}*{Theorem 4.1}）]\label{thm:existence}
+  $\mu\in\Prob(\X)$，$\nu\in\Prob(\Y)$ とする．
+  ある $\pi^*\in\Couplings(\mu,\nu)$ が存在して
+  \[
+    \int c\,\d\pi^*=\inf_{\pi\in\Couplings(\mu,\nu)}\int c\,\d\pi
+  \]
+  が成り立つ．
+\end{thm}
+
+\begin{proof}
+  右辺を $I$ とおく．$I=\infty$ ならば任意の coupling が下限を達成するので，$I<\infty$ とする．
+
+  \textbf{1. 最小化列．}
+  下限の定義より，各 $k\in\N$ に対して
+  \[
+    \pi_k\in\Couplings(\mu,\nu),\qquad\int c\,\d\pi_k<I+\frac1k
+  \]
+  となる $\pi_k$ が取れる．
+
+  \textbf{2. 部分列の抽出．}
+  一点集合 $\{\mu\}$ の列は定数列なので $\mu$ に弱収束し，
+  Prokhorov の定理（定理~\ref{thm:prokhorov}）より $\{\mu\}$ は tight である．
+  $\{\nu\}$ も同様であり，補題~\ref{lem:plans-tight}より
+  $\Couplings(\mu,\nu)$ は tight である．
+  $\X\times\Y$ は Polish 空間なので（注意~\ref{rem:product-space}），
+  再び Prokhorov の定理により，ある部分列と $\pi^*\in\Prob(\X\times\Y)$ に対して
+  \[
+    \pi_{k_j}\weakto\pi^*
+  \]
+  となる．
+
+  \textbf{3. 極限も coupling である．}
+  $\varphi\in C_b(\X)$ に対し $(x,y)\mapsto\varphi(x)$ も有界連続なので，
+  \[
+    \begin{aligned}
+      \int\varphi(x)\,\d\pi^*(x,y)
+      &=\lim_{j\to\infty}\int\varphi(x)\,\d\pi_{k_j}(x,y)
+        &&\text{（弱収束の定義）}\\
+      &=\int_\X\varphi\,\d\mu
+        &&\text{（周辺積分公式，注意~\ref{rem:marginal}）}.
+    \end{aligned}
+  \]
+  左辺は $\pi^*$ の第1周辺分布による $\varphi$ の積分なので，
+  命題~\ref{prop:cb-determines}よりその周辺分布は $\mu$ である．
+  第2周辺分布も同様に $\nu$ であり，$\pi^*\in\Couplings(\mu,\nu)$ である．
+
+  \textbf{4. 下限の達成．}
+  \[
+    \begin{aligned}
+      I&\leq\int c\,\d\pi^*
+        &&\text{（$\pi^*\in\Couplings(\mu,\nu)$ と下限の定義）}\\
+      &\leq\liminf_{j\to\infty}\int c\,\d\pi_{k_j}
+        &&\text{（補題~\ref{lem:cost-lsc}）}\\
+      &=I
+        &&\text{（手順 1）}.
+    \end{aligned}
+    \qedhere
+  \]
+\end{proof}
+
+
+%======================================
+\chapter{Wasserstein 距離とその距離性}
+\label{ch:metric}
+%======================================
+
+以下，$\X$ を Polish 空間とし，その距離を $d$ と書く．
+本章では $\Wass_p$ を定義し，それが距離であることを示す．
+一致の公理には最適 coupling の存在（定理~\ref{thm:existence}）を用いる．
+三角不等式の鍵は，共通の周辺分布をもつ二つの coupling を
+一つの三変数の確率測度にまとめる接着補題である．
+その準備として，二変数の分布を共通の変数ごとの分布に分ける測度分解定理を示す．
+証明は北別府~\cite{Kitabeppu}*{Theorem 5.3.1} に沿う．
+
+\section{Wasserstein 距離の定義}
 
 \begin{dfn}[有限 $p$ 次モーメント（\cite{Villani}*{Definition 6.4}）]\label{dfn:pp}
   $1\leq p<\infty$ と $x_0\in\X$ に対し
@@ -665,153 +811,16 @@ $n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
   である．$\Wass_p(\mu,\nu)^p$ はこの値以下なので有限である．
 \end{proof}
 
-
-%======================================
-\chapter{最適 coupling の存在}
-\label{ch:existence}
-%======================================
-
-コストが下限に近づく coupling の列を取り，その弱収束極限が下限を達成することを示す．
-そのために，部分列を取り出すための tightness（補題~\ref{lem:plans-tight}）と，
-極限でコストが増えないことを保証する下半連続性（補題~\ref{lem:cost-lsc}）を準備する．
-以下 $\int_{\X\times\X}d(x,y)^p\,\d\pi(x,y)$ を $\int d^p\,\d\pi$ と略記する．
-
-\begin{lem}[$p$ 次輸送コストの下半連続性（\cite{Villani}*{Lemma 4.3}）]\label{lem:cost-lsc}
-  $\pi_k,\pi\in\Prob(\X\times\X)$ が $\pi_k\weakto\pi$ をみたすならば
+\begin{rem}[$\Wass_p$ の最適 coupling]\label{rem:wp-optimal}
+  $d^p$ は $\X\times\X$ 上の連続な非負関数なので（注意~\ref{rem:product-space}），
+  定理~\ref{thm:existence}より
   \[
-    \int d^p\,\d\pi\leq\liminf_{k\to\infty}\int d^p\,\d\pi_k.
+    \Wass_p(\mu,\nu)^p=\int_{\X\times\X}d(x,y)^p\,\d\pi^*(x,y)
   \]
-\end{lem}
+  をみたす $\pi^*\in\Couplings(\mu,\nu)$ が存在する．
+  これを $\Wass_p$ の\textbf{最適 coupling} という．
+\end{rem}
 
-\begin{proof}
-  $m\in\N$ に対し
-  \[
-    c_m(x,y):=\min\{d(x,y)^p,m\}
-  \]
-  とおくと，
-  $d$ の連続性（注意~\ref{rem:product-space}）より $c_m$ は有界連続である．
-  よって
-  \[
-    \begin{aligned}
-      \int c_m\,\d\pi&=\lim_{k\to\infty}\int c_m\,\d\pi_k
-        &&\text{（弱収束の定義）}\\
-      &\leq\liminf_{k\to\infty}\int d^p\,\d\pi_k
-        &&\text{（$c_m\leq d^p$）}.
-    \end{aligned}
-  \]
-  $c_m\uparrow d^p$（$m\to\infty$）であり，右辺は $m$ によらないので
-  \[
-    \begin{aligned}
-      \int d^p\,\d\pi&=\lim_{m\to\infty}\int c_m\,\d\pi
-        &&\text{（単調収束定理，定理~\ref{thm:convergence}）}\\
-      &\leq\liminf_{k\to\infty}\int d^p\,\d\pi_k
-        &&\text{（上の不等式）}.
-    \end{aligned}
-    \qedhere
-  \]
-\end{proof}
-
-\begin{lem}[輸送計画の tightness（\cite{Villani}*{Lemma 4.4}）]\label{lem:plans-tight}
-  $A\subset\Prob(\X)$，$B\subset\Prob(\Y)$ が tight ならば，
-  \[
-    \Couplings(A,B):=\bigcup_{\mu\in A,\,\nu\in B}\Couplings(\mu,\nu)
-  \]
-  も tight である．
-\end{lem}
-
-\begin{proof}
-  $\varepsilon>0$ に対し，compact 集合 $K\subset\X$，$L\subset\Y$ を
-  \[
-    \eta(\X\setminus K)\leq\frac{\varepsilon}{2}\quad(\forall\eta\in A),\qquad
-    \rho(\Y\setminus L)\leq\frac{\varepsilon}{2}\quad(\forall\rho\in B)
-  \]
-  となるように取る．
-  $\pi\in\Couplings(\eta,\rho)$（$\eta\in A$，$\rho\in B$）とすると，
-  $K\times L$ の外の点は $x\notin K$ または $y\notin L$ をみたすので
-  \[
-    \begin{aligned}
-      \pi((\X\times\Y)\setminus(K\times L))
-      &\leq\pi((\X\setminus K)\times\Y)+\pi(\X\times(\Y\setminus L))
-        &&\text{（劣加法性）}\\
-      &=\eta(\X\setminus K)+\rho(\Y\setminus L)
-        &&\text{（周辺分布の条件）}\\
-      &\leq\varepsilon
-        &&\text{（$K,L$ の選び方）}.
-    \end{aligned}
-  \]
-  $K\times L$ は compact なので，$\Couplings(A,B)$ は tight である．
-\end{proof}
-
-\begin{thm}[最適 coupling の存在（\cite{Villani}*{Theorem 4.1}）]\label{thm:existence}
-  $1\leq p<\infty$，$\mu,\nu\in\Pp{p}(\X)$ とする．
-  ある $\pi^*\in\Couplings(\mu,\nu)$ が存在して
-  \[
-    \Wass_p(\mu,\nu)^p=\int d^p\,\d\pi^*
-  \]
-  が成り立つ．
-\end{thm}
-
-\begin{proof}
-  $I:=\Wass_p(\mu,\nu)^p$ とおくと，補題~\ref{lem:wp-finite}より $I<\infty$ である．
-
-  \textbf{1. 最小化列．}
-  下限の定義より，各 $k\in\N$ に対して
-  \[
-    \pi_k\in\Couplings(\mu,\nu),\qquad\int d^p\,\d\pi_k<I+\frac1k
-  \]
-  となる $\pi_k$ が取れる．
-
-  \textbf{2. 部分列の抽出．}
-  一点集合 $\{\mu\}$ の列は定数列なので $\mu$ に弱収束し，
-  Prokhorov の定理（定理~\ref{thm:prokhorov}）より $\{\mu\}$ は tight である．
-  $\{\nu\}$ も同様であり，補題~\ref{lem:plans-tight}より
-  $\Couplings(\mu,\nu)$ は tight である．
-  $\X\times\X$ は Polish 空間なので，再び Prokhorov の定理により，
-  ある部分列と $\pi^*\in\Prob(\X\times\X)$ に対して
-  \[
-    \pi_{k_j}\weakto\pi^*
-  \]
-  となる．
-
-  \textbf{3. 極限も coupling である．}
-  $\varphi\in C_b(\X)$ に対し $(x,y)\mapsto\varphi(x)$ も有界連続なので，
-  \[
-    \begin{aligned}
-      \int\varphi(x)\,\d\pi^*(x,y)
-      &=\lim_{j\to\infty}\int\varphi(x)\,\d\pi_{k_j}(x,y)
-        &&\text{（弱収束の定義）}\\
-      &=\int_\X\varphi\,\d\mu
-        &&\text{（周辺積分公式，注意~\ref{rem:marginal}）}.
-    \end{aligned}
-  \]
-  左辺は $\pi^*$ の第1周辺分布による $\varphi$ の積分なので，
-  命題~\ref{prop:cb-determines}よりその周辺分布は $\mu$ である．
-  第2周辺分布も同様に $\nu$ であり，$\pi^*\in\Couplings(\mu,\nu)$ である．
-
-  \textbf{4. 下限の達成．}
-  \[
-    \begin{aligned}
-      I&\leq\int d^p\,\d\pi^*
-        &&\text{（$\pi^*\in\Couplings(\mu,\nu)$ と下限の定義）}\\
-      &\leq\liminf_{j\to\infty}\int d^p\,\d\pi_{k_j}
-        &&\text{（補題~\ref{lem:cost-lsc}）}\\
-      &=I
-        &&\text{（手順 1）}.
-    \end{aligned}
-    \qedhere
-  \]
-\end{proof}
-
-
-%======================================
-\chapter{Wasserstein 距離の距離性}
-\label{ch:metric}
-%======================================
-
-三角不等式の鍵は，共通の周辺分布をもつ二つの coupling を
-一つの三変数の確率測度にまとめる接着補題である．
-その準備として，二変数の分布を共通の変数ごとの分布に分ける測度分解定理を示す．
-証明は北別府~\cite{Kitabeppu}*{Theorem 5.3.1} に沿う．
 
 \section{測度分解定理}
 
@@ -886,7 +895,7 @@ $n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
   Dynkin の定理（定理~\ref{thm:dynkin}）よりすべての $A\in\Borel(\X)$ で成り立つ．
 
   \textbf{3. 一般の場合．}
-  $\mu(A):=\pi(A\times\Y)$ は，第\ref{ch:existence}章と同様に Prokhorov の定理より tight である．
+  $\mu(A):=\pi(A\times\Y)$ は，定理~\ref{thm:existence}の証明と同様に Prokhorov の定理より tight である．
   よって compact 集合の増大列 $K_1\subset K_2\subset\cdots$ で
   $\mu(\X\setminus K_n)\leq1/n$ となるものが取れる．
   $K_0:=\emptyset$ とし，
@@ -1023,8 +1032,11 @@ $n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
   \]
 
   ($\Rightarrow$) $\Wass_p(\mu,\nu)=0$ とする．
-  定理~\ref{thm:existence}より，$\int d^p\,\d\pi^*=0$ となる
-  $\pi^*\in\Couplings(\mu,\nu)$ が存在する．
+  注意~\ref{rem:wp-optimal}より，
+  \[
+    \int_{\X\times\X}d(x,y)^p\,\d\pi^*(x,y)=0
+  \]
+  となる $\pi^*\in\Couplings(\mu,\nu)$ が存在する．
   被積分関数は非負なので $d(x,y)=0$ が $\pi^*$-a.e. に成り立ち，$\pi^*(\Delta)=1$ である．
   任意の $A\in\Borel(\X)$ に対し，
   \[
@@ -1075,7 +1087,7 @@ $n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
   \]
 
   \textbf{3. 三角不等式．}
-  $\xi\in\Pp{p}(\X)$ とする．定理~\ref{thm:existence}より
+  $\xi\in\Pp{p}(\X)$ とする．注意~\ref{rem:wp-optimal}より
   最適 coupling $\pi\in\Couplings(\mu,\nu)$，$\sigma\in\Couplings(\nu,\xi)$ を取り，
   接着補題（補題~\ref{lem:gluing}）により $\gamma\in\Prob(\X^3)$ を取る．
   $\gamma$ の第1成分と第3成分を取り出した確率測度
