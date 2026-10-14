@@ -8,7 +8,7 @@
 
 SITE := node tools/site
 
-.PHONY: help sites cuturi-site wasserstein-site quantum-ot-site clean-sites
+.PHONY: help sites cuturi-site wasserstein-site quantum-ot-site clean-sites ot-viz
 
 help:
 	@echo "make sites             すべてのセミナーのサイトを生成"
@@ -16,6 +16,7 @@ help:
 	@echo "make wasserstein-site  Wasserstein 距離のサイトを生成"
 	@echo "make quantum-ot-site   量子最適輸送のサイトを生成"
 	@echo "make clean-sites       生成したサイトを削除"
+	@echo "make ot-viz            最適輸送 3D ビューアをローカルで開く"
 
 sites: cuturi-site wasserstein-site quantum-ot-site
 
@@ -39,3 +40,8 @@ quantum-ot-site:
 
 clean-sites:
 	rm -rf seminar/*/site
+
+# --- 最適輸送 3D ビューア ---
+ot-viz:
+	@echo "→ http://localhost:8765/ をブラウザで開いてください（Ctrl-C で終了）"
+	python3 -m http.server 8765 -d tools/ot-viz

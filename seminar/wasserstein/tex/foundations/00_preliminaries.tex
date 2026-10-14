@@ -573,30 +573,85 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
   （標準的な結果．証明は省略する．Dudley (2002) §4.4 参照．）
 \end{theorem}
 
-\begin{theorem}{周辺分布を用いた積分表示}{meas-disintegration}
-  $\mathcal{X},\mathcal{Y}$ を Polish 空間，$\pi\in\Prob(\mathcal{X}\times \mathcal{Y})$ とし，
-  $\nu$ を $\pi$ の第2周辺分布とする．
-  このとき，各 $y\in\mathcal{Y}$ に確率測度 $\pi_y\in\Prob(\mathcal{X})$ を
-  対応させ，次の二つをみたすようにできる：
+\section{測度分解のための準備}
+
+本文の測度分解定理（定理~\ref{thm:meas-disintegration}）で用いる標準定理をまとめる．
+これらは北別府悠『最適輸送理論入門〜兼非標準的関数解析入門〜』
+Theorem 5.3.1 の証明（提供資料）でも用いられる．
+
+\begin{definition}{測度の絶対連続性（北別府 p.~57）}{meas-absolute-continuity}
+  可測空間 $(\Omega,\mathcal{A})$ 上の有限測度 $\nu$ と，
+  有限符号付き測度 $\alpha$（二つの有限測度の差）を考える．
+  $\alpha$ が $\nu$ に\textbf{絶対連続}であるとは，
+  任意の $\varepsilon>0$ に対してある $\delta>0$ が存在し，
+  \[
+    \nu(B)<\delta\quad\Longrightarrow\quad\abs{\alpha(B)}<\varepsilon
+    \qquad(B\in\mathcal{A})
+  \]
+  が成り立つことをいう．このとき $\alpha\ll\nu$ と書く．
+  北別府の資料では，この定義を実数値の集合関数に対して与えている．
+  本資料で用いるのは有限符号付き測度の場合である．
+\end{definition}
+
+\begin{theorem}{Radon--Nikodym の定理（北別府 Cor 4.6.2, 4.6.3）}{meas-radon-nikodym}
+  可測空間 $(\Omega,\mathcal{A})$ 上の二つの有限測度 $\nu,\alpha$ に対し，
+  次の三つは同値である．
   \begin{enumerate}
-    \item 各 $A\in\Borel(\mathcal{X})$ で $y\mapsto\pi_y(A)$ は可測，
-    \item すべての $A\in\Borel(\mathcal{X})$，$B\in\Borel(\mathcal{Y})$ に対し
+    \item $\alpha\ll\nu$，すなわち $\alpha$ は $\nu$ に絶対連続である．
+    \item すべての $B\in\mathcal{A}$ に対して，
+      $\nu(B)=0$ ならば $\alpha(B)=0$ である．
+    \item 非負の $\nu$-可積分な可測関数 $h$ が存在し，
       \[
-        \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y).
+        \alpha(B)=\int_B h\,\d\nu\qquad(B\in\mathcal{A})
       \]
+      が成り立つ．
   \end{enumerate}
-  $\pi_y$ は「$y$ が与えられたときの $x$ の分布」にあたり，
-  $\nu$-a.e. の意味で一意である．
-  第1周辺分布を用いた同様の表示も成り立つ．
-  （Polish 空間上の標準的な結果．証明は省略する．
-  桑江ほか (2015) 補題 1.32（測度分解定理）に証明がある．
-  同書は一般の Borel 写像 $\Pi$ による分解として述べており，
-  $\Pi$ を第2成分（第1周辺分布の場合は第1成分）への射影としたものが本定理である．
-  Dudley (2002) Chapter 10 も参照．
-  なお Villani (2009) p.~12 は，接着補題の説明でこの分解を非形式的に用いている．）
+  さらに，$\alpha$ が有限符号付き測度の場合も，条件 3 の $h$ を
+  実数値の可積分関数として，同じ同値関係が成り立つ．
+  いずれの場合も $h$ は $\nu$-a.e. の意味で一意であり，
+  \textbf{Radon--Nikodym 微分} $\d\alpha/\d\nu$ とよぶ．
+
+  （存在と三条件の同値性は標準定理として証明なしに用いる．
+  非負測度の場合は北別府 Corollary 4.6.2（p.~57）であり，
+  資料では Lebesgue 分解定理（Theorem 4.6.1，pp.~56--57）から導いている．
+  符号付きの場合の存在は同 Corollary 4.6.3（p.~57）を有限符号付き測度に適用した形である．
+  同系は有限測度空間上の有限加法的な実数値集合関数を扱う．
+  有限符号付き測度は有限加法的で有限値を取り，絶対連続性の定義も一致するので適用できる．）
 \end{theorem}
 
-\begin{theorem}{確率測度の族を平均した確率測度（前提とする事実）}{meas-kernel-composition}
+密度の一意性は，符号によらず次のように確かめられる．
+二つの可積分関数 $h,k$ がすべての $B\in\mathcal{A}$ で同じ積分値をもつなら，
+$B=\{h>k\}$ として $\int_B(h-k)\,\d\nu=0$ を得る．
+$h-k$ は $B$ 上で正なので $\nu(B)=0$ である．
+$h,k$ を入れ替えて $\nu(\{k>h\})=0$ も得られ，$h=k$ が $\nu$-a.e. に成り立つ．
+
+\begin{remark}{記法：compact 空間上の連続関数}{meas-compact-continuous}
+  空でない compact 距離空間 $K$ 上の実数値連続関数全体を $C(K)$ と書き，
+  $\lVert f\rVert_\infty:=\sup_{x\in K}\abs{f(x)}$ とおく．
+  この値は有限であり，$\lVert f_n-f\rVert_\infty\to0$ を\textbf{一様収束}という．
+  $C(K)$ はこの距離で可分である．したがって，定数関数 $1$ を含む
+  可算な稠密 $\mathbb{Q}$-ベクトル部分空間 $\mathcal{C}\subset C(K)$ が存在する
+  （$\mathbb{Q}$ は有理数全体．可算稠密集合と $1$ の有理係数の有限線形結合を取ればよい）．
+  可分性は標準的な事実として用いる（北別府，Theorem 5.3.1 の証明 Step 1 参照）．
+\end{remark}
+
+\begin{theorem}{Riesz--Markov--Kakutani の表現定理（compact 距離空間の場合）}{meas-riesz-representation}
+  $K$ を空でない compact 距離空間とする．
+  実線形写像 $L\colon C(K)\to\R$ が
+  \[
+    f\geq0\ \Longrightarrow\ L(f)\geq0,\qquad L(1)=1
+  \]
+  をみたすならば，ある唯一の $\rho\in\Prob(K)$ により
+  \[
+    L(f)=\int_K f\,\d\rho\qquad(f\in C(K))
+  \]
+  と表せる．条件 $f\geq0\Rightarrow L(f)\geq0$ をみたす実線形写像を
+  \textbf{正の線形汎関数}という．
+  （標準的な定理．北別府の上記証明でも用いられる．
+  例えば Rudin \emph{Real and Complex Analysis} の Riesz の表現定理を参照．）
+\end{theorem}
+
+\begin{theorem}{確率測度の族を平均した確率測度}{meas-kernel-composition}
   $\mathcal{X},\mathcal{Y},\mathcal{Z}$ を Polish 空間，$\nu\in\Prob(\mathcal{Y})$ とし，
   各 $y\in\mathcal{Y}$ に対して確率測度
   $\pi_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ が与えられているとする．
@@ -609,8 +664,21 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
     \qquad(A\in\Borel(\mathcal{X}),\,B\in\Borel(\mathcal{Y}),\,C\in\Borel(\mathcal{Z}))
   \]
   をみたすものがただ一つ存在する．
-  （単調族定理による標準的な構成．証明は省略する．
-  桑江ほか (2015) 定義 1.31 と式 (1.32) 参照．
-  一意性は，矩形集合が $\pi$-系をなすこと（注意~\ref{rem:meas-borel-product}）と
-  一致定理（定理~\ref{thm:meas-uniqueness}）から従う．）
 \end{theorem}
+
+\begin{proof}
+  各 $y$ に対して，直積確率測度
+  $\lambda_y:=\pi_y\otimes\delta_y\otimes\sigma_y$ を考える
+  （$\delta_y(B):=\mathbf{1}_B(y)$）．矩形 $D=A\times B\times C$ について
+  $\lambda_y(D)=\pi_y(A)\mathbf{1}_B(y)\sigma_y(C)$ は $y$ の Borel 可測関数である．
+  $y\mapsto\lambda_y(D)$ が可測となる $D$ の全体は $\lambda$-系なので，
+  Dynkin の定理（定理~\ref{thm:meas-pi-lambda}）と
+  注意~\ref{rem:meas-borel-product}から，すべての Borel 集合 $D$ で可測となる．
+  そこで
+  \[
+    \gamma(D):=\int_{\mathcal{Y}}\lambda_y(D)\,\d\nu(y)
+  \]
+  と定める．単調収束定理から可算加法性が従い，全質量は $1$ なので，
+  $\gamma$ は求める確率測度である．
+  一意性は，矩形上の値と有限測度の一致定理（定理~\ref{thm:meas-uniqueness}）による．
+\end{proof}

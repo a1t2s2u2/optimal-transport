@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>最適輸送 3D ビューア</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* 左に操作パネル、右に 3D ステージ。下端に時刻 t のタイムライン。狭い画面では縦積み。 */
+:root {
+  --bg: #f2f4f7;
+  --panel: #ffffff;
+  --fg: #1a2230;
+  --muted: #5b6677;
+  --line: #dbe0e8;
+  --mu: #2d62d6;
+  --nu: #d8641c;
+  --scene: #eceff4;
+  --ground: #e1e6ee;
+  --gridline: #c3cad6;
+  --chip: rgba(255, 255, 255, 0.82);
+  --ok: #1f8a54;
+  --busy: #b7791f;
+  --font-display: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1218; --panel: #141922; --fg: #e3e7ee; --muted: #8e98a8; --line: #252c38;
+    --mu: #6e9cff; --nu: #ff9a55; --scene: #0b0f15; --ground: #131922; --gridline: #28313f;
+    --chip: rgba(20, 25, 34, 0.82); --ok: #4cc38a; --busy: #e0a94a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1218; --panel: #141922; --fg: #e3e7ee; --muted: #8e98a8; --line: #252c38;
+  --mu: #6e9cff; --nu: #ff9a55; --scene: #0b0f15; --ground: #131922; --gridline: #28313f;
+  --chip: rgba(20, 25, 34, 0.82); --ok: #4cc38a; --busy: #e0a94a;
+  color-scheme: dark;
+}
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.6 var(--font-body);
+  display: grid;
+  grid-template-columns: 330px 1fr;
+  overflow: hidden;
+}
+.panel {
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+  padding: 20px 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+}
+header h1 {
+  font: 700 24px/1.25 var(--font-display);
+  margin: 0;
+  letter-spacing: 0.02em;
+  text-wrap: balance;
+}
+header p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+section { display: flex; flex-direction: column; gap: 10px; }
+section > h2 {
+  margin: 0;
+  font: 500 11px/1 var(--font-body);
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.row > label:first-child, .row > .lbl { flex: 0 0 auto; min-width: 5.2em; }
+.row select, .row input[type="range"] { flex: 1 1 auto; min-width: 0; }
+.swatch {
+  display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+  margin-right: 6px; vertical-align: 0;
+}
+.swatch.mu { background: var(--mu); }
+.swatch.nu { background: var(--nu); }
+.swatch.mut { background: linear-gradient(90deg, var(--mu), var(--nu)); }
+select, button {
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 5px 8px;
+}
+button { cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button:focus-visible, select:focus-visible, input:focus-visible {
+  outline: 2px solid var(--mu); outline-offset: 2px;
+}
+input[type="range"] { accent-color: var(--fg); }
+input[type="checkbox"] { accent-color: var(--fg); margin: 0 6px 0 0; }
+.val {
+  font: 12px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  min-width: 4.6em;
+  text-align: right;
+}
+.seg { display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button {
+  flex: 1; border: 0; border-radius: 0; background: transparent; padding: 6px 4px; font-size: 13px;
+}
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--panel); }
+.hint { color: var(--muted); font-size: 12px; margin: 0; }
+.checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+.checks label { display: flex; align-items: center; font-size: 13px; }
+
+.stats {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 13px;
+}
+.stats dt { color: var(--muted); }
+.stats dd {
+  margin: 0; text-align: right;
+  font: 12.5px var(--font-mono); font-variant-numeric: tabular-nums;
+}
+.status {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--muted);
+}
+.status::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--busy);
+}
+.status[data-state="done"]::before { background: var(--ok); }
+
+details { border-top: 1px solid var(--line); padding-top: 12px; }
+details summary {
+  cursor: pointer; font: 500 11px/1 var(--font-body); letter-spacing: 0.14em;
+  color: var(--muted); text-transform: uppercase;
+}
+.defs { font-size: 13px; line-height: 1.75; }
+.defs p { margin: 10px 0 0; }
+.defs .m { font-family: "Times New Roman", "STIX Two Math", serif; font-size: 15px; white-space: nowrap; }
+.defs .src { color: var(--muted); font-size: 12px; }
+
+.stage { position: relative; min-width: 0; background: var(--scene); }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.stage.painting canvas { cursor: crosshair; }
+.legend {
+  position: absolute; top: 14px; left: 14px;
+  display: flex; flex-wrap: wrap; gap: 6px;
+  pointer-events: none;
+}
+.legend > span {
+  background: var(--chip); backdrop-filter: blur(6px);
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 3px 10px; font-size: 12px;
+}
+.formula {
+  position: absolute; top: 14px; right: 14px;
+  background: var(--chip); backdrop-filter: blur(6px);
+  border: 1px solid var(--line); border-radius: 8px;
+  padding: 6px 12px; pointer-events: none;
+  font: 15px "Times New Roman", "STIX Two Math", serif;
+}
+.timeline {
+  position: absolute; left: 14px; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 12px;
+  background: var(--chip); backdrop-filter: blur(8px);
+  border: 1px solid var(--line); border-radius: 10px;
+  padding: 8px 14px;
+}
+.timeline input[type="range"] { flex: 1; min-width: 0; }
+.timeline .play { width: 34px; height: 30px; padding: 0; display: grid; place-items: center; }
+.timeline .tval { font: 13px var(--font-mono); font-variant-numeric: tabular-nums; min-width: 5.5em; }
+.timeline select { padding: 3px 6px; font-size: 12px; }
+
+@media (max-width: 820px) {
+  body { display: flex; flex-direction: column; overflow: auto; height: auto; }
+  .stage { order: -1; height: 64svh; min-height: 360px; flex: 0 0 auto; }
+  .panel { border-right: 0; border-top: 1px solid var(--line); overflow: visible; padding-inline: 16px; }
+  .formula { display: none; }
+  .timeline { left: 10px; right: 10px; gap: 8px; padding: 6px 10px; }
+}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+
+<aside class="panel">
+  <header>
+    <h1>最適輸送 3D ビューア</h1>
+    <p>[0,1]² 上の離散測度 μ, ν の間の輸送計画を Sinkhorn 反復で求め、変位補間 μ<sub>t</sub> を立体で表示する。</p>
+  </header>
+
+  <section>
+    <h2>測度</h2>
+    <div class="row">
+      <label for="presetMu"><span class="swatch mu"></span>μ（始点）</label>
+      <select id="presetMu"></select>
+    </div>
+    <div class="row">
+      <label for="presetNu"><span class="swatch nu"></span>ν（終点）</label>
+      <select id="presetNu"></select>
+    </div>
+    <div class="row">
+      <button id="swap" type="button">μ と ν を入れ替える</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>手描き</h2>
+    <div class="seg" role="group" aria-label="描画モード">
+      <button type="button" data-brush="off" aria-pressed="true">回転</button>
+      <button type="button" data-brush="mu" aria-pressed="false">μ に足す</button>
+      <button type="button" data-brush="nu" aria-pressed="false">ν に足す</button>
+      <button type="button" data-brush="erase" aria-pressed="false">消す</button>
+    </div>
+    <div class="row">
+      <label for="brushR">筆の半径</label>
+      <input id="brushR" type="range" min="0.02" max="0.15" step="0.005" value="0.06">
+      <span class="val" id="brushRVal">0.060</span>
+    </div>
+    <p class="hint">描画モードでは床面をドラッグして質量を足す／消す。指を離すと輸送計画を計算し直す。ホイールで拡大縮小。</p>
+  </section>
+
+  <section>
+    <h2>Sinkhorn</h2>
+    <div class="row">
+      <label for="eps">ε</label>
+      <input id="eps" type="range" min="-3.3" max="-1" step="0.05" value="-2.7">
+      <span class="val" id="epsVal">0.0020</span>
+    </div>
+    <div class="row">
+      <label for="grid">格子</label>
+      <select id="grid">
+        <option value="16">16 × 16</option>
+        <option value="24" selected>24 × 24</option>
+        <option value="32">32 × 32</option>
+      </select>
+    </div>
+    <span class="status" id="status">計算中</span>
+    <dl class="stats">
+      <dt>反復回数</dt><dd id="stIter">0</dd>
+      <dt>周辺誤差 ‖P𝟙 − a‖₁</dt><dd id="stErr">—</dd>
+      <dt>⟨C, P<sup>ε</sup>⟩</dt><dd id="stCost">—</dd>
+      <dt>√⟨C, P<sup>ε</sup>⟩ ≈ W₂</dt><dd id="stW2">—</dd>
+      <dt>台の大きさ |a|, |b|</dt><dd id="stSupp">—</dd>
+    </dl>
+  </section>
+
+  <section>
+    <h2>表示</h2>
+    <div class="checks">
+      <label><input type="checkbox" id="lyMu" checked>μ</label>
+      <label><input type="checkbox" id="lyNu" checked>ν</label>
+      <label><input type="checkbox" id="lyMut" checked>μ<sub>t</sub></label>
+      <label><input type="checkbox" id="lyParticles" checked>粒子</label>
+      <label><input type="checkbox" id="lyArcs" checked>輸送経路</label>
+      <label><input type="checkbox" id="lyBary">重心射影</label>
+    </div>
+    <div class="row">
+      <label for="arcN">経路の本数</label>
+      <input id="arcN" type="range" min="50" max="2000" step="50" value="400">
+      <span class="val" id="arcNVal">400</span>
+    </div>
+    <div class="row">
+      <label for="height">高さ倍率</label>
+      <input id="height" type="range" min="0.2" max="2.5" step="0.05" value="1">
+      <span class="val" id="heightVal">1.00</span>
+    </div>
+    <p class="hint">輸送経路の弧は x<sub>i</sub> から y<sub>j</sub> への対応を示す。弧の高さは見やすさのためのもので、実際の移動は床面上の線分に沿う。</p>
+  </section>
+
+  <details>
+    <summary>定義と出典</summary>
+    <div class="defs">
+      <p><b>離散測度．</b> x<sub>1</sub>, …, x<sub>N</sub> を [0,1]² の n × n 格子点（N = n²）とし，
+        <span class="m">μ = Σ<sub>i</sub> a<sub>i</sub> δ<sub>x<sub>i</sub></sub></span>，
+        <span class="m">ν = Σ<sub>j</sub> b<sub>j</sub> δ<sub>x<sub>j</sub></sub></span>
+        とする（a, b は確率ベクトル）．高さは各点の質量を幅 ≈ 格子間隔のガウス核でならしたものである．</p>
+      <p><b>コストと輸送計画．</b> <span class="m">C<sub>ij</sub> = ‖x<sub>i</sub> − x<sub>j</sub>‖²</span>，
+        <span class="m">U(a, b) = { P ∈ ℝ<sub>+</sub><sup>N×N</sup> : P𝟙 = a, P<sup>⊤</sup>𝟙 = b }</span>．</p>
+      <p><b>エントロピー正則化．</b>
+        <span class="m">H(P) = −Σ<sub>ij</sub> P<sub>ij</sub>(log P<sub>ij</sub> − 1)</span> として
+        <span class="m">L<sub>C</sub><sup>ε</sup>(a, b) = min<sub>P∈U(a,b)</sub> ⟨C, P⟩ − εH(P)</span>．
+        その一意な解 P<sup>ε</sup> を Sinkhorn 反復（対数領域，ε を大きい値から目標値まで徐々に下げる）で求める．
+        ε → 0 で ⟨C, P<sup>ε</sup>⟩ は L<sub>C</sub>(a, b) = W₂(μ, ν)² に収束する．
+        <span class="src">Peyré–Cuturi, <i>Computational Optimal Transport</i>, 第4章．</span></p>
+      <p><b>変位補間．</b> t ∈ [0, 1] に対し
+        <span class="m">μ<sub>t</sub> = Σ<sub>ij</sub> P<sub>ij</sub> δ<sub>(1−t)x<sub>i</sub> + t x<sub>j</sub></sub></span>．
+        P が最適輸送計画のとき，これは μ と ν を結ぶ W₂ の測地線である．ここでは P = P<sup>ε</sup> で近似している．
+        <span class="src">R. J. McCann, A convexity principle for interacting gases, <i>Adv. Math.</i> 128 (1997).</span></p>
+      <p><b>重心射影．</b> <span class="m">T(x<sub>i</sub>) = a<sub>i</sub><sup>−1</sup> Σ<sub>j</sub> P<sub>ij</sub> x<sub>j</sub></span>．
+        各点から出る質量の行き先の平均で，床面上の矢印として描く．</p>
+    </div>
+  </details>
+</aside>
+
+<main class="stage" id="stage">
+  <div class="legend" aria-hidden="true">
+    <span><span class="swatch mu"></span>μ</span>
+    <span><span class="swatch nu"></span>ν</span>
+    <span><span class="swatch mut"></span>μ<sub>t</sub></span>
+  </div>
+  <div class="formula" aria-hidden="true">μ<sub>t</sub> = ((1−t)·pr₁ + t·pr₂)<sub>#</sub> P<sup>ε</sup></div>
+  <div class="timeline">
+    <button class="play" id="play" type="button" aria-label="再生／一時停止">
+      <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path id="playIcon" d="M3 2h3v10H3zM8 2h3v10H8z" fill="currentColor"/></svg>
+    </button>
+    <label for="tSlider" class="tval" id="tVal">t = 0.00</label>
+    <input id="tSlider" type="range" min="0" max="1000" value="0">
+    <select id="speed" aria-label="再生速度">
+      <option value="0.5">0.5×</option>
+      <option value="1" selected>1×</option>
+      <option value="2">2×</option>
+    </select>
+  </div>
+</main>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ---------------------------------------------------------------
+// 測度の元データ（細かい格子上の非負関数）とプリセット
+// ---------------------------------------------------------------
+const FINE = 72;           // 手描き・プリセット用の細かい格子
+const R = 84;              // 描画用の曲面の格子
+const gauss = (x, y, cx, cy, s) => Math.exp(-((x - cx) ** 2 + (y - cy) ** 2) / (2 * s * s));
+const sstep = (e0, e1, x) => { const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
+
+const PRESETS = {
+  gauss:   { label: 'ガウス', f: (x, y, cx, cy) => gauss(x, y, cx, cy, 0.09) },
+  twin:    { label: '2 峰', f: (x, y, cx, cy) => gauss(x, y, cx, cy - 0.22, 0.07) + gauss(x, y, cx, cy + 0.22, 0.07) },
+  three:   { label: '3 峰', f: (x, y, cx, cy) => {
+    let s = 0;
+    for (let k = 0; k < 3; k++) {
+      const th = Math.PI / 2 + k * 2 * Math.PI / 3;
+      s += gauss(x, y, cx + 0.18 * Math.cos(th), cy + 0.18 * Math.sin(th), 0.055);
+    }
+    return s;
+  } },
+  ring:    { label: 'リング', f: (x, y, cx, cy) => Math.exp(-((Math.hypot(x - cx, y - cy) - 0.17) ** 2) / (2 * 0.035 ** 2)) },
+  square:  { label: '正方形（一様）', f: (x, y, cx, cy) => 1 - sstep(0.12, 0.15, Math.max(Math.abs(x - cx), Math.abs(y - cy))) },
+  moon:    { label: '三日月', f: (x, y, cx, cy) => (1 - sstep(0.18, 0.21, Math.hypot(x - cx, y - cy))) * sstep(0.15, 0.18, Math.hypot(x - cx - 0.09, y - cy)) },
+  uniform: { label: '一様（全域）', f: () => 1 },
+};
+const CENTER = { mu: [0.28, 0.5], nu: [0.72, 0.5] };
+
+const state = {
+  n: 24,
+  eps: 0.002,
+  t: 0,
+  playing: !matchMedia('(prefers-reduced-motion: reduce)').matches,
+  speed: 1,
+  preset: { mu: 'gauss', nu: 'twin' },
+  raw: { mu: new Float32Array(FINE * FINE), nu: new Float32Array(FINE * FINE) },
+  a: null, b: null,
+  layers: { mu: true, nu: true, mut: true, particles: true, arcs: true, bary: false },
+  height: 1,
+  arcN: 400,
+  brush: 'off',
+  brushR: 0.06,
+};
+if (!state.playing) state.t = 0.5;
+
+function fillPreset(which) {
+  const name = state.preset[which];
+  const p = PRESETS[name];
+  if (!p) return;
+  const [cx, cy] = CENTER[which];
+  const raw = state.raw[which];
+  for (let iy = 0; iy < FINE; iy++) for (let ix = 0; ix < FINE; ix++) {
+    raw[iy * FINE + ix] = p.f(ix / (FINE - 1), iy / (FINE - 1), cx, cy);
+  }
+}
+
+function sampleFine(raw, x, y) {
+  const fx = x * (FINE - 1), fy = y * (FINE - 1);
+  const ix = Math.min(FINE - 2, Math.floor(fx)), iy = Math.min(FINE - 2, Math.floor(fy));
+  const tx = fx - ix, ty = fy - iy;
+  const k = iy * FINE + ix;
+  return (1 - ty) * ((1 - tx) * raw[k] + tx * raw[k + 1]) + ty * ((1 - tx) * raw[k + FINE] + tx * raw[k + FINE + 1]);
+}
+
+// 細かい格子の関数を n × n 格子点上の確率ベクトルにする
+function discretize(raw) {
+  const n = state.n, v = new Float64Array(n * n);
+  let s = 0;
+  for (let iy = 0; iy < n; iy++) for (let ix = 0; ix < n; ix++) {
+    const w = Math.max(0, sampleFine(raw, ix / (n - 1), iy / (n - 1)));
+    v[iy * n + ix] = w; s += w;
+  }
+  if (s <= 0) return null;
+  for (let k = 0; k < v.length; k++) v[k] /= s;
+  return v;
+}
+
+// ---------------------------------------------------------------
+// 対数領域の Sinkhorn 反復（ε を徐々に下げる）
+// ---------------------------------------------------------------
+class Sinkhorn {
+  constructor(a, b, n, epsTarget, warm) {
+    const pick = (w) => {
+      let m = 0; for (const x of w) m = Math.max(m, x);
+      const idx = []; for (let k = 0; k < w.length; k++) if (w[k] > 1e-7 * m) idx.push(k);
+      return idx;
+    };
+    this.n = n;
+    this.I = pick(a); this.J = pick(b);
+    const nI = this.nI = this.I.length, nJ = this.nJ = this.J.length;
+    const sa = this.I.reduce((s, i) => s + a[i], 0), sb = this.J.reduce((s, j) => s + b[j], 0);
+    this.a = Float64Array.from(this.I, (i) => a[i] / sa);
+    this.la = this.a.map(Math.log);
+    this.lb = Float64Array.from(this.J, (j) => Math.log(b[j] / sb));
+    const h = 1 / (n - 1);
+    this.xI = Float64Array.from(this.I.flatMap((i) => [(i % n) * h, Math.floor(i / n) * h]));
+    this.xJ = Float64Array.from(this.J.flatMap((j) => [(j % n) * h, Math.floor(j / n) * h]));
+    this.C = new Float64Array(nI * nJ);
+    this.CT = new Float64Array(nI * nJ);
+    for (let i = 0; i < nI; i++) for (let j = 0; j < nJ; j++) {
+      const dx = this.xI[2 * i] - this.xJ[2 * j], dy = this.xI[2 * i + 1] - this.xJ[2 * j + 1];
+      const c = dx * dx + dy * dy;
+      this.C[i * nJ + j] = c; this.CT[j * nI + i] = c;
+    }
+    this.f = new Float64Array(nI); this.g = new Float64Array(nJ);
+    this.target = epsTarget;
+    this.eps = Math.max(epsTarget, 0.05);
+    if (warm && warm.nI === nI && warm.nJ === nJ && warm.n === n) {
+      this.f.set(warm.f); this.g.set(warm.g);
+      this.eps = Math.max(epsTarget, Math.min(warm.eps, 0.05));
+    }
+    this.iter = 0; this.itAtTarget = 0; this.err = Infinity; this.done = false; this.maxed = false;
+  }
+  step() {
+    const { nI, nJ, C, CT, f, g, eps, la, lb } = this;
+    for (let i = 0; i < nI; i++) {
+      const base = i * nJ; let m = -Infinity;
+      for (let j = 0; j < nJ; j++) { const v = g[j] - C[base + j]; if (v > m) m = v; }
+      let s = 0;
+      for (let j = 0; j < nJ; j++) s += Math.exp((g[j] - C[base + j] - m) / eps);
+      f[i] = eps * la[i] - m - eps * Math.log(s);
+    }
+    for (let j = 0; j < nJ; j++) {
+      const base = j * nI; let m = -Infinity;
+      for (let i = 0; i < nI; i++) { const v = f[i] - CT[base + i]; if (v > m) m = v; }
+      let s = 0;
+      for (let i = 0; i < nI; i++) s += Math.exp((f[i] - CT[base + i] - m) / eps);
+      g[j] = eps * lb[j] - m - eps * Math.log(s);
+    }
+    this.iter++;
+  }
+  marginalError() {
+    const { nI, nJ, C, f, g, eps, a } = this; let e = 0;
+    for (let i = 0; i < nI; i++) {
+      let r = 0; const base = i * nJ;
+      for (let j = 0; j < nJ; j++) r += Math.exp((f[i] + g[j] - C[base + j]) / eps);
+      e += Math.abs(r - a[i]);
+    }
+    return e;
+  }
+  run(budgetMs) {
+    const t0 = performance.now();
+    while (!this.done && performance.now() - t0 < budgetMs) {
+      this.step();
+      if (this.eps > this.target) { this.eps = Math.max(this.target, this.eps * 0.9); continue; }
+      this.itAtTarget++;
+      if (this.itAtTarget % 5 === 0) {
+        this.err = this.marginalError();
+        if (this.err < 2e-5) this.done = true;
+        else if (this.itAtTarget >= 3000) { this.done = true; this.maxed = true; }
+      }
+    }
+  }
+  // 輸送計画から、描画に使う (x_i, x_j, 質量) の組と統計量を取り出す
+  extract() {
+    const { nI, nJ, C, f, g, eps, xI, xJ } = this;
+    const P = new Float64Array(nI * nJ);
+    let maxP = 0, cost = 0, tot = 0;
+    for (let i = 0; i < nI; i++) for (let j = 0; j < nJ; j++) {
+      const k = i * nJ + j, p = Math.exp((f[i] + g[j] - C[k]) / eps);
+      P[k] = p; cost += p * C[k]; tot += p; if (p > maxP) maxP = p;
+    }
+    const thr = maxP * 2e-3;
+    let list = [];
+    for (let k = 0; k < P.length; k++) if (P[k] > thr) list.push(k);
+    list.sort((u, v) => P[v] - P[u]);
+    if (list.length > 9000) list = list.slice(0, 9000);
+    const cnt = list.length, pairs = new Float32Array(cnt * 5);
+    let kept = 0; for (const k of list) kept += P[k];
+    list.forEach((k, q) => {
+      const i = Math.floor(k / nJ), j = k % nJ;
+      pairs.set([xI[2 * i], xI[2 * i + 1], xJ[2 * j], xJ[2 * j + 1], P[k] / kept], q * 5);
+    });
+    const bary = [];
+    for (let i = 0; i < nI; i++) {
+      let s = 0, bx = 0, by = 0;
+      for (let j = 0; j < nJ; j++) { const p = P[i * nJ + j]; s += p; bx += p * xJ[2 * j]; by += p * xJ[2 * j + 1]; }
+      if (s > 0) bary.push(xI[2 * i], xI[2 * i + 1], bx / s, by / s, s);
+    }
+    return { pairs, count: cnt, cost: cost / tot, bary: Float32Array.from(bary) };
+  }
+}
+
+// ---------------------------------------------------------------
+// 描画用の密度（ガウス核でならす）
+// ---------------------------------------------------------------
+function splat(target, px, py, m, sigma) {
+  const r = 3 * sigma, s2 = 2 * sigma * sigma, H = R - 1;
+  const i0 = Math.max(0, Math.ceil((px - r) * H)), i1 = Math.min(H, Math.floor((px + r) * H));
+  const j0 = Math.max(0, Math.ceil((py - r) * H)), j1 = Math.min(H, Math.floor((py + r) * H));
+  for (let iy = j0; iy <= j1; iy++) {
+    const wy = m * Math.exp(-((iy / H - py) ** 2) / s2);
+    const row = iy * R;
+    for (let ix = i0; ix <= i1; ix++) target[row + ix] += wy * Math.exp(-((ix / H - px) ** 2) / s2);
+  }
+}
+const sigmaOf = () => 0.75 / (state.n - 1);
+
+function densityOfWeights(w) {
+  const out = new Float32Array(R * R); if (!w) return out;
+  const n = state.n, h = 1 / (n - 1), sg = sigmaOf();
+  for (let k = 0; k < w.length; k++) if (w[k] > 0) splat(out, (k % n) * h, Math.floor(k / n) * h, w[k], sg);
+  return out;
+}
+function densityAtTime(plan, t) {
+  const out = new Float32Array(R * R); if (!plan) return out;
+  const { pairs, count } = plan, sg = sigmaOf();
+  for (let q = 0; q < count; q++) {
+    const o = q * 5;
+    splat(out, (1 - t) * pairs[o] + t * pairs[o + 2], (1 - t) * pairs[o + 1] + t * pairs[o + 3], pairs[o + 4], sg);
+  }
+  return out;
+}
+function sampleRender(rho, x, y) {
+  const H = R - 1, fx = Math.min(H - 1e-6, Math.max(0, x * H)), fy = Math.min(H - 1e-6, Math.max(0, y * H));
+  const ix = Math.floor(fx), iy = Math.floor(fy), tx = fx - ix, ty = fy - iy, k = iy * R + ix;
+  return (1 - ty) * ((1 - tx) * rho[k] + tx * rho[k + 1]) + ty * ((1 - tx) * rho[k + R] + tx * rho[k + R + 1]);
+}
+
+// ---------------------------------------------------------------
+// three.js のシーン
+// ---------------------------------------------------------------
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+stage.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 50);
+camera.position.set(-0.3, 2.1, 2.7);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.2, 0);
+controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI * 0.49;
+controls.minDistance = 1.2;
+controls.maxDistance = 7;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x777788, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(-1.5, 3, 1.2);
+scene.add(sun);
+
+// 領域 [0,1]² を世界座標の [-1,1]² に置く。高さは y 軸。
+const W = (x) => (x - 0.5) * 2;
+const Wz = (y) => (0.5 - y) * 2;
+
+const groundMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), groundMat);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -0.002;
+scene.add(ground);
+
+const gridPts = [];
+for (let k = 0; k <= 10; k++) {
+  const u = -1 + k * 0.2;
+  gridPts.push(u, 0, -1, u, 0, 1, -1, 0, u, 1, 0, u);
+}
+const gridGeom = new THREE.BufferGeometry();
+gridGeom.setAttribute('position', new THREE.Float32BufferAttribute(gridPts, 3));
+const gridMat = new THREE.LineBasicMaterial({ color: 0xcccccc });
+scene.add(new THREE.LineSegments(gridGeom, gridMat));
+
+function makeSurface(opacity, renderOrder, solid) {
+  const geom = new THREE.BufferGeometry();
+  const pos = new Float32Array(R * R * 3), col = new Float32Array(R * R * 4);
+  for (let iy = 0; iy < R; iy++) for (let ix = 0; ix < R; ix++) {
+    const k = iy * R + ix;
+    pos[3 * k] = W(ix / (R - 1)); pos[3 * k + 2] = Wz(iy / (R - 1));
+  }
+  const idx = [];
+  for (let iy = 0; iy < R - 1; iy++) for (let ix = 0; ix < R - 1; ix++) {
+    const k = iy * R + ix;
+    idx.push(k, k + 1, k + R, k + 1, k + R + 1, k + R);
+  }
+  geom.setIndex(idx);
+  geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geom.setAttribute('color', new THREE.BufferAttribute(col, 4));
+  const mat = new THREE.MeshStandardMaterial({
+    vertexColors: true, transparent: true, side: THREE.DoubleSide,
+    roughness: 0.55, metalness: 0, depthWrite: solid,
+  });
+  const mesh = new THREE.Mesh(geom, mat);
+  mesh.renderOrder = renderOrder;
+  scene.add(mesh);
+  return { mesh, geom, pos, col, opacity };
+}
+const surf = {
+  mu: makeSurface(0.34, 2, false),
+  nu: makeSurface(0.34, 3, false),
+  mut: makeSurface(0.9, 1, true),
+};
+
+let rhoRef = 1;
+function updateSurface(s, rho, color, lift) {
+  const { pos, col, geom, opacity } = s;
+  const hs = 0.75 * state.height / rhoRef;
+  for (let k = 0; k < R * R; k++) {
+    const r = rho[k];
+    pos[3 * k + 1] = r * hs + lift;
+    const a = Math.min(1, (r / rhoRef) * 14) * opacity;
+    col[4 * k] = color.r; col[4 * k + 1] = color.g; col[4 * k + 2] = color.b; col[4 * k + 3] = a;
+  }
+  geom.attributes.position.needsUpdate = true;
+  geom.attributes.color.needsUpdate = true;
+  geom.computeVertexNormals();
+  geom.computeBoundingSphere();
+}
+
+// 輸送経路（x_i から x_j への弧）
+const ARC_SEG = 18, ARC_MAX = 2000;
+const arcGeom = new THREE.BufferGeometry();
+const arcPos = new Float32Array(ARC_MAX * ARC_SEG * 2 * 3), arcCol = new Float32Array(ARC_MAX * ARC_SEG * 2 * 4);
+arcGeom.setAttribute('position', new THREE.BufferAttribute(arcPos, 3));
+arcGeom.setAttribute('color', new THREE.BufferAttribute(arcCol, 4));
+const arcs = new THREE.LineSegments(arcGeom, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false }));
+arcs.renderOrder = 4;
+scene.add(arcs);
+
+// 粒子（変位補間に沿って動く質量）
+const PART_MAX = 4000;
+const dotTex = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d'); g.fillStyle = '#fff';
+  g.beginPath(); g.arc(32, 32, 28, 0, Math.PI * 2); g.fill();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+})();
+const partGeom = new THREE.BufferGeometry();
+const partPos = new Float32Array(PART_MAX * 3);
+partGeom.setAttribute('position', new THREE.BufferAttribute(partPos, 3));
+const partMat = new THREE.PointsMaterial({ size: 0.028, map: dotTex, transparent: true, alphaTest: 0.4, depthWrite: true });
+const particles = new THREE.Points(partGeom, partMat);
+particles.renderOrder = 5;
+scene.add(particles);
+
+// 重心射影の矢印
+const baryGeom = new THREE.BufferGeometry();
+const baryMat = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.8 });
+const baryLines = new THREE.LineSegments(baryGeom, baryMat);
+baryLines.renderOrder = 6;
+scene.add(baryLines);
+
+// 筆のカーソル
+const cursorPts = [];
+for (let k = 0; k <= 64; k++) { const th = (k / 64) * Math.PI * 2; cursorPts.push(Math.cos(th), 0, Math.sin(th)); }
+const cursorGeom = new THREE.BufferGeometry();
+cursorGeom.setAttribute('position', new THREE.Float32BufferAttribute(cursorPts, 3));
+const cursorMat = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.9 });
+const cursor = new THREE.Line(cursorGeom, cursorMat);
+cursor.visible = false;
+scene.add(cursor);
+
+// テーマ色
+const colors = { mu: new THREE.Color(), nu: new THREE.Color(), fg: new THREE.Color(), mut: new THREE.Color() };
+function applyTheme() {
+  const cs = getComputedStyle(document.documentElement);
+  const tok = (n) => cs.getPropertyValue(n).trim();
+  scene.background = new THREE.Color(tok('--scene'));
+  groundMat.color.set(tok('--ground'));
+  gridMat.color.set(tok('--gridline'));
+  colors.mu.set(tok('--mu')); colors.nu.set(tok('--nu')); colors.fg.set(tok('--fg'));
+  baryMat.color.copy(colors.fg);
+  dirty.measures = dirty.plan = dirty.time = true;
+}
+
+// ---------------------------------------------------------------
+// 状態の更新
+// ---------------------------------------------------------------
+const dirty = { measures: true, plan: true, time: true };
+let solver = null, plan = null, rhoMu = null, rhoNu = null, lastExtract = 0;
+
+function rebuildMeasures() {
+  state.a = discretize(state.raw.mu);
+  state.b = discretize(state.raw.nu);
+  rhoMu = densityOfWeights(state.a);
+  rhoNu = densityOfWeights(state.b);
+  let m = 1e-12;
+  for (let k = 0; k < R * R; k++) m = Math.max(m, rhoMu[k], rhoNu[k]);
+  rhoRef = m;
+  dirty.measures = true;
+}
+
+function startSolve(warm) {
+  if (!state.a || !state.b) { solver = null; plan = null; setStatus('μ または ν の質量が 0 です。プリセットを選び直すか描き足してください', false); return; }
+  solver = new Sinkhorn(state.a, state.b, state.n, state.eps, warm ? solver : null);
+  setStatus('計算中', false);
+}
+
+const $ = (id) => document.getElementById(id);
+function setStatus(text, done) { const s = $('status'); s.textContent = text; s.dataset.state = done ? 'done' : 'busy'; }
+function updateStats() {
+  if (!solver) return;
+  $('stIter').textContent = solver.iter;
+  $('stErr').textContent = Number.isFinite(solver.err) ? solver.err.toExponential(1) : '—';
+  $('stSupp').textContent = `${solver.nI}, ${solver.nJ}`;
+  if (plan) {
+    $('stCost').textContent = plan.cost.toFixed(5);
+    $('stW2').textContent = Math.sqrt(plan.cost).toFixed(4);
+  }
+  if (solver.done) setStatus(solver.maxed ? '反復の上限に達しました（ε を大きくすると収束しやすい）' : `収束（ε = ${solver.eps.toPrecision(2)}）`, !solver.maxed);
+  else setStatus(solver.eps > solver.target ? `計算中（ε = ${solver.eps.toPrecision(2)} から下げています）` : '計算中', false);
+}
+
+function rebuildArcs() {
+  if (!plan) { arcGeom.setDrawRange(0, 0); return; }
+  const K = Math.min(state.arcN, plan.count, ARC_MAX), p = plan.pairs;
+  const mTop = K ? p[4] : 1;
+  let v = 0;
+  const c = new THREE.Color();
+  for (let q = 0; q < K; q++) {
+    const o = q * 5;
+    const x0 = W(p[o]), z0 = Wz(p[o + 1]), x1 = W(p[o + 2]), z1 = Wz(p[o + 3]);
+    const d = Math.hypot(x1 - x0, z1 - z0), hArc = 0.08 + 0.45 * d;
+    const alpha = 0.06 + 0.8 * Math.sqrt(p[o + 4] / mTop);
+    for (let s = 0; s < ARC_SEG; s++) {
+      for (const u of [s / ARC_SEG, (s + 1) / ARC_SEG]) {
+        arcPos[3 * v] = x0 + (x1 - x0) * u;
+        arcPos[3 * v + 1] = 4 * u * (1 - u) * hArc;
+        arcPos[3 * v + 2] = z0 + (z1 - z0) * u;
+        c.copy(colors.mu).lerp(colors.nu, u);
+        arcCol[4 * v] = c.r; arcCol[4 * v + 1] = c.g; arcCol[4 * v + 2] = c.b; arcCol[4 * v + 3] = alpha;
+        v++;
+      }
+    }
+  }
+  arcGeom.attributes.position.needsUpdate = true;
+  arcGeom.attributes.color.needsUpdate = true;
+  arcGeom.setDrawRange(0, v);
+  arcGeom.computeBoundingSphere();
+}
+
+function rebuildBary() {
+  if (!plan) { baryGeom.setDrawRange(0, 0); return; }
+  const b = plan.bary, pts = [];
+  let mMax = 0; for (let o = 4; o < b.length; o += 5) mMax = Math.max(mMax, b[o]);
+  for (let o = 0; o < b.length; o += 5) {
+    if (b[o + 4] < 0.02 * mMax) continue;
+    const x0 = W(b[o]), z0 = Wz(b[o + 1]), x1 = W(b[o + 2]), z1 = Wz(b[o + 3]);
+    const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz);
+    if (L < 1e-4) continue;
+    const y = 0.004, hl = Math.min(0.035, L * 0.3), ux = dx / L, uz = dz / L;
+    pts.push(x0, y, z0, x1, y, z1);
+    pts.push(x1, y, z1, x1 - hl * (ux * 0.9 - uz * 0.45), y, z1 - hl * (uz * 0.9 + ux * 0.45));
+    pts.push(x1, y, z1, x1 - hl * (ux * 0.9 + uz * 0.45), y, z1 - hl * (uz * 0.9 - ux * 0.45));
+  }
+  baryGeom.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+  baryGeom.setDrawRange(0, pts.length / 3);
+  baryGeom.computeBoundingSphere();
+}
+
+function updateTime() {
+  const t = state.t;
+  colors.mut.copy(colors.mu).lerp(colors.nu, t);
+  const rho = densityAtTime(plan, t);
+  updateSurface(surf.mut, rho, colors.mut, 0.003);
+  if (plan) {
+    const cnt = Math.min(PART_MAX, plan.count), p = plan.pairs, hs = 0.75 * state.height / rhoRef;
+    for (let q = 0; q < cnt; q++) {
+      const o = q * 5;
+      const x = (1 - t) * p[o] + t * p[o + 2], y = (1 - t) * p[o + 1] + t * p[o + 3];
+      partPos[3 * q] = W(x); partPos[3 * q + 1] = sampleRender(rho, x, y) * hs + 0.012; partPos[3 * q + 2] = Wz(y);
+    }
+    partGeom.setDrawRange(0, cnt);
+    partGeom.attributes.position.needsUpdate = true;
+    partGeom.computeBoundingSphere();
+  } else partGeom.setDrawRange(0, 0);
+  partMat.color.copy(colors.mut).lerp(colors.fg, 0.25);
+  $('tVal').textContent = `t = ${t.toFixed(2)}`;
+  $('tSlider').value = Math.round(t * 1000);
+}
+
+function applyLayers() {
+  surf.mu.mesh.visible = state.layers.mu;
+  surf.nu.mesh.visible = state.layers.nu;
+  surf.mut.mesh.visible = state.layers.mut;
+  particles.visible = state.layers.particles;
+  arcs.visible = state.layers.arcs;
+  baryLines.visible = state.layers.bary;
+}
+
+// ---------------------------------------------------------------
+// UI
+// ---------------------------------------------------------------
+for (const which of ['mu', 'nu']) {
+  const sel = $(which === 'mu' ? 'presetMu' : 'presetNu');
+  for (const [key, p] of Object.entries(PRESETS)) sel.add(new Option(p.label, key));
+  const custom = new Option('（手描き）', 'custom'); custom.disabled = true; sel.add(custom);
+  sel.value = state.preset[which];
+  sel.addEventListener('change', () => {
+    state.preset[which] = sel.value; fillPreset(which); rebuildMeasures(); startSolve(false);
+  });
+}
+$('swap').addEventListener('click', () => {
+  [state.raw.mu, state.raw.nu] = [state.raw.nu, state.raw.mu];
+  [state.preset.mu, state.preset.nu] = [state.preset.nu, state.preset.mu];
+  $('presetMu').value = state.preset.mu; $('presetNu').value = state.preset.nu;
+  rebuildMeasures(); startSolve(false);
+});
+
+const epsFromSlider = () => Math.pow(10, parseFloat($('eps').value));
+$('eps').addEventListener('input', () => { state.eps = epsFromSlider(); $('epsVal').textContent = state.eps.toFixed(4); });
+$('eps').addEventListener('change', () => { state.eps = epsFromSlider(); startSolve(true); });
+$('grid').addEventListener('change', () => { state.n = parseInt($('grid').value, 10); rebuildMeasures(); startSolve(false); });
+
+const layerIds = { lyMu: 'mu', lyNu: 'nu', lyMut: 'mut', lyParticles: 'particles', lyArcs: 'arcs', lyBary: 'bary' };
+for (const [id, key] of Object.entries(layerIds)) {
+  $(id).addEventListener('change', () => { state.layers[key] = $(id).checked; applyLayers(); });
+}
+$('arcN').addEventListener('input', () => { state.arcN = +$('arcN').value; $('arcNVal').textContent = state.arcN; rebuildArcs(); });
+$('height').addEventListener('input', () => {
+  state.height = +$('height').value; $('heightVal').textContent = state.height.toFixed(2);
+  dirty.measures = dirty.time = true;
+});
+$('brushR').addEventListener('input', () => {
+  state.brushR = +$('brushR').value; $('brushRVal').textContent = state.brushR.toFixed(3);
+  cursor.scale.setScalar(state.brushR * 2);
+});
+
+const setPlayIcon = () => $('playIcon').setAttribute('d', state.playing ? 'M3 2h3v10H3zM8 2h3v10H8z' : 'M3 1.5l9 5.5-9 5.5z');
+$('play').addEventListener('click', () => { state.playing = !state.playing; setPlayIcon(); if (state.playing) phase = state.t * PERIOD / 2; });
+$('tSlider').addEventListener('input', () => { state.playing = false; setPlayIcon(); state.t = $('tSlider').value / 1000; dirty.time = true; });
+$('speed').addEventListener('change', () => { state.speed = +$('speed').value; });
+
+// 手描き
+const seg = document.querySelectorAll('.seg button');
+seg.forEach((btn) => btn.addEventListener('click', () => {
+  state.brush = btn.dataset.brush;
+  seg.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+  const painting = state.brush !== 'off';
+  controls.enableRotate = !painting; controls.enablePan = !painting;
+  stage.classList.toggle('painting', painting);
+  cursor.visible = false;
+}));
+
+const raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2(), plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hit = new THREE.Vector3();
+function domainPoint(ev) {
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  raycaster.setFromCamera(ndc, camera);
+  if (!raycaster.ray.intersectPlane(plane, hit)) return null;
+  const x = hit.x / 2 + 0.5, y = 0.5 - hit.z / 2;
+  return (x < -0.1 || x > 1.1 || y < -0.1 || y > 1.1) ? null : [x, y];
+}
+function paintAt(x, y) {
+  const targets = state.brush === 'erase' ? ['mu', 'nu'] : [state.brush];
+  const rr = state.brushR;
+  for (const which of targets) {
+    const raw = state.raw[which];
+    let mx = 0; for (const v of raw) mx = Math.max(mx, v);
+    const amt = 0.18 * (mx > 0 ? mx : 1);
+    for (let iy = 0; iy < FINE; iy++) for (let ix = 0; ix < FINE; ix++) {
+      const k = iy * FINE + ix;
+      const w = gauss(ix / (FINE - 1), iy / (FINE - 1), x, y, rr);
+      raw[k] = state.brush === 'erase' ? raw[k] * (1 - 0.45 * w) : raw[k] + amt * w;
+    }
+    state.preset[which] = 'custom';
+    $(which === 'mu' ? 'presetMu' : 'presetNu').value = 'custom';
+  }
+  rebuildMeasures();
+}
+let painting = false, lastPaint = 0;
+renderer.domElement.addEventListener('pointerdown', (ev) => {
+  if (state.brush === 'off' || ev.button !== 0) return;
+  const p = domainPoint(ev); if (!p) return;
+  painting = true; renderer.domElement.setPointerCapture(ev.pointerId);
+  paintAt(...p); lastPaint = performance.now();
+});
+renderer.domElement.addEventListener('pointermove', (ev) => {
+  if (state.brush === 'off') return;
+  const p = domainPoint(ev);
+  cursor.visible = !!p;
+  if (p) {
+    cursor.position.set(W(p[0]), 0.006, Wz(p[1]));
+    cursorMat.color.copy(state.brush === 'nu' ? colors.nu : state.brush === 'mu' ? colors.mu : colors.fg);
+  }
+  if (painting && p && performance.now() - lastPaint > 30) { paintAt(...p); lastPaint = performance.now(); }
+});
+const endPaint = () => { if (!painting) return; painting = false; startSolve(false); };
+renderer.domElement.addEventListener('pointerup', endPaint);
+renderer.domElement.addEventListener('pointercancel', endPaint);
+renderer.domElement.addEventListener('pointerleave', () => { cursor.visible = false; });
+cursor.scale.setScalar(state.brushR * 2);
+
+// サイズとテーマ
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / Math.max(1, h);
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+// ---------------------------------------------------------------
+// メインループ
+// ---------------------------------------------------------------
+const PERIOD = 7; // 秒：μ → ν → μ の往復
+let phase = 0, prev = performance.now();
+function easedT(ph) {
+  // 往復の各端で少し止まる
+  const u = (ph % PERIOD) / PERIOD;
+  const tri = u < 0.5 ? u * 2 : 2 - u * 2;
+  const v = Math.min(1, Math.max(0, (tri - 0.08) / 0.84));
+  return v * v * (3 - 2 * v);
+}
+
+function frame(now) {
+  const dt = Math.min(0.1, (now - prev) / 1000); prev = now;
+
+  if (solver && !solver.done) {
+    solver.run(9);
+    if (solver.done || now - lastExtract > 150) {
+      plan = solver.extract(); lastExtract = now;
+      dirty.plan = dirty.time = true;
+    }
+    updateStats();
+  }
+  if (state.playing) {
+    phase += dt * state.speed;
+    state.t = easedT(phase);
+    dirty.time = true;
+  }
+  if (dirty.measures) {
+    updateSurface(surf.mu, rhoMu, colors.mu, 0.001);
+    updateSurface(surf.nu, rhoNu, colors.nu, 0.002);
+    dirty.measures = false;
+  }
+  if (dirty.plan) { rebuildArcs(); rebuildBary(); dirty.plan = false; }
+  if (dirty.time) { updateTime(); dirty.time = false; }
+
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+
+fillPreset('mu'); fillPreset('nu');
+rebuildMeasures();
+applyTheme();
+applyLayers();
+setPlayIcon();
+resize();
+startSolve(false);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

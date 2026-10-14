@@ -1,0 +1,474 @@
+%======================================
+%卒業研究報告書サンプル
+%ver. 1.0 2024-12-04 %このように履歴を残すのも良い
+%ver. 1.1 2025-02-?? 投稿
+%ver. 2.1 2025-02-?? 修正
+%======================================
+
+\documentclass[12pt,a4j,twoside]{jreport}
+
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage[abbrev]{amsrefs}
+\usepackage{latexsym}
+
+
+\pagestyle{plain}
+\oddsidemargin 23pt
+\evensidemargin 18pt
+\renewcommand{\bibname}{参考文献}
+\renewcommand{\proofname}{\bf 証明}
+\renewcommand{\labelenumi}{{\rm(\arabic{enumi})}}
+\numberwithin{equation}{chapter}
+
+\theoremstyle{definition} % 以下の環境で英文がイタリックにならないようにするため. 
+\newtheorem{thm}{定理}[chapter]
+\newtheorem{prop}[thm]{命題}
+\newtheorem{lem}[thm]{補題}
+\newtheorem{cor}[thm]{系}
+\newtheorem{dfn}[thm]{定義}
+\newtheorem{ex}[thm]{例}
+\newtheorem{rem}[thm]{注意}
+
+%%newcommand
+\newcommand{\R}{{\mathbb R}} %Euclid space
+\newcommand{\Lap}{\Delta} %Laplacian
+\newcommand{\FL}[2]{(-\Lap)^{#1\frac{#2}{2}}} %Fractional Laplacian
+\newcommand{\Fl}[1]{(-\Lap)^{#1/2}} %Fractional Laplacian
+\newcommand{\F}{\mathcal F} %Fourier transform
+\newcommand{\gm}{\gamma} %gamma
+\newcommand{\Gm}{\Gamma} %Gamma 
+\newcommand{\conj}[1]{\overline{#1}} %conjugate
+\newcommand{\Sp}{{\mathbb S}} %Sphere
+\newcommand{\wb}{\qed} %Result end
+\newcommand{\bb}{\hfill $\blacksquare$} %Proof end
+\newcommand{\al}{\alpha} %alpha
+\newcommand{\lm}{\lambda} %lambda
+\renewcommand{\th}{\theta} %theta
+\newcommand{\pt}{\partial} %partial derivative
+\newcommand{\s}{\sigma} %sigma
+\renewcommand{\t}{\tau} %tau
+\newcommand{\Sw}{\mathcal S} %Schwartz space
+\newcommand{\bs}{\backslash} %backslash
+\newcommand{\Del}{\Delta} %Laplacian
+\newcommand{\bt}{\beta} %beta
+\newcommand{\ep}{\varepsilon} %epsilon
+\newcommand{\C}{{\mathbb C}} %Complex number
+\newcommand{\nab}{\nabla} %gradient
+\newcommand{\dl}{\delta} %delta
+\renewcommand{\r}{\rho} %rho
+\newcommand{\N}{{\mathbb N}} %Natural number
+\newcommand{\Om}{\Omega} %Omega
+\newcommand{\kp}{\kappa} %kappa
+\newcommand{\Hm}{\mathcal H} %Hausdorff measure
+\newcommand{\om}{\omega} %omega
+\newcommand{\ev}{\mathbf{e}_1}
+\newcommand{\wc}{\rightharpoonup} %weak convergence
+\newcommand{\D}{\mathcal D} %Distributional function space
+\renewcommand{\max}{\mathop{\rm max}\limits} %max
+\renewcommand{\sup}{\mathop{\rm sup}\limits} %sup
+\renewcommand{\lim}{\mathop{\rm lim}\limits} %lim
+\renewcommand{\div}{\mathrm{div}} %divergence
+\newcommand{\diam}{\mathrm{diam}}
+\renewcommand{\det}{\mathrm{det}} %deteminant
+\newcommand{\rot}{\mathrm{rot}} %rotation
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\He}{\mathbb{H}}
+\renewcommand{\Im}{\mathrm{Im}}
+\newcommand{\sL}{\mathcal{L}}
+
+\DeclareMathOperator{\esssup}{ess, \sup}
+\DeclareMathOperator{\real}{Re}
+\DeclareMathOperator{\supp}{supp}
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator{\dist}{dist}
+\DeclareMathOperator{\rank}{rank}
+
+\renewcommand{\Re}{\real}
+
+\newcommand{\eqn}[1]{\begin{equation}#1\end{equation}}
+\newcommand{\eq}[1]{\begin{equation*}#1\end{equation*}}
+\newcommand{\spln}[1]{\begin{equation}\begin{split}#1\end{split}\end{equation}}
+\newcommand{\spl}[1]{\begin{equation*}\begin{split}#1\end{split}\end{equation*}}
+\newcommand{\casn}[1]{\begin{eqnarray}\begin{cases}#1\end{cases}\end{eqnarray}}
+\newcommand{\cas}[1]{\begin{eqnarray*}\begin{cases}#1\end{cases}\end{eqnarray*}}
+
+\def\Xint#1{\mathchoice
+{\XXint\displaystyle\textstyle{#1}}%
+{\XXint\textstyle\scriptstyle{#1}}%
+{\XXint\scriptstyle\scriptscriptstyle{#1}}%
+{\XXint\scriptscriptstyle\scriptscriptstyle{#1}}%
+\!\int}
+\def\XXint#1#2#3{{\setbox0=\hbox{$#1{#2#3}{\int}$}
+\vcenter{\hbox{$#2#3$}}\kern-.5\wd0}}
+\def\ddashint{\Xint=}
+\def\dashint{\Xint-}
+
+\allowdisplaybreaks
+
+\begin{document}
+
+%======================================
+\title{ %表紙
+\huge 卒業研究の題目 \\[5cm]
+}
+\author{学生番号　氏名 \\
+\qquad\qquad\quad 氏名のアルファベット\\[1cm]
+（指導教員: 名前 職位） \\[1cm]
+熊本大学理学部理学科数学コース \\
+卒業研究報告書}
+\date{\Large 2026 年 2 月} %年・月を入れる. 
+\maketitle %表紙を作成
+\thispagestyle{empty} 
+\clearpage
+\tableofcontents %目次
+\thispagestyle{empty}
+\newpage
+\setcounter{page}{1}
+\renewcommand{\thepage}{\arabic{page}} 
+%======================================
+
+
+\chapter{序文}%ここに序文を書く. 
+
+本稿では, 次の対数型Sobolevの不等式を考える: 
+
+\begin{thm}[対数型Sobolevの不等式] \label{thm:dareka}
+任意の$f \in H^1(\R^n)$に対して, 
+\eqn{
+   \int_{\R^n} |f(x)|^2 \log\frac{|f(x)|^2}{\|f\|_{L^2}^2}\, dx
+   \leq \frac{n}{2} \|f\|_{L^2}^2 \log\left(\frac{2}{n \pi e \|f\|_{L^2}^2} \int_{\R^n} |\nab f(x)|^2\, dx\right) 
+ }
+\begin{enumerate}
+\item これこれ. 
+\item しかじか. 
+\end{enumerate}
+\end{thm}
+
+
+以下で, $1 \leq p < \infty$に対して, $L^p$-空間を次で定める:
+\begin{equation}\label{dfn;Lp}
+  L^p(\Om)
+  \equiv \left\{f: \Om \to \R;f: \text{可測},\quad \|f\|_{L^p} \equiv \left(\int_{\R^n} |f(x)|^p\, dx\right)^\frac{1}{p} < + \infty\right\}.
+\end{equation}
+%定義\eqref{dfn;Lp}より, $\|\cdot\|_{L^p}$はノルムなので, $L^p$はノルム空間である. 
+$H^1$はSobolev空間とする. 
+
+
+\begin{rem}
+定数$2/(n \pi e)$は最良定数である.
+最良定数はGauss函数によって達成されることが知られている. 
+詳しくは, Carlen (1995)を参照せよ. 
+\end{rem}
+
+
+通常の$H^1$上では次のSobolevの不等式が成り立つことが知られている:
+
+
+\begin{thm}
+任意の$f \in H^1(\R^n)$に対して, 
+\eqn{
+  \|f\|_{L^\frac{2 n}{n - 2}}
+  \leq C \|\nab f\|_{L^2}
+}
+が成り立つ. 
+\end{thm}
+
+
+Jensenの不等式より, 
+\eqn{
+  \int_{\R^n} |f(x)|^2 \log\frac{|f(x)|^2}{\|f\|_{L^2}^2}\, dx
+  \leq C \|f\|_{L^\frac{2 n}{n - 2}}
+}
+が成り立つので, Sobolevの不等式から対数型Sobolevの不等式が導かれることがわかる. 
+
+
+\begin{rem}
+Sobolevの不等式の最良定数はTalenti, Liebによって同定されている. 
+実は, Liebの証明においては, Hardy--Littlewood--Sobolevの不等式の最良定数の導出が鍵となる. 
+
+\end{rem}
+
+
+ガンマ函数は次で定まる:
+\eqn{
+  \Gm(x) = \int_0^\infty t^{x - 1} e^{- t}\, dt.
+}
+\eqn{
+  \left|\Sp^{n - 1}\right|
+  = \frac{2 \pi^\frac{n}{2}}{\Gm\left(\frac{n}{2}\right)}.
+}
+
+
+
+
+\begin{rem}
+HLS不等式の最良定数は知られており, 
+\end{rem}
+
+定理\ref{thm:dareka}より以下が従う. 
+
+\begin{cor}
+系はこのように書く. 
+\end{cor}
+
+\begin{proof}
+証明はこのように書く.（普通は序文では使わない. ）
+\end{proof}
+
+\section*{謝辞}
+ここに謝辞を書く. 
+
+\chapter{準備, Lebesgue空間}
+
+ここに2章の内容を書く. 
+
+\section{??}
+
+\begin{prop}
+命題はこのように書く. 
+\end{prop}
+\begin{proof}
+証明はこのように書く. 証明終わりの目印などは
+変更しても良いが全体で統一すること. 
+\end{proof}
+\begin{lem}
+補題はこのように書く. 
+\end{lem}
+\begin{ex}
+例はこのように書く. 
+\end{ex}
+\begin{dfn}
+定義はこのように. 
+\end{dfn}
+
+\begin{rem}
+注意や例, 定義も, 定理や補題などと同じ各章で通し番号となっている. 
+各自で例えば全体で通し番号となるように変更しても良い. 
+\end{rem}
+
+
+\begin{align*}
+f(x)
+&= g(x) \\
+&= g(x) \\
+&= g(x) \\
+&= g(x) \\&= g(x) \\
+&= g(x) \\&= g(x) \\
+&= g(x) \\&= g(x) \\
+&= g(x) \\&= g(x) \\
+&= g(x) \\&= g(x) \\
+&= g(x) \\&= g(x) \\
+&= g(x) \\
+\end{align*}
+
+\section{??}
+
+文献の引用は \cite{Gmv:green}, \cite{APS} のように書く. 
+%同一の著者による一連の文献をを引用する時は \cites{Satake, SatakeN} のように書いても良い. 
+
+\chapter{主定理の証明}
+
+ここに3章の内容を書く. 
+
+\section{??}
+
+\section{??}
+
+１ページ分の分量はこのぐらいです. 
+ご自身でサイズを調整したいときは, このサイズを
+大幅に超えることのないようにしましょう. 
+１ページ分の分量はこのぐらいです. 
+ご自身でサイズを調整したいときは, このサイズを
+大幅に超えることのないようにしましょう. 
+１ページ分の分量はこのぐらいです. 
+ご自身でサイズを調整したいときは, このサイズを
+大幅に超えることのないようにしましょう. 
+１ページ分の分量はこのぐらいです. 
+ご自身でサイズを調整したいときは, このサイズを
+大幅に超えることのないようにしましょう. 
+１ページ分の分量はこのぐらいです. 
+ご自身でサイズを調整したいときは, このサイズを
+大幅に超えることのないようにしましょう. 
+１ページ分の分量はこのぐらいです. 
+ご自身でサイズを調整したいときは, このサイズを
+大幅に超えることのないようにしましょう. 
+１ページ分の分量はこのぐらいです. 
+ご自身でサイズを調整したいときは, このサイズを
+大幅に超えることのないようにしましょう. 
+１ページ分の分量はこのぐらいです. 
+ご自身でサイズを調整したいときは, このサイズを
+大幅に超えることのないようにしましょう. 
+１ページ分の分量はこのぐらいです. 
+ご自身でサイズを調整したいときは, このサイズを
+大幅に超えることのないようにしましょう. 
+１ページ分の分量はこのぐらいです. 
+ご自身でサイズを調整したいときは, このサイズを
+大幅に超えることのないようにしましょう. 
+１ページ分の分量はこのぐらいです. 
+ご自身でサイズを調整したいときは, このサイズを
+大幅に超えることのないようにしましょう. 
+１ページ分の分量はこのぐらいです. 
+ご自身でサイズを調整したいときは, このサイズを
+大幅に超えることのないようにしましょう. 
+１ページ分の分量はこのぐらいです. 
+ご自身でサイズを調整したいときは, このサイズを
+大幅に超えることのないようにしましょう. 
+１ページ分の分量はこのぐらいです. 
+ご自身でサイズを調整したいときは, このサイズを
+大幅に超えることのないようにしましょう. 
+１ページ分の分量はこのぐらいです. 
+ご自身でサイズを調整したいときは, このサイズを
+大幅に超えることのないようにしましょう. 
+
+
+
+
+新しいページになりました. 
+
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+
+
+
+\begin{bibdiv}
+\begin{biblist}
+
+%「参考文献」には, 欧文図書, 欧文論文, 
+%和書, プレプリントの掲載例を示してある. 
+%その他プロシーディング等の文献については, 
+%これらの例やその他の文献の「参考文献」の記述方法を
+%参照しながら, ご自身で記載すること. 
+
+
+% 以下は MathSciNet の Batch Download を AMSRefs に選んでチェックを付け, 
+% Retrieve Marked ボタンを押すと出てくる. 
+
+\bib{APS}{article}{
+   author={Atiyah, M. F.},
+   author={Patodi, V. K.},
+   author={Singer, I. M.},
+   title={Spectral asymmetry and Riemannian geometry. I},
+   journal={Math. Proc. Cambridge Philos. Soc.},
+   volume={77},
+   date={1975},
+   pages={43--69},
+   issn={0305-0041},
+%   review={\MR{0397797}},
+}
+
+
+\bib{AS}{article}{
+   author={Atiyah, M. F.},
+   author={Singer, I. M.},
+   title={The index of elliptic operators. I},
+   journal={Ann. of Math. (2)},
+   volume={87},
+   date={1968},
+   pages={484--530},
+   issn={0003-486X},
+%   review={\MR{0236950}},
+}
+
+
+\bib{Gmv:green}{book}{
+   author={Gromov, Misha},
+   title={Metric structures for Riemannian and non-Riemannian spaces},
+   series={Modern Birkh\"auser Classics},
+   edition={Reprint of the 2001 English edition},
+   note={Based on the 1981 French original;
+   With appendices by M. Katz, P. Pansu and S. Semmes;
+   Translated from the French by Sean Michael Bates},
+   publisher={Birkh\"auser Boston, Inc., Boston, MA},
+   date={2007},
+   pages={xx+585},
+   isbn={978-0-8176-4582-3},
+   isbn={0-8176-4582-9},
+%   review={\MR{2307192 (2007k:53049)}},
+}
+
+%和書は MathSciNet からは出力出来ない. 以下のように記述する. 
+
+%\bib{Satake}{book}{
+%  author={佐武一郎},
+%   title={『線型代数学』},
+%   series={数学選書 1},
+%   publisher={裳華房},
+%   date={1974年},
+%}
+
+
+%\bib{SatakeN}{book}{
+%  author={佐武一郎},
+%   title={『線型代数学』{\rm (新装版)}},
+%   edition={(新装版)}, エディッションの記載は文献による
+%   series={数学選書 1},
+%   publisher={裳華房},
+%   date={2015年},
+%}
+
+% プレプリントは以下のように記述
+\bib{Preprint}{article}{
+   author={Tao, T.},
+   author={Ziegler, T.},
+   title={Polynomial patterns in the primes},
+   note={preprint (2016), arXiv:1603.07817},
+}
+
+\end{biblist}
+\end{bibdiv}
+
+\end{document}
+
+
+\bye
+
+
+\bye

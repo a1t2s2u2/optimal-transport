@@ -313,7 +313,146 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 
 前節の最適 coupling の存在を用いて，$\Wass_p$ の距離性を示す．
 三角不等式の鍵は，共通の周辺分布をもつ二つの coupling を
-一つの三変数の確率測度にまとめる，次の接着補題である．
+一つの三変数の確率測度にまとめる接着補題である．
+まずその準備として測度分解定理を証明し，接着補題を経て距離の公理を確かめる．
+
+\subsection{測度分解定理}
+
+接着補題で必要なのは，二変数の分布 $\pi$ を，共通の変数 $y$ ごとの分布 $\pi_y$ に分ける次の形である．
+北別府悠『最適輸送理論入門〜兼非標準的関数解析入門〜』Theorem 5.3.1 の
+証明（提供資料）を参考に，compact な場合の構成から一般の Polish 空間へ拡張する．
+用いる Radon--Nikodym の定理，$C(K)$ の記法と可分性，Riesz の表現定理は，
+それぞれ付録の定理~\ref{thm:meas-radon-nikodym}，注意~\ref{rem:meas-compact-continuous}，
+定理~\ref{thm:meas-riesz-representation}にまとめた．
+
+\begin{remark}{記法と定義：測度の絶対連続性}{wp-absolute-continuity-notation}
+  可測空間 $(\Omega,\mathcal{A})$ 上の有限測度 $\nu$ と，
+  有限符号付き測度 $\alpha$（二つの有限測度の差）を考える．
+  $\alpha$ が $\nu$ に\textbf{絶対連続}であるとは，
+  任意の $\varepsilon>0$ に対してある $\delta>0$ が存在し，
+  \[
+    \nu(B)<\delta\quad\Longrightarrow\quad\abs{\alpha(B)}<\varepsilon
+    \qquad(B\in\mathcal{A})
+  \]
+  が成り立つことをいう．このとき $\alpha\ll\nu$ と書く（定義~\ref{def:meas-absolute-continuity}）．
+  この定義は，すべての $B\in\mathcal{A}$ について $\nu(B)=0$ ならば $\alpha(B)=0$ となる条件と
+  同値である（定理~\ref{thm:meas-radon-nikodym}）．
+\end{remark}
+
+\begin{theorem}{測度分解定理（接着補題で用いる形）}{meas-disintegration}
+  $\mathcal{X},\mathcal{Y}$ を Polish 空間，$\pi\in\Prob(\mathcal{X}\times\mathcal{Y})$ とし，
+  第2周辺分布 $\nu\in\Prob(\mathcal{Y})$ を
+  \[
+    \nu(B):=\pi(\mathcal{X}\times B)\qquad(B\in\Borel(\mathcal{Y}))
+  \]
+  で定める．
+  このとき，確率測度の族 $(\pi_y)_{y\in\mathcal{Y}}$，$\pi_y\in\Prob(\mathcal{X})$ で，
+  次をみたすものが存在する．
+  \begin{enumerate}
+    \item 各 Borel 集合 $A\in\Borel(\mathcal{X})$ に対して $y\mapsto\pi_y(A)$ は Borel 可測である．
+    \item 任意の Borel 集合 $A\in\Borel(\mathcal{X})$，$B\in\Borel(\mathcal{Y})$ に対して
+      \[
+        \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y).
+      \]
+  \end{enumerate}
+\end{theorem}
+
+\begin{proof}
+  固定した $x_0\in\mathcal{X}$ に対し，$\delta_{x_0}(A):=\mathbf{1}_A(x_0)$ とおく．
+
+  \textbf{1. $\mathcal{X}$ が compact の場合：積分の候補を作る．}
+  ここでは $\pi$ は零でない有限測度でもよい．
+  $1$ を含む可算な稠密 $\mathbb{Q}$-ベクトル部分空間 $\mathcal{C}\subset C(\mathcal{X})$ を取り，
+  各 $f\in\mathcal{C}$ に対して
+  \[
+    \nu_f(B):=\int_{\mathcal{X}\times B}f(x)\,\d\pi(x,y)
+    \qquad(B\in\Borel(\mathcal{Y}))
+  \]
+  とおく．$f$ の正部分・負部分に分ければ $\nu_f$ は有限符号付き測度であり，
+  $\abs{\nu_f(B)}\leq\lVert f\rVert_\infty\nu(B)$ より $\nu_f\ll\nu$ である．
+  Radon--Nikodym の定理から Borel 可測な密度 $l_f:=\d\nu_f/\d\nu$ を取る．
+  $f\geq0$ のときは非負の密度を選び，一般の $f$ には符号付きの場合を用いる．
+  この選び方と密度の一意性より，共通の Borel $\nu$-零集合 $N$ の外で
+  \[
+    l_{af+bg}=a l_f+b l_g,\qquad l_1=1,\qquad
+    f\geq0\ \Longrightarrow\ l_f\geq0
+  \]
+  がすべての $f,g\in\mathcal{C}$，$a,b\in\mathbb{Q}$ で成り立つ．
+  ここで，条件は可算個なので，各条件の例外集合の合併も零集合である．
+  有理数 $r>\lVert f\rVert_\infty$ には $r\pm f\geq0$ より $r\pm l_f(y)\geq0$ となるので，
+  $r$ を $\lVert f\rVert_\infty$ に近づけて $\abs{l_f(y)}\leq\lVert f\rVert_\infty$ を得る（$y\notin N$）．
+
+  \textbf{2. 積分の候補から測度を得る．}
+  $y\notin N$ では，$f\mapsto l_f(y)$ は $\mathbb{Q}$-線形で
+  $\abs{l_f(y)-l_g(y)}\leq\lVert f-g\rVert_\infty$ をみたすので，
+  一様近似により $C(\mathcal{X})$ 上の連続な汎関数 $L_y$ に延長できる．
+  加法性は極限で保たれ，有理係数を実数に近似すれば実線形性も従う．
+  また，$L_y(1)=1$，$\abs{L_y(f)}\leq\lVert f\rVert_\infty$ をみたす．
+  $f\geq0$ なら，$m:=\lVert f\rVert_\infty$ とおくと $\lVert m-f\rVert_\infty\leq m$ より
+  \[
+    L_y(f)=m-L_y(m-f)\geq0.
+  \]
+  したがって Riesz の表現定理により $L_y(f)=\int_{\mathcal{X}}f\,\d\pi_y$ となる
+  $\pi_y\in\Prob(\mathcal{X})$ が得られる．$N$ 上では $\pi_y:=\delta_{x_0}$ とする．
+
+  密度の公式と一様近似より，すべての $f\in C(\mathcal{X})$ に対し
+  $y\mapsto\int_{\mathcal{X}}f\,\d\pi_y$ は Borel 可測で，
+  \[
+    \int_B\left(\int_{\mathcal{X}}f\,\d\pi_y\right)\d\nu(y)
+    =\int_{\mathcal{X}\times B}f(x)\,\d\pi(x,y).
+  \]
+  閉集合 $A\neq\emptyset$ に対し，$d(x,A):=\inf_{a\in A}d(x,a)$ とおく．
+  これは三角不等式より $x$ について連続で，閉性より $d(x,A)=0\iff x\in A$ となる．
+  よって $\max\{1-k\,d(x,A),0\}\to\mathbf{1}_A(x)$（$k\to\infty$）と
+  有界収束定理から条件 1，2 を得る（$A=\emptyset$ も明らか）．
+  両条件をみたす $A$ の全体は $\lambda$-系である：全空間を含み，補集合には
+  $\pi_y(\mathcal{X}\setminus A)=1-\pi_y(A)$ と $\pi(\mathcal{X}\times B)=\nu(B)$ を，
+  互いに素な可算合併には単調収束定理を用いる．閉集合は Borel 集合を生成する $\pi$-系なので，
+  Dynkin の定理（定理~\ref{thm:meas-pi-lambda}）によりすべての Borel 集合 $A$ で成り立つ．
+
+  \textbf{3. $\mathcal{X}$ が compact とは限らない場合．}
+  第1周辺分布 $\mu(A):=\pi(A\times\mathcal{Y})$ は Prokhorov の定理
+  （定理~\ref{thm:meas-prokhorov}，$1\Rightarrow2$）より tight である
+  （$\{\mu\}$ 内の列は定数列で $\mu$ に弱収束する）．
+  $K_0:=\emptyset$ とし，tightness で得た compact 集合と $K_{n-1}$ の合併を取って，
+  $K_{n-1}\subset K_n$，$\mu(\mathcal{X}\setminus K_n)\leq1/n$ となる compact 列を作る．
+  $K:=\bigcup_nK_n$ とおけば，任意の $B\in\Borel(\mathcal{Y})$ について
+  \[
+    \pi((\mathcal{X}\setminus K)\times B)
+    \leq\mu(\mathcal{X}\setminus K)=0.
+  \]
+  $E_n:=K_n\setminus K_{n-1}$，$\nu_n(B):=\pi(E_n\times B)$ とおけば，
+  $E_n$ は $K$ を互いに素に分割するので $\sum_n\nu_n=\nu$ である．
+
+  $\nu_n\neq0$ の各 $n$ では，$\pi$ の $E_n\times\mathcal{Y}$ への制限を
+  $K_n\times\mathcal{Y}$ 上の有限測度として 1--2 を適用する．
+  ここでは，閉部分空間の Borel 集合も周囲の Borel 集合であることを用いる．
+  得た測度を，$A\in\Borel(\mathcal{X})$ に $A\cap K_n$ の測度を割り当てて
+  $\mathcal{X}$ 上に延長し，$\rho_y^{(n)}$ と書けば，
+  \[
+    \pi((A\cap E_n)\times B)=\int_B\rho_y^{(n)}(A)\,\d\nu_n(y)
+  \]
+  と条件 1 をみたす $\mathcal{X}$ 上の確率測度の族を得る．
+  非負の Borel 可測な密度 $h_n:=\d\nu_n/\d\nu$ を取り，
+  $\nu_n=0$ の項では $h_n:=0$，$\rho_y^{(n)}:=\delta_{x_0}$ とすれば，上の公式はすべての $n$ で成り立つ．
+  $\sum_n\nu_n=\nu$ と単調収束定理・密度の一意性より $\sum_nh_n=1$ が $\nu$-a.e. に成り立つので，
+  \[
+    \pi_y(A):=\sum_n h_n(y)\rho_y^{(n)}(A)
+  \]
+  と定める（$\sum_nh_n\neq1$ となる Borel 零集合上では $\delta_{x_0}$ とする）．
+  これは条件 1 をみたす確率測度の族である．
+  密度の公式を非負単関数近似で拡張し，単調収束定理を用いると
+  \[
+    \begin{aligned}
+      \int_B\pi_y(A)\,\d\nu
+      &=\sum_n\int_B\rho_y^{(n)}(A)\,\d\nu_n(y)\\
+      &=\sum_n\pi((A\cap E_n)\times B)=\pi(A\times B).
+    \end{aligned}
+  \]
+  よって条件 2 も成り立つ．
+\end{proof}
+
+\subsection{接着補題}
 
 \begin{lemma}{接着補題（gluing lemma；Villani (2009) pp.~11--12）}{wp-gluing}
   $\mathcal{X},\mathcal{Y},\mathcal{Z}$ を Polish 空間とする．
@@ -337,19 +476,15 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 \end{lemma}
 
 \begin{proof}
-  各 $y\in\mathcal{Y}$ について，次のように確率測度 $\pi_y,\sigma_y$ を取る．
-  $\pi$ の第2周辺分布は $\nu$ なので，定理~\ref{thm:meas-disintegration}により
+  共通の変数 $y$ に沿って二つの測度を分解し，得られた分布を直積にしてから $\nu$ で平均する．
+  定理~\ref{thm:meas-disintegration}を $\pi$ と，$\sigma$ の写像 $(y,z)\mapsto(z,y)$ による
+  像測度に適用する．これにより，確率測度の族
+  $\pi_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ で
   \[
-    \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y)
-    \qquad(A\in\Borel(\mathcal{X}),\,B\in\Borel(\mathcal{Y}))
-  \]
-  をみたす $\pi_y\in\Prob(\mathcal{X})$ が取れる．
-  同様に，$\sigma$ の第1周辺分布は $\nu$ なので，同じ定理により
-  \[
+    \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y),\qquad
     \sigma(B\times C)=\int_B\sigma_y(C)\,\d\nu(y)
-    \qquad(B\in\Borel(\mathcal{Y}),\,C\in\Borel(\mathcal{Z}))
   \]
-  をみたす $\sigma_y\in\Prob(\mathcal{Z})$ が取れる．
+  をみたし，$y\mapsto\pi_y(A)$，$y\mapsto\sigma_y(C)$ が Borel 可測となるものを得る．
 
   そこで，$\gamma\in\Prob(\mathcal{X}\times\mathcal{Y}\times\mathcal{Z})$ を
   \[
@@ -366,6 +501,48 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
     \gamma(\mathcal{X}\times B\times C)=\int_B\sigma_y(C)\,\d\nu(y)=\sigma(B\times C)
   \]
   である．
+\end{proof}
+
+\subsection{距離の公理の確認}
+
+\begin{proposition}{対角集合に集中する coupling}{wp-diagonal-coupling}
+  $\mathcal{X}$ を Polish 空間，$\mu\in\Prob(\mathcal{X})$ とし，
+  対角集合を $\Delta:=\{(x,x)\mid x\in\mathcal{X}\}$ とおく．
+  このとき，$\pi(\Delta)=1$ をみたす $\pi\in\Couplings(\mu,\mu)$ が存在する．
+\end{proposition}
+
+\begin{proof}
+  $\Delta=\{(x,y)\in\mathcal{X}\times\mathcal{X}\mid d(x,y)=0\}$ であり，
+  $d$ は連続なので（注意~\ref{rem:wp-welldef}），$\Delta$ は閉集合，特に Borel 集合である．
+  $E\in\Borel(\mathcal{X}\times\mathcal{X})$ に対して
+  \[
+    \pi(E):=\mu\bigl(\{x\in\mathcal{X}\mid(x,x)\in E\}\bigr)
+  \]
+  と定める．これは連続写像 $T(x):=(x,x)$ による像測度 $\mu\circ T^{-1}$
+  （定義~\ref{def:meas-pushforward}）であり，
+  $\pi(\mathcal{X}\times\mathcal{X})=\mu(\mathcal{X})=1$ より確率測度である．
+
+  \textbf{coupling であること．}
+  $A,B\in\Borel(\mathcal{X})$ に対し
+  \[
+    \pi(A\times B)
+    =\mu\bigl(\{x\in\mathcal{X}\mid x\in A,\ x\in B\}\bigr)
+    =\mu(A\cap B).
+  \]
+  $B=\mathcal{X}$ とすれば $\pi(A\times\mathcal{X})=\mu(A)$，
+  $A=\mathcal{X}$ とすれば $\pi(\mathcal{X}\times B)=\mu(B)$ であるから，
+  $\pi\in\Couplings(\mu,\mu)$ である．
+
+  \textbf{$\pi(\Delta)=1$ であること．}
+  $A:=\{x\in\mathcal{X}\mid(x,x)\in\Delta\}$ とおくと $\pi(\Delta)=\mu(A)$ である．
+  $A\subset\mathcal{X}$ より $\mu(A)\leq\mu(\mathcal{X})$．
+  逆に，任意の $a\in\mathcal{X}$ について $(a,a)\in\Delta$ だから $a\in A$，
+  すなわち $\mathcal{X}\subset A$ であり，$\mu(\mathcal{X})\leq\mu(A)$．
+  したがって
+  \[
+    \mu(\mathcal{X})\leq\pi(\Delta)\leq\mu(\mathcal{X})
+  \]
+  であり，$\mu(\mathcal{X})=1$ より $\pi(\Delta)=1$ である．
 \end{proof}
 
 \begin{proposition}{Wasserstein 距離は距離である（Villani Def 6.4）}{wp-metric}
@@ -388,19 +565,15 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   \textbf{2. 一致の公理．}
   $\Wass_p(\mu,\nu)=0\iff\mu=\nu$ を示す．
   対角集合を $\Delta:=\{(x,x)\mid x\in\mathcal{X}\}$ とおく．
-  $\Delta=\{(x,y)\in\mathcal{X}\times\mathcal{X}\mid d(x,y)=0\}$ であり，
-  $d$ は連続なので（注意~\ref{rem:wp-welldef}），$\Delta$ は閉集合，特に Borel 集合である．
 
   ($\Leftarrow$) $\mu=\nu$ とする．
-  $\pi(\Delta)=1$ となる（$\Delta$ に集中する）$\pi\in\Couplings(\mu,\mu)$ を取る．
-  実際，$T(x):=(x,x)$ による像測度 $\pi:=\mu\circ T^{-1}$ がそのような coupling である．
-  $A\in\Borel(\mathcal{X})$ に対し $T^{-1}(A\times\mathcal{X})=T^{-1}(\mathcal{X}\times A)=A$
-  より $\pi(A\times\mathcal{X})=\pi(\mathcal{X}\times A)=\mu(A)$ であり，
-  $T^{-1}(\Delta)=\mathcal{X}$ より $\pi(\Delta)=1$ である．
-  $\Delta$ 上で $d(x,y)=0$ なので，
+  命題~\ref{prop:wp-diagonal-coupling}より，$\pi(\Delta)=1$ をみたす
+  $\pi\in\Couplings(\mu,\mu)$ を取る．
+  $\pi$ は $\Delta$ の外に質量をもたず，$\Delta$ 上では $d(x,x)=0$ なので
   \[
     \Wass_p(\mu,\mu)^p
-    \leq\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)=0.
+    \leq\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)
+    =\int_{\Delta}d(x,y)^p\,\d\pi(x,y)=0.
   \]
   1 の非負性とあわせて $\Wass_p(\mu,\mu)=0$ である．
 
@@ -414,7 +587,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   よって $x=y$ が $\pi^*$-a.e. で成り立ち，$\pi^*(\Delta)=1$ である．
   任意の $A\in\Borel(\mathcal{X})$ に対し，
   $A\times(\mathcal{X}\setminus A)$ と $(\mathcal{X}\setminus A)\times A$ は
-  $\Delta$ と交わらないので，
+  $\Delta$ と交わらないので，周辺分布の条件と有限加法性より
   \[
     \begin{aligned}
       \mu(A)&=\pi^*(A\times\mathcal{X})
@@ -430,14 +603,32 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   \textbf{3. 対称性．}
   $S(x,y):=(y,x)$ とし，$\pi\in\Couplings(\mu,\nu)$ に対し
   $\pi^\top:=\pi\circ S^{-1}$ と定める．
-  $\pi^\top(A\times B)=\pi(B\times A)$ より $\pi^\top\in\Couplings(\nu,\mu)$ である．
-  $d$ の対称性と変数変換公式（補題~\ref{lem:meas-change-of-variables}）より
+  $\pi^\top(A\times B)=\pi(B\times A)$ より
   \[
-    \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)
-    =\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi^\top(x,y)
+    \pi^\top(A\times\mathcal{X})=\pi(\mathcal{X}\times A)=\nu(A),\qquad
+    \pi^\top(\mathcal{X}\times B)=\pi(B\times\mathcal{X})=\mu(B)
   \]
-  であるから，$\pi$ について下限を取れば $\Wass_p(\nu,\mu)\leq\Wass_p(\mu,\nu)$ を得る．
-  $\mu,\nu$ を入れ替えれば逆向きの不等式も従い，$\Wass_p(\mu,\nu)=\Wass_p(\nu,\mu)$ である．
+  なので $\pi^\top\in\Couplings(\nu,\mu)$ である．
+  $(\pi^\top)^\top=\pi$ より，$\pi\mapsto\pi^\top$ は
+  $\Couplings(\mu,\nu)$ から $\Couplings(\nu,\mu)$ への全単射である．
+  変数変換公式（補題~\ref{lem:meas-change-of-variables}）と $d$ の対称性より
+  \[
+    \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi^\top(x,y)
+    =\int_{\mathcal{X}\times\mathcal{X}}d(y,x)^p\,\d\pi(x,y)
+    =\int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi(x,y)
+  \]
+  であるから，
+  \[
+    \begin{aligned}
+      \Wass_p(\mu,\nu)^p
+      &=\inf_{\pi\in\Couplings(\mu,\nu)}
+        \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi^\top(x,y)\\
+      &=\inf_{\pi'\in\Couplings(\nu,\mu)}
+        \int_{\mathcal{X}\times\mathcal{X}}d(x,y)^p\,\d\pi'(x,y)
+      =\Wass_p(\nu,\mu)^p.
+    \end{aligned}
+  \]
+  よって $\Wass_p(\mu,\nu)=\Wass_p(\nu,\mu)$ である．
 
   \textbf{4. 三角不等式．}
   $\xi\in\Pp{p}(\mathcal{X})$ を取り，
