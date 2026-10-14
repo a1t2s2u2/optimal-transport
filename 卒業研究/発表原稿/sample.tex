@@ -104,371 +104,1097 @@
 \def\ddashint{\Xint=}
 \def\dashint{\Xint-}
 
+%% 最適輸送の記法（Villani 準拠）
+\newcommand{\X}{\mathcal{X}}
+\newcommand{\Y}{\mathcal{Y}}
+\newcommand{\Borel}{\mathcal{B}}
+\newcommand{\Prob}{\mathcal{P}}
+\newcommand{\Pp}[1]{\mathcal{P}_{#1}}
+\newcommand{\Couplings}{\Pi}
+\newcommand{\Wass}{W}
+\newcommand{\weakto}{\rightharpoonup} %確率測度の弱収束
+\newcommand{\abs}[1]{\lvert #1\rvert}
+\newcommand{\inner}[2]{\langle #1,#2\rangle}
+\renewcommand{\d}{\mathrm{d}} %積分の d
+
 \allowdisplaybreaks
 
 \begin{document}
 
 %======================================
 \title{ %表紙
-\huge 卒業研究の題目 \\[5cm]
+\huge Wasserstein 距離の距離性 \\[5cm] % 仮題
 }
 \author{228s1341　江嶋 宏優 \\
 \qquad\qquad\quad Ejima Atsuhiro\\[1cm]
 （指導教員: 勝呂 剛志 准教授） \\[1cm]
 熊本大学理学部理学科数学コース \\
 卒業研究報告書}
-\date{\Large 2027 年 2 月} %年・月を入れる. 
+\date{\Large 2027 年 2 月} %年・月を入れる.
 \maketitle %表紙を作成
-\thispagestyle{empty} 
+\thispagestyle{empty}
 \clearpage
 \tableofcontents %目次
 \thispagestyle{empty}
 \newpage
 \setcounter{page}{1}
-\renewcommand{\thepage}{\arabic{page}} 
+\renewcommand{\thepage}{\arabic{page}}
 %======================================
 
 
-\chapter{序文}%ここに序文を書く. 
+%======================================
+\chapter{序文}
+%======================================
 
-本稿では, 次の対数型Sobolevの不等式を考える: 
+\section{最適輸送問題}
 
-\begin{thm}[対数型Sobolevの不等式] \label{thm:dareka}
-任意の$f \in H^1(\R^n)$に対して, 
-\eqn{
-   \int_{\R^n} |f(x)|^2 \log\frac{|f(x)|^2}{\|f\|_{L^2}^2}\, dx
-   \leq \frac{n}{2} \|f\|_{L^2}^2 \log\left(\frac{2}{n \pi e \|f\|_{L^2}^2} \int_{\R^n} |\nab f(x)|^2\, dx\right) 
- }
-\begin{enumerate}
-\item これこれ. 
-\item しかじか. 
-\end{enumerate}
-\end{thm}
+二つの確率分布 $\mu,\nu$ が与えられたとき，
+$\mu$ を $\nu$ へ移す方法のうち輸送コストが最小のものを求める問題を
+\textbf{最適輸送問題}という．
+Monge は各点 $x$ の行き先を写像 $T$ で一つに定める定式化を考えた．
+しかしこの定式化では一点の質量を分割できず，
+例えば $\mu$ が 1 点の Dirac 測度で $\nu$ が 2 点に等分された測度のとき，
+$\mu$ を $\nu$ へ移す写像は存在しない．
+Kantorovich は質量の分割を許し，
+「$x$ から $y$ へどれだけ運ぶか」を表す直積空間上の確率測度
+（coupling）の上で最小化する問題に緩和した（定義~\ref{dfn:kantorovich}）．
 
+コストを距離の $p$ 乗 $d(x,y)^p$ にとると，最小輸送コストの $p$ 乗根は
+確率測度の間の距離を与える．これが \textbf{Wasserstein 距離} $\Wass_p$ である
+（定義~\ref{dfn:wasserstein}）．
 
-以下で, $1 \leq p < \infty$に対して, $L^p$-空間を次で定める:
-\begin{equation}\label{dfn;Lp}
-  L^p(\Om)
-  \equiv \left\{f: \Om \to \R;f: \text{可測},\quad \|f\|_{L^p} \equiv \left(\int_{\R^n} |f(x)|^p\, dx\right)^\frac{1}{p} < + \infty\right\}.
-\end{equation}
-%定義\eqref{dfn;Lp}より, $\|\cdot\|_{L^p}$はノルムなので, $L^p$はノルム空間である. 
-$H^1$はSobolev空間とする. 
+\section{本稿の目標と構成}
 
+本稿の主目標は，Polish 空間 $\X$ と $1\leq p<\infty$ に対して
+$\Wass_p$ が $\Pp{p}(\X)$ 上の距離であること（定理~\ref{thm:wp-metric}）を
+示すことである．距離の公理のうち，一致の公理には最適 coupling の存在が，
+三角不等式には二つの coupling を貼り合わせる接着補題が必要となる．
+定義・記法・証明は主として Villani~\cite{Villani} に従う．
 
-\begin{rem}
-定数$2/(n \pi e)$は最良定数である.
-最良定数はGauss函数によって達成されることが知られている. 
-詳しくは, Carlen (1995)を参照せよ. 
-\end{rem}
+\begin{itemize}
+  \item 第\ref{ch:prelim}章：距離空間と測度論の準備をまとめる．
+  \item 第\ref{ch:kantorovich}章：Kantorovich 問題を定義し，最適 coupling の存在を示す．
+    離散測度の場合には行列の最適化に帰着して存在が直ちに従い，
+    一般の Polish 空間では弱収束と Prokhorov の定理を用いる．
+  \item 第\ref{ch:metric}章：$\Wass_p$ を定義し，測度分解定理と接着補題を経て主定理を証明する．
+\end{itemize}
 
+\section{記法と前提}
 
-通常の$H^1$上では次のSobolevの不等式が成り立つことが知られている:
-
-
-\begin{thm}
-任意の$f \in H^1(\R^n)$に対して, 
-\eqn{
-  \|f\|_{L^\frac{2 n}{n - 2}}
-  \leq C \|\nab f\|_{L^2}
-}
-が成り立つ. 
-\end{thm}
-
-
-Jensenの不等式より, 
-\eqn{
-  \int_{\R^n} |f(x)|^2 \log\frac{|f(x)|^2}{\|f\|_{L^2}^2}\, dx
-  \leq C \|f\|_{L^\frac{2 n}{n - 2}}
-}
-が成り立つので, Sobolevの不等式から対数型Sobolevの不等式が導かれることがわかる. 
-
-
-\begin{rem}
-Sobolevの不等式の最良定数はTalenti, Liebによって同定されている. 
-実は, Liebの証明においては, Hardy--Littlewood--Sobolevの不等式の最良定数の導出が鍵となる. 
-
-\end{rem}
-
-
-ガンマ函数は次で定まる:
-\eqn{
-  \Gm(x) = \int_0^\infty t^{x - 1} e^{- t}\, dt.
-}
-\eqn{
-  \left|\Sp^{n - 1}\right|
-  = \frac{2 \pi^\frac{n}{2}}{\Gm\left(\frac{n}{2}\right)}.
-}
-
-
-
-
-\begin{rem}
-HLS不等式の最良定数は知られており, 
-\end{rem}
-
-定理\ref{thm:dareka}より以下が従う. 
-
-\begin{cor}
-系はこのように書く. 
-\end{cor}
-
-\begin{proof}
-証明はこのように書く.（普通は序文では使わない. ）
-\end{proof}
+$\X$ 上の Borel 確率測度全体を $\Prob(\X)$ と書く．
+写像 $T$ による測度 $\mu$ の像測度は，文献でよく用いられる $T_\#\mu$ ではなく
+$\mu\circ T^{-1}$ と書く（定義~\ref{dfn:pushforward}）．
+証明なしに用いる標準的な定理は，主張を明示したうえで文献を挙げる．
 
 \section*{謝辞}
-ここに謝辞を書く. 
+ここに謝辞を書く．
 
-\chapter{準備, Lebesgue空間}
 
-ここに2章の内容を書く. 
+%======================================
+\chapter{準備}
+\label{ch:prelim}
+%======================================
 
-\section{??}
+距離空間の位相（開集合・閉集合・連続性・compact 性）と，
+$\sigma$-代数・測度・Lebesgue 積分の基本事項は既知とする．
 
-\begin{prop}
-命題はこのように書く. 
-\end{prop}
-\begin{proof}
-証明はこのように書く. 証明終わりの目印などは
-変更しても良いが全体で統一すること. 
-\end{proof}
-\begin{lem}
-補題はこのように書く. 
-\end{lem}
-\begin{ex}
-例はこのように書く. 
-\end{ex}
-\begin{dfn}
-定義はこのように. 
+\section{距離空間と Polish 空間}
+
+\begin{dfn}[距離空間]\label{dfn:metric}
+  集合 $M$ 上の関数 $d\colon M\times M\to[0,\infty)$ が，
+  任意の $x,y,z\in M$ に対して
+  \begin{enumerate}
+    \item （一致の公理）$d(x,y)=0\iff x=y$，
+    \item （対称性）$d(x,y)=d(y,x)$，
+    \item （三角不等式）$d(x,z)\leq d(x,y)+d(y,z)$
+  \end{enumerate}
+  をみたすとき，$d$ を $M$ 上の\textbf{距離}，$(M,d)$ を\textbf{距離空間}という．
 \end{dfn}
 
-\begin{rem}
-注意や例, 定義も, 定理や補題などと同じ各章で通し番号となっている. 
-各自で例えば全体で通し番号となるように変更しても良い. 
+\begin{dfn}[Polish 空間]\label{dfn:polish}
+  距離空間 $(\X,d)$ が可算な稠密部分集合をもつとき\textbf{可分}，
+  すべての Cauchy 列が収束するとき\textbf{完備}という．
+  完備かつ可分な距離空間を \textbf{Polish 空間}という．
+\end{dfn}
+
+\begin{rem}[直積空間]\label{rem:product-space}
+  距離空間 $(\X,d_\X)$，$(\Y,d_\Y)$ の直積には距離
+  \[
+    d_{\X\times\Y}((x,y),(x',y')):=\max\{d_\X(x,x'),d_\Y(y,y')\}
+  \]
+  を入れる．$\X,\Y$ が Polish 空間なら $\X\times\Y$ も Polish 空間であり，
+  Borel $\sigma$-代数 $\Borel(\X\times\Y)$ は矩形集合 $A\times B$
+  （$A\in\Borel(\X)$，$B\in\Borel(\Y)$）全体から生成される．
+  矩形集合の全体は共通部分について閉じている．
+  有限個の直積についても同様である（\cite{Dudley}）．
+  また三角不等式から
+  \[
+    \abs{d(x,y)-d(x',y')}\leq d(x,x')+d(y,y')
+  \]
+  が従うので，距離 $d\colon\X\times\X\to[0,\infty)$ は連続，特に Borel 可測である．
+\end{rem}
+
+\section{測度と積分}
+
+距離空間 $\X$ の開集合全体が生成する $\sigma$-代数を $\Borel(\X)$ と書き，
+その上の確率測度全体を $\Prob(\X)$ と書く．
+$x\in\X$ に対し $\delta_x(A):=\mathbf{1}_A(x)$ を \textbf{Dirac 測度}という．
+ここで $\mathbf{1}_A$ は集合 $A$ の指示関数である．
+性質 $P$ の成り立たない点全体が測度 $0$ の可測集合であるとき，
+$P$ は \textbf{$\mu$-a.e.} に成り立つという．
+
+\begin{thm}[収束定理]\label{thm:convergence}
+  $(\Omega,\mathcal{A},\mu)$ を測度空間とする．
+  \begin{enumerate}
+    \item （単調収束定理）非負可測関数の列が $f_n\uparrow f$（各点で単調増加に収束）ならば
+      \[
+        \int_\Omega f_n\,\d\mu\longrightarrow\int_\Omega f\,\d\mu.
+      \]
+    \item （有界収束定理）$\mu$ が有限測度で，可測関数の列 $(f_n)$ が各点収束し，
+      ある定数 $M$ で $\abs{f_n}\leq M$ ならば
+      \[
+        \int_\Omega f_n\,\d\mu\longrightarrow\int_\Omega\lim_{n\to\infty}f_n\,\d\mu.
+      \]
+  \end{enumerate}
+\end{thm}
+
+\begin{thm}[Dynkin の $\pi$-$\lambda$ 定理と一致定理]\label{thm:dynkin}
+  集合 $\Omega$ の部分集合族 $\mathcal{C}$ が共通部分について閉じているとき
+  \textbf{$\pi$-系}といい，
+  $\Omega$ を含み，補集合と互いに素な可算合併について閉じている族を
+  \textbf{$\lambda$-系}という．
+  \begin{enumerate}
+    \item $\pi$-系 $\mathcal{C}$ が $\lambda$-系 $\mathcal{D}$ に含まれるならば，
+      $\mathcal{C}$ の生成する $\sigma$-代数 $\sigma(\mathcal{C})$ も $\mathcal{D}$ に含まれる．
+    \item $\sigma(\mathcal{C})$ 上の二つの有限測度が $\Omega$ と
+      $\mathcal{C}$ の各元の上で一致すれば，$\sigma(\mathcal{C})$ 上で一致する．
+  \end{enumerate}
+  （証明は \cite{Dudley} を参照．）
+\end{thm}
+
+\begin{thm}[Minkowski の不等式]\label{thm:minkowski}
+  $1\leq p<\infty$ とし，可測関数 $f,g$ は
+  $\int_\Omega\abs{f}^p\,\d\mu<\infty$，$\int_\Omega\abs{g}^p\,\d\mu<\infty$ をみたすとする．このとき
+  \[
+    \left(\int_\Omega\abs{f+g}^p\,\d\mu\right)^{1/p}
+    \leq
+    \left(\int_\Omega\abs{f}^p\,\d\mu\right)^{1/p}
+    +\left(\int_\Omega\abs{g}^p\,\d\mu\right)^{1/p}.
+  \]
+\end{thm}
+
+\begin{dfn}[像測度]\label{dfn:pushforward}
+  可測写像 $T\colon\Omega\to\Omega'$ と $\Omega$ 上の測度 $\mu$ に対し，
+  \[
+    (\mu\circ T^{-1})(B):=\mu(T^{-1}(B))
+  \]
+  で定まる $\Omega'$ 上の測度を $T$ による $\mu$ の\textbf{像測度}という．
+  逆像は互いに素な合併を互いに素な合併に写すので，$\mu\circ T^{-1}$ は測度であり，
+  $\mu$ が確率測度なら $\mu\circ T^{-1}$ も確率測度である．
+\end{dfn}
+
+\begin{lem}[変数変換公式]\label{lem:change-of-variables}
+  定義~\ref{dfn:pushforward}の設定で，非負可測関数 $f$ に対し
+  \[
+    \int_{\Omega'}f\,\d(\mu\circ T^{-1})=\int_\Omega f\circ T\,\d\mu.
+  \]
+  $\mu$ が有限測度ならば，有界可測関数 $f$ についても同じ等式が成り立つ．
+\end{lem}
+
+\begin{proof}
+  $f=\mathbf{1}_B$ のときは $\mathbf{1}_B\circ T=\mathbf{1}_{T^{-1}(B)}$ より定義そのものである．
+  積分の線形性から非負単関数に拡張し，
+  非負単関数の単調増加列で近似して単調収束定理（定理~\ref{thm:convergence}）を用いればよい．
+  有界な $f$ は，定数 $M$ を加えた $f+M\geq0$ に適用して両辺から $M\mu(\Omega)$ を引けばよい．
+\end{proof}
+
+\begin{thm}[直積測度と Tonelli の定理]\label{thm:product}
+  $\X,\Y$ を可分距離空間，$\mu\in\Prob(\X)$，$\nu\in\Prob(\Y)$ とする．
+  \[
+    (\mu\otimes\nu)(A\times B)=\mu(A)\nu(B)
+    \qquad(A\in\Borel(\X),\ B\in\Borel(\Y))
+  \]
+  をみたす $\mu\otimes\nu\in\Prob(\X\times\Y)$ がただ一つ存在し，
+  非負可測関数 $f$ に対し
+  \[
+    \int_{\X\times\Y}f\,\d(\mu\otimes\nu)
+    =\int_\X\int_\Y f(x,y)\,\d\nu(y)\,\d\mu(x)
+  \]
+  が成り立つ．有限個の直積についても同様である（\cite{Dudley}*{\S4.4}）．
+\end{thm}
+
+\section{確率測度の弱収束と tightness}
+
+距離空間 $\X$ 上の有界連続関数全体を $C_b(\X)$ と書く．
+
+\begin{dfn}[弱収束]\label{dfn:weak}
+  $\eta_k,\eta\in\Prob(\X)$ について
+  \[
+    \int_\X f\,\d\eta_k\longrightarrow\int_\X f\,\d\eta
+    \qquad(\forall f\in C_b(\X))
+  \]
+  となるとき，
+  $(\eta_k)$ は $\eta$ に\textbf{弱収束}するといい，$\eta_k\weakto\eta$ と書く．
+\end{dfn}
+
+\begin{prop}[有界連続関数による確率測度の判定]\label{prop:cb-determines}
+  $\eta,\rho\in\Prob(\X)$ が
+  \[
+    \int_\X f\,\d\eta=\int_\X f\,\d\rho\qquad(\forall f\in C_b(\X))
+  \]
+  をみたせば，$\eta=\rho$ である．
+\end{prop}
+
+\begin{proof}
+  空でない閉集合 $F$ に対し
+  \[
+    d(x,F):=\inf_{a\in F}d(x,a),\qquad
+    f_k(x):=\max\{1-k\,d(x,F),0\}\quad(k\in\N)
+  \]
+  とおく．三角不等式より $x\mapsto d(x,F)$ は連続なので $f_k\in C_b(\X)$ であり，
+  $F$ が閉集合なので $d(x,F)=0\iff x\in F$ である．
+  よって $f_k$ は $\mathbf{1}_F$ に各点収束し，$0\leq f_k\leq1$ なので
+  \[
+    \begin{aligned}
+      \eta(F)&=\lim_{k\to\infty}\int_\X f_k\,\d\eta
+        &&\text{（有界収束定理，定理~\ref{thm:convergence}）}\\
+      &=\lim_{k\to\infty}\int_\X f_k\,\d\rho
+        &&\text{（仮定）}\\
+      &=\rho(F)
+        &&\text{（有界収束定理）}
+    \end{aligned}
+  \]
+  を得る．
+  閉集合全体は $\Borel(\X)$ を生成する $\pi$-系なので，
+  一致定理（定理~\ref{thm:dynkin}）より $\eta=\rho$ である．
+\end{proof}
+
+\begin{dfn}[tight]\label{dfn:tight}
+  $\mathcal{F}\subset\Prob(\X)$ が \textbf{tight} であるとは，
+  任意の $\varepsilon>0$ に対し compact 集合 $K\subset\X$ が存在して
+  \[
+    \eta(\X\setminus K)\leq\varepsilon\qquad(\forall\eta\in\mathcal{F})
+  \]
+  となることをいう．
+\end{dfn}
+
+\begin{thm}[Prokhorov の定理]\label{thm:prokhorov}
+  $\X$ を Polish 空間，$\mathcal{F}\subset\Prob(\X)$ とする．次は同値である．
+  \begin{enumerate}
+    \item $\mathcal{F}$ の任意の列は，ある $\eta\in\Prob(\X)$ に弱収束する部分列をもつ．
+    \item $\mathcal{F}$ は tight である．
+  \end{enumerate}
+  （証明は \cite{Billingsley}*{Theorems 5.1, 5.2} を参照．）
+\end{thm}
+
+\section{測度分解のための道具}
+
+可測空間 $(\Omega,\mathcal{A})$ 上の二つの有限測度の差を\textbf{有限符号付き測度}という．
+
+\begin{thm}[Radon--Nikodym の定理]\label{thm:radon-nikodym}
+  $\nu$ を $(\Omega,\mathcal{A})$ 上の有限測度，$\alpha$ を有限符号付き測度とし，
+  すべての $B\in\mathcal{A}$ について $\nu(B)=0\Rightarrow\alpha(B)=0$ が成り立つとする
+  （$\alpha$ は $\nu$ に\textbf{絶対連続}であるといい，$\alpha\ll\nu$ と書く）．
+  このとき $\nu$-可積分な可測関数 $h$ で
+  \[
+    \alpha(B)=\int_Bh\,\d\nu\qquad(B\in\mathcal{A})
+  \]
+  をみたすものが存在し，$\nu$-a.e. の意味で一意である．
+  $\alpha$ が測度なら $h\geq0$ に取れる．
+  $h$ を $\d\alpha/\d\nu$ と書く（\cite{Rudin}*{Theorem 6.10}）．
+\end{thm}
+
+一意性は次のように確かめられる．
+$h,k$ がともに条件をみたせば，$B:=\{h>k\}$ について $\int_B(h-k)\,\d\nu=0$ となり，
+被積分関数は $B$ 上で正なので $\nu(B)=0$ である．
+$h,k$ を入れ替えれば，$h=k$ が $\nu$-a.e. に成り立つ．
+
+\begin{rem}[compact 空間上の連続関数]\label{rem:compact-continuous}
+  空でない compact 距離空間 $K$ 上の実数値連続関数全体を $C(K)$ と書き，
+  $\lVert f\rVert_\infty:=\sup_{x\in K}\abs{f(x)}$ とおく．
+  $C(K)$ はこのノルムについて可分である（\cite{Dudley}）．
+  したがって，可算稠密集合と定数関数 $1$ の有理係数線形結合全体を取れば，
+  $1$ を含む可算な稠密 $\mathbb{Q}$-ベクトル部分空間が得られる．
+\end{rem}
+
+\begin{thm}[Riesz の表現定理]\label{thm:riesz}
+  $K$ を空でない compact 距離空間とする．線形写像 $L\colon C(K)\to\R$ が
+  $f\geq0\Rightarrow L(f)\geq0$ と $L(1)=1$ をみたすならば，
+  \[
+    L(f)=\int_Kf\,\d\rho\qquad(f\in C(K))
+  \]
+  となる $\rho\in\Prob(K)$ がただ一つ存在する（\cite{Rudin}*{Theorem 2.14}）．
+\end{thm}
+
+\begin{thm}[確率測度の族を平均した確率測度]\label{thm:kernel}
+  $\X,\Y,\mathcal{Z}$ を Polish 空間，$\nu\in\Prob(\Y)$ とし，
+  各 $y\in\Y$ に $\pi_y\in\Prob(\X)$，$\sigma_y\in\Prob(\mathcal{Z})$ が与えられていて，
+  任意の $A\in\Borel(\X)$，$C\in\Borel(\mathcal{Z})$ について
+  $y\mapsto\pi_y(A)$，$y\mapsto\sigma_y(C)$ は可測とする．
+  このとき $\gamma\in\Prob(\X\times\Y\times\mathcal{Z})$ で
+  \[
+    \gamma(A\times B\times C)=\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y)
+  \]
+  をすべての矩形集合でみたすものがただ一つ存在する．
+\end{thm}
+
+\begin{proof}
+  各 $y$ について直積確率測度 $\lambda_y:=\pi_y\otimes\delta_y\otimes\sigma_y$ を考える．
+  矩形集合 $D=A\times B\times C$ について
+  \[
+    \lambda_y(D)=\pi_y(A)\,\mathbf{1}_B(y)\,\sigma_y(C)
+  \]
+  は $y$ の可測関数である．
+  $y\mapsto\lambda_y(D)$ が可測となる Borel 集合 $D$ の全体は $\lambda$-系なので，
+  Dynkin の定理（定理~\ref{thm:dynkin}）と注意~\ref{rem:product-space}より
+  すべての Borel 集合 $D$ で可測となる．そこで
+  \[
+    \gamma(D):=\int_\Y\lambda_y(D)\,\d\nu(y)
+  \]
+  と定めれば，
+  単調収束定理から可算加法性が従い，$\gamma$ は求める確率測度である．
+  一意性は一致定理（定理~\ref{thm:dynkin}）による．
+\end{proof}
+
+
+%======================================
+\chapter{Kantorovich 問題と最適 coupling の存在}
+\label{ch:kantorovich}
+%======================================
+
+以下，$\X,\Y$ は Polish 空間とする．
+
+\section{coupling と Kantorovich 問題}
+
+\begin{dfn}[coupling（\cite{Villani}*{Definition 1.1}）]\label{dfn:coupling}
+  $\mu\in\Prob(\X)$，$\nu\in\Prob(\Y)$ に対し
+  \[
+    \Couplings(\mu,\nu)
+    :=
+    \left\{
+      \pi\in\Prob(\X\times\Y)
+      \;\middle|\;
+      \begin{aligned}
+        \pi(A\times\Y)&=\mu(A) &&(\forall A\in\Borel(\X)),\\
+        \pi(\X\times B)&=\nu(B) &&(\forall B\in\Borel(\Y))
+      \end{aligned}
+    \right\}
+  \]
+  と定め，その元を $\mu$ と $\nu$ の \textbf{coupling} という．
+  $\mu,\nu$ をそれぞれ $\pi$ の第1，第2\textbf{周辺分布}という．
+\end{dfn}
+
+直積測度 $\mu\otimes\nu$ は coupling なので（定理~\ref{thm:product}），
+$\Couplings(\mu,\nu)$ は空でない．
+
+\begin{rem}[周辺積分公式]\label{rem:marginal}
+  $\pi\in\Couplings(\mu,\nu)$ とし，$T(x,y):=x$ とおくと，
+  $T^{-1}(A)=A\times\Y$ より $\pi\circ T^{-1}=\mu$ である．
+  よって変数変換公式（補題~\ref{lem:change-of-variables}）から，
+  非負可測関数 $f$ に対し
+  \[
+    \int_{\X\times\Y}f(x)\,\d\pi(x,y)=\int_\X f\,\d\mu
+  \]
+  が成り立つ．有界可測関数 $f$ や第2周辺分布についても同様である．
+\end{rem}
+
+\begin{dfn}[Kantorovich 問題]\label{dfn:kantorovich}
+  Borel 可測関数 $c\colon\X\times\Y\to[0,\infty)$ をコストとし，
+  \[
+    \inf_{\pi\in\Couplings(\mu,\nu)}\int_{\X\times\Y}c(x,y)\,\d\pi(x,y)
+  \]
+  を求める問題を \textbf{Kantorovich 問題}という．
+  下限を達成する $\pi$ を\textbf{最適 coupling} という．
+\end{dfn}
+
+\section{離散測度の場合}
+
+$x_1,\dots,x_n\in\X$ を相異なる点，$\mathbf{a}=(a_i)\in\R^n$ を
+$a_i>0$，$\sum_ia_i=1$ をみたすベクトルとする．
+同様に相異なる点 $y_1,\dots,y_m\in\Y$ とベクトル $\mathbf{b}=(b_j)\in\R^m$ を取り，
+\[
+  \mu:=\sum_{i=1}^na_i\delta_{x_i},\qquad
+  \nu:=\sum_{j=1}^mb_j\delta_{y_j}
+\]
+とおく．コスト行列を $\mathbf{C}:=(c(x_i,y_j))_{i,j}$ とし，
+$n\times m$ 行列 $\mathbf{P},\mathbf{Q}$ に対し
+\[
+  \inner{\mathbf{P}}{\mathbf{Q}}:=\sum_{i,j}P_{i,j}Q_{i,j}
+\]
+と書く．
+
+\begin{prop}[離散 Kantorovich 問題（\cite{PeyreCuturi}*{Chapter 2}）]\label{prop:discrete}
+  \[
+    U(\mathbf{a},\mathbf{b})
+    :=
+    \left\{
+      \mathbf{P}\in[0,\infty)^{n\times m}
+      \;\middle|\;
+      \sum_{j=1}^mP_{i,j}=a_i\ (\forall i),\quad
+      \sum_{i=1}^nP_{i,j}=b_j\ (\forall j)
+    \right\}
+  \]
+  とおく．このとき
+  \[
+    \mathbf{P}\longmapsto\pi_{\mathbf{P}}:=\sum_{i,j}P_{i,j}\delta_{(x_i,y_j)}
+  \]
+  は $U(\mathbf{a},\mathbf{b})$ から $\Couplings(\mu,\nu)$ への全単射であり，
+  \[
+    \int_{\X\times\Y}c\,\d\pi_{\mathbf{P}}=\inner{\mathbf{C}}{\mathbf{P}}
+  \]
+  が成り立つ．特に Kantorovich 問題の下限は
+  \[
+    L_{\mathbf{C}}(\mathbf{a},\mathbf{b})
+    :=\min_{\mathbf{P}\in U(\mathbf{a},\mathbf{b})}\inner{\mathbf{C}}{\mathbf{P}}
+  \]
+  に等しく，最適 coupling が存在する．
+\end{prop}
+
+\begin{proof}
+  $A\in\Borel(\X)$ に対し
+  \[
+    \begin{aligned}
+      \pi_{\mathbf{P}}(A\times\Y)
+      &=\sum_{i:\,x_i\in A}\sum_{j=1}^mP_{i,j}
+        &&\text{（$\pi_{\mathbf{P}}$ の定義）}\\
+      &=\sum_{i:\,x_i\in A}a_i
+        &&\text{（行和の条件）}\\
+      &=\mu(A)
+        &&\text{（$\mu$ の定義）}
+    \end{aligned}
+  \]
+  であり，第2周辺分布も同様なので $\pi_{\mathbf{P}}\in\Couplings(\mu,\nu)$ である．
+  点 $(x_i,y_j)$ は相異なるので $P_{i,j}=\pi_{\mathbf{P}}(\{(x_i,y_j)\})$ となり，単射である．
+
+  全射性を示す．$\pi\in\Couplings(\mu,\nu)$ とし，
+  $S:=\{x_1,\dots,x_n\}$，$T:=\{y_1,\dots,y_m\}$ とおく．
+  \[
+    \pi((\X\setminus S)\times\Y)=\mu(\X\setminus S)=0,\qquad
+    \pi(\X\times(\Y\setminus T))=\nu(\Y\setminus T)=0
+  \]
+  より，$\pi$ は $S\times T$ の外で $0$ である．
+  よって $P_{i,j}:=\pi(\{(x_i,y_j)\})$ とおけば，任意の Borel 集合 $E$ について
+  \[
+    \pi(E)=\pi(E\cap(S\times T))=\pi_{\mathbf{P}}(E)
+  \]
+  である．さらに
+  \[
+    \sum_{j=1}^mP_{i,j}=\pi(\{x_i\}\times\Y)=a_i,\qquad
+    \sum_{i=1}^nP_{i,j}=\pi(\X\times\{y_j\})=b_j
+  \]
+  より $\mathbf{P}\in U(\mathbf{a},\mathbf{b})$ である．
+
+  $\int c\,\d\delta_{(x_i,y_j)}=c(x_i,y_j)$ からコストの等式が従う．
+  最後に，$U(\mathbf{a},\mathbf{b})$ は $(a_ib_j)_{i,j}$ を含み，
+  成分が $[0,1]$ に入る閉集合なので $\R^{n\times m}$ の空でない compact 集合である．
+  連続関数 $\mathbf{P}\mapsto\inner{\mathbf{C}}{\mathbf{P}}$ はその上で最小値をとる．
+\end{proof}
+
+離散の場合は coupling 全体が有限次元の compact 集合と同一視できるので，
+最適 coupling の存在は直ちに従う．
+一般の Polish 空間ではこの議論が使えないため，
+次節では弱収束と Prokhorov の定理を用いる．
+
+\section{最適 coupling の存在}
+
+一般の Polish 空間では coupling 全体を有限次元の集合と同一視できないので，
+コストが下限に近づく coupling の列を取り，その弱収束極限が下限を達成することを示す．
+そのために，部分列を取り出すための tightness（補題~\ref{lem:plans-tight}）と，
+極限でコストが増えないことを保証する下半連続性（補題~\ref{lem:cost-lsc}）を準備する．
+以下，コスト $c\colon\X\times\Y\to[0,\infty)$ は連続とし，
+$\int_{\X\times\Y}c(x,y)\,\d\pi(x,y)$ を $\int c\,\d\pi$ と略記する．
+
+\begin{lem}[輸送コストの下半連続性（\cite{Villani}*{Lemma 4.3}）]\label{lem:cost-lsc}
+  $\pi_k,\pi\in\Prob(\X\times\Y)$ が $\pi_k\weakto\pi$ をみたすならば
+  \[
+    \int c\,\d\pi\leq\liminf_{k\to\infty}\int c\,\d\pi_k.
+  \]
+\end{lem}
+
+\begin{proof}
+  $m\in\N$ に対し
+  \[
+    c_m(x,y):=\min\{c(x,y),m\}
+  \]
+  とおくと，$c$ の連続性より $c_m$ は有界連続である．よって
+  \[
+    \begin{aligned}
+      \int c_m\,\d\pi&=\lim_{k\to\infty}\int c_m\,\d\pi_k
+        &&\text{（弱収束の定義）}\\
+      &\leq\liminf_{k\to\infty}\int c\,\d\pi_k
+        &&\text{（$c_m\leq c$）}.
+    \end{aligned}
+  \]
+  $c_m\uparrow c$（$m\to\infty$）であり，右辺は $m$ によらないので
+  \[
+    \begin{aligned}
+      \int c\,\d\pi&=\lim_{m\to\infty}\int c_m\,\d\pi
+        &&\text{（単調収束定理，定理~\ref{thm:convergence}）}\\
+      &\leq\liminf_{k\to\infty}\int c\,\d\pi_k
+        &&\text{（上の不等式）}.
+    \end{aligned}
+    \qedhere
+  \]
+\end{proof}
+
+\begin{lem}[輸送計画の tightness（\cite{Villani}*{Lemma 4.4}）]\label{lem:plans-tight}
+  $A\subset\Prob(\X)$，$B\subset\Prob(\Y)$ が tight ならば，
+  \[
+    \Couplings(A,B):=\bigcup_{\mu\in A,\,\nu\in B}\Couplings(\mu,\nu)
+  \]
+  も tight である．
+\end{lem}
+
+\begin{proof}
+  $\varepsilon>0$ に対し，compact 集合 $K\subset\X$，$L\subset\Y$ を
+  \[
+    \eta(\X\setminus K)\leq\frac{\varepsilon}{2}\quad(\forall\eta\in A),\qquad
+    \rho(\Y\setminus L)\leq\frac{\varepsilon}{2}\quad(\forall\rho\in B)
+  \]
+  となるように取る．
+  $\pi\in\Couplings(\eta,\rho)$（$\eta\in A$，$\rho\in B$）とすると，
+  $K\times L$ の外の点は $x\notin K$ または $y\notin L$ をみたすので
+  \[
+    \begin{aligned}
+      \pi((\X\times\Y)\setminus(K\times L))
+      &\leq\pi((\X\setminus K)\times\Y)+\pi(\X\times(\Y\setminus L))
+        &&\text{（劣加法性）}\\
+      &=\eta(\X\setminus K)+\rho(\Y\setminus L)
+        &&\text{（周辺分布の条件）}\\
+      &\leq\varepsilon
+        &&\text{（$K,L$ の選び方）}.
+    \end{aligned}
+  \]
+  $K\times L$ は compact なので，$\Couplings(A,B)$ は tight である．
+\end{proof}
+
+\begin{thm}[最適 coupling の存在（\cite{Villani}*{Theorem 4.1}）]\label{thm:existence}
+  $\mu\in\Prob(\X)$，$\nu\in\Prob(\Y)$ とする．
+  ある $\pi^*\in\Couplings(\mu,\nu)$ が存在して
+  \[
+    \int c\,\d\pi^*=\inf_{\pi\in\Couplings(\mu,\nu)}\int c\,\d\pi
+  \]
+  が成り立つ．
+\end{thm}
+
+\begin{proof}
+  右辺を $I$ とおく．$I=\infty$ ならば任意の coupling が下限を達成するので，$I<\infty$ とする．
+
+  \textbf{1. 最小化列．}
+  下限の定義より，各 $k\in\N$ に対して
+  \[
+    \pi_k\in\Couplings(\mu,\nu),\qquad\int c\,\d\pi_k<I+\frac1k
+  \]
+  となる $\pi_k$ が取れる．
+
+  \textbf{2. 部分列の抽出．}
+  一点集合 $\{\mu\}$ の列は定数列なので $\mu$ に弱収束し，
+  Prokhorov の定理（定理~\ref{thm:prokhorov}）より $\{\mu\}$ は tight である．
+  $\{\nu\}$ も同様であり，補題~\ref{lem:plans-tight}より
+  $\Couplings(\mu,\nu)$ は tight である．
+  $\X\times\Y$ は Polish 空間なので（注意~\ref{rem:product-space}），
+  再び Prokhorov の定理により，ある部分列と $\pi^*\in\Prob(\X\times\Y)$ に対して
+  \[
+    \pi_{k_j}\weakto\pi^*
+  \]
+  となる．
+
+  \textbf{3. 極限も coupling である．}
+  $\varphi\in C_b(\X)$ に対し $(x,y)\mapsto\varphi(x)$ も有界連続なので，
+  \[
+    \begin{aligned}
+      \int\varphi(x)\,\d\pi^*(x,y)
+      &=\lim_{j\to\infty}\int\varphi(x)\,\d\pi_{k_j}(x,y)
+        &&\text{（弱収束の定義）}\\
+      &=\int_\X\varphi\,\d\mu
+        &&\text{（周辺積分公式，注意~\ref{rem:marginal}）}.
+    \end{aligned}
+  \]
+  左辺は $\pi^*$ の第1周辺分布による $\varphi$ の積分なので，
+  命題~\ref{prop:cb-determines}よりその周辺分布は $\mu$ である．
+  第2周辺分布も同様に $\nu$ であり，$\pi^*\in\Couplings(\mu,\nu)$ である．
+
+  \textbf{4. 下限の達成．}
+  \[
+    \begin{aligned}
+      I&\leq\int c\,\d\pi^*
+        &&\text{（$\pi^*\in\Couplings(\mu,\nu)$ と下限の定義）}\\
+      &\leq\liminf_{j\to\infty}\int c\,\d\pi_{k_j}
+        &&\text{（補題~\ref{lem:cost-lsc}）}\\
+      &=I
+        &&\text{（手順 1）}.
+    \end{aligned}
+    \qedhere
+  \]
+\end{proof}
+
+
+%======================================
+\chapter{Wasserstein 距離とその距離性}
+\label{ch:metric}
+%======================================
+
+以下，$\X$ を Polish 空間とし，その距離を $d$ と書く．
+本章では $\Wass_p$ を定義し，それが距離であることを示す．
+一致の公理には最適 coupling の存在（定理~\ref{thm:existence}）を用いる．
+三角不等式の鍵は，共通の周辺分布をもつ二つの coupling を
+一つの三変数の確率測度にまとめる接着補題である．
+その準備として，二変数の分布を共通の変数ごとの分布に分ける測度分解定理を示す．
+証明は北別府~\cite{Kitabeppu}*{Theorem 5.3.1} に沿う．
+
+\section{Wasserstein 距離の定義}
+
+\begin{dfn}[有限 $p$ 次モーメント（\cite{Villani}*{Definition 6.4}）]\label{dfn:pp}
+  $1\leq p<\infty$ と $x_0\in\X$ に対し
+  \[
+    \Pp{p}(\X)
+    :=
+    \left\{
+      \mu\in\Prob(\X)
+      \;\middle|\;
+      \int_\X d(x,x_0)^p\,\d\mu(x)<\infty
+    \right\}
+  \]
+  と定める．
+\end{dfn}
+
+\begin{lem}\label{lem:pp-indep}
+  $\Pp{p}(\X)$ は $x_0$ の選び方によらない．
+\end{lem}
+
+\begin{proof}
+  $x_0'\in\X$ とする．$t\mapsto t^p$ の凸性から
+  \[
+    (s+t)^p\leq2^{p-1}(s^p+t^p)\qquad(s,t\geq0)
+  \]
+  が従うので，三角不等式とあわせて
+  \[
+    \int_\X d(x,x_0')^p\,\d\mu(x)
+    \leq2^{p-1}\left(\int_\X d(x,x_0)^p\,\d\mu(x)+d(x_0,x_0')^p\right).
+  \]
+  よって左辺は右辺の積分が有限なら有限である．$x_0,x_0'$ を入れ替えれば逆も従う．
+\end{proof}
+
+\begin{dfn}[Wasserstein 距離（\cite{Villani}*{Definition 6.1}）]\label{dfn:wasserstein}
+  $1\leq p<\infty$ と $\mu,\nu\in\Pp{p}(\X)$ に対し
+  \[
+    \Wass_p(\mu,\nu)
+    :=
+    \inf_{\pi\in\Couplings(\mu,\nu)}
+    \left(\int_{\X\times\X}d(x,y)^p\,\d\pi(x,y)\right)^{1/p}
+  \]
+  と定める．すなわち $\Wass_p(\mu,\nu)^p$ はコスト $d^p$ の Kantorovich 問題の下限である．
+\end{dfn}
+
+\begin{lem}[$\Wass_p$ の有限性]\label{lem:wp-finite}
+  $\mu,\nu\in\Pp{p}(\X)$ ならば $\Wass_p(\mu,\nu)<\infty$ である．
+\end{lem}
+
+\begin{proof}
+  補題~\ref{lem:pp-indep}の証明と同様に
+  \[
+    d(x,y)^p\leq2^{p-1}\bigl(d(x,x_0)^p+d(x_0,y)^p\bigr)
+  \]
+  である．
+  $\mu\otimes\nu\in\Couplings(\mu,\nu)$ について
+  \[
+    \begin{aligned}
+      &\int_{\X\times\X}d(x,y)^p\,\d(\mu\otimes\nu)\\
+      &\quad\leq2^{p-1}\int_{\X\times\X}\bigl(d(x,x_0)^p+d(x_0,y)^p\bigr)\,\d(\mu\otimes\nu)
+        &&\text{（上の不等式）}\\
+      &\quad=2^{p-1}\left(\int_\X d(x,x_0)^p\,\d\mu+\int_\X d(x_0,y)^p\,\d\nu\right)
+        &&\text{（注意~\ref{rem:marginal}）}\\
+      &\quad<\infty
+        &&\text{（$\mu,\nu\in\Pp{p}(\X)$）}
+    \end{aligned}
+  \]
+  である．$\Wass_p(\mu,\nu)^p$ はこの値以下なので有限である．
+\end{proof}
+
+\begin{rem}[$\Wass_p$ の最適 coupling]\label{rem:wp-optimal}
+  $d^p$ は $\X\times\X$ 上の連続な非負関数なので（注意~\ref{rem:product-space}），
+  定理~\ref{thm:existence}より
+  \[
+    \Wass_p(\mu,\nu)^p=\int_{\X\times\X}d(x,y)^p\,\d\pi^*(x,y)
+  \]
+  をみたす $\pi^*\in\Couplings(\mu,\nu)$ が存在する．
+  これを $\Wass_p$ の\textbf{最適 coupling} という．
 \end{rem}
 
 
-\begin{align*}
-f(x)
-&= g(x) \\
-&= g(x) \\
-&= g(x) \\
-&= g(x) \\&= g(x) \\
-&= g(x) \\&= g(x) \\
-&= g(x) \\&= g(x) \\
-&= g(x) \\&= g(x) \\
-&= g(x) \\&= g(x) \\
-&= g(x) \\&= g(x) \\
-&= g(x) \\
-\end{align*}
+\section{測度分解定理}
 
-\section{??}
+\begin{thm}[測度分解定理]\label{thm:disintegration}
+  $\pi\in\Prob(\X\times\Y)$ とし，$\nu(B):=\pi(\X\times B)$ とおく．
+  このとき確率測度の族 $(\pi_y)_{y\in\Y}\subset\Prob(\X)$ で，
+  任意の $A\in\Borel(\X)$，$B\in\Borel(\Y)$ に対し次をみたすものが存在する．
+  \begin{enumerate}
+    \item $y\mapsto\pi_y(A)$ は Borel 可測である．
+    \item $\displaystyle\pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y)$．
+  \end{enumerate}
+\end{thm}
 
-文献の引用は \cite{Gmv:green}, \cite{APS} のように書く. 
-%同一の著者による一連の文献をを引用する時は \cites{Satake, SatakeN} のように書いても良い. 
+\begin{proof}
+  $x_0\in\X$ を一つ固定する．
 
-\chapter{主定理の証明}
+  \textbf{1. $\X$ が compact の場合：積分の候補．}
+  この段と次の段では，$\pi$ は零でない有限測度でもよい．
+  $1$ を含む可算な稠密 $\mathbb{Q}$-ベクトル部分空間 $\mathcal{C}\subset C(\X)$ を取る
+  （注意~\ref{rem:compact-continuous}）．
+  $f\in\mathcal{C}$ に対し
+  \[
+    \nu_f(B):=\int_{\X\times B}f(x)\,\d\pi(x,y)\qquad(B\in\Borel(\Y))
+  \]
+  とおくと，$\nu_f$ は有限符号付き測度であり，
+  $\abs{\nu_f(B)}\leq\lVert f\rVert_\infty\nu(B)$ より $\nu_f\ll\nu$ である．
+  Radon--Nikodym の定理（定理~\ref{thm:radon-nikodym}）から
+  密度 $l_f:=\d\nu_f/\d\nu$ を取り，$f\geq0$ のときは $l_f\geq0$ に選ぶ．
+  密度の一意性より，可算個の条件
+  \[
+    l_{af+bg}=al_f+bl_g,\qquad l_1=1,\qquad f\geq0\Rightarrow l_f\geq0
+    \qquad(f,g\in\mathcal{C},\ a,b\in\mathbb{Q})
+  \]
+  が共通の Borel $\nu$-零集合 $N$ の外で成り立つ．
+  有理数 $r>\lVert f\rVert_\infty$ に対し $r\pm f\geq0$ より $r\pm l_f(y)\geq0$ なので，
+  $\abs{l_f(y)}\leq\lVert f\rVert_\infty$（$y\notin N$）を得る．
 
-ここに3章の内容を書く. 
+  \textbf{2. 測度の構成．}
+  $y\notin N$ では $f\mapsto l_f(y)$ は $\mathbb{Q}$-線形で
+  $\abs{l_f(y)-l_g(y)}\leq\lVert f-g\rVert_\infty$ をみたすので，
+  一様近似により $C(\X)$ 上の実線形汎関数 $L_y$ に延長でき，
+  \[
+    L_y(1)=1,\qquad\abs{L_y(f)}\leq\lVert f\rVert_\infty
+  \]
+  をみたす．$f\geq0$ なら $m:=\lVert f\rVert_\infty$ について
+  $\lVert m-f\rVert_\infty\leq m$ なので
+  \[
+    L_y(f)=m-L_y(m-f)\geq0
+  \]
+  である．
+  Riesz の表現定理（定理~\ref{thm:riesz}）により
+  \[
+    L_y(f)=\int_\X f\,\d\pi_y\qquad(f\in C(\X))
+  \]
+  となる $\pi_y\in\Prob(\X)$ を取り，
+  $y\in N$ では $\pi_y:=\delta_{x_0}$ とする．
+  密度の定義と一様近似より，すべての $f\in C(\X)$ で
+  $y\mapsto\int_\X f\,\d\pi_y$ は可測であり，
+  \[
+    \int_B\left(\int_\X f\,\d\pi_y\right)\d\nu(y)=\int_{\X\times B}f(x)\,\d\pi(x,y).
+  \]
+  空でない閉集合 $A$ に対し，命題~\ref{prop:cb-determines}の証明と同様に
+  \[
+    \max\{1-k\,d(x,A),0\}\longrightarrow\mathbf{1}_A(x)\qquad(k\to\infty)
+  \]
+  なので，有界収束定理から
+  閉集合 $A$ について条件 1，2 を得る．
+  条件 1，2 をみたす $A$ の全体は $\lambda$-系であり
+  （補集合には $\pi_y(\X\setminus A)=1-\pi_y(A)$ を，
+  互いに素な可算合併には単調収束定理を用いる），
+  閉集合全体は $\Borel(\X)$ を生成する $\pi$-系なので，
+  Dynkin の定理（定理~\ref{thm:dynkin}）よりすべての $A\in\Borel(\X)$ で成り立つ．
 
-\section{??}
+  \textbf{3. 一般の場合．}
+  $\mu(A):=\pi(A\times\Y)$ は，定理~\ref{thm:existence}の証明と同様に Prokhorov の定理より tight である．
+  よって compact 集合の増大列 $K_1\subset K_2\subset\cdots$ で
+  $\mu(\X\setminus K_n)\leq1/n$ となるものが取れる．
+  $K_0:=\emptyset$ とし，
+  \[
+    E_n:=K_n\setminus K_{n-1},\qquad\nu_n(B):=\pi(E_n\times B)
+  \]
+  とおく．$\mu(\X\setminus\bigcup_nK_n)=0$ より $\sum_n\nu_n=\nu$ である．
 
-\section{??}
+  $\nu_n\neq0$ となる各 $n$ について，$\pi$ の $E_n\times\Y$ への制限を
+  $K_n\times\Y$ 上の有限測度とみて 1，2 を適用する．
+  得た $K_n$ 上の測度を，$A\in\Borel(\X)$ に $A\cap K_n$ の測度を対応させて
+  $\X$ 上に延長したものを $\rho^{(n)}_y$ と書く．すると
+  \[
+    \pi((A\cap E_n)\times B)=\int_B\rho^{(n)}_y(A)\,\d\nu_n(y)
+  \]
+  と条件 1 が成り立つ．$\nu_n=0$ のときは $\rho^{(n)}_y:=\delta_{x_0}$ とする．
+  $\nu_n\ll\nu$ なので，非負の密度 $h_n:=\d\nu_n/\d\nu$ を取る．
+  $\sum_n\nu_n=\nu$ と単調収束定理，密度の一意性より
+  $\sum_nh_n=1$ が $\nu$-a.e. に成り立つので，
+  \[
+    \pi_y(A):=\sum_nh_n(y)\rho^{(n)}_y(A)
+  \]
+  と定める（$\sum_nh_n(y)\neq1$ となる Borel 零集合上では $\pi_y:=\delta_{x_0}$ とする）．
+  これは条件 1 をみたす確率測度の族であり，
+  \[
+    \begin{aligned}
+      \int_B\pi_y(A)\,\d\nu(y)
+      &=\sum_n\int_Bh_n(y)\rho^{(n)}_y(A)\,\d\nu(y)
+        &&\text{（$\pi_y$ の定義と単調収束定理）}\\
+      &=\sum_n\int_B\rho^{(n)}_y(A)\,\d\nu_n(y)
+        &&\text{（$h_n=\d\nu_n/\d\nu$）}\\
+      &=\sum_n\pi((A\cap E_n)\times B)
+        &&\text{（上の公式）}\\
+      &=\pi(A\times B)
+        &&\text{（$E_n$ は $\textstyle\bigcup_nK_n$ の分割）}.
+    \end{aligned}
+    \qedhere
+  \]
+  第2の等号では，密度の公式を非負単関数で近似して非負可測関数に拡張した．
+\end{proof}
 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
+\section{接着補題}
 
+\begin{lem}[接着補題（\cite{Villani}*{pp.~11--12}，\cite{Kuwae}*{補題 1.33}）]\label{lem:gluing}
+  $\X,\Y,\mathcal{Z}$ を Polish 空間，
+  $\mu\in\Prob(\X)$，$\nu\in\Prob(\Y)$，$\xi\in\Prob(\mathcal{Z})$，
+  $\pi\in\Couplings(\mu,\nu)$，$\sigma\in\Couplings(\nu,\xi)$ とする．
+  このとき $\gamma\in\Prob(\X\times\Y\times\mathcal{Z})$ で，任意の
+  $A\in\Borel(\X)$，$B\in\Borel(\Y)$，$C\in\Borel(\mathcal{Z})$ に対し
+  \[
+    \gamma(A\times B\times\mathcal{Z})=\pi(A\times B),\qquad
+    \gamma(\X\times B\times C)=\sigma(B\times C)
+  \]
+  をみたすものが存在する．
+\end{lem}
 
+\begin{proof}
+  測度分解定理（定理~\ref{thm:disintegration}）を，$\pi$ と，
+  $\sigma$ の写像 $(y,z)\mapsto(z,y)$ による像測度に適用して，
+  \[
+    \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y),\qquad
+    \sigma(B\times C)=\int_B\sigma_y(C)\,\d\nu(y)
+  \]
+  をみたす可測な確率測度の族 $(\pi_y)$，$(\sigma_y)$ を得る．
+  定理~\ref{thm:kernel}により
+  \[
+    \gamma(A\times B\times C)=\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y)
+  \]
+  となる $\gamma$ を取る．$C=\mathcal{Z}$ とすれば $\sigma_y(\mathcal{Z})=1$ より
+  $\gamma(A\times B\times\mathcal{Z})=\pi(A\times B)$，
+  $A=\X$ とすれば $\pi_y(\X)=1$ より $\gamma(\X\times B\times C)=\sigma(B\times C)$ である．
+\end{proof}
 
+\section{対角集合に集中する coupling}
 
-新しいページになりました. 
+\begin{prop}\label{prop:diagonal}
+  $\mu\in\Prob(\X)$ とし，対角集合を $\Delta:=\{(x,x)\mid x\in\X\}$ とおく．
+  このとき $\pi(\Delta)=1$ をみたす $\pi\in\Couplings(\mu,\mu)$ が存在する．
+\end{prop}
 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
+\begin{proof}
+  $\Delta=\{(x,y)\mid d(x,y)=0\}$ であり，$d$ は連続なので，$\Delta$ は閉集合，特に Borel 集合である．
+  $E\in\Borel(\X\times\X)$ に対し
+  \[
+    \pi(E):=\mu\bigl(\{x\in\X\mid(x,x)\in E\}\bigr)
+  \]
+  と定める．これは連続写像 $x\mapsto(x,x)$ による像測度（定義~\ref{dfn:pushforward}）であり，
+  $\pi(\X\times\X)=\mu(\X)=1$ より確率測度である．
 
+  \textbf{coupling であること．}
+  $A,B\in\Borel(\X)$ に対し
+  \[
+    \pi(A\times B)=\mu\bigl(\{x\in\X\mid x\in A,\ x\in B\}\bigr)=\mu(A\cap B)
+  \]
+  である．$B=\X$ とすれば $\pi(A\times\X)=\mu(A)$，
+  $A=\X$ とすれば $\pi(\X\times B)=\mu(B)$ なので，$\pi\in\Couplings(\mu,\mu)$ である．
+
+  \textbf{$\pi(\Delta)=1$ であること．}
+  $A:=\{x\in\X\mid(x,x)\in\Delta\}$ とおくと $\pi(\Delta)=\mu(A)$ である．
+  $A\subset\X$ より $\mu(A)\leq\mu(\X)$．
+  逆に，任意の $a\in\X$ について $(a,a)\in\Delta$ だから $a\in A$，
+  すなわち $\X\subset A$ であり，$\mu(\X)\leq\mu(A)$．したがって
+  \[
+    \mu(\X)\leq\pi(\Delta)\leq\mu(\X)
+  \]
+  であり，$\mu(\X)=1$ より $\pi(\Delta)=1$ である．
+\end{proof}
+
+\section{距離の公理の確認}
+
+\begin{thm}[$\Wass_p$ の距離性（\cite{Villani}*{Chapter 6}）]\label{thm:wp-metric}
+  $1\leq p<\infty$ に対し，$\Wass_p$ は $\Pp{p}(\X)$ 上の距離である．
+\end{thm}
+
+\begin{proof}
+  $\mu,\nu\in\Pp{p}(\X)$ とする．
+  $d\geq0$ より $\Wass_p(\mu,\nu)\geq0$ であり，
+  補題~\ref{lem:wp-finite}より $\Wass_p(\mu,\nu)<\infty$ である．
+  距離の公理（定義~\ref{dfn:metric}）を順に確かめる．
+
+  \textbf{1. 一致の公理．}
+  ($\Leftarrow$) $\mu=\nu$ とする．
+  命題~\ref{prop:diagonal}より，$\pi(\Delta)=1$ をみたす $\pi\in\Couplings(\mu,\mu)$ を取る．
+  \[
+    \begin{aligned}
+      \Wass_p(\mu,\mu)^p
+      &\leq\int_{\X\times\X}d(x,y)^p\,\d\pi(x,y)
+        &&\text{（下限の定義）}\\
+      &=\int_\Delta d(x,y)^p\,\d\pi(x,y)
+        &&\text{（$\pi(\Delta)=1$）}\\
+      &=0
+        &&\text{（$\Delta$ 上で $d(x,x)=0$）}.
+    \end{aligned}
+  \]
+
+  ($\Rightarrow$) $\Wass_p(\mu,\nu)=0$ とする．
+  注意~\ref{rem:wp-optimal}より，
+  \[
+    \int_{\X\times\X}d(x,y)^p\,\d\pi^*(x,y)=0
+  \]
+  となる $\pi^*\in\Couplings(\mu,\nu)$ が存在する．
+  被積分関数は非負なので $d(x,y)=0$ が $\pi^*$-a.e. に成り立ち，$\pi^*(\Delta)=1$ である．
+  任意の $A\in\Borel(\X)$ に対し，
+  \[
+    \begin{aligned}
+      \mu(A)&=\pi^*(A\times\X)
+        &&\text{（周辺分布の条件）}\\
+      &=\pi^*(A\times A)+\pi^*\bigl(A\times(\X\setminus A)\bigr)
+        &&\text{（有限加法性）}\\
+      &=\pi^*(A\times A)
+        &&\text{（$A\times(\X\setminus A)$ は $\Delta$ と交わらない）}.
+    \end{aligned}
+  \]
+  同様に $\nu(A)=\pi^*(\X\times A)=\pi^*(A\times A)$ であるから，$\mu=\nu$ である．
+
+  \textbf{2. 対称性．}
+  $S(x,y):=(y,x)$ とし，$\pi\in\Couplings(\mu,\nu)$ に対し
+  $\pi^\top:=\pi\circ S^{-1}$ と定める．
+  $\pi^\top(A\times B)=\pi(B\times A)$ より
+  \[
+    \pi^\top(A\times\X)=\pi(\X\times A)=\nu(A),\qquad
+    \pi^\top(\X\times B)=\pi(B\times\X)=\mu(B)
+  \]
+  なので $\pi^\top\in\Couplings(\nu,\mu)$ である．
+  $(\pi^\top)^\top=\pi$ より，$\pi\mapsto\pi^\top$ は
+  $\Couplings(\mu,\nu)$ から $\Couplings(\nu,\mu)$ への全単射である．
+  \[
+    \begin{aligned}
+      \int_{\X\times\X}d(x,y)^p\,\d\pi^\top(x,y)
+      &=\int_{\X\times\X}d(y,x)^p\,\d\pi(x,y)
+        &&\text{（変数変換公式，補題~\ref{lem:change-of-variables}）}\\
+      &=\int_{\X\times\X}d(x,y)^p\,\d\pi(x,y)
+        &&\text{（$d$ の対称性）}
+    \end{aligned}
+  \]
+  であるから，
+  \[
+    \begin{aligned}
+      \Wass_p(\mu,\nu)^p
+      &=\inf_{\pi\in\Couplings(\mu,\nu)}
+        \int_{\X\times\X}d(x,y)^p\,\d\pi^\top(x,y)
+        &&\text{（上の等式）}\\
+      &=\inf_{\pi'\in\Couplings(\nu,\mu)}
+        \int_{\X\times\X}d(x,y)^p\,\d\pi'(x,y)
+        &&\text{（$\pi\mapsto\pi^\top$ は全単射）}\\
+      &=\Wass_p(\nu,\mu)^p
+        &&\text{（$\Wass_p$ の定義）}.
+    \end{aligned}
+  \]
+
+  \textbf{3. 三角不等式．}
+  $\xi\in\Pp{p}(\X)$ とする．注意~\ref{rem:wp-optimal}より
+  最適 coupling $\pi\in\Couplings(\mu,\nu)$，$\sigma\in\Couplings(\nu,\xi)$ を取り，
+  接着補題（補題~\ref{lem:gluing}）により $\gamma\in\Prob(\X^3)$ を取る．
+  $\gamma$ の第1成分と第3成分を取り出した確率測度
+  \[
+    \rho(E):=\gamma\bigl(\{(x,y,z)\in\X^3\mid(x,z)\in E\}\bigr)
+    \qquad(E\in\Borel(\X\times\X))
+  \]
+  について，
+  \[
+    \begin{aligned}
+      \rho(A\times\X)&=\gamma(A\times\X\times\X)
+        &&\text{（$\rho$ の定義）}\\
+      &=\pi(A\times\X)
+        &&\text{（接着補題）}\\
+      &=\mu(A)
+        &&\text{（$\pi\in\Couplings(\mu,\nu)$）}
+    \end{aligned}
+  \]
+  であり，同様に $\rho(\X\times C)=\sigma(\X\times C)=\xi(C)$ であるから，
+  $\rho\in\Couplings(\mu,\xi)$ である．したがって
+  \[
+    \begin{aligned}
+      \Wass_p(\mu,\xi)
+      &\leq\left(\int_{\X^2}d(x,z)^p\,\d\rho\right)^{1/p}
+        &&\text{（下限の定義）}\\
+      &=\left(\int_{\X^3}d(x,z)^p\,\d\gamma\right)^{1/p}
+        &&\text{（変数変換公式）}\\
+      &\leq\left(\int_{\X^3}\bigl(d(x,y)+d(y,z)\bigr)^p\,\d\gamma\right)^{1/p}
+        &&\text{（$d$ の三角不等式）}\\
+      &\leq\left(\int_{\X^3}d(x,y)^p\,\d\gamma\right)^{1/p}
+      +\left(\int_{\X^3}d(y,z)^p\,\d\gamma\right)^{1/p}
+        &&\text{（Minkowski，定理~\ref{thm:minkowski}）}\\
+      &=\left(\int_{\X^2}d(x,y)^p\,\d\pi\right)^{1/p}
+      +\left(\int_{\X^2}d(y,z)^p\,\d\sigma\right)^{1/p}
+        &&\text{（$\gamma$ の周辺分布）}\\
+      &=\Wass_p(\mu,\nu)+\Wass_p(\nu,\xi)
+        &&\text{（$\pi,\sigma$ の最適性）}.
+    \end{aligned}
+  \]
+  「$\gamma$ の周辺分布」の等号では，$\gamma$ の第 $1,2$ 成分の像測度が $\pi$ と
+  矩形集合上で一致するので一致定理（定理~\ref{thm:dynkin}）より等しいこと
+  （第 $2,3$ 成分と $\sigma$ も同様）と，変数変換公式を用いた．
+\end{proof}
 
 
 \begin{bibdiv}
 \begin{biblist}
 
-%「参考文献」には, 欧文図書, 欧文論文, 
-%和書, プレプリントの掲載例を示してある. 
-%その他プロシーディング等の文献については, 
-%これらの例やその他の文献の「参考文献」の記述方法を
-%参照しながら, ご自身で記載すること. 
-
-
-% 以下は MathSciNet の Batch Download を AMSRefs に選んでチェックを付け, 
-% Retrieve Marked ボタンを押すと出てくる. 
-
-\bib{APS}{article}{
-   author={Atiyah, M. F.},
-   author={Patodi, V. K.},
-   author={Singer, I. M.},
-   title={Spectral asymmetry and Riemannian geometry. I},
-   journal={Math. Proc. Cambridge Philos. Soc.},
-   volume={77},
-   date={1975},
-   pages={43--69},
-   issn={0305-0041},
-%   review={\MR{0397797}},
+\bib{Billingsley}{book}{
+   author={Billingsley, Patrick},
+   title={Convergence of probability measures},
+   edition={2},
+   publisher={John Wiley \& Sons, Inc., New York},
+   date={1999},
 }
 
-
-\bib{AS}{article}{
-   author={Atiyah, M. F.},
-   author={Singer, I. M.},
-   title={The index of elliptic operators. I},
-   journal={Ann. of Math. (2)},
-   volume={87},
-   date={1968},
-   pages={484--530},
-   issn={0003-486X},
-%   review={\MR{0236950}},
+\bib{Dudley}{book}{
+   author={Dudley, R. M.},
+   title={Real analysis and probability},
+   series={Cambridge Studies in Advanced Mathematics},
+   volume={74},
+   publisher={Cambridge University Press, Cambridge},
+   date={2002},
 }
 
-
-\bib{Gmv:green}{book}{
-   author={Gromov, Misha},
-   title={Metric structures for Riemannian and non-Riemannian spaces},
-   series={Modern Birkh\"auser Classics},
-   edition={Reprint of the 2001 English edition},
-   note={Based on the 1981 French original;
-   With appendices by M. Katz, P. Pansu and S. Semmes;
-   Translated from the French by Sean Michael Bates},
-   publisher={Birkh\"auser Boston, Inc., Boston, MA},
-   date={2007},
-   pages={xx+585},
-   isbn={978-0-8176-4582-3},
-   isbn={0-8176-4582-9},
-%   review={\MR{2307192 (2007k:53049)}},
+\bib{PeyreCuturi}{article}{
+   author={Peyr\'e, Gabriel},
+   author={Cuturi, Marco},
+   title={Computational optimal transport},
+   journal={Found. Trends Mach. Learn.},
+   volume={11},
+   date={2019},
+   pages={355--607},
 }
 
-%和書は MathSciNet からは出力出来ない. 以下のように記述する. 
+\bib{Rudin}{book}{
+   author={Rudin, Walter},
+   title={Real and complex analysis},
+   edition={3},
+   publisher={McGraw-Hill Book Co., New York},
+   date={1987},
+}
 
-%\bib{Satake}{book}{
-%  author={佐武一郎},
-%   title={『線型代数学』},
-%   series={数学選書 1},
-%   publisher={裳華房},
-%   date={1974年},
-%}
+\bib{Villani}{book}{
+   author={Villani, C\'edric},
+   title={Optimal transport. Old and new},
+   series={Grundlehren der mathematischen Wissenschaften},
+   volume={338},
+   publisher={Springer-Verlag, Berlin},
+   date={2009},
+}
 
+\bib{Kitabeppu}{misc}{
+   author={北別府悠},
+   title={『最適輸送理論入門〜兼非標準的関数解析入門〜』},
+   note={講義資料},
+}
 
-%\bib{SatakeN}{book}{
-%  author={佐武一郎},
-%   title={『線型代数学』{\rm (新装版)}},
-%   edition={(新装版)}, エディッションの記載は文献による
-%   series={数学選書 1},
-%   publisher={裳華房},
-%   date={2015年},
-%}
-
-% プレプリントは以下のように記述
-\bib{Preprint}{article}{
-   author={Tao, T.},
-   author={Ziegler, T.},
-   title={Polynomial patterns in the primes},
-   note={preprint (2016), arXiv:1603.07817},
+\bib{Kuwae}{book}{
+   author={桑江一洋 ほか},
+   title={『最適輸送理論とリッチ曲率』},
+   series={Encounter with Mathematics 第63回講演資料},
+   publisher={中央大学},
+   date={2015年},
 }
 
 \end{biblist}
 \end{bibdiv}
 
 \end{document}
-
-
-\bye
-
-
-\bye
