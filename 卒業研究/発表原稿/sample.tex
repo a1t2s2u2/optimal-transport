@@ -110,7 +110,7 @@
 
 %======================================
 \title{ %表紙
-\huge 卒業研究の題目 \\[5cm]
+\huge Wasserstein 距離の距離性と\\ \huge 離散最適輸送のエントロピー正則化 \\[5cm] % 仮題
 }
 \author{228s1341　江嶋 宏優 \\
 \qquad\qquad\quad Ejima Atsuhiro\\[1cm]
@@ -129,337 +129,89 @@
 %======================================
 
 
-\chapter{序文}%ここに序文を書く. 
+% ===== 目次の草案（各節の中身は未執筆） =====
 
-本稿では, 次の対数型Sobolevの不等式を考える: 
-
-\begin{thm}[対数型Sobolevの不等式] \label{thm:dareka}
-任意の$f \in H^1(\R^n)$に対して, 
-\eqn{
-   \int_{\R^n} |f(x)|^2 \log\frac{|f(x)|^2}{\|f\|_{L^2}^2}\, dx
-   \leq \frac{n}{2} \|f\|_{L^2}^2 \log\left(\frac{2}{n \pi e \|f\|_{L^2}^2} \int_{\R^n} |\nab f(x)|^2\, dx\right) 
- }
-\begin{enumerate}
-\item これこれ. 
-\item しかじか. 
-\end{enumerate}
-\end{thm}
-
-
-以下で, $1 \leq p < \infty$に対して, $L^p$-空間を次で定める:
-\begin{equation}\label{dfn;Lp}
-  L^p(\Om)
-  \equiv \left\{f: \Om \to \R;f: \text{可測},\quad \|f\|_{L^p} \equiv \left(\int_{\R^n} |f(x)|^p\, dx\right)^\frac{1}{p} < + \infty\right\}.
-\end{equation}
-%定義\eqref{dfn;Lp}より, $\|\cdot\|_{L^p}$はノルムなので, $L^p$はノルム空間である. 
-$H^1$はSobolev空間とする. 
-
-
-\begin{rem}
-定数$2/(n \pi e)$は最良定数である.
-最良定数はGauss函数によって達成されることが知られている. 
-詳しくは, Carlen (1995)を参照せよ. 
-\end{rem}
-
-
-通常の$H^1$上では次のSobolevの不等式が成り立つことが知られている:
-
-
-\begin{thm}
-任意の$f \in H^1(\R^n)$に対して, 
-\eqn{
-  \|f\|_{L^\frac{2 n}{n - 2}}
-  \leq C \|\nab f\|_{L^2}
-}
-が成り立つ. 
-\end{thm}
-
-
-Jensenの不等式より, 
-\eqn{
-  \int_{\R^n} |f(x)|^2 \log\frac{|f(x)|^2}{\|f\|_{L^2}^2}\, dx
-  \leq C \|f\|_{L^\frac{2 n}{n - 2}}
-}
-が成り立つので, Sobolevの不等式から対数型Sobolevの不等式が導かれることがわかる. 
-
-
-\begin{rem}
-Sobolevの不等式の最良定数はTalenti, Liebによって同定されている. 
-実は, Liebの証明においては, Hardy--Littlewood--Sobolevの不等式の最良定数の導出が鍵となる. 
-
-\end{rem}
-
-
-ガンマ函数は次で定まる:
-\eqn{
-  \Gm(x) = \int_0^\infty t^{x - 1} e^{- t}\, dt.
-}
-\eqn{
-  \left|\Sp^{n - 1}\right|
-  = \frac{2 \pi^\frac{n}{2}}{\Gm\left(\frac{n}{2}\right)}.
-}
-
-
-
-
-\begin{rem}
-HLS不等式の最良定数は知られており, 
-\end{rem}
-
-定理\ref{thm:dareka}より以下が従う. 
-
-\begin{cor}
-系はこのように書く. 
-\end{cor}
-
-\begin{proof}
-証明はこのように書く.（普通は序文では使わない. ）
-\end{proof}
-
+\chapter{序文}
+\section{最適輸送問題}
+% Monge 問題から Kantorovich 問題へ．輸送計画（coupling）という見方．
+\section{本稿の目標と構成}
+% 主目標：Polish 空間上で W_p が P_p(X) 上の距離であること．
+% 寄り道：離散の場合のエントロピー正則化．
 \section*{謝辞}
-ここに謝辞を書く. 
 
-\chapter{準備, Lebesgue空間}
+\chapter{準備}
+\section{距離空間と Polish 空間}
+\section{測度と積分}
+% 単調収束定理・有界収束定理・Minkowski の不等式
+\section{像測度と直積測度}
+\section{確率測度の弱収束と tightness}
+% Prokhorov の定理（証明なしで認める）
+\section{Radon--Nikodym の定理と Riesz の表現定理}
+% 測度分解定理の証明に用いる
 
-ここに2章の内容を書く. 
+\chapter{Kantorovich 問題と Wasserstein 距離}
+\section{coupling と Kantorovich 問題}
+\section{有限 $p$ 次モーメントをもつ確率測度}
+\section{Wasserstein 距離 $W_p$ の定義と有限性}
 
-\section{??}
+\chapter{最適 coupling の存在}
+\section{$p$ 次輸送コストの下半連続性}
+\section{輸送計画の tightness}
+\section{存在定理}
 
-\begin{prop}
-命題はこのように書く. 
-\end{prop}
-\begin{proof}
-証明はこのように書く. 証明終わりの目印などは
-変更しても良いが全体で統一すること. 
-\end{proof}
-\begin{lem}
-補題はこのように書く. 
-\end{lem}
-\begin{ex}
-例はこのように書く. 
-\end{ex}
-\begin{dfn}
-定義はこのように. 
-\end{dfn}
+\chapter{Wasserstein 距離の距離性}
+\section{測度分解定理}
+\section{接着補題}
+\section{対角集合に集中する coupling}
+\section{距離の公理の確認}
 
-\begin{rem}
-注意や例, 定義も, 定理や補題などと同じ各章で通し番号となっている. 
-各自で例えば全体で通し番号となるように変更しても良い. 
-\end{rem}
+\chapter{寄り道：離散最適輸送のエントロピー正則化}
+\section{離散 Kantorovich 問題}
+% 有限個の点に台をもつ測度の場合．輸送計画は行列，問題は線形計画．
+\section{エントロピー正則化と解の存在・一意性}
+\section{KL 射影としての定式化とスケーリング形}
+% Gibbs カーネル．Sinkhorn 反復は紹介にとどめる．
+\section{正則化パラメータ $\varepsilon\to0$ の極限}
+% 正則化解が元の問題の最適解に収束する．
 
-
-\begin{align*}
-f(x)
-&= g(x) \\
-&= g(x) \\
-&= g(x) \\
-&= g(x) \\&= g(x) \\
-&= g(x) \\&= g(x) \\
-&= g(x) \\&= g(x) \\
-&= g(x) \\&= g(x) \\
-&= g(x) \\&= g(x) \\
-&= g(x) \\&= g(x) \\
-&= g(x) \\
-\end{align*}
-
-\section{??}
-
-文献の引用は \cite{Gmv:green}, \cite{APS} のように書く. 
-%同一の著者による一連の文献をを引用する時は \cites{Satake, SatakeN} のように書いても良い. 
-
-\chapter{主定理の証明}
-
-ここに3章の内容を書く. 
-
-\section{??}
-
-\section{??}
-
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-１ページ分の分量はこのぐらいです. 
-ご自身でサイズを調整したいときは, このサイズを
-大幅に超えることのないようにしましょう. 
-
-
-
-
-新しいページになりました. 
-
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-修士論文は推敲に推敲を重ねて十分検討して執筆しましょう. 
-
-
+\chapter{まとめと今後の展望}
 
 \begin{bibdiv}
 \begin{biblist}
 
-%「参考文献」には, 欧文図書, 欧文論文, 
-%和書, プレプリントの掲載例を示してある. 
-%その他プロシーディング等の文献については, 
-%これらの例やその他の文献の「参考文献」の記述方法を
-%参照しながら, ご自身で記載すること. 
-
-
-% 以下は MathSciNet の Batch Download を AMSRefs に選んでチェックを付け, 
-% Retrieve Marked ボタンを押すと出てくる. 
-
-\bib{APS}{article}{
-   author={Atiyah, M. F.},
-   author={Patodi, V. K.},
-   author={Singer, I. M.},
-   title={Spectral asymmetry and Riemannian geometry. I},
-   journal={Math. Proc. Cambridge Philos. Soc.},
-   volume={77},
-   date={1975},
-   pages={43--69},
-   issn={0305-0041},
-%   review={\MR{0397797}},
+\bib{Villani}{book}{
+   author={Villani, C\'edric},
+   title={Optimal transport. Old and new},
+   series={Grundlehren der mathematischen Wissenschaften},
+   volume={338},
+   publisher={Springer-Verlag, Berlin},
+   date={2009},
 }
 
-
-\bib{AS}{article}{
-   author={Atiyah, M. F.},
-   author={Singer, I. M.},
-   title={The index of elliptic operators. I},
-   journal={Ann. of Math. (2)},
-   volume={87},
-   date={1968},
-   pages={484--530},
-   issn={0003-486X},
-%   review={\MR{0236950}},
+\bib{PeyreCuturi}{article}{
+   author={Peyr\'e, Gabriel},
+   author={Cuturi, Marco},
+   title={Computational optimal transport},
+   journal={Found. Trends Mach. Learn.},
+   volume={11},
+   date={2019},
+   pages={355--607},
 }
 
-
-\bib{Gmv:green}{book}{
-   author={Gromov, Misha},
-   title={Metric structures for Riemannian and non-Riemannian spaces},
-   series={Modern Birkh\"auser Classics},
-   edition={Reprint of the 2001 English edition},
-   note={Based on the 1981 French original;
-   With appendices by M. Katz, P. Pansu and S. Semmes;
-   Translated from the French by Sean Michael Bates},
-   publisher={Birkh\"auser Boston, Inc., Boston, MA},
-   date={2007},
-   pages={xx+585},
-   isbn={978-0-8176-4582-3},
-   isbn={0-8176-4582-9},
-%   review={\MR{2307192 (2007k:53049)}},
+\bib{Billingsley}{book}{
+   author={Billingsley, Patrick},
+   title={Convergence of probability measures},
+   edition={2},
+   publisher={John Wiley \& Sons, Inc., New York},
+   date={1999},
 }
 
-%和書は MathSciNet からは出力出来ない. 以下のように記述する. 
-
-%\bib{Satake}{book}{
-%  author={佐武一郎},
-%   title={『線型代数学』},
-%   series={数学選書 1},
-%   publisher={裳華房},
-%   date={1974年},
-%}
-
-
-%\bib{SatakeN}{book}{
-%  author={佐武一郎},
-%   title={『線型代数学』{\rm (新装版)}},
-%   edition={(新装版)}, エディッションの記載は文献による
-%   series={数学選書 1},
-%   publisher={裳華房},
-%   date={2015年},
-%}
-
-% プレプリントは以下のように記述
-\bib{Preprint}{article}{
-   author={Tao, T.},
-   author={Ziegler, T.},
-   title={Polynomial patterns in the primes},
-   note={preprint (2016), arXiv:1603.07817},
+\bib{Kuwae}{book}{
+   author={桑江一洋 ほか},
+   title={『最適輸送理論とリッチ曲率』},
+   series={Encounter with Mathematics 第63回講演資料},
+   publisher={中央大学},
+   date={2015年},
 }
 
 \end{biblist}
