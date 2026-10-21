@@ -122,6 +122,53 @@ Villani \emph{Optimal Transport} (2009) 第1章を参照．
   \end{itemize}
 \end{definition}
 
+\begin{remark}{compact 集合について前提とする事実}{meas-compact-facts}
+  次は距離空間の標準的事実であり，証明なしに用いる．
+  \begin{itemize}
+    \item compact 集合の閉部分集合は compact である．
+    \item 空でない compact 集合上の実数値連続関数は最大値と最小値をとる．特に有界である．
+  \end{itemize}
+\end{remark}
+
+\begin{lemma}{集合への距離}{meas-distance-to-set}
+  距離空間 $(\mathcal{X},d)$ の空でない部分集合 $A$ に対し
+  \[
+    d(x,A):=\inf_{a\in A}d(x,a)\qquad(x\in\mathcal{X})
+  \]
+  とおく．このとき次が成り立つ．
+  \begin{enumerate}
+    \item $\abs{d(x,A)-d(y,A)}\leq d(x,y)$ であり，特に $x\mapsto d(x,A)$ は連続である．
+    \item $A$ が閉集合ならば，$d(x,A)=0\iff x\in A$ である．
+  \end{enumerate}
+\end{lemma}
+
+\begin{proof}
+  1. 任意の $a\in A$ で $d(x,A)\leq d(x,a)\leq d(x,y)+d(y,a)$ である．
+  $a$ について下限を取れば $d(x,A)\leq d(x,y)+d(y,A)$ を得る．
+  $x,y$ を入れ替えれば主張の不等式になり，連続性はこれから従う．
+
+  2. $x\in A$ なら $d(x,A)\leq d(x,x)=0$ である．
+  $x\notin A$ なら，$\mathcal{X}\setminus A$ は開集合なので
+  ある $r>0$ で $B_r(x)\cap A=\emptyset$ となり，$d(x,A)\geq r>0$ である．
+\end{proof}
+
+\begin{lemma}{閉集合の指示関数の連続関数による近似}{meas-closed-approx}
+  距離空間 $\mathcal{X}$ の空でない閉集合 $F$ と $k\in\N$ に対し
+  \[
+    \phi_k(x):=\max\{1-k\,d(x,F),0\}
+  \]
+  とおく．このとき $\phi_k$ は連続で $0\leq\phi_k\leq1$ をみたし，
+  $k\to\infty$ のとき各点で $\phi_k\downarrow\mathbf{1}_F$ となる．
+\end{lemma}
+
+\begin{proof}
+  連続性は補題~\ref{lem:meas-distance-to-set}の1から従う．
+  $x\in F$ なら $\phi_k(x)=1$ である．
+  $x\notin F$ なら補題~\ref{lem:meas-distance-to-set}の2より $d(x,F)>0$ なので，
+  $k$ が十分大きければ $\phi_k(x)=0$ となる．
+  $k$ について単調減少であることは定義から明らかである．
+\end{proof}
+
 \section{測度と可測関数}
 
 $\sigma$-代数・可測空間・測度・可測関数・Lebesgue 積分の定義と，
@@ -575,81 +622,79 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
 
 \section{測度分解のための準備}
 
-本文の測度分解定理（定理~\ref{thm:meas-disintegration}）で用いる標準定理をまとめる．
-これらは北別府悠『最適輸送理論入門〜兼非標準的関数解析入門〜』
-Theorem 5.3.1 の証明（提供資料）でも用いられる．
-
-\begin{definition}{測度の絶対連続性（北別府 p.~57）}{meas-absolute-continuity}
-  可測空間 $(\Omega,\mathcal{A})$ 上の有限測度 $\nu$ と，
-  有限符号付き測度 $\alpha$（二つの有限測度の差）を考える．
-  $\alpha$ が $\nu$ に\textbf{絶対連続}であるとは，
-  任意の $\varepsilon>0$ に対してある $\delta>0$ が存在し，
-  \[
-    \nu(B)<\delta\quad\Longrightarrow\quad\abs{\alpha(B)}<\varepsilon
-    \qquad(B\in\mathcal{A})
-  \]
-  が成り立つことをいう．このとき $\alpha\ll\nu$ と書く．
-  北別府の資料では，この定義を実数値の集合関数に対して与えている．
-  本資料で用いるのは有限符号付き測度の場合である．
-\end{definition}
-
-\begin{theorem}{Radon--Nikodym の定理（北別府 Cor 4.6.2, 4.6.3）}{meas-radon-nikodym}
-  可測空間 $(\Omega,\mathcal{A})$ 上の二つの有限測度 $\nu,\alpha$ に対し，
-  次の三つは同値である．
-  \begin{enumerate}
-    \item $\alpha\ll\nu$，すなわち $\alpha$ は $\nu$ に絶対連続である．
-    \item すべての $B\in\mathcal{A}$ に対して，
-      $\nu(B)=0$ ならば $\alpha(B)=0$ である．
-    \item 非負の $\nu$-可積分な可測関数 $h$ が存在し，
-      \[
-        \alpha(B)=\int_B h\,\d\nu\qquad(B\in\mathcal{A})
-      \]
-      が成り立つ．
-  \end{enumerate}
-  さらに，$\alpha$ が有限符号付き測度の場合も，条件 3 の $h$ を
-  実数値の可積分関数として，同じ同値関係が成り立つ．
-  いずれの場合も $h$ は $\nu$-a.e. の意味で一意であり，
-  \textbf{Radon--Nikodym 微分} $\d\alpha/\d\nu$ とよぶ．
-
-  （存在と三条件の同値性は標準定理として証明なしに用いる．
-  非負測度の場合は北別府 Corollary 4.6.2（p.~57）であり，
-  資料では Lebesgue 分解定理（Theorem 4.6.1，pp.~56--57）から導いている．
-  符号付きの場合の存在は同 Corollary 4.6.3（p.~57）を有限符号付き測度に適用した形である．
-  同系は有限測度空間上の有限加法的な実数値集合関数を扱う．
-  有限符号付き測度は有限加法的で有限値を取り，絶対連続性の定義も一致するので適用できる．）
-\end{theorem}
-
-密度の一意性は，符号によらず次のように確かめられる．
-二つの可積分関数 $h,k$ がすべての $B\in\mathcal{A}$ で同じ積分値をもつなら，
-$B=\{h>k\}$ として $\int_B(h-k)\,\d\nu=0$ を得る．
-$h-k$ は $B$ 上で正なので $\nu(B)=0$ である．
-$h,k$ を入れ替えて $\nu(\{k>h\})=0$ も得られ，$h=k$ が $\nu$-a.e. に成り立つ．
+本編第\ref{ch:radon-nikodym}章から第\ref{ch:disintegration}章で用いる事実をまとめる．
 
 \begin{remark}{記法：compact 空間上の連続関数}{meas-compact-continuous}
   空でない compact 距離空間 $K$ 上の実数値連続関数全体を $C(K)$ と書き，
-  $\lVert f\rVert_\infty:=\sup_{x\in K}\abs{f(x)}$ とおく．
-  この値は有限であり，$\lVert f_n-f\rVert_\infty\to0$ を\textbf{一様収束}という．
-  $C(K)$ はこの距離で可分である．したがって，定数関数 $1$ を含む
-  可算な稠密 $\mathbb{Q}$-ベクトル部分空間 $\mathcal{C}\subset C(K)$ が存在する
-  （$\mathbb{Q}$ は有理数全体．可算稠密集合と $1$ の有理係数の有限線形結合を取ればよい）．
-  可分性は標準的な事実として用いる（北別府，Theorem 5.3.1 の証明 Step 1 参照）．
+  \[
+    \lVert f\rVert_\infty:=\sup_{x\in K}\abs{f(x)}
+  \]
+  とおく．注意~\ref{rem:meas-compact-facts}よりこの値は有限である．
+  $\lVert f_n-f\rVert_\infty\to0$ を\textbf{一様収束}という．
+  $f\in C(K)$ に対し $f^+:=\max\{f,0\}$，$f^-:=\max\{-f,0\}$ とおけば，
+  $f^\pm\in C(K)$，$f^\pm\geq0$，$f=f^+-f^-$ である．
 \end{remark}
 
-\begin{theorem}{Riesz--Markov--Kakutani の表現定理（compact 距離空間の場合）}{meas-riesz-representation}
-  $K$ を空でない compact 距離空間とする．
-  実線形写像 $L\colon C(K)\to\R$ が
-  \[
-    f\geq0\ \Longrightarrow\ L(f)\geq0,\qquad L(1)=1
-  \]
-  をみたすならば，ある唯一の $\rho\in\Prob(K)$ により
-  \[
-    L(f)=\int_K f\,\d\rho\qquad(f\in C(K))
-  \]
-  と表せる．条件 $f\geq0\Rightarrow L(f)\geq0$ をみたす実線形写像を
-  \textbf{正の線形汎関数}という．
-  （標準的な定理．北別府の上記証明でも用いられる．
-  例えば Rudin \emph{Real and Complex Analysis} の Riesz の表現定理を参照．）
+\begin{theorem}{$C(K)$ の可分性}{meas-ck-separable}
+  空でない compact 距離空間 $K$ に対し，$C(K)$ は距離
+  $(f,g)\mapsto\lVert f-g\rVert_\infty$ について可分である．
+  したがって，定数関数 $1$ を含む可算な稠密 $\mathbb{Q}$-ベクトル部分空間
+  $\mathcal{C}\subset C(K)$ が存在する
+  （$\mathbb{Q}$ は有理数全体．可算稠密集合と $1$ の有理係数の有限線形結合の全体を取ればよい）．
+
+  （関数解析の標準的事実として証明なしに用いる．
+  例えば Stone--Weierstrass の定理から従う．
+  北別府，Theorem 5.3.1 の証明 Step 1 でも同じ事実が用いられている．）
 \end{theorem}
+
+\begin{lemma}{Borel 集合を生成する可算 $\pi$-系}{meas-countable-generator}
+  可分距離空間 $\mathcal{X}$ には，$\Borel(\mathcal{X})$ を生成する可算な $\pi$-系が存在する．
+\end{lemma}
+
+\begin{proof}
+  $D\subset\mathcal{X}$ を可算稠密集合とし，
+  $\mathcal{U}:=\{B_q(z)\mid z\in D,\ q\in\mathbb{Q},\ q>0\}$ とおく．$\mathcal{U}$ は可算である．
+  開集合 $U$ と $x\in U$ を取り，$B_r(x)\subset U$ とする．
+  $z\in D$ を $d(x,z)<r/3$ となるように，
+  有理数 $q$ を $r/3<q<2r/3$ となるように選ぶと，
+  三角不等式より $x\in B_q(z)\subset B_r(x)\subset U$ である．
+  よって $U$ は $\mathcal{U}$ の元の可算合併であり，$\sigma(\mathcal{U})=\Borel(\mathcal{X})$ となる．
+  $\mathcal{U}$ の元の有限個の共通部分の全体は可算な $\pi$-系であり，同じ $\sigma$-代数を生成する．
+\end{proof}
+
+\begin{remark}{閉部分空間の Borel 集合（前提とする事実）}{meas-subspace-borel}
+  距離空間 $\mathcal{X}$ の閉集合 $K$ に $d$ の制限を入れた距離空間を考えると，
+  \[
+    \Borel(K)=\{A\in\Borel(\mathcal{X})\mid A\subset K\}
+  \]
+  が成り立つ（証明は省略する）．したがって $K$ 上の Borel 測度 $\rho$ は，
+  $A\in\Borel(\mathcal{X})$ に $\rho(A\cap K)$ を対応させることで
+  $\mathcal{X}$ 上の Borel 測度に延長できる．
+\end{remark}
+
+\begin{definition}{外測度と可測集合}{meas-outer-measure}
+  集合 $\Omega$ のすべての部分集合に対して定義された関数
+  $\rho^*\colon2^\Omega\to[0,\infty]$ が\textbf{外測度}であるとは，
+  \begin{enumerate}
+    \item $\rho^*(\emptyset)=0$，
+    \item $E\subset F$ ならば $\rho^*(E)\leq\rho^*(F)$（単調性），
+    \item $\rho^*\left(\bigcup_nE_n\right)\leq\sum_n\rho^*(E_n)$（可算劣加法性）
+  \end{enumerate}
+  をみたすことをいう．
+  $A\subset\Omega$ が \textbf{$\rho^*$-可測}であるとは，任意の $E\subset\Omega$ に対して
+  \[
+    \rho^*(E)=\rho^*(E\cap A)+\rho^*(E\setminus A)
+  \]
+  が成り立つことをいう．劣加法性から「$\leq$」はつねに成り立つ．
+\end{definition}
+
+\begin{theorem}{Carathéodory の定理}{meas-caratheodory}
+  $\rho^*$ を集合 $\Omega$ 上の外測度とする．
+  $\rho^*$-可測集合の全体 $\mathcal{M}$ は $\sigma$-代数であり，
+  $\rho^*$ の $\mathcal{M}$ への制限は測度である．
+  （標準的な結果．証明は省略する．Folland \emph{Real Analysis} (2nd ed., 1999) Theorem 1.11 参照．）
+\end{theorem}
+
 
 \begin{theorem}{確率測度の族を平均した確率測度}{meas-kernel-composition}
   $\mathcal{X},\mathcal{Y},\mathcal{Z}$ を Polish 空間，$\nu\in\Prob(\mathcal{Y})$ とし，
