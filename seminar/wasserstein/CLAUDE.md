@@ -30,6 +30,8 @@ Villani の該当ページのスキャンは `reference/old_and_new/pNNN.jpg` �
 - 前提知識は付録（`tex/foundations/`）で全網羅し、本文からは参照でリンクする
 - $W_p$ は Villani (Definition 6.1) に合わせて $1\leq p<\infty$ のみ扱う（$W_\infty$ と $L^\infty$ 系の道具は導入しない）
 - 最適 coupling の存在定理は Villani (2009) Theorem 4.1 をコスト $d^p$ に特殊化した形（Remark 4.2 にいう $a=b=0$ の場合）で示し、距離性（三角不等式・一致の公理）の証明に用いる。Lemma 4.3 も「$p$ 次輸送コストの下半連続性」に特殊化（$d^p$ は連続なので切り捨て $\min\{d^p,m\}$ ＋単調収束定理で自己完結。一般コスト・上半連続 $h$・$L^1$ 条件は置かない）。Lemma 4.4（輸送計画の tightness）は Villani どおり
+- 卒業研究として測度分解定理（Villani の接着補題で使う形，存在と本質的一意性）を証明する。北別府 Theorem 5.3.1 の構成に従い，そこで使う Radon–Nikodym の定理（`main/02_radon_nikodym.tex`，正集合の補題による証明。北別府の $L^2$/Lebesgue 分解経由とは別証明）と compact 距離空間上の Riesz–Markov–Kakutani の表現定理（`main/03_riesz_representation.tex`，Rudin Thm 2.14 の方針を Carathéodory の定理で簡略化）にも証明を付ける。測度分解定理は `main/04_disintegration.tex`（`01_wasserstein_metrics.tex` の接着補題から参照）
+- 測度分解まわりで証明なしに認めるのは $C(K)$ の可分性，Carathéodory の定理，閉部分空間の Borel 集合の性質のみ（付録「測度分解のための準備」）
 - Prokhorov の定理は証明なしで認める（ステートメントと引用元のみ明示。Villani Ch.4 / Billingsley 1999 Th 5.1, 5.2）
 - 証明なしで認める標準定理はステートメントを明示して文献を挙げる
 

@@ -22,7 +22,8 @@ Polish 空間 $\mathcal{X}$ 上で
 接着補題などの用語はこれに合わせた．
 測度分解定理の証明は，北別府悠
 『最適輸送理論入門〜兼非標準的関数解析入門〜』Theorem 5.3.1 の
-提供資料に沿って補った．
+提供資料に沿って補い，そこで用いる Radon--Nikodym の定理と
+Riesz の表現定理にも証明を付けた．
 
 \section*{本資料の構成}
 
@@ -31,8 +32,15 @@ Polish 空間 $\mathcal{X}$ 上で
   \item 第\ref{ch:wasserstein-metrics}章：
     $\Pp{p}(\mathcal{X})$，coupling，$\Wass_p$ を定義し，
     最適 coupling の存在定理を経て目標を証明する．
+    三角不等式の証明では，接着補題を通じて測度分解定理を用いる．
+  \item 第\ref{ch:radon-nikodym}章：
+    測度分解定理で用いる Radon--Nikodym の定理を証明する．
+  \item 第\ref{ch:riesz-representation}章：
+    compact 距離空間上の Riesz--Markov--Kakutani の表現定理を証明する．
+  \item 第\ref{ch:disintegration}章：
+    前の二章を用いて測度分解定理（存在と一意性）を証明する．
   \item 付録A：
-    距離性の証明に必要な距離空間と測度論の準備をまとめる．
+    本編に必要な距離空間と測度論の準備をまとめる．
 \end{itemize}
 
 \section*{主な記号}
@@ -47,4 +55,8 @@ Polish 空間 $\mathcal{X}$ 上で
   \item $\mathbf{1}_A$：指示関数（定義~\ref{def:meas-indicator}）．
   \item $\mu\circ T^{-1}$：写像 $T$ による $\mu$ の像測度（定義~\ref{def:meas-pushforward}）．
   \item $\mu\otimes\nu$：直積測度（定理~\ref{thm:meas-product}）．
+  \item $\alpha\ll\nu$：絶対連続性（定義~\ref{def:meas-absolute-continuity}）．
+  \item $\d\alpha/\d\nu$：Radon--Nikodym 微分（定理~\ref{thm:meas-radon-nikodym}）．
+  \item $C(K)$，$\lVert f\rVert_\infty$：compact 空間上の連続関数と一様ノルム
+    （注意~\ref{rem:meas-compact-continuous}）．
 \end{itemize}
