@@ -15,7 +15,8 @@ Peyré–Cuturi の教科書に沿い、最適輸送の計算的側面を扱う�
 
 Wasserstein 距離を定義し、最適 coupling の存在を経て距離性を証明する。
 
-- 本編 5 章（導入 / Wₚ の距離性 / Radon–Nikodym の定理 / Riesz の表現定理 / 測度分解定理）+ 付録 1 章（距離空間と測度）
+- 本編 3 章（導入 / Wₚ の距離性 / 測度分解定理）+ 付録 1 章（距離空間と測度）
+- 第3章に、測度分解定理とその準備となる Radon–Nikodym の定理・Riesz の表現定理をまとめる
 - 参考文献:
   - [Optimal Transport: Old and New, C. Villani (2009)](https://doi.org/10.1007/978-3-540-71050-9)
   - [最適輸送理論とリッチ曲率, 桑江ほか (Encounter with Mathematics 第63回, 2015)](https://www.math.chuo-u.ac.jp/ENCwMATH/EwM63resume.pdf)
