@@ -17,7 +17,7 @@ Theorem 5.3.1 とその証明，および §4.6 の Radon–Nikodym の定理に
 - `IMG_3497.JPG`：同証明の後半，絶対連続性の定義，Radon–Nikodym の定理
   （Corollary 4.6.2）と証明，符号付きの場合への拡張（Corollary 4.6.3）の主張と証明の冒頭（印刷 p.57）．
 
-本編の章「測度分解定理」では，接着補題で使う積空間上の形に限定し，
+本編第3章「測度分解定理」では，接着補題で使う積空間上の形に限定し，
 可測な確率測度の族と矩形上の積分公式の存在，および本質的一意性を一つの定理として述べた．
 一般の写像による形，逆像への集中，一般の関数の積分公式は扱わない．
 存在の証明は資料の構成方法に沿い，第1の空間が compact な場合に Radon–Nikodym 微分と
@@ -27,14 +27,14 @@ Radon–Nikodym 微分を重みとして分解を足し合わせる．
 資料が符号付きの Radon–Nikodym（Corollary 4.6.3）を使う箇所は，
 連続関数を正部分・負部分に分けて非負の場合だけで済ませた．
 
-本編の章「Radon–Nikodym の定理」では，p.57 の ε–δ による絶対連続性の定義と，
+同章の節「Radon–Nikodym の定理」では，p.57 の ε–δ による絶対連続性の定義と，
 Corollary 4.6.2 の三条件の同値性を述べ，証明を付けた．
 $3\Rightarrow1$ は資料の証明に従うが，$2\Rightarrow3$ は資料の $L^2$ と Lebesgue 分解定理
 （Theorem 4.6.1）を経る証明ではなく，正集合の補題による初等的な証明を採用した．
 資料の Theorem 4.6.1 が有限または σ-有限の基準測度を扱うのに対し，
 ここで述べる Radon–Nikodym の定理は Corollary 4.6.2 と同じ有限の場合である．
 
-本編の章「Riesz の表現定理」は，Rudin *Real and Complex Analysis* Theorem 2.14 の方針
+同章の節「Riesz の表現定理」では，Rudin *Real and Complex Analysis* Theorem 2.14 の方針
 （開集合の測度を汎関数の上限で定める）を compact 距離空間に特化し，
 Carathéodory の定理で簡略化して証明した．両定理の主張は
 [Arun Ram の講義ノート](https://math.soimeme.org/~arunram/Notes/RadonNikodymContent.html)
