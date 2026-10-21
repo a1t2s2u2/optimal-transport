@@ -58,4 +58,25 @@ export default {
   demos: {
     gluing: gluingDiagram,
   },
+
+  // --- 記法の検査（tools/notation）。禁止する書き方と、その代わり ---
+  notation: {
+    forbidden: [
+      { pattern: /\\phi(?![a-zA-Z])/, use: "\\varphi", why: "φ の字形を統一する" },
+      { pattern: /\\epsilon(?![a-zA-Z])/, use: "\\varepsilon", why: "ε の字形を統一する" },
+      {
+        pattern: /\\su[bp]seteq(?![a-zA-Z])/,
+        use: "\\subset / \\supset",
+        why: "Villani に合わせ ⊂ を等号込みで使う（Villani (2009) p.44 Lemma 4.4）",
+      },
+      { pattern: /_\{?\\(?:sharp|#)/, use: "\\mu\\circ T^{-1}", why: "押し出し記法は使わず像測度で書く" },
+      { pattern: /\\mathrm\{pr\}/, use: "周辺分布・座標成分の直接の記述", why: "座標射影を記号化しない" },
+      {
+        pattern: /_\{?[A-Za-z0-9]+\}?\s*\\Rightarrow/,
+        use: "\\weakto",
+        why: "\\Rightarrow は含意専用．弱収束には使わない",
+      },
+      { pattern: /[、。]/, use: "，．", why: "句読点を統一する" },
+    ],
+  },
 };
