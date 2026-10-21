@@ -238,7 +238,7 @@ $\alpha$ を超えない積分を与える密度の中から，積分値が最�
 Riesz の表現定理は，連続関数に対する正の線形汎関数を，測度による積分として表す定理である．
 測度分解の証明では，Radon--Nikodym 微分から作った汎関数にこの定理を適用し，
 各 $y$ に対応する確率測度を得る．ここでは compact 距離空間の場合を扱う．
-$C(K)$ と $\lVert\cdot\rVert_\infty$ の記法は注意~\ref{rem:meas-compact-continuous}による．
+$C(K)$ と $\norm{\cdot}_\infty$ の記法は注意~\ref{rem:meas-compact-continuous}による．
 
 \subsection{定理の主張と準備}
 
@@ -261,9 +261,9 @@ $C(K)$ と $\lVert\cdot\rVert_\infty$ の記法は注意~\ref{rem:meas-compact-c
 次に連続関数の積分が $L$ に一致することを示す．本節の以下の議論では，$K,L$ は上の定理のとおりとする．
 
 $f\leq g$ ならば $L(g)-L(f)=L(g-f)\geq0$ なので，$L$ は単調である．
-特に $-\lVert f\rVert_\infty\leq f\leq\lVert f\rVert_\infty$ と $L(1)=1$ から
+特に $-\norm{ f}_\infty\leq f\leq\norm{ f}_\infty$ と $L(1)=1$ から
 \[
-  \abs{L(f)}\leq\lVert f\rVert_\infty
+  \abs{L(f)}\leq\norm{ f}_\infty
 \]
 を得る．
 
@@ -301,13 +301,13 @@ $f\leq g$ ならば $L(g)-L(f)=L(g-f)\geq0$ なので，$L$ は単調である�
 
   \textbf{2．}
   $F_\varepsilon=\emptyset$ なら $g_\varepsilon=0$ なので $g_i:=0$ とすればよい．$F_\varepsilon\neq\emptyset$ とする．
-  各 $i$ について，$U_i\neq K$ なら $\phi_i(x):=d(x,K\setminus U_i)$，
-  $U_i=K$ なら $\phi_i:=1$ とおく．
-  補題~\ref{lem:meas-distance-to-set}より $\phi_i$ は連続で，$\phi_i(x)>0\iff x\in U_i$ である．
-  $\Phi:=\sum_i\phi_i$ は compact 集合 $F_\varepsilon$ 上で正なので
+  各 $i$ について，$U_i\neq K$ なら $\varphi_i(x):=d(x,K\setminus U_i)$，
+  $U_i=K$ なら $\varphi_i:=1$ とおく．
+  補題~\ref{lem:meas-distance-to-set}より $\varphi_i$ は連続で，$\varphi_i(x)>0\iff x\in U_i$ である．
+  $\Phi:=\sum_i\varphi_i$ は compact 集合 $F_\varepsilon$ 上で正なので
   $c:=\min_{F_\varepsilon}\Phi>0$ である（注意~\ref{rem:meas-compact-facts}）．
   \[
-    g_i:=\frac{g_\varepsilon\,\phi_i}{\max\{\Phi,c\}}
+    g_i:=\frac{g_\varepsilon\,\varphi_i}{\max\{\Phi,c\}}
   \]
   とおくと，$g_i$ は連続で非負であり，$U_i$ の外で $0$ である．
   $F_\varepsilon$ 上では分母が $\Phi$ に等しく，$F_\varepsilon$ の外では $g_\varepsilon=0$ なので，
@@ -420,16 +420,16 @@ $\rho^*(\emptyset)=0$，$\rho^*(K)=1$ である．
   \]
   $n\to\infty$ として $L(f)\leq\int_Kf\,\d\rho$ を得る．
   $1-f$ にも適用すると，$L(1)=\rho(K)=1$ より逆向きの不等式も従う．
-  一般の $f\in C(K)$ については，$m:=\lVert f\rVert_\infty>0$ ならば
+  一般の $f\in C(K)$ については，$m:=\norm{ f}_\infty>0$ ならば
   $g:=(f+m)/(2m)$ にこの等式を適用し，線形性から結論を得る．$m=0$ の場合は明らかである．
 
   \textbf{3. 一意性．}
   $\rho'\in\Prob(K)$ も同じ表示をみたすとする．
-  空でない閉集合 $F$ について補題~\ref{lem:meas-closed-approx}の $\phi_k$ を取ると，
+  空でない閉集合 $F$ について補題~\ref{lem:meas-closed-approx}の $\varphi_k$ を取ると，
   有界収束定理（定理~\ref{thm:meas-bounded-convergence}）より
   \[
-    \rho(F)=\lim_k\int_K\phi_k\,\d\rho=\lim_kL(\phi_k)
-    =\lim_k\int_K\phi_k\,\d\rho'=\rho'(F).
+    \rho(F)=\lim_k\int_K\varphi_k\,\d\rho=\lim_kL(\varphi_k)
+    =\lim_k\int_K\varphi_k\,\d\rho'=\rho'(F).
   \]
   閉集合全体は $\Borel(K)$ を生成する $\pi$-系なので，
   一致定理（定理~\ref{thm:meas-uniqueness}）より $\rho=\rho'$ である．
@@ -465,7 +465,7 @@ $\rho^*(\emptyset)=0$，$\rho^*(K)=1$ である．
     \qquad(B\in\Borel(\mathcal{Y}))
   \]
   とおく．単調収束定理より $\nu_g$ は有限測度であり，
-  $\nu_g(B)\leq\lVert g\rVert_\infty\nu(B)$ である．
+  $\nu_g(B)\leq\norm{ g}_\infty\nu(B)$ である．
   Radon--Nikodym の定理（定理~\ref{thm:meas-radon-nikodym}，$2\Rightarrow3$）から，
   非負で $\nu$-可積分な Borel 可測関数 $l_g$ で
   $\nu_g(B)=\int_Bl_g\,\d\nu$ となるものを取る．
@@ -490,22 +490,22 @@ $\rho^*(\emptyset)=0$，$\rho^*(K)=1$ である．
     l_{af+bg}(y)=a\,l_f(y)+b\,l_g(y)\qquad(f,g\in\mathcal{C},\ a,b\in\mathbb{Q})
   \]
   が同時に成り立つ．
-  $y\notin N$，$f\in\mathcal{C}$ とし，有理数 $r>\lVert f\rVert_\infty$ を取ると，
+  $y\notin N$，$f\in\mathcal{C}$ とし，有理数 $r>\norm{ f}_\infty$ を取ると，
   $r\pm f\geq0$ かつ $r\pm f\in\mathcal{C}$ より $r\pm l_f(y)=l_{r\pm f}(y)\geq0$ である．
-  $r$ を $\lVert f\rVert_\infty$ に近づけて $\abs{l_f(y)}\leq\lVert f\rVert_\infty$ を得る．
+  $r$ を $\norm{ f}_\infty$ に近づけて $\abs{l_f(y)}\leq\norm{ f}_\infty$ を得る．
 
   \textbf{2. Riesz の表現定理による確率測度の構成．}
   $y\notin N$ とする．$f\mapsto l_f(y)$ は $\mathcal{C}$ 上で $\mathbb{Q}$-線形であり，
-  1 より $\abs{l_f(y)-l_g(y)}=\abs{l_{f-g}(y)}\leq\lVert f-g\rVert_\infty$ をみたす．
-  $f\in C(K)$ に対し，$\lVert f_k-f\rVert_\infty\to0$ となる $f_k\in\mathcal{C}$ を取ると
+  1 より $\abs{l_f(y)-l_g(y)}=\abs{l_{f-g}(y)}\leq\norm{ f-g}_\infty$ をみたす．
+  $f\in C(K)$ に対し，$\norm{ f_k-f}_\infty\to0$ となる $f_k\in\mathcal{C}$ を取ると
   $(l_{f_k}(y))_k$ は Cauchy 列なので，
   \[
     L_y(f):=\lim_{k\to\infty}l_{f_k}(y)
   \]
   と定める．極限は近似列の選び方によらず，$f\in\mathcal{C}$ なら $L_y(f)=l_f(y)$ である．
   加法性は極限で保たれ，実数係数を有理数で近似すれば実線形性も従う．
-  また $L_y(1)=1$，$\abs{L_y(f)}\leq\lVert f\rVert_\infty$ である．
-  $f\geq0$ なら，$m:=\lVert f\rVert_\infty$ とおくと $\lVert m-f\rVert_\infty\leq m$ なので，
+  また $L_y(1)=1$，$\abs{L_y(f)}\leq\norm{ f}_\infty$ である．
+  $f\geq0$ なら，$m:=\norm{ f}_\infty$ とおくと $\norm{ m-f}_\infty\leq m$ なので，
   \[
     L_y(f)=m-L_y(m-f)\geq0.
   \]
@@ -517,7 +517,7 @@ $\rho^*(\emptyset)=0$，$\rho^*(K)=1$ である．
   $f\in C(K)$ と上の近似列 $f_k\in\mathcal{C}$ を取る．
   $y\notin N$ で $\int_Kf\,\d\pi_y=\lim_kl_{f_k}(y)$ であり，$N$ は Borel 集合なので，
   $y\mapsto\int_Kf\,\d\pi_y$ は Borel 可測である．
-  さらに $\abs{l_{f_k}}\leq\lVert f_k\rVert_\infty\leq\lVert f\rVert_\infty+1$（$k$ が大きいとき，$N$ の外）
+  さらに $\abs{l_{f_k}}\leq\norm{ f_k}_\infty\leq\norm{ f}_\infty+1$（$k$ が大きいとき，$N$ の外）
   なので，有界収束定理を両辺に用いて
   \[
     \int_B\left(\int_Kf\,\d\pi_y\right)\d\nu(y)
@@ -528,7 +528,7 @@ $\rho^*(\emptyset)=0$，$\rho^*(K)=1$ である．
 
   \textbf{4. Borel 集合への拡張．}
   空でない閉集合 $A\subset K$ に対し，補題~\ref{lem:meas-closed-approx}の
-  $\phi_k\downarrow\mathbf{1}_A$ を 3 の $f$ として有界収束定理を用いると，
+  $\varphi_k\downarrow\mathbf{1}_A$ を 3 の $f$ として有界収束定理を用いると，
   $y\mapsto\pi_y(A)$ は可測で，主張の積分公式が成り立つ（$A=\emptyset$ では明らか）．
   可測性とすべての $B$ に対する積分公式をみたす $A$ の全体は $\lambda$-系である．
   実際，$K$ を含み，補集合については $\pi_y(K\setminus A)=1-\pi_y(A)$ を，

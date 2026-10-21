@@ -155,17 +155,17 @@ Villani \emph{Optimal Transport} (2009) 第1章を参照．
 \begin{lemma}{閉集合の指示関数の連続関数による近似}{meas-closed-approx}
   距離空間 $\mathcal{X}$ の空でない閉集合 $F$ と $k\in\N$ に対し
   \[
-    \phi_k(x):=\max\{1-k\,d(x,F),0\}
+    \varphi_k(x):=\max\{1-k\,d(x,F),0\}
   \]
-  とおく．このとき $\phi_k$ は連続で $0\leq\phi_k\leq1$ をみたし，
-  $k\to\infty$ のとき各点で $\phi_k\downarrow\mathbf{1}_F$ となる．
+  とおく．このとき $\varphi_k$ は連続で $0\leq\varphi_k\leq1$ をみたし，
+  $k\to\infty$ のとき各点で $\varphi_k\downarrow\mathbf{1}_F$ となる．
 \end{lemma}
 
 \begin{proof}
   連続性は補題~\ref{lem:meas-distance-to-set}の1から従う．
-  $x\in F$ なら $\phi_k(x)=1$ である．
+  $x\in F$ なら $\varphi_k(x)=1$ である．
   $x\notin F$ なら補題~\ref{lem:meas-distance-to-set}の2より $d(x,F)>0$ なので，
-  $k$ が十分大きければ $\phi_k(x)=0$ となる．
+  $k$ が十分大きければ $\varphi_k(x)=0$ となる．
   $k$ について単調減少であることは定義から明らかである．
 \end{proof}
 
@@ -488,8 +488,8 @@ $f,g\colon\Omega\to\R$ を可測関数とする．
   $\mu$ が確率測度なら
   $(\mu\circ T^{-1})(\Omega')=\mu(\Omega)=1$ より
   $\mu\circ T^{-1}$ も確率測度である．
-  なお文献では像測度を $T_\#\mu$ や $T_*\mu$ とも書き，
-  押し出し測度ともよぶ（Villani 2009，桑江ほか 2015 は $T_\#\mu$）．
+  なお文献では像測度を $T_\#\mu$ や $T_*\mu$ とも書き， % notation: ignore
+  押し出し測度ともよぶ（Villani 2009，桑江ほか 2015 は $T_\#\mu$）． % notation: ignore
 \end{definition}
 
 \begin{lemma}{変数変換公式}{meas-change-of-variables}
@@ -627,22 +627,22 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
 \begin{remark}{記法：compact 空間上の連続関数}{meas-compact-continuous}
   空でない compact 距離空間 $K$ 上の実数値連続関数全体を $C(K)$ と書き，
   \[
-    \lVert f\rVert_\infty:=\sup_{x\in K}\abs{f(x)}
+    \norm{ f}_\infty:=\sup_{x\in K}\abs{f(x)}
   \]
   とおく．注意~\ref{rem:meas-compact-facts}よりこの値は有限である．
-  $\lVert f_n-f\rVert_\infty\to0$ を\textbf{一様収束}という．
+  $\norm{ f_n-f}_\infty\to0$ を\textbf{一様収束}という．
   $f\in C(K)$ に対し $f^+:=\max\{f,0\}$，$f^-:=\max\{-f,0\}$ とおけば，
   $f^\pm\in C(K)$，$f^\pm\geq0$，$f=f^+-f^-$ である．
 \end{remark}
 
 \begin{theorem}{$C(K)$ の可分性}{meas-ck-separable}
   空でない compact 距離空間 $K$ に対し，$C(K)$ は距離
-  $(f,g)\mapsto\lVert f-g\rVert_\infty$ について可分である．
+  $(f,g)\mapsto\norm{ f-g}_\infty$ について可分である．
   したがって，定数関数 $1$ を含む可算な稠密 $\mathbb{Q}$-ベクトル部分空間
   $\mathcal{C}\subset C(K)$ が存在する
   （$\mathbb{Q}$ は有理数全体．可算稠密集合と $1$ の有理係数の有限線形結合の全体を取ればよい）．
 
-  （関数解析の標準的事実として証明なしに用いる．
+  （関数解析の標準的事実であり，証明は省略する．
   例えば Stone--Weierstrass の定理から従う．
   北別府，Theorem 5.3.1 の証明 Step 1 でも同じ事実が用いられている．）
 \end{theorem}
