@@ -2,11 +2,10 @@
 \label{ch:disintegration}
 
 接着補題（補題~\ref{lem:wp-gluing}）で必要なのは，
-二変数の分布 $\pi$ を，共通の変数 $y$ ごとの分布 $\pi_y$ に分ける次の形である．
+二変数の分布 $\pi$ を，変数 $y$ ごとの確率測度 $\pi_y$ に分け，
+その平均として元の分布を復元することである．
 北別府悠『最適輸送理論入門〜兼非標準的関数解析入門〜』Theorem 5.3.1 の
-証明（提供資料）を参考に，compact な場合の構成から一般の Polish 空間へ拡張する．
-証明には第\ref{ch:radon-nikodym}章の Radon--Nikodym の定理と，
-第\ref{ch:riesz-representation}章の Riesz の表現定理を用いる．
+証明に沿って，接着補題で使う形を示す．
 
 \section{主張}
 
@@ -27,24 +26,25 @@
       \]
   \end{enumerate}
   さらに，$(\pi'_y)_{y\in\mathcal{Y}}$ も条件 1，2 をみたすならば，
-  ある $\nu$-零集合 $N$ が存在して，$y\notin N$ ならば $\pi_y=\pi'_y$ である．
+  $\nu(N)=0$ をみたす $N\in\Borel(\mathcal{Y})$ が存在して，$y\notin N$ ならば $\pi_y=\pi'_y$ である．
 \end{theorem}
 
 条件 1，2 をみたす族 $(\pi_y)$ を $\pi$ の $\nu$ に関する\textbf{分解}という．
-証明は，第1の空間が compact な場合の存在，一般の場合の存在，一意性の順に与える．
-以下，固定した $x_0\in\mathcal{X}$ に対する Dirac 測度 $\delta_{x_0}$ を，
-例外集合上の分解として用いる．
+一意性は，$A$ ごとに例外集合を取るだけでなく，
+一つの零集合の外で\emph{測度として一致する}ことを主張している．
+まず compact な場合に分解を構成し，tightness によって一般の場合へ拡張した後，一意性を示す．
 
 \section{第1の空間が compact な場合}
 
-一般の場合への拡張で用いるため，ここでは $\pi$ を確率測度に限らず有限測度とする．
+構成は二段階である．Radon--Nikodym の定理で連続関数の積分を $y$ の関数として表し，
+各 $y$ で得られる正の線形汎関数に Riesz の表現定理を適用する．
+一般の場合への拡張に備え，ここでは有限測度を扱う．
 
 \begin{lemma}{compact な場合の分解}{dis-compact}
   $K$ を空でない compact 距離空間，$\mathcal{Y}$ を距離空間とし，
   $\pi$ を $K\times\mathcal{Y}$ 上の零でない有限 Borel 測度，
   $\nu(B):=\pi(K\times B)$ とする．
-  このとき，$\pi_y\in\Prob(K)$ の族で，各 $A\in\Borel(K)$ について
-  $y\mapsto\pi_y(A)$ が Borel 可測であり，
+  このとき，$\pi_y\in\Prob(K)$ の族で，各 $A\in\Borel(K)$ に対し $y\mapsto\pi_y(A)$ が Borel 可測となり，
   \[
     \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y)
     \qquad(A\in\Borel(K),\ B\in\Borel(\mathcal{Y}))
@@ -53,44 +53,43 @@
 \end{lemma}
 
 \begin{proof}
-  \textbf{1. 積分の候補を作る．}
+  \textbf{1. Radon--Nikodym 微分と共通の零集合．}
   非負の $g\in C(K)$ に対し
   \[
     \nu_g(B):=\int_{K\times B}g(x)\,\d\pi(x,y)
     \qquad(B\in\Borel(\mathcal{Y}))
   \]
   とおく．単調収束定理より $\nu_g$ は有限測度であり，
-  $\nu_g(B)\leq\lVert g\rVert_\infty\nu(B)$ より，
-  $\nu(B)=0$ ならば $\nu_g(B)=0$ である．
+  $\nu_g(B)\leq\lVert g\rVert_\infty\nu(B)$ である．
   Radon--Nikodym の定理（定理~\ref{thm:meas-radon-nikodym}，$2\Rightarrow3$）から，
   非負で $\nu$-可積分な Borel 可測関数 $l_g$ で
   $\nu_g(B)=\int_Bl_g\,\d\nu$ となるものを取る．
-  ただし $l_0:=0$，$l_1:=1$ と選ぶ（$\nu_0=0$，$\nu_1=\nu$ だから選べる）．
+  $\nu_0=0$，$\nu_1=\nu$ なので $l_0:=0$，$l_1:=1$ と選び，
   一般の $f\in C(K)$ には $l_f:=l_{f^+}-l_{f^-}$ と定める
   （$f^\pm$ は注意~\ref{rem:meas-compact-continuous}）．
-  $f\geq0$ なら $f^-=0$ なので，$l_f=l_{f^+}\geq0$ が至るところで成り立つ．
-  また積分の線形性より，すべての $f\in C(K)$ と $B$ で
+  この選び方では $f\geq0$ ならば $l_f\geq0$ が各点で成り立ち，積分の線形性より
   \[
     \int_Bl_f\,\d\nu=\int_{K\times B}f(x)\,\d\pi(x,y)
   \]
-  である．
+  がすべての $f\in C(K)$ と $B\in\Borel(\mathcal{Y})$ で成り立つ．
 
+  密度の等式は一般に $\nu$-a.e. にしか成り立たず，例外集合は関数に依存する．
+  そこで，共通の零集合を取るため，まず関数を可算個に絞る．
   $1$ を含む可算な稠密 $\mathbb{Q}$-ベクトル部分空間 $\mathcal{C}\subset C(K)$ を取る
   （定理~\ref{thm:meas-ck-separable}）．
   $f,g\in\mathcal{C}$，$a,b\in\mathbb{Q}$ について，$l_{af+bg}$ と $al_f+bl_g$ は
   上の積分公式により任意の $B$ で同じ積分値をもつので，
   密度の一意性（補題~\ref{lem:rn-density-uniqueness}）より $\nu$-a.e. に一致する．
-  この条件は可算個なので，各条件の例外集合の合併として，
-  Borel 集合である $\nu$-零集合 $N$ で，$y\notin N$ ならば
+  条件は可算個なので，例外集合の合併は Borel 零集合 $N$ となり，$y\notin N$ で
   \[
     l_{af+bg}(y)=a\,l_f(y)+b\,l_g(y)\qquad(f,g\in\mathcal{C},\ a,b\in\mathbb{Q})
   \]
-  となるものが取れる．
+  が同時に成り立つ．
   $y\notin N$，$f\in\mathcal{C}$ とし，有理数 $r>\lVert f\rVert_\infty$ を取ると，
   $r\pm f\geq0$ かつ $r\pm f\in\mathcal{C}$ より $r\pm l_f(y)=l_{r\pm f}(y)\geq0$ である．
   $r$ を $\lVert f\rVert_\infty$ に近づけて $\abs{l_f(y)}\leq\lVert f\rVert_\infty$ を得る．
 
-  \textbf{2. 積分の候補から測度を得る．}
+  \textbf{2. Riesz の表現定理による確率測度の構成．}
   $y\notin N$ とする．$f\mapsto l_f(y)$ は $\mathcal{C}$ 上で $\mathbb{Q}$-線形であり，
   1 より $\abs{l_f(y)-l_g(y)}=\abs{l_{f-g}(y)}\leq\lVert f-g\rVert_\infty$ をみたす．
   $f\in C(K)$ に対し，$\lVert f_k-f\rVert_\infty\to0$ となる $f_k\in\mathcal{C}$ を取ると
@@ -99,16 +98,15 @@
     L_y(f):=\lim_{k\to\infty}l_{f_k}(y)
   \]
   と定める．極限は近似列の選び方によらず，$f\in\mathcal{C}$ なら $L_y(f)=l_f(y)$ である．
-  加法性は極限で保たれ，有理係数を実数に近似すれば実線形性も従う．
+  加法性は極限で保たれ，実数係数を有理数で近似すれば実線形性も従う．
   また $L_y(1)=1$，$\abs{L_y(f)}\leq\lVert f\rVert_\infty$ である．
-  $f\geq0$ なら，$m:=\lVert f\rVert_\infty$ とおくと $0\leq m-f\leq m$ より
-  $\lVert m-f\rVert_\infty\leq m$ なので，
+  $f\geq0$ なら，$m:=\lVert f\rVert_\infty$ とおくと $\lVert m-f\rVert_\infty\leq m$ なので，
   \[
     L_y(f)=m-L_y(m-f)\geq0.
   \]
   したがって Riesz の表現定理（定理~\ref{thm:meas-riesz-representation}）により
   $L_y(f)=\int_Kf\,\d\pi_y$（$f\in C(K)$）となる $\pi_y\in\Prob(K)$ が得られる．
-  $y\in N$ では $\pi_y:=\delta_{x_0}$ とする（$x_0\in K$）．
+  $x_0\in K$ を固定し，$y\in N$ では $\pi_y:=\delta_{x_0}$ とする．
 
   \textbf{3. 連続関数に対する積分公式．}
   $f\in C(K)$ と上の近似列 $f_k\in\mathcal{C}$ を取る．
@@ -127,10 +125,9 @@
   空でない閉集合 $A\subset K$ に対し，補題~\ref{lem:meas-closed-approx}の
   $\phi_k\downarrow\mathbf{1}_A$ を 3 の $f$ として有界収束定理を用いると，
   $y\mapsto\pi_y(A)$ は可測で，主張の積分公式が成り立つ（$A=\emptyset$ では明らか）．
-  可測性と積分公式をみたす $A\in\Borel(K)$ の全体は $\lambda$-系である：
-  $K$ を含み（$\pi_y(K)=1$，$\pi(K\times B)=\nu(B)$），補集合については
-  $\pi_y(K\setminus A)=1-\pi_y(A)$ と $\pi((K\setminus A)\times B)=\nu(B)-\pi(A\times B)$ を，
-  互いに素な可算合併については単調収束定理を用いればよい．
+  可測性とすべての $B$ に対する積分公式をみたす $A$ の全体は $\lambda$-系である．
+  実際，$K$ を含み，補集合については $\pi_y(K\setminus A)=1-\pi_y(A)$ を，
+  互いに素な可算合併については可算加法性と単調収束定理を使えばよい．
   閉集合の全体は $\Borel(K)$ を生成する $\pi$-系なので，
   Dynkin の定理（定理~\ref{thm:meas-pi-lambda}）によりすべての $A\in\Borel(K)$ で成り立つ．
 \end{proof}
@@ -138,27 +135,27 @@
 \section{一般の Polish 空間の場合}
 
 \begin{proof}[定理~\ref{thm:meas-disintegration}の存在の証明]
-  \textbf{1. compact 集合による分割．}
+  $x_0\in\mathcal{X}$ を固定する．
+
+  \textbf{1. compact 集合の列による分割．}
   第1周辺分布 $\mu(A):=\pi(A\times\mathcal{Y})$ は Prokhorov の定理
   （定理~\ref{thm:meas-prokhorov}，$1\Rightarrow2$）より tight である
   （$\{\mu\}$ 内の列は定数列で $\mu$ に弱収束する）．
   $K_0:=\emptyset$ とし，tightness で得た compact 集合と $K_{n-1}$ の合併を取って，
   $K_{n-1}\subset K_n$，$\mu(\mathcal{X}\setminus K_n)\leq1/n$ となる compact 集合の列を作る．
-  $K:=\bigcup_nK_n$ とおけば $\mu(\mathcal{X}\setminus K)=0$ なので，
-  任意の $A\in\Borel(\mathcal{X})$，$B\in\Borel(\mathcal{Y})$ について
+  $K:=\bigcup_nK_n$，$E_n:=K_n\setminus K_{n-1}$ とおけば，$\mu(\mathcal{X}\setminus K)=0$ であり，
+  $E_n$ は $K$ を互いに素に分割する．したがって，$\nu_n(B):=\pi(E_n\times B)$ とおくと
   \[
-    \pi(A\times B)=\pi((A\cap K)\times B).
+    \pi(A\times B)=\sum_n\pi((A\cap E_n)\times B),\qquad
+    \nu(B)=\sum_n\nu_n(B).
   \]
-  $E_n:=K_n\setminus K_{n-1}$，$\nu_n(B):=\pi(E_n\times B)$ とおけば，
-  $E_n$ は $K$ を互いに素に分割するので，可算加法性より $\sum_n\nu_n(B)=\nu(B)$ である．
 
   \textbf{2. 各部分での分解．}
   $\nu_n\neq0$ の各 $n$ では，$\pi$ の $E_n\times\mathcal{Y}$ への制限
-  $C\mapsto\pi(C\cap(E_n\times\mathcal{Y}))$ を $K_n\times\mathcal{Y}$ 上の有限測度とみて
-  補題~\ref{lem:dis-compact}を適用する
-  （閉部分空間の Borel 集合は周囲の Borel 集合である．注意~\ref{rem:meas-subspace-borel}）．
-  得た $K_n$ 上の確率測度を，$A\in\Borel(\mathcal{X})$ に $A\cap K_n$ の測度を割り当てて
-  $\mathcal{X}$ 上に延長し，$\rho_y^{(n)}$ と書く．このとき
+  $C\mapsto\pi(C\cap(E_n\times\mathcal{Y}))$ を $K_n\times\mathcal{Y}$ 上の有限測度とみて，
+  補題~\ref{lem:dis-compact}を適用する．得た確率測度を $K_n$ の外で $0$ として
+  $\mathcal{X}$ 上に延長し，$\rho_y^{(n)}$ と書く
+  （注意~\ref{rem:meas-subspace-borel}）．このとき
   $y\mapsto\rho^{(n)}_y(A)$ は Borel 可測で，
   \[
     \pi((A\cap E_n)\times B)=\int_B\rho_y^{(n)}(A)\,\d\nu_n(y)
@@ -169,9 +166,10 @@
   \textbf{3. 重みを付けて足し合わせる．}
   $\nu_n(B)\leq\nu(B)$ なので，Radon--Nikodym の定理（定理~\ref{thm:meas-radon-nikodym}）から
   非負の Borel 可測な密度 $h_n:=\d\nu_n/\d\nu$ を取る．
-  単調収束定理より $\int_B\sum_nh_n\,\d\nu=\sum_n\nu_n(B)=\nu(B)=\int_B1\,\d\nu$ なので，
-  密度の一意性（補題~\ref{lem:rn-density-uniqueness}）より $\sum_nh_n=1$ が $\nu$-a.e. に成り立つ．
-  その例外集合 $N_0:=\{\sum_nh_n\neq1\}$ は Borel 集合である．そこで
+  単調収束定理より $\int_B\sum_nh_n\,\d\nu=\sum_n\nu_n(B)=\nu(B)$ である．
+  特に $\sum_nh_n$ は可積分である．零集合上の無限値を $0$ に置き換え，
+  密度の一意性（補題~\ref{lem:rn-density-uniqueness}）を適用すると，$\sum_nh_n=1$ が $\nu$-a.e. に成り立つ．
+  Borel 零集合 $N_0:=\{\sum_nh_n\neq1\}$ を用いて
   \[
     \pi_y(A):=
     \begin{cases}
@@ -179,16 +177,16 @@
       \delta_{x_0}(A) & (y\in N_0)
     \end{cases}
   \]
-  と定める．$y\notin N_0$ では，非負係数の和が $1$ の確率測度の可算和なので，
-  単調収束定理（数列の場合）より $\pi_y$ は確率測度である．
-  各項の可測性から条件 1 が成り立つ．
+  と定める．$y\notin N_0$ では，確率測度を和が $1$ の非負の重みで足し合わせているので，
+  $\pi_y$ は確率測度である（可算加法性は非負二重級数の和の交換による）．
+  各項と $N_0$ の可測性から条件 1 が成り立つ．
   系~\ref{cor:rn-density-integral}と単調収束定理より
   \[
     \begin{aligned}
       \int_B\pi_y(A)\,\d\nu(y)
       &=\sum_n\int_B\rho_y^{(n)}(A)\,h_n(y)\,\d\nu(y)
       =\sum_n\int_B\rho_y^{(n)}(A)\,\d\nu_n(y)\\
-      &=\sum_n\pi((A\cap E_n)\times B)=\pi((A\cap K)\times B)=\pi(A\times B).
+      &=\sum_n\pi((A\cap E_n)\times B)=\pi(A\times B).
     \end{aligned}
   \]
   よって条件 2 も成り立つ．
@@ -198,10 +196,10 @@
 
 \begin{proof}[定理~\ref{thm:meas-disintegration}の一意性の証明]
   $(\pi_y)$，$(\pi'_y)$ がともに条件 1，2 をみたすとする．
-  $A\in\Borel(\mathcal{X})$ を固定すると，$y\mapsto\pi_y(A)$，$y\mapsto\pi'_y(A)$ は
-  $[0,1]$ に値をとる可測関数であり，条件 2 よりすべての $B$ で同じ積分値をもつ．
+  $A\in\Borel(\mathcal{X})$ を固定すると，$\pi_y(A)$，$\pi'_y(A)$ は $y$ の有界可測関数であり，
+  条件 2 よりすべての $B$ で同じ積分値をもつ．
   密度の一意性（補題~\ref{lem:rn-density-uniqueness}）より，
-  ある $\nu$-零集合 $N_A$ の外で $\pi_y(A)=\pi'_y(A)$ である．
+  $N_A:=\{y\mid\pi_y(A)\neq\pi'_y(A)\}$ は Borel 零集合である．
 
   補題~\ref{lem:meas-countable-generator}により，
   $\Borel(\mathcal{X})$ を生成する可算な $\pi$-系 $\mathcal{E}$ を取り，

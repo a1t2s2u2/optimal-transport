@@ -1,19 +1,14 @@
 \chapter{Radon--Nikodym の定理}
 \label{ch:radon-nikodym}
 
-第\ref{ch:disintegration}章の測度分解定理では，
-二つの有限測度の間の密度（Radon--Nikodym 微分）の存在を用いる．
-本章ではこれを証明する．
+Radon--Nikodym の定理は，一つの測度を別の測度に関する密度で表す定理である．
+第\ref{ch:disintegration}章では，この密度を使って各 $y$ における積分の値を定める．
 主張は北別府悠『最適輸送理論入門〜兼非標準的関数解析入門〜』
-Corollary 4.6.2（p.~57）に従う．
-資料では Hilbert 空間 $L^2$ 上の Riesz の表現定理から Lebesgue 分解定理
-（Theorem 4.6.1）を経て導いているが，
-本資料では $L^2$ の完備性を用いずに済む，正集合の補題による証明を採用する
-（例えば Royden--Fitzpatrick \emph{Real Analysis}（第4版）の Hahn の補題と同じ構成）．
+Corollary 4.6.2（p.~57）に従い，証明には正集合の補題を用いる．
 
 以下，$(\Omega,\mathcal{A})$ を可測空間とする．
 
-\section{絶対連続性}
+\section{絶対連続性と定理の主張}
 
 \begin{definition}{測度の絶対連続性（北別府 p.~57）}{meas-absolute-continuity}
   $(\Omega,\mathcal{A})$ 上の有限測度 $\nu,\alpha$ を考える．
@@ -24,9 +19,6 @@ Corollary 4.6.2（p.~57）に従う．
     \qquad(B\in\mathcal{A})
   \]
   が成り立つことをいう．このとき $\alpha\ll\nu$ と書く．
-  北別府の資料では，この定義を実数値の集合関数 $\psi$ に対して
-  $\abs{\psi(B)}<\varepsilon$ の形で与えている．
-  本資料で用いるのは有限測度の場合である．
 \end{definition}
 
 \begin{remark}{零集合による特徴付けとの関係}{rn-null-characterization}
@@ -35,19 +27,44 @@ Corollary 4.6.2（p.~57）に従う．
   有限測度の場合，この二つは同値である（定理~\ref{thm:meas-radon-nikodym}）．
 \end{remark}
 
-\section{正集合の補題}
+\begin{theorem}{Radon--Nikodym の定理（北別府 Cor 4.6.2）}{meas-radon-nikodym}
+  $(\Omega,\mathcal{A})$ 上の有限測度 $\nu,\alpha$ に対し，次の三つは同値である．
+  \begin{enumerate}
+    \item $\alpha\ll\nu$．
+    \item すべての $B\in\mathcal{A}$ に対して，$\nu(B)=0$ ならば $\alpha(B)=0$ である．
+    \item 非負の $\nu$-可積分な可測関数 $h\colon\Omega\to[0,\infty)$ が存在し，
+      \[
+        \alpha(B)=\int_Bh\,\d\nu\qquad(B\in\mathcal{A})
+      \]
+      が成り立つ．
+  \end{enumerate}
+  条件 3 の $h$ は $\nu$-a.e. の意味で一意であり，
+  \textbf{Radon--Nikodym 微分}とよんで $\d\alpha/\d\nu$ と書く．
+\end{theorem}
 
-二つの有限測度 $\alpha,\beta$ に対し，集合関数
-\[
-  \lambda(B):=\alpha(B)-\beta(B)\qquad(B\in\mathcal{A})
-\]
-を考える．$\lambda$ は実数値であり，互いに素な $B_1,B_2,\ldots\in\mathcal{A}$ に対して
-\[
-  \lambda\left(\bigcup_kB_k\right)=\sum_k\lambda(B_k)
-\]
-が成り立つ．実際，右辺の級数は
-$\sum_k\abs{\lambda(B_k)}\leq\sum_k(\alpha(B_k)+\beta(B_k))\leq\alpha(\Omega)+\beta(\Omega)<\infty$
-より絶対収束し，$\alpha,\beta$ それぞれの可算加法性の差を取ればよい．
+証明の中心は $2\Rightarrow3$ である．
+$\alpha$ を超えない積分を与える密度の中から，積分値が最大のものを取り，
+残りの測度が $0$ であることを示す．その準備として二つの補題を証明する．
+
+\section{証明の準備}
+
+\begin{lemma}{密度の一意性}{rn-density-uniqueness}
+  $\nu$ を $(\Omega,\mathcal{A})$ 上の有限測度とし，
+  $h,k\colon\Omega\to\R$ を $\nu$-可積分な可測関数とする．すべての $B\in\mathcal{A}$ で
+  \[
+    \int_Bh\,\d\nu=\int_Bk\,\d\nu
+  \]
+  が成り立つならば，$h=k$ が $\nu$-a.e. に成り立つ．
+\end{lemma}
+
+\begin{proof}
+  $B:=\{h>k\}$ では $h-k>0$ である一方，$\int_B(h-k)\,\d\nu=0$ なので $\nu(B)=0$ である．
+  $h,k$ を入れ替えて $\nu(\{k>h\})=0$ も得る．
+\end{proof}
+
+次の補題は，測度の差が正になる部分を取り出すために用いる．
+証明は Hahn の補題と同じく，値が負になる部分集合を順に取り除く構成による
+（Royden--Fitzpatrick \emph{Real Analysis}，第4版）．
 
 \begin{lemma}{正集合の存在}{rn-positive-set}
   $\alpha,\beta$ を $(\Omega,\mathcal{A})$ 上の有限測度とし，$\lambda:=\alpha-\beta$ とおく．
@@ -60,86 +77,48 @@ $\sum_k\abs{\lambda(B_k)}\leq\sum_k(\alpha(B_k)+\beta(B_k))\leq\alpha(\Omega)+\b
 \end{lemma}
 
 \begin{proof}
-  $\lambda$ の値が負になる部分集合を，できるだけ大きく負のものから順に取り除いていく．
-
-  $A_0:=\Omega$ とおく．$A_{k-1}$ まで定まったとする．
-  $A_{k-1}$ のすべての可測部分集合 $C$ で $\lambda(C)\geq0$ ならば，ここで操作を止める．
-  そうでなければ，
+  互いに素な可測集合 $C_k$ に対し
   \[
-    n_k:=\min\{n\in\N\mid\text{ある }C\in\mathcal{A},\ C\subset A_{k-1}\text{ で }\lambda(C)\leq-1/n\}
+    \sum_k\abs{\lambda(C_k)}\leq\alpha(\Omega)+\beta(\Omega)<\infty
   \]
-  とし，$C_k\subset A_{k-1}$ を $\lambda(C_k)\leq-1/n_k$ となるように選んで，
-  $A_k:=A_{k-1}\setminus C_k$ とおく．このとき
+  なので，$\lambda(\bigcup_kC_k)=\sum_k\lambda(C_k)$ が成り立つ．
+
+  $A_0:=\Omega$ とし，$A_{k-1}$ が定まったとき
   \[
-    \lambda(A_k)=\lambda(A_{k-1})-\lambda(C_k)\geq\lambda(A_{k-1})+\frac1{n_k}
+    m_k:=\inf\{\lambda(C)\mid C\in\mathcal{A},\ C\subset A_{k-1}\}
   \]
-  なので，$\lambda(A_k)$ は $k$ について増加する．
+  とおく．$-\beta(\Omega)\leq m_k\leq0$ である．
+  $m_k=0$ ならば $P:=A_{k-1}$ として終了する．
+  $m_k<0$ ならば，可測集合 $C_k\subset A_{k-1}$ を
+  $\lambda(C_k)<m_k/2$ となるように取り，$A_k:=A_{k-1}\setminus C_k$ とする．
+  負の値をもつ集合だけを取り除くので，$\lambda(A_k)\geq\lambda(\Omega)>0$ であり，
+  操作が止まれば求める $P$ が得られる．
 
-  操作がある $k$ で止まれば，$P:=A_{k-1}$ は $\lambda(P)\geq\lambda(\Omega)>0$ をみたし，求める集合である．
-
-  止まらない場合，$C_1,C_2,\ldots$ は互いに素であり，
-  $P:=\Omega\setminus\bigcup_kC_k$ とおくと，$\lambda$ の可算加法性より
+  止まらない場合は $P:=\Omega\setminus\bigcup_kC_k$ とおく．
+  $C_k$ は互いに素なので
   \[
     \lambda(P)=\lambda(\Omega)-\sum_k\lambda(C_k)\geq\lambda(\Omega)>0.
   \]
-  また $\sum_k1/n_k\leq\sum_k\abs{\lambda(C_k)}<\infty$ より $n_k\to\infty$ である．
-  ある $C\in\mathcal{A}$，$C\subset P$ で $\lambda(C)<0$ と仮定し，
-  $\lambda(C)\leq-1/n$ となる $n\in\N$ を取る．
-  $n_k>n$ となる $k$ を取ると，$C\subset P\subset A_{k-1}$ だから，
-  $n_k$ の最小性に反する．よって $P$ の可測部分集合 $C$ はすべて $\lambda(C)\geq0$ をみたす．
+  また，絶対収束より $\lambda(C_k)\to0$ であり，$2\lambda(C_k)<m_k\leq0$ から $m_k\to0$ である．
+  可測集合 $C\subset P$ はすべての $A_{k-1}$ に含まれるので，
+  $\lambda(C)\geq m_k$ がすべての $k$ で成り立ち，$\lambda(C)\geq0$ を得る．
 \end{proof}
 
-\section{Radon--Nikodym の定理}
+\section{定理の証明と積分への応用}
 
-\begin{lemma}{密度の一意性}{rn-density-uniqueness}
-  $\nu$ を $(\Omega,\mathcal{A})$ 上の有限測度とし，
-  $h,k\colon\Omega\to\R$ を $\nu$-可積分な可測関数とする．すべての $B\in\mathcal{A}$ で
-  \[
-    \int_Bh\,\d\nu=\int_Bk\,\d\nu
-  \]
-  が成り立つならば，$h=k$ が $\nu$-a.e. に成り立つ．
-\end{lemma}
-
-\begin{proof}
-  $B:=\{h>k\}$ とおくと $\int_B(h-k)\,\d\nu=0$ であり，
-  $(h-k)\mathbf{1}_B$ は非負なので，$\nu$-a.e. に $0$ である．
-  $B$ 上では $h-k>0$ だから $\nu(B)=0$ である．
-  $h,k$ を入れ替えて $\nu(\{k>h\})=0$ も得られ，$h=k$ が $\nu$-a.e. に成り立つ．
-\end{proof}
-
-\begin{theorem}{Radon--Nikodym の定理（北別府 Cor 4.6.2）}{meas-radon-nikodym}
-  $(\Omega,\mathcal{A})$ 上の二つの有限測度 $\nu,\alpha$ に対し，次の三つは同値である．
-  \begin{enumerate}
-    \item $\alpha\ll\nu$，すなわち $\alpha$ は $\nu$ に絶対連続である．
-    \item すべての $B\in\mathcal{A}$ に対して，$\nu(B)=0$ ならば $\alpha(B)=0$ である．
-    \item 非負の $\nu$-可積分な可測関数 $h\colon\Omega\to[0,\infty)$ が存在し，
-      \[
-        \alpha(B)=\int_Bh\,\d\nu\qquad(B\in\mathcal{A})
-      \]
-      が成り立つ．
-  \end{enumerate}
-  条件 3 の $h$ は $\nu$-a.e. の意味で一意であり（補題~\ref{lem:rn-density-uniqueness}），
-  \textbf{Radon--Nikodym 微分}とよんで $\d\alpha/\d\nu$ と書く．
-\end{theorem}
-
-\begin{proof}
+\begin{proof}[定理~\ref{thm:meas-radon-nikodym}の証明]
   \textbf{$1\Rightarrow2$．}
-  $\nu(B)=0$ とする．任意の $\varepsilon>0$ に対し，対応する $\delta>0$ について
-  $\nu(B)<\delta$ だから $\alpha(B)<\varepsilon$ である．$\varepsilon$ は任意なので $\alpha(B)=0$ である．
+  $\nu(B)=0$ ならば，絶対連続性より任意の $\varepsilon>0$ に対して
+  $\alpha(B)<\varepsilon$ となるので，$\alpha(B)=0$ である．
 
-  \textbf{$3\Rightarrow1$．}（北別府の証明に従う．）
-  $\varepsilon>0$ を任意に取る．$n\in\N$ に対し $B_n:=\{h>n\}$ とおくと，
-  $h$ は実数値なので $h-h\mathbf{1}_{B_n}=h\mathbf{1}_{\{h\leq n\}}\uparrow h$（各点）である．
-  単調収束定理（定理~\ref{thm:meas-mct}）と $\int_\Omega h\,\d\nu<\infty$ より
+  \textbf{$3\Rightarrow1$．}
+  $\varepsilon>0$ を取る．$h$ の可積分性と単調収束定理（定理~\ref{thm:meas-mct}）より，
+  $\int_{\{h>n\}}h\,\d\nu\to0$ である．
+  この積分が $\varepsilon/2$ 未満となる $n\in\N$ を取り，$\delta:=\varepsilon/(2n)$ とすれば，
+  $\nu(B)<\delta$ のとき
   \[
-    \alpha(B_n)=\int_{B_n}h\,\d\nu\longrightarrow0\qquad(n\to\infty).
-  \]
-  そこで $\alpha(B_n)<\varepsilon/2$ となる $n$ を取り，$\delta:=\varepsilon/(2n)$ とおく．
-  $\nu(B)<\delta$ ならば，$B\setminus B_n$ 上で $h\leq n$ なので
-  \[
-    \alpha(B)=\alpha(B\cap B_n)+\int_{B\setminus B_n}h\,\d\nu
-    \leq\alpha(B_n)+n\,\nu(B)
-    <\frac\varepsilon2+n\delta=\varepsilon.
+    \alpha(B)=\int_Bh\,\d\nu
+    \leq\int_{\{h>n\}}h\,\d\nu+n\,\nu(B)<\varepsilon.
   \]
 
   \textbf{$2\Rightarrow3$．}
@@ -149,7 +128,7 @@ $\sum_k\abs{\lambda(B_k)}\leq\sum_k(\alpha(B_k)+\beta(B_k))\leq\alpha(\Omega)+\b
   \]
   とおく．$0\in\mathcal{G}$ である．
 
-  \emph{(a) $\mathcal{G}$ は最大について閉じている．}
+  \emph{(a) 積分値が最大の密度を作る．}
   $g_1,g_2\in\mathcal{G}$ とし，$B\in\mathcal{A}$ を
   $B_1:=B\cap\{g_1\geq g_2\}$，$B_2:=B\setminus B_1$ に分けると
   \[
@@ -158,26 +137,25 @@ $\sum_k\abs{\lambda(B_k)}\leq\sum_k(\alpha(B_k)+\beta(B_k))\leq\alpha(\Omega)+\b
     \leq\alpha(B_1)+\alpha(B_2)=\alpha(B).
   \]
 
-  \emph{(b) 積分が最大となる元を取る．}
   $s:=\sup_{g\in\mathcal{G}}\int_\Omega g\,\d\nu\leq\alpha(\Omega)<\infty$ とおく．
   $\int_\Omega g_n\,\d\nu\to s$ となる $g_n\in\mathcal{G}$ を取り，
-  $\tilde g_n:=\max\{g_1,\dots,g_n\}$ とおくと，(a) より $\tilde g_n\in\mathcal{G}$ であり，
+  $\tilde g_n:=\max\{g_1,\dots,g_n\}$ とおくと，前段より $\tilde g_n\in\mathcal{G}$ であり，
   $\tilde g_n$ は単調増加である．その各点極限を $g$ とすると，
   単調収束定理（定理~\ref{thm:meas-mct}）より，すべての $B$ で
   $\int_Bg\,\d\nu=\lim_n\int_B\tilde g_n\,\d\nu\leq\alpha(B)$ となり，
   $g\in\mathcal{G}$ かつ $\int_\Omega g\,\d\nu=s$ である．
   $\int_\Omega g\,\d\nu<\infty$ より $\nu(\{g=\infty\})=0$ なので，
-  $h:=g\,\mathbf{1}_{\{g<\infty\}}$ とおけば $h$ は実数値で，$h\in\mathcal{G}$，$\int_\Omega h\,\d\nu=s$ である．
+  この零集合上で $g$ の値を $0$ に置き換えた関数を $h$ とすれば，
+  $h$ は実数値で，$h\in\mathcal{G}$，$\int_\Omega h\,\d\nu=s$ である．
 
-  \emph{(c) $h$ が求める密度であること．}
+  \emph{(b) 残りの測度は $0$ である．}
   \[
     \beta(B):=\alpha(B)-\int_Bh\,\d\nu\qquad(B\in\mathcal{A})
   \]
   とおくと，$h\in\mathcal{G}$ より $\beta\geq0$ であり，$\beta$ は有限測度である
   （可算加法性は単調収束定理による）．$\beta(\Omega)=0$ を示せばよい．
 
-  $\beta(\Omega)>0$ と仮定する．$\nu(\Omega)=0$ なら仮定 2 から $\alpha(\Omega)=0$，
-  したがって $\beta(\Omega)=0$ となるので，$\nu(\Omega)>0$ である．
+  $\beta(\Omega)>0$ と仮定する．
   $t>0$ を $\beta(\Omega)-t\,\nu(\Omega)>0$ となるように取り，
   補題~\ref{lem:rn-positive-set}を $\lambda:=\beta-t\nu$ に適用して $P$ を得る．
   $P$ の可測部分集合 $C$ について $t\,\nu(C)\leq\beta(C)$ であるから，
@@ -196,7 +174,7 @@ $\sum_k\abs{\lambda(B_k)}\leq\sum_k(\alpha(B_k)+\beta(B_k))\leq\alpha(\Omega)+\b
   \]
   となって $s$ の定義に反する．したがって $\beta(\Omega)=0$ であり，
   すべての $B$ で $\alpha(B)=\int_Bh\,\d\nu$ が成り立つ．
-  $\int_\Omega h\,\d\nu=\alpha(\Omega)<\infty$ より $h$ は $\nu$-可積分である．
+  一意性は補題~\ref{lem:rn-density-uniqueness}による．
 \end{proof}
 
 \begin{corollary}{密度による積分の書き換え}{rn-density-integral}
