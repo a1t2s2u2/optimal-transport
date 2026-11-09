@@ -23,7 +23,7 @@ Polish 空間 $\mathcal{X}$ 上で
 測度分解定理の証明は，北別府悠
 『最適輸送理論入門〜兼非標準的関数解析入門〜』Theorem 5.3.1 の
 提供資料に沿って補い，そこで用いる Radon--Nikodym の定理と
-Riesz の表現定理にも証明を付けた．
+Riesz--Markov--Kakutani の表現定理にも証明を付けた．
 
 \section*{本資料の構成}
 
@@ -34,15 +34,19 @@ Riesz の表現定理にも証明を付けた．
     最適 coupling の存在定理を経て目標を証明する．
     三角不等式の証明では，接着補題を通じて測度分解定理を用いる．
   \item 第\ref{ch:disintegration}章：
-    測度分解定理の主張を示し，準備となる Radon--Nikodym の定理と Riesz の表現定理を証明する．
+    測度分解定理の主張を示し，準備となる Radon--Nikodym の定理と
+    Riesz--Markov--Kakutani の表現定理を証明する．
     その後，変数ごとの確率測度への分解とその本質的一意性を証明する．
   \item 付録A：
-    本編に必要な距離空間と測度論の準備をまとめる．
+    既知として用いる定理の主張と，補助結果の証明をまとめる．
+    発表中の質問や復習に備え，必要な箇所を本文から参照する．
 \end{itemize}
 
 \section*{主な記号}
 
 \begin{itemize}
+  \item $A\subset B$：包含．$A=B$ の場合も含む
+    （Villani (2009) の用法に合わせる．例えば p.44 Lemma 4.4）．
   \item $\Prob(\mathcal{X})$：$\mathcal{X}$ 上の Borel 確率測度全体．
   \item $\Pp{p}(\mathcal{X})$：有限 $p$ 次モーメントをもつ確率測度全体
     （定義~\ref{def:wp-p-space}）．
@@ -52,8 +56,10 @@ Riesz の表現定理にも証明を付けた．
   \item $\mathbf{1}_A$：指示関数（定義~\ref{def:meas-indicator}）．
   \item $\mu\circ T^{-1}$：写像 $T$ による $\mu$ の像測度（定義~\ref{def:meas-pushforward}）．
   \item $\mu\otimes\nu$：直積測度（定理~\ref{thm:meas-product}）．
-  \item $\alpha\ll\nu$：絶対連続性（定義~\ref{def:meas-absolute-continuity}）．
-  \item $\d\alpha/\d\nu$：Radon--Nikodym 微分（定理~\ref{thm:meas-radon-nikodym}）．
-  \item $C(K)$，$\lVert f\rVert_\infty$：compact 空間上の連続関数と一様ノルム
+  \item $\nu\ll\mu$：絶対連続性（定義~\ref{def:meas-absolute-continuity}）．
+  \item $\d\nu/\d\mu$：Radon--Nikodym 微分（定理~\ref{thm:meas-radon-nikodym}）．
+  \item $L^2(\pi)$，$\norm{g}_{L^2(\pi)}$：二乗可積分関数の空間とそのノルム
+    （注意~\ref{rem:rn-l2-notation}）．
+  \item $C(K)$，$\norm{f}_\infty$：compact 空間上の連続関数と一様ノルム
     （注意~\ref{rem:meas-compact-continuous}）．
 \end{itemize}

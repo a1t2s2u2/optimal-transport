@@ -86,7 +86,7 @@ Borel $\sigma$-代数 $\Borel(\mathcal{X})$ 上の確率測度全体を
       \int_{\mathcal{X}\times \mathcal{X}}d(x,y)^p\,\d\pi(x,y)
     \right)^{1/p}
   \]
-  と定める．
+  を $\mu,\nu$ の\textbf{Wasserstein 距離}と定める．
 \end{definition}
 
 \begin{remark}{距離関数の可測性}{wp-welldef}
@@ -191,7 +191,7 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
 \end{proof}
 
 \begin{remark}{記法：測度の族}{wp-family-symbol}
-  Villani は測度の族を $\mathcal{P},\mathcal{Q}$ と書くが，
+  Villani は測度の族を $\mathcal{P},\mathcal{Q}$ と書くが， % notation: ignore
   本資料では確率測度全体を $\Prob(\mathcal{X})$ と書いているため
   記号が衝突する．そこで以下では族を $A,B$ で表す．
 \end{remark}
@@ -345,24 +345,24 @@ $\int d^p\,\d\pi$ と略記する．また，弱収束の定義
   共通の変数 $y$ に沿って二つの測度を分解し，得られた分布を直積にしてから $\nu$ で平均する．
   定理~\ref{thm:meas-disintegration}を $\pi$ と，$\sigma$ の写像 $(y,z)\mapsto(z,y)$ による
   像測度に適用する．これにより，確率測度の族
-  $\pi_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ で
+  $\lambda_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ で
   \[
-    \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y),\qquad
+    \pi(A\times B)=\int_B\lambda_y(A)\,\d\nu(y),\qquad
     \sigma(B\times C)=\int_B\sigma_y(C)\,\d\nu(y)
   \]
-  をみたし，$y\mapsto\pi_y(A)$，$y\mapsto\sigma_y(C)$ が Borel 可測となるものを得る．
+  をみたし，$y\mapsto\lambda_y(A)$，$y\mapsto\sigma_y(C)$ が Borel 可測となるものを得る．
 
   そこで，$\gamma\in\Prob(\mathcal{X}\times\mathcal{Y}\times\mathcal{Z})$ を
   \[
-    \gamma(A\times B\times C):=\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y)
+    \gamma(A\times B\times C):=\int_B\lambda_y(A)\,\sigma_y(C)\,\d\nu(y)
   \]
   と定める．このような確率測度がただ一つ存在することは
   定理~\ref{thm:meas-kernel-composition}による．
   $\sigma_y(\mathcal{Z})=1$ より，$C=\mathcal{Z}$ とすると
   \[
-    \gamma(A\times B\times\mathcal{Z})=\int_B\pi_y(A)\,\d\nu(y)=\pi(A\times B)
+    \gamma(A\times B\times\mathcal{Z})=\int_B\lambda_y(A)\,\d\nu(y)=\pi(A\times B)
   \]
-  である．同様に $\pi_y(\mathcal{X})=1$ より，$A=\mathcal{X}$ とすると
+  である．同様に $\lambda_y(\mathcal{X})=1$ より，$A=\mathcal{X}$ とすると
   \[
     \gamma(\mathcal{X}\times B\times C)=\int_B\sigma_y(C)\,\d\nu(y)=\sigma(B\times C)
   \]

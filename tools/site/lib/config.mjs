@@ -132,5 +132,8 @@ export async function loadConfig(seminarDir) {
 
     // --- デモ図 ---
     demos: raw.demos ?? {},
+
+    // --- 記法の検査（tools/notation）---
+    notation: { forbidden: [], ...raw.notation },
   };
 }

@@ -19,21 +19,26 @@ Villani の該当ページのスキャンは `reference/old_and_new/pNNN.jpg` �
 - 文献間で定義が異なる場合は、最も一般的な定義を採用し、差異を注意として記載する
 - 押し出し記法 $T_\sharp\mu$ は使わず、像測度 $\mu\circ T^{-1}$ と書く（定義箇所に文献との対応を注記済み）
 - 座標射影を $\mathrm{pr}_1,\mathrm{pr}_{12}$ などと記号化しない。周辺分布または座標成分を集合上の等式で直接書く
-- 空間記号は付録も含め Villani に合わせて calligraphy（$\mathcal{X},\mathcal{Y},\mathcal{Z}$）で書く。例外は抽象的な測度空間 $\Omega,\Omega'$ と、距離の公理の台集合 $M$（$P_p(\mathcal{X})$ 等にも適用するため中立の記号を維持）
+- 空間記号は付録も含め Villani に合わせて calligraphy（$\mathcal{X},\mathcal{Y},\mathcal{Z}$）で書く。例外は抽象的な測度空間 $\Omega,\Omega'$、北別府の記号に合わせる Radon–Nikodym の節と対応する付録の $X$、および距離の公理の台集合 $M$（$P_p(\mathcal{X})$ 等にも適用するため中立の記号を維持）
 - 弱収束は `\weakto`（$\rightharpoonup$）で書く。Villani / Billingsley は $\Rightarrow$ を使うが、含意と紛らわしいため採用しない（$\Rightarrow$ は含意専用）
 - 定着した名称のない補題は、内容を説明する日本語タイトルを付ける
 - Villani に対応する番号のあるブロックは、タイトルに `（Villani Thm 4.1）` の形で併記する（番号のない主張・本資料独自の補題には付けない）
 - 記法の初出箇所には「記法 …」の注意を置く（例: $L_n\downarrow L^*$、$\norm{f}_{L^p(\mu)}$）
+- 絶対連続性は零集合による定義を使う（Folland §3.2）。北別府 p.57 の ε–δ による定義との同値性は付録で証明する
+- Radon–Nikodym の節と対応する付録の記号は北別府 pp.56–57 に合わせる。可測空間は $(X,\Sigma)$、基準測度は $\mu$、密度で表す測度は $\nu$、密度は $f=\d\nu/\d\mu$ とし、$\nu(A)=\int_Af\,\d\mu$ と書く。証明中の $\pi=\mu+\nu$、補助関数 $h$、切り詰め集合 $G_n$ も原資料に合わせる。$h$ は $\pi$ に関する密度で、最終的な密度 $f$ とは区別する。測度分解に適用する際の記号との対応も明示する
+- 測度分解では北別府の提供資料に合わせて、密度を $l_f$、延長した汎関数を $m_y$、分解測度を $\lambda_y$ とする。接着補題・付録・概念図でも分解測度の記号を揃える。原資料との記号・定理の範囲・証明の相違は `reference/README.md` に記録し、別証明や補足証明を原資料の証明と混同しない
 
 ## 方針
 
-- 前提知識は付録（`tex/foundations/`）で全網羅し、本文からは参照でリンクする
+- 前提知識と補助結果の証明は付録（`tex/foundations/`）にまとめ、本文から参照する。付録の証明をすべて発表で扱うことは想定しない
 - $W_p$ は Villani (Definition 6.1) に合わせて $1\leq p<\infty$ のみ扱う（$W_\infty$ と $L^\infty$ 系の道具は導入しない）
 - 最適 coupling の存在定理は Villani (2009) Theorem 4.1 をコスト $d^p$ に特殊化した形（Remark 4.2 にいう $a=b=0$ の場合）で示し、距離性（三角不等式・一致の公理）の証明に用いる。Lemma 4.3 も「$p$ 次輸送コストの下半連続性」に特殊化（$d^p$ は連続なので切り捨て $\min\{d^p,m\}$ ＋単調収束定理で自己完結。一般コスト・上半連続 $h$・$L^1$ 条件は置かない）。Lemma 4.4（輸送計画の tightness）は Villani どおり
-- 第3章「測度分解定理」（`main/02_disintegration.tex`）に，測度分解定理とその準備となる二つの定理をまとめる。章内は「測度分解定理の主張 → Radon–Nikodym の定理 → Riesz の表現定理 → 測度分解定理の証明」の順とする。測度分解定理は北別府 Theorem 5.3.1 の構成に従い，Villani の接着補題で使う形の存在と本質的一意性を証明する。Radon–Nikodym の定理には正集合の補題による証明（北別府の $L^2$/Lebesgue 分解経由とは別証明），compact 距離空間上の Riesz–Markov–Kakutani の表現定理には Rudin Thm 2.14 の方針を Carathéodory の定理で簡略化した証明を付ける。`01_wasserstein_metrics.tex` の接着補題から本章を参照する
-- 測度分解まわりで証明なしに認めるのは $C(K)$ の可分性，Carathéodory の定理，閉部分空間の Borel 集合の性質のみ（付録「測度分解のための準備」）
-- Prokhorov の定理は証明なしで認める（ステートメントと引用元のみ明示。Villani Ch.4 / Billingsley 1999 Th 5.1, 5.2）
+- 第3章「測度分解定理」（`main/02_disintegration.tex`）に，測度分解定理とその準備となる二つの定理をまとめる。章内は「測度分解定理の主張 → Radon–Nikodym の定理 → Riesz–Markov–Kakutani の表現定理 → 測度分解定理の証明」の順とする。測度分解定理は北別府 Theorem 5.3.1 の構成に従い，Villani の接着補題で使う形の存在と本質的一意性を証明する。Radon–Nikodym は北別府 Theorem 4.6.1 の $L^2(\mu+\nu)$ による構成を $\nu\ll\mu$ の場合に適用し，Lebesgue 分解定理を独立に立てず Corollary 4.6.2 を直接示す。compact 距離空間上の Riesz–Markov–Kakutani の表現定理には Rudin Thm 2.14 の方針を Carathéodory の定理で簡略化した証明を付ける。`01_wasserstein_metrics.tex` の接着補題から本章を参照する
+- Radon–Nikodym の証明は「和の測度に関する表示 → 基準測度に関する密度 → 一意性」の3段階とし，細かな補題に分けない。Hilbert 空間版 Riesz と $L^2$ の完備性の定義・証明は付録に置く。別リポジトリ `seminar` の Riesz–Fischer の定理・射影の補題の議論を参考に，任意の有限測度に使える実 Hilbert 空間の形で補う。射影の議論は表現定理の証明に組み込み，独立した射影定理や一般の $L^p$ 双対定理は前提にしない。密度の一意性は実数値の可積分関数について示し，後の測度分解からもその議論を参照する。「密度による積分の書き換え」は定理の後の系として置く
+- 測度分解まわりで既知とするのは測度論の基本事項（可測性と積分の基本性質，単調収束定理，Dynkin の定理，Carathéodory の定理）と距離空間の基本事項。本文では二つの準備定理と測度分解の証明を軸とし，補助結果は付録の証明を参照する。$C(K)$ の可分性は有限個の球と明示的な連続関数による近似で示し，Stone–Weierstrass や一般の分割の定理を前提にしない。閉部分空間の Borel 集合の性質も付録で証明する
+- Prokhorov の定理は証明なしで認める（ステートメントと引用元を明示。Villani Ch.4 / Billingsley 1999 Th 5.1, 5.2）。第2章の最適 coupling の存在証明に加え，第3章の一般の Polish 空間への拡張でも再利用する。一つの確率測度の tightness の直接証明は付録の補足とし，本編の証明には組み込まない。Riesz–Markov–Kakutani の表現定理は引き続き外測度から直接証明し，Hilbert 空間版 Riesz との違いを明記する
 - 証明なしで認める標準定理はステートメントを明示して文献を挙げる
+- 本編では Hilbert 空間版 Riesz を標準的な定理として直接使う。別リポジトリ `seminar` の定理番号や $L^p$ 双対表現を経由する説明は入れず，付録の証明も単独で読める形にする。参考にした資料との対応は `reference/README.md` に記録する
 
 ## サイト
 

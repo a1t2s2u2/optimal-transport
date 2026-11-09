@@ -7,13 +7,15 @@
 # セミナー固有の設定は seminar/<名前>/site.config.mjs に置く。
 
 SITE := node tools/site
+LINT := node tools/notation/lint.mjs
 
-.PHONY: help sites cuturi-site wasserstein-site quantum-ot-site clean-sites ot-viz
+.PHONY: help sites cuturi-site wasserstein-site wasserstein-lint quantum-ot-site clean-sites ot-viz
 
 help:
 	@echo "make sites             すべてのセミナーのサイトを生成"
 	@echo "make cuturi-site       計算最適輸送のサイトを生成"
 	@echo "make wasserstein-site  Wasserstein 距離のサイトを生成"
+	@echo "make wasserstein-lint  Wasserstein 距離の tex の記法と構成を検査"
 	@echo "make quantum-ot-site   量子最適輸送のサイトを生成"
 	@echo "make clean-sites       生成したサイトを削除"
 	@echo "make ot-viz            最適輸送 3D ビューアをローカルで開く"
@@ -31,6 +33,9 @@ wasserstein-site:
 	$(SITE)/tex2md.mjs seminar/wasserstein --strict
 	$(SITE)/build.mjs seminar/wasserstein
 	@echo "→ seminar/wasserstein/site/dist/index.html をブラウザで開いてください"
+
+wasserstein-lint:
+	$(LINT) seminar/wasserstein
 
 # --- Quantum Optimal Transport ---
 quantum-ot-site:

@@ -12,8 +12,8 @@ export default {
   landingTitle: "Wasserstein 距離",
   landingSubtitle: "定義から距離性の証明，測度分解定理まで",
   landingFooter: "参考文献: Villani (2009), 桑江ほか (2015)",
-  appendixHeading: "付録：前提知識",
-  appendixSubheading: "発表では省略した数学的前提を網羅した完全版．本編から参照される．",
+  appendixHeading: "付録：前提知識と補足証明",
+  appendixSubheading: "既知として用いる定理の主張と補助結果の証明．必要な箇所を本編から参照する．",
 
   // --- 章立て（tex は tex/ からの相対パス、md は site/content/ に出る）---
   chapters: [
@@ -57,5 +57,26 @@ export default {
 
   demos: {
     gluing: gluingDiagram,
+  },
+
+  // --- 記法の検査（tools/notation）。禁止する書き方と、その代わり ---
+  notation: {
+    forbidden: [
+      { pattern: /\\phi(?![a-zA-Z])/, use: "\\varphi", why: "φ の字形を統一する" },
+      { pattern: /\\epsilon(?![a-zA-Z])/, use: "\\varepsilon", why: "ε の字形を統一する" },
+      {
+        pattern: /\\su[bp]seteq(?![a-zA-Z])/,
+        use: "\\subset / \\supset",
+        why: "Villani に合わせ ⊂ を等号込みで使う（Villani (2009) p.44 Lemma 4.4）",
+      },
+      { pattern: /_\{?\\(?:sharp|#)/, use: "\\mu\\circ T^{-1}", why: "押し出し記法は使わず像測度で書く" },
+      { pattern: /\\mathrm\{pr\}/, use: "周辺分布・座標成分の直接の記述", why: "座標射影を記号化しない" },
+      {
+        pattern: /_\{?[A-Za-z0-9]+\}?\s*\\Rightarrow/,
+        use: "\\weakto",
+        why: "\\Rightarrow は含意専用．弱収束には使わない",
+      },
+      { pattern: /[、。]/, use: "，．", why: "句読点を統一する" },
+    ],
   },
 };

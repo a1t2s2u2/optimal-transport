@@ -6,6 +6,7 @@
 - `seminar/wasserstein/` — Wasserstein 距離の定義と距離性（詳細は `seminar/wasserstein/CLAUDE.md`）
 - `seminar/quantum-ot/` — 有限次元の量子最適輸送と量子 $W_1$ の距離性（詳細は `seminar/quantum-ot/CLAUDE.md`）
 - `tools/site/` — tex から Web サイトを生成するエンジン（全セミナー共通。詳細は `tools/site/README.md`）
+- `tools/notation/` — tex の記法と文章構成の検査（全セミナー共通。詳細は `tools/notation/README.md`）
 
 ## セミナー方針（共通）
 
@@ -20,6 +21,7 @@
 - サイト生成のコードは `tools/site/` の 1 か所だけ。セミナーごとにコピーを作らない
 - セミナー固有の設定は `seminar/<名前>/site.config.mjs` に書く
 - MathJax のマクロは `tex/preamble.tex` から自動抽出される。設定に書き写さない
+- 記法の検査は `make wasserstein-lint`。セミナー固有の禁止記法は `site.config.mjs` の `notation` に書く
 
 ## Git 運用
 

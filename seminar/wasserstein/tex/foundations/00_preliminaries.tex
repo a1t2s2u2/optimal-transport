@@ -1,12 +1,13 @@
 \chapter{距離空間と測度の準備}
 \label{ch:found-preliminaries}
 
-本編で用いる実数・距離空間・測度論の道具をまとめる．
+本編で用いる実数・距離空間・測度論の道具と，Radon--Nikodym の証明に必要な Hilbert 空間の結果をまとめる．
 本資料では，使う用語はすべて定義し，
 証明なしに用いる標準定理はステートメントを明示したうえで文献を挙げる
-（単調収束定理・一致定理・Tonelli の定理・
+（単調収束定理・Dynkin の定理・Tonelli の定理・
 Prokhorov の定理など）．
 それ以外の主張にはすべて証明を付ける．
+付録は必要な箇所を参照するためのものであり，補足証明をすべて発表で扱う必要はない．
 証明を省略した定理については，
 例えば伊藤清三『ルベーグ積分入門』，
 Dudley \emph{Real Analysis and Probability} (2002)，
@@ -123,10 +124,16 @@ Villani \emph{Optimal Transport} (2009) 第1章を参照．
 \end{definition}
 
 \begin{remark}{compact 集合について前提とする事実}{meas-compact-facts}
-  次は距離空間の標準的事実であり，証明なしに用いる．
+  次は距離空間の基本的な事実として，証明なしに用いる
+  （Rudin \emph{Principles of Mathematical Analysis}，第3版，第2章・第4章参照）．
   \begin{itemize}
-    \item compact 集合の閉部分集合は compact である．
+    \item 距離空間の compact 集合は閉であり，その閉部分集合は compact である．
     \item 空でない compact 集合上の実数値連続関数は最大値と最小値をとる．特に有界である．
+    \item compact 距離空間上の実数値連続関数 $f$ は\textbf{一様連続}である．すなわち，
+      任意の $\varepsilon>0$ に対しある $\delta>0$ が存在して，
+      $d(x,y)<\delta$ ならば $\abs{f(x)-f(y)}<\varepsilon$ となる．
+    \item 距離空間の部分集合 $K$ が compact であることと，
+      $K$ 内の任意の点列が $K$ 内の点に収束する部分列をもつことは同値である．
   \end{itemize}
 \end{remark}
 
@@ -155,17 +162,17 @@ Villani \emph{Optimal Transport} (2009) 第1章を参照．
 \begin{lemma}{閉集合の指示関数の連続関数による近似}{meas-closed-approx}
   距離空間 $\mathcal{X}$ の空でない閉集合 $F$ と $k\in\N$ に対し
   \[
-    \phi_k(x):=\max\{1-k\,d(x,F),0\}
+    \varphi_k(x):=\max\{1-k\,d(x,F),0\}
   \]
-  とおく．このとき $\phi_k$ は連続で $0\leq\phi_k\leq1$ をみたし，
-  $k\to\infty$ のとき各点で $\phi_k\downarrow\mathbf{1}_F$ となる．
+  とおく．このとき $\varphi_k$ は連続で $0\leq\varphi_k\leq1$ をみたし，
+  $k\to\infty$ のとき各点で $\varphi_k\downarrow\mathbf{1}_F$ となる．
 \end{lemma}
 
 \begin{proof}
   連続性は補題~\ref{lem:meas-distance-to-set}の1から従う．
-  $x\in F$ なら $\phi_k(x)=1$ である．
+  $x\in F$ なら $\varphi_k(x)=1$ である．
   $x\notin F$ なら補題~\ref{lem:meas-distance-to-set}の2より $d(x,F)>0$ なので，
-  $k$ が十分大きければ $\phi_k(x)=0$ となる．
+  $k$ が十分大きければ $\varphi_k(x)=0$ となる．
   $k$ について単調減少であることは定義から明らかである．
 \end{proof}
 
@@ -219,7 +226,8 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
   $\pi$-系 $\mathcal{C}$ が $\lambda$-系 $\mathcal{D}$ に含まれるならば，
   $\sigma(\mathcal{C})\subset\mathcal{D}$ である．
 
-  （標準的な結果．証明は省略する．）
+  （標準的な結果．証明は省略する．Billingsley \emph{Probability and Measure}
+  (3rd ed., 1995) §3 参照．）
 \end{theorem}
 
 \begin{theorem}{有限測度の一致定理}{meas-uniqueness}
@@ -228,9 +236,14 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
   $\mu(\Omega)=\nu(\Omega)$ かつ，すべての $A\in\mathcal{C}$ で
   $\mu(A)=\nu(A)$ ならば，$\sigma(\mathcal{C})$ 上で $\mu=\nu$ である．
 
-  （Dynkin の $\pi$-$\lambda$ 定理（定理~\ref{thm:meas-pi-lambda}）から従う
-  標準的な結果．証明は省略する．）
 \end{theorem}
+
+\begin{proof}
+  $\mathcal{D}:=\{A\in\sigma(\mathcal{C})\mid\mu(A)=\nu(A)\}$ とおく．
+  全測度の一致から $\Omega\in\mathcal{D}$ であり，有限性より補集合についても一致する．
+  可算加法性より，互いに素な可算合併についても一致するので，$\mathcal{D}$ は $\lambda$-系である．
+  $\mathcal{C}\subset\mathcal{D}$ と Dynkin の定理（定理~\ref{thm:meas-pi-lambda}）から結論を得る．
+\end{proof}
 
 \section{指示関数と a.e.}
 
@@ -280,7 +293,8 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
   \[
     \lim_{n\to\infty}\int_\Omega f_n\,\d\mu=\int_\Omega f\,\d\mu.
   \]
-  （Lebesgue 積分論の基本定理．証明は省略する．）
+  （Lebesgue 積分論の基本定理．証明は省略する．
+  Folland \emph{Real Analysis} (2nd ed., 1999) Theorem 2.14 参照．）
 \end{theorem}
 
 \begin{theorem}{有界収束定理}{meas-bounded-convergence}
@@ -334,7 +348,7 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
 \label{sec:meas-weak-tight}
 
 \begin{definition}{有界連続関数の空間}{meas-cb}
-  距離空間 $\mathcal{X}$ 上の有界連続関数 $f\colon \mathcal{X}\to\R$ 全体を
+  距離空間 $\mathcal{X}$ 上の\textbf{有界連続関数} $f\colon \mathcal{X}\to\R$ 全体を
   \[
     C_b(\mathcal{X})
     :=
@@ -438,6 +452,39 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
   (2nd ed., 1999) Theorems 5.1, 5.2 にある．）
 \end{theorem}
 
+\subsection{補足：一つの確率測度の tightness}
+
+本編では Prokhorov の定理から得る性質について，可分性と完備性からの直接証明も記しておく．
+
+\begin{lemma}{Polish 空間上の一つの確率測度の tightness}{meas-single-tight}
+  Polish 空間 $\mathcal{X}$ 上の任意の $\mu\in\Prob(\mathcal{X})$ に対し，
+  $\{\mu\}$ は tight である．
+\end{lemma}
+
+\begin{proof}
+  $\varepsilon>0$ と，可算稠密集合 $\{x_1,x_2,\ldots\}\subset\mathcal{X}$ を取る．
+  各 $n\geq1$ について $\mathcal{X}=\bigcup_{j\geq1}B_{1/n}(x_j)$ なので，
+  単調収束定理を有限合併の指示関数に用いると，ある $m_n$ で
+  \[
+    \mu\left(\bigcup_{j=1}^{m_n}B_{1/n}(x_j)\right)>1-\varepsilon2^{-n}
+  \]
+  となる．閉集合
+  \[
+    F_n:=\bigcup_{j=1}^{m_n}\{x\in\mathcal{X}\mid d(x,x_j)\leq1/n\},
+    \qquad K:=\bigcap_{n\geq1}F_n
+  \]
+  を取れば，可算劣加法性より $\mu(\mathcal{X}\setminus K)\leq\sum_n\varepsilon2^{-n}=\varepsilon$ である．
+
+  $K$ が compact であることを確かめる．$K$ 内の任意の点列から，
+  $F_1$ を構成する一つの閉球に含まれる部分列を選び，
+  さらに $F_2$ を構成する一つの閉球に含まれる部分列を選ぶ，という操作を続ける．
+  第 $n$ 段階の部分列は半径 $1/n$ の一つの閉球に含まれる．
+  各段階から元の添字が増加するように一項ずつ取ると，得られる点列の第 $n$ 項以降の
+  二点の距離は $2/n$ 以下なので Cauchy 列である．
+  $\mathcal{X}$ の完備性より収束し，$K$ は閉なので極限も $K$ に属する．
+  したがって compact 性の点列による特徴付け（注意~\ref{rem:meas-compact-facts}）より $K$ は compact である．
+\end{proof}
+
 \section{積分不等式}
 
 以下，$(\Omega,\mathcal{A},\mu)$ を測度空間とし，
@@ -469,6 +516,118 @@ $f,g\colon\Omega\to\R$ を可測関数とする．
   例えば Dudley (2002) §5.1 参照．）
 \end{theorem}
 
+\section{Radon--Nikodym の証明に用いる Hilbert 空間}
+
+任意の有限測度 $\pi$ に対して $L^2(\pi)$ が実 Hilbert 空間となることと，
+Hilbert 空間版 Riesz の表現定理を証明する．
+これらを既知とする場合は，この節の証明を省略して本編を読み進められる．
+
+\begin{definition}{実 Hilbert 空間と有界線形汎関数}{rn-hilbert-space}
+  実ベクトル空間 $\mathcal{H}$ 上の\textbf{内積}とは，各変数について線形で，
+  $\langle u,v\rangle=\langle v,u\rangle$，$\langle u,u\rangle\geq0$ をみたし，
+  $\langle u,u\rangle=0$ が $u=0$ と同値になる写像
+  $\langle\cdot,\cdot\rangle\colon\mathcal{H}\times\mathcal{H}\to\R$ である．
+  $\norm{u}:=\langle u,u\rangle^{1/2}$ とおく．
+  距離 $d(u,v):=\norm{u-v}$ に関して完備な内積空間を\textbf{実 Hilbert 空間}という．
+
+  線形写像 $L\colon\mathcal{H}\to\R$ を\textbf{線形汎関数}という．
+  ある定数 $C\geq0$ が存在して
+  \[
+    \abs{L(u)}\leq C\norm{u}\qquad(u\in\mathcal{H})
+  \]
+  となるとき $L$ は\textbf{有界}であるという．
+  このとき $\abs{L(u)-L(v)}\leq C\norm{u-v}$ なので $L$ は連続である．
+\end{definition}
+
+内積から得られる基本公式を確認しておく．$v\neq0$ のとき
+$\norm{u-tv}^2\geq0$ に $t=\langle u,v\rangle/\norm{v}^2$ を代入すると，
+Cauchy--Schwarz の不等式 $\abs{\langle u,v\rangle}\leq\norm{u}\norm{v}$ が得られる
+（$v=0$ なら自明）．したがって
+$\norm{u+v}^2\leq(\norm{u}+\norm{v})^2$ であり，$\norm{\cdot}$ はノルムである．
+また，内積を展開すると\textbf{中線定理}
+\[
+  \norm{u+v}^2+\norm{u-v}^2=2\norm{u}^2+2\norm{v}^2
+\]
+が得られる．
+
+\begin{remark}{記法 $L^2(\pi)$}{rn-l2-notation}
+  $(X,\Sigma,\pi)$ を有限測度空間とする．
+  $L^2(\pi)$ は，$\int_X\abs{g}^2\,\d\pi<\infty$ をみたす可測関数 $g\colon X\to\R$ を，
+  $\pi$-a.e. に等しいもの同士で同一視した実ベクトル空間である．
+  同値類とその代表元を同じ記号 $g$ で書き，
+  \[
+    \langle g,h\rangle:=\int_Xgh\,\d\pi,\qquad
+    \norm{g}_{L^2(\pi)}:=\left(\int_X\abs{g}^2\,\d\pi\right)^{1/2}
+  \]
+  とおく．Minkowski の不等式より和も $L^2(\pi)$ に属し，
+  Hölder の不等式より積 $gh$ は可積分である．
+  積分は代表元によらず，$\int_Xg^2\,\d\pi=0$ と $g=0$ $\pi$-a.e. は同値なので，これは内積を定める．
+\end{remark}
+
+\begin{lemma}{$L^2$ の完備性（Riesz--Fischer）}{rn-l2-complete}
+  任意の有限測度空間 $(X,\Sigma,\pi)$ に対し，$L^2(\pi)$ は上の内積によって実 Hilbert 空間となる．
+\end{lemma}
+
+\begin{proof}
+  完備性を示せばよい．$(g_n)$ を $L^2(\pi)$ の Cauchy 列とする．
+  部分列 $(g_{n_k})$ を $\norm{g_{n_{k+1}}-g_{n_k}}_{L^2(\pi)}\leq2^{-k}$ となるように取り，
+  各項の可測な代表元を選ぶ．
+  \[
+    S_m:=\sum_{k=1}^m\abs{g_{n_{k+1}}-g_{n_k}},\qquad S:=\lim_m S_m
+  \]
+  とおくと，Minkowski の不等式より $\norm{S_m}_{L^2(\pi)}\leq\sum_{k=1}^m2^{-k}\leq1$ である．
+  $S_m^2\uparrow S^2$ に単調収束定理を用いて $\int_XS^2\,\d\pi\leq1$ を得るので，$S<\infty$ が $\pi$-a.e. に成り立つ．
+  したがって級数
+  \[
+    g:=g_{n_1}+\sum_{k=1}^{\infty}(g_{n_{k+1}}-g_{n_k})
+  \]
+  は $\{S<\infty\}$ 上で絶対収束する．$\{S=\infty\}$ 上では $g=0$ と定めれば可測であり，
+  $\abs{g}\leq\abs{g_{n_1}}+S$ が $\pi$-a.e. に成り立つので $g\in L^2(\pi)$ である．
+  同じ Minkowski の不等式と単調収束定理を級数の末尾に用いると
+  \[
+    \norm{g-g_{n_k}}_{L^2(\pi)}
+    \leq\left\|\sum_{j=k}^{\infty}\abs{g_{n_{j+1}}-g_{n_j}}\right\|_{L^2(\pi)}
+    \leq\sum_{j=k}^{\infty}2^{-j}=2^{1-k}\longrightarrow0.
+  \]
+  $(g_n)$ は Cauchy 列なので，三角不等式から全列も $g$ に収束する．
+\end{proof}
+
+\begin{theorem}{Hilbert 空間版 Riesz の表現定理}{rn-hilbert-riesz}
+  $\mathcal{H}$ を実 Hilbert 空間，$L\colon\mathcal{H}\to\R$ を有界線形汎関数とする．
+  このとき，ただ一つの $h\in\mathcal{H}$ が存在して
+  \[
+    L(u)=\langle u,h\rangle\qquad(u\in\mathcal{H})
+  \]
+  が成り立つ．
+\end{theorem}
+
+\begin{proof}
+  $L=0$ のときは $h=0$ とすればよい．以下 $L\neq0$ とする．
+  $C:=\{u\in\mathcal{H}\mid L(u)=1\}$ は空でなく，$L$ の連続性から閉集合である．
+  $d:=\inf_{u\in C}\norm{u}$ とおき，$u_n\in C$ を $\norm{u_n}\to d$ となるように取る．
+  $(u_n+u_m)/2\in C$ と中線定理から
+  \[
+    \norm{u_n-u_m}^2
+    =2\norm{u_n}^2+2\norm{u_m}^2-\norm{u_n+u_m}^2
+    \leq2\norm{u_n}^2+2\norm{u_m}^2-4d^2\longrightarrow0.
+  \]
+  よって $(u_n)$ は Cauchy 列であり，完備性と $C$ の閉性より，ある $z\in C$ に収束する．
+  ノルムの連続性から $\norm{z}=d$ である．
+
+  $L(v)=0$ なら任意の $t\in\R$ について $z+tv\in C$ なので，最小性から
+  \[
+    0\leq\norm{z+tv}^2-\norm{z}^2
+    =2t\langle z,v\rangle+t^2\norm{v}^2.
+  \]
+  これがすべての $t$ で成り立つためには $\langle z,v\rangle=0$ でなければならない．
+  任意の $u\in\mathcal{H}$ に対して $v:=u-L(u)z$ は $L(v)=0$ をみたすから
+  \[
+    \langle u,z\rangle=L(u)\norm{z}^2.
+  \]
+  $L(z)=1$ より $z\neq0$ なので，$h:=z/\norm{z}^2$ とすれば所望の表示を得る．
+  二つの表示元 $h,h'$ があれば，$u=h-h'$ を代入して $\norm{h-h'}^2=0$ を得るため，一意でもある．
+\end{proof}
+
 \section{像測度}
 
 \begin{definition}{像測度}{meas-pushforward}
@@ -488,8 +647,8 @@ $f,g\colon\Omega\to\R$ を可測関数とする．
   $\mu$ が確率測度なら
   $(\mu\circ T^{-1})(\Omega')=\mu(\Omega)=1$ より
   $\mu\circ T^{-1}$ も確率測度である．
-  なお文献では像測度を $T_\#\mu$ や $T_*\mu$ とも書き，
-  押し出し測度ともよぶ（Villani 2009，桑江ほか 2015 は $T_\#\mu$）．
+  なお文献では像測度を $T_\#\mu$ や $T_*\mu$ とも書き， % notation: ignore
+  押し出し測度ともよぶ（Villani 2009，桑江ほか 2015 は $T_\#\mu$）． % notation: ignore
 \end{definition}
 
 \begin{lemma}{変数変換公式}{meas-change-of-variables}
@@ -541,12 +700,19 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
 同様に $\max$ 距離を入れ，可分性・完備性は保たれる
 （2因子の場合の繰り返し）．
 
-\begin{remark}{直積空間の Borel $\sigma$-代数（前提とする事実）}{meas-borel-product}
+\begin{remark}{直積空間の Borel $\sigma$-代数}{meas-borel-product}
   $\mathcal{X},\mathcal{Y}$ が可分距離空間のとき，
   $\Borel(\mathcal{X}\times \mathcal{Y})$ は矩形集合
   $\{A\times B\mid A\in\Borel(\mathcal{X}),\,B\in\Borel(\mathcal{Y})\}$
   の生成する $\sigma$-代数
-  $\Borel(\mathcal{X})\otimes\Borel(\mathcal{Y})$ と一致する（証明は省略する）．
+  $\Borel(\mathcal{X})\otimes\Borel(\mathcal{Y})$ と一致する．
+  実際，補題~\ref{lem:meas-countable-generator}の証明で用いる可算な開球の族を各因子に取ると，
+  その直積からなる可算族の元の合併で，直積空間の任意の開集合を表せる．
+  したがって $\Borel(\mathcal{X}\times\mathcal{Y})\subset\Borel(\mathcal{X})\otimes\Borel(\mathcal{Y})$ である．
+  逆に，$(x,y)\mapsto x$，$(x,y)\mapsto y$ は連続なので，
+  $A\times\mathcal{Y}$ と $\mathcal{X}\times B$ は Borel 集合であり，
+  その共通部分 $A\times B$ も Borel 集合である．これで逆の包含も従う．
+
   なお矩形集合の族は
   $(A\times B)\cap(A'\times B')=(A\cap A')\times(B\cap B')$
   より $\pi$-系である．
@@ -622,30 +788,73 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
 
 \section{測度分解のための準備}
 
-第\ref{ch:disintegration}章で用いる事実をまとめる．
+第\ref{ch:disintegration}章で用いる補助結果と，既知として用いる Carathéodory の定理をまとめる．
+$C(K)$ の可分性や可算な Borel 生成族の構成は，本文では主張を用い，証明の詳細はここで確認する．
+
+\begin{remark}{絶対連続性の二つの定義}{rn-null-characterization}
+  可測空間 $(X,\Sigma)$ 上の有限測度 $\mu,\nu$ について，定義~\ref{def:meas-absolute-continuity}の零集合による条件は，
+  北別府 p.~57 の次の条件と同値である：
+  任意の $\varepsilon>0$ に対しある $\delta>0$ が存在して，すべての $A\in\Sigma$ で
+  \[
+    \mu(A)<\delta\quad\Longrightarrow\quad\nu(A)<\varepsilon.
+  \]
+  実際，この条件から零集合の条件は直ちに従う．逆に $\nu\ll\mu$ なら，
+  Radon--Nikodym の定理（定理~\ref{thm:meas-radon-nikodym}）で $\nu(A)=\int_Af\,\d\mu$ と表せる．
+  $f\mathbf{1}_{\{f\leq n\}}\uparrow f$ と単調収束定理より，
+  $\int_{\{f>n\}}f\,\d\mu\to0$ である．これが $\varepsilon/2$ 未満となる $n\geq1$ を取り，
+  $\delta:=\varepsilon/(2n)$ とすれば，$\mu(A)<\delta$ のとき
+  \[
+    \nu(A)\leq\int_{\{f>n\}}f\,\d\mu+n\mu(A)<\varepsilon
+  \]
+  を得る．
+\end{remark}
 
 \begin{remark}{記法：compact 空間上の連続関数}{meas-compact-continuous}
   空でない compact 距離空間 $K$ 上の実数値連続関数全体を $C(K)$ と書き，
   \[
-    \lVert f\rVert_\infty:=\sup_{x\in K}\abs{f(x)}
+    \norm{f}_\infty:=\sup_{x\in K}\abs{f(x)}
   \]
   とおく．注意~\ref{rem:meas-compact-facts}よりこの値は有限である．
-  $\lVert f_n-f\rVert_\infty\to0$ を\textbf{一様収束}という．
+  $\norm{f_n-f}_\infty\to0$ を\textbf{一様収束}という．
   $f\in C(K)$ に対し $f^+:=\max\{f,0\}$，$f^-:=\max\{-f,0\}$ とおけば，
   $f^\pm\in C(K)$，$f^\pm\geq0$，$f=f^+-f^-$ である．
 \end{remark}
 
 \begin{theorem}{$C(K)$ の可分性}{meas-ck-separable}
   空でない compact 距離空間 $K$ に対し，$C(K)$ は距離
-  $(f,g)\mapsto\lVert f-g\rVert_\infty$ について可分である．
+  $(f,g)\mapsto\norm{f-g}_\infty$ について可分である．
   したがって，定数関数 $1$ を含む可算な稠密 $\mathbb{Q}$-ベクトル部分空間
   $\mathcal{C}\subset C(K)$ が存在する
   （$\mathbb{Q}$ は有理数全体．可算稠密集合と $1$ の有理係数の有限線形結合の全体を取ればよい）．
 
-  （関数解析の標準的事実として証明なしに用いる．
-  例えば Stone--Weierstrass の定理から従う．
-  北別府，Theorem 5.3.1 の証明 Step 1 でも同じ事実が用いられている．）
 \end{theorem}
+
+\begin{proof}
+  各 $n\geq1$ について，compact 性により
+  $K=\bigcup_{j=1}^{m_n}B_{1/n}(x_{n,j})$ となる有限個の点 $x_{n,j}\in K$ を選ぶ．
+  これらの点の近くで正になる連続関数を，和が $1$ になるように正規化して
+  \[
+    \psi_{n,j}(x):=\max\{1/n-d(x,x_{n,j}),0\},\qquad
+    \varphi_{n,j}(x):=\frac{\psi_{n,j}(x)}{\sum_{i=1}^{m_n}\psi_{n,i}(x)}
+  \]
+  とおく．被覆の取り方から分母はすべての $x\in K$ で正であり，
+  $\varphi_{n,j}$ は連続で，$\varphi_{n,j}\geq0$，$\sum_j\varphi_{n,j}=1$ をみたす．
+  また $\varphi_{n,j}(x)>0$ ならば $d(x,x_{n,j})<1/n$ である．
+
+  $\mathcal{C}$ を，すべての $\varphi_{n,j}$ の有理係数の有限線形結合の全体とする．
+  関数 $\varphi_{n,j}$ は可算個なので $\mathcal{C}$ も可算であり，$1\in\mathcal{C}$ である．
+  稠密性を示すため，$f\in C(K)$ と $\varepsilon>0$ を取る．
+  $f$ の一様連続性（注意~\ref{rem:meas-compact-facts}）から，$n$ を十分大きく取れば
+  $d(x,z)<1/n$ のとき $\abs{f(x)-f(z)}<\varepsilon/2$ となる．
+  有理数 $q_j$ を $\abs{q_j-f(x_{n,j})}<\varepsilon/2$ となるように選び，
+  $g:=\sum_jq_j\varphi_{n,j}\in\mathcal{C}$ とおく．正の重みをもつ項だけを見れば，すべての $x$ で
+  \[
+    \abs{f(x)-g(x)}
+    \leq\sum_{j=1}^{m_n}\varphi_{n,j}(x)\,\abs{f(x)-q_j}
+    \leq\varepsilon
+  \]
+  となる．したがって $\norm{f-g}_\infty\leq\varepsilon$ であり，$\mathcal{C}$ は稠密である．
+\end{proof}
 
 \begin{lemma}{Borel 集合を生成する可算 $\pi$-系}{meas-countable-generator}
   可分距離空間 $\mathcal{X}$ には，$\Borel(\mathcal{X})$ を生成する可算な $\pi$-系が存在する．
@@ -662,12 +871,17 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
   $\mathcal{U}$ の元の有限個の共通部分の全体は可算な $\pi$-系であり，同じ $\sigma$-代数を生成する．
 \end{proof}
 
-\begin{remark}{閉部分空間の Borel 集合（前提とする事実）}{meas-subspace-borel}
+\begin{remark}{閉部分空間の Borel 集合}{meas-subspace-borel}
   距離空間 $\mathcal{X}$ の閉集合 $K$ に $d$ の制限を入れた距離空間を考えると，
   \[
     \Borel(K)=\{A\in\Borel(\mathcal{X})\mid A\subset K\}
   \]
-  が成り立つ（証明は省略する）．したがって $K$ 上の Borel 測度 $\rho$ は，
+  が成り立つ．実際，右辺は $K$ 上の $\sigma$-代数であり，
+  $K$ の開集合は $K\cap U$（$U$ は $\mathcal{X}$ の開集合）の形なので，すべて右辺に属する．
+  よって左辺は右辺に含まれる．逆に，包含写像 $i\colon K\to\mathcal{X}$ は連続なので Borel 可測であり，
+  $A\in\Borel(\mathcal{X})$，$A\subset K$ ならば $A=i^{-1}(A)\in\Borel(K)$ である．
+
+  したがって $K$ 上の Borel 測度 $\rho$ は，
   $A\in\Borel(\mathcal{X})$ に $\rho(A\cap K)$ を対応させることで
   $\mathcal{X}$ 上の Borel 測度に延長できる．
 \end{remark}
@@ -699,13 +913,13 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
 \begin{theorem}{確率測度の族を平均した確率測度}{meas-kernel-composition}
   $\mathcal{X},\mathcal{Y},\mathcal{Z}$ を Polish 空間，$\nu\in\Prob(\mathcal{Y})$ とし，
   各 $y\in\mathcal{Y}$ に対して確率測度
-  $\pi_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ が与えられているとする．
+  $\lambda_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ が与えられているとする．
   任意の $A\in\Borel(\mathcal{X})$，$C\in\Borel(\mathcal{Z})$ について，
-  $y\mapsto\pi_y(A)$，$y\mapsto\sigma_y(C)$ は可測と仮定する．
+  $y\mapsto\lambda_y(A)$，$y\mapsto\sigma_y(C)$ は可測と仮定する．
   このとき $\gamma\in\Prob(\mathcal{X}\times\mathcal{Y}\times\mathcal{Z})$ で
   \[
     \gamma(A\times B\times C)
-    =\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y)
+    =\int_B\lambda_y(A)\,\sigma_y(C)\,\d\nu(y)
     \qquad(A\in\Borel(\mathcal{X}),\,B\in\Borel(\mathcal{Y}),\,C\in\Borel(\mathcal{Z}))
   \]
   をみたすものがただ一つ存在する．
@@ -713,15 +927,15 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
 
 \begin{proof}
   各 $y$ に対して，直積確率測度
-  $\lambda_y:=\pi_y\otimes\delta_y\otimes\sigma_y$ を考える
+  $\eta_y:=\lambda_y\otimes\delta_y\otimes\sigma_y$ を考える
   （$\delta_y(B):=\mathbf{1}_B(y)$）．矩形 $D=A\times B\times C$ について
-  $\lambda_y(D)=\pi_y(A)\mathbf{1}_B(y)\sigma_y(C)$ は $y$ の Borel 可測関数である．
-  $y\mapsto\lambda_y(D)$ が可測となる $D$ の全体は $\lambda$-系なので，
+  $\eta_y(D)=\lambda_y(A)\mathbf{1}_B(y)\sigma_y(C)$ は $y$ の Borel 可測関数である．
+  $y\mapsto\eta_y(D)$ が可測となる $D$ の全体は $\lambda$-系なので，
   Dynkin の定理（定理~\ref{thm:meas-pi-lambda}）と
   注意~\ref{rem:meas-borel-product}から，すべての Borel 集合 $D$ で可測となる．
   そこで
   \[
-    \gamma(D):=\int_{\mathcal{Y}}\lambda_y(D)\,\d\nu(y)
+    \gamma(D):=\int_{\mathcal{Y}}\eta_y(D)\,\d\nu(y)
   \]
   と定める．単調収束定理から可算加法性が従い，全質量は $1$ なので，
   $\gamma$ は求める確率測度である．
