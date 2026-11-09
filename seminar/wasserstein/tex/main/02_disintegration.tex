@@ -9,13 +9,14 @@
 原資料は一般の Borel 可測写像に沿う分解を扱うが，本章では第2変数に沿う分解に限定する．
 分解測度 $\lambda_y$ と，その構成に用いる汎関数 $m_y$ の記号は原資料に合わせる．
 本章では，まず測度分解定理を述べ，その準備となる二つの定理を証明してから，測度分解の証明に進む．
-Radon--Nikodym の定理は有限測度，Riesz の表現定理は compact 距離空間の場合に限る．
+Radon--Nikodym の定理は有限測度，Riesz--Markov--Kakutani の表現定理は compact 距離空間の場合に限る．
 測度分解の証明に用いるのは，この二つの形である．
 積分の基本性質・単調収束定理・Dynkin の定理と距離空間の基本事項は既知とし，
-Riesz の証明では Carathéodory の定理（定理~\ref{thm:meas-caratheodory}）を用いる．
+測度を表現する後者の証明では Carathéodory の定理（定理~\ref{thm:meas-caratheodory}）を用いる．
 一般の Polish 空間への拡張では，第\ref{ch:wasserstein-metrics}章で用いた Prokhorov の定理を再利用する．
 
 発表では，二つの定理の証明から測度分解の構成・一意性へ進む流れを軸とする．
+$L^2$ の完備性と Hilbert 空間版 Riesz の表現定理，
 $C(K)$ の可分性や Borel 集合に関する補助結果には付録で証明を付け，
 本文の参照先から必要に応じて確認できるようにした．
 
@@ -53,7 +54,7 @@ $\nu_f(B):=\int_{K\times B}f(x)\,\d\pi(x,y)$ とおくと，証明の流れは
 \]
 となる．左の密度 $l_f$ を Radon--Nikodym の定理で作り，
 共通の零集合の外で $f\mapsto l_f(y)$ を正の線形汎関数 $m_y$ にまとめる．
-右の確率測度 $\lambda_y$ を与えるのが Riesz の表現定理である．
+右の確率測度 $\lambda_y$ を与えるのが Riesz--Markov--Kakutani の表現定理である．
 $\nu_f$ は $f\geq0$ のとき測度になるので，まずこの場合を扱い，一般の $f$ は正部分・負部分に分ける．
 
 \section{Radon--Nikodym の定理}
@@ -62,8 +63,9 @@ $\nu_f$ は $f\geq0$ のとき測度になるので，まずこの場合を扱�
 Radon--Nikodym の定理は，一つの測度を別の測度に関する密度で表す定理である．
 測度分解の証明では，この密度を使って各 $y$ における積分の値を定める．
 有限測度の場合の主張は，北別府悠『最適輸送理論入門〜兼非標準的関数解析入門〜』
-Corollary 4.6.2（p.~57）に対応する．原資料の証明は $L^2$ と Lebesgue 分解定理を用いる．
-本節では，測度の差から正の部分を取り出す補題を用いて直接証明する．
+Corollary 4.6.2（p.~57）に対応する．原資料では，$L^2$ を用いて Lebesgue 分解定理
+（Theorem 4.6.1，pp.~56--57）を示し，その系としてこの定理を得る．
+本節では，同じ $L^2$ による構成を $\nu\ll\mu$ の場合に適用し，必要な密度を直接作る．
 
 本節では，北別府 p.~57 の記号に合わせ，$(X,\Sigma)$ を可測空間とする．
 
@@ -99,108 +101,82 @@ Corollary 4.6.2（p.~57）に対応する．原資料の証明は $L^2$ と Lebe
   と書く．
 \end{theorem}
 
-$\nu$ を超えない積分を与える密度の中から，積分値が最大のものを取り，
-残りの測度が $0$ であることを示す．
-
-\subsection{正集合の補題}
-
-残りの測度が正なら，ある集合 $P$ 上で密度に定数 $t>0$ を足せることを示したい．
-そのためには，$P$ のどの可測部分集合でも「残りの測度 $-\,t\mu$」が非負であればよい．
-次の補題が，そのような $P$ を取り出す．
-値が負になる部分集合を順に取り除くことで証明する．
-これは Royden--Fitzpatrick \emph{Real Analysis}（第4版）の Hahn の補題の構成を，有限測度の差に用いたものである．
-
-\begin{lemma}{正集合の存在}{rn-positive-set}
-  $\mu,\nu$ を $(X,\Sigma)$ 上の有限測度とし，$\lambda:=\nu-\mu$ とおく．
-  $\lambda(X)>0$ ならば，ある $P\in\Sigma$ で
-  \[
-    \lambda(P)>0,\qquad
-    \lambda(C)\geq0\quad(C\in\Sigma,\ C\subset P)
-  \]
-  をみたすものが存在する．
-\end{lemma}
-
-\begin{proof}
-  互いに素な可測集合 $C_k$ に対し
-  \[
-    \sum_k\abs{\lambda(C_k)}\leq\nu(X)+\mu(X)<\infty
-  \]
-  なので，$\lambda(\bigcup_kC_k)=\sum_k\lambda(C_k)$ が成り立つ．
-
-  $A_0:=X$ とし，$A_{k-1}$ が定まったとき
-  \[
-    m_k:=\inf\{\lambda(C)\mid C\in\Sigma,\ C\subset A_{k-1}\}
-  \]
-  とおく．$-\mu(X)\leq m_k\leq0$ である．
-  可測集合 $C_k\subset A_{k-1}$ を $\lambda(C_k)\leq m_k/2$ となるように取り，
-  $A_k:=A_{k-1}\setminus C_k$ とする
-  （$m_k<0$ なら下限の定義により選べ，$m_k=0$ なら $C_k:=\emptyset$ とすればよい）．
-
-  $P:=X\setminus\bigcup_kC_k$ とおく．
-  $C_k$ は互いに素なので
-  \[
-    \lambda(P)=\lambda(X)-\sum_k\lambda(C_k)\geq\lambda(X)>0.
-  \]
-  また，絶対収束より $\lambda(C_k)\to0$ であり，$2\lambda(C_k)\leq m_k\leq0$ から $m_k\to0$ である．
-  可測集合 $C\subset P$ はすべての $A_{k-1}$ に含まれるので，
-  $\lambda(C)\geq m_k$ がすべての $k$ で成り立ち，$\lambda(C)\geq0$ を得る．
-\end{proof}
+証明の要点は，和の測度 $\pi:=\mu+\nu$ を基準にして，まず
+\[
+  \nu(A)=\int_Ah\,\d\pi,\qquad
+  \mu(A)=\int_A(1-h)\,\d\pi
+\]
+という表示を作ることである．次に，$\nu\ll\mu$ により $\{h=1\}$ を零集合として除き，
+$f=h/(1-h)$ を得る．補助関数 $h$ と，求める密度 $f=\d\nu/\d\mu$ は区別する．
 
 \subsection{定理の証明と積分への応用}
 
+ここで用いる $L^2(\pi)$ は，$\int_X\abs{g}^2\,\d\pi<\infty$ をみたす実数値可測関数を，
+$\pi$-a.e. に等しいもの同士で同一視した空間である．
+内積 $\langle g,h\rangle=\int_Xgh\,\d\pi$ とノルム
+$\norm{g}_{L^2(\pi)}=(\int_X\abs{g}^2\,\d\pi)^{1/2}$ により Hilbert 空間となる
+（補題~\ref{lem:rn-l2-complete}）．
+\textbf{Hilbert 空間版 Riesz の表現定理}は，その上の有界線形汎関数 $L$ が
+ある $h\in L^2(\pi)$ を用いて $L(g)=\langle g,h\rangle$（$g\in L^2(\pi)$）と一意に表されるという定理である．
+定義と証明は付録の定義~\ref{def:rn-hilbert-space}・定理~\ref{thm:rn-hilbert-riesz}にまとめた．
+
 \begin{proof}[定理~\ref{thm:meas-radon-nikodym}の証明]
-  \textbf{1. 積分値が最大の密度を作る．}
+  \textbf{1. $\pi=\mu+\nu$ に関する表示を作る．}
+  $\pi$ は有限測度である．$L^2(\pi)$ 上の線形汎関数を
   \[
-    \mathcal{G}:=\left\{g\colon X\to[0,\infty]\ \middle|\
-    g\text{ は可測で，すべての }A\in\Sigma\text{ について }\int_Ag\,\d\mu\leq\nu(A)\right\}
+    L(g):=\int_Xg\,\d\nu
   \]
-  とおく．$0\in\mathcal{G}$ である．
+  で定める．$\nu\leq\pi$ なので代表元によらず，Cauchy--Schwarz の不等式
+  （定理~\ref{thm:meas-holder}の $r=r'=2$ の場合）より
+  \[
+    \abs{L(g)}\leq\int_X\abs{g}\,\d\nu
+    \leq\nu(X)^{1/2}\left(\int_X\abs{g}^2\,\d\nu\right)^{1/2}
+    \leq\nu(X)^{1/2}\norm{g}_{L^2(\pi)}.
+  \]
+  したがって $L$ は有界であり，Hilbert 空間版 Riesz の表現定理
+  （定理~\ref{thm:rn-hilbert-riesz}）から，ある $h\in L^2(\pi)$ について
+  \[
+    \int_Xg\,\d\nu=\int_Xgh\,\d\pi\qquad(g\in L^2(\pi))
+  \]
+  と表される．$\pi$ が有限なので，任意の $A\in\Sigma$ について $\mathbf{1}_A\in L^2(\pi)$ であり，
+  \[
+    \nu(A)=\int_Ah\,\d\pi,\qquad
+    \mu(A)=\pi(A)-\nu(A)=\int_A(1-h)\,\d\pi.
+  \]
+  前者に $A=\{h<0\}$，後者に $A=\{h>1\}$ を代入すると，左辺の非負性から
+  $0\leq h\leq1$ が $\pi$-a.e. に成り立つ．
+  この可測な例外集合上で $h=0$ と定め直し，以下では各点で $0\leq h\leq1$ とする．
 
-  $g_1,g_2\in\mathcal{G}$ とし，$A\in\Sigma$ を
-  $A_1:=A\cap\{g_1\geq g_2\}$，$A_2:=A\setminus A_1$ に分けると
+  \textbf{2. $\mu$ に関する密度 $f$ を取り出す．}
+  $B:=\{h=1\}$ とおくと，前段の表示から $\mu(B)=0$ であり，
+  $\nu\ll\mu$ により $\nu(B)=0$ でもある．そこで
   \[
-    \int_A\max\{g_1,g_2\}\,\d\mu
-    =\int_{A_1}g_1\,\d\mu+\int_{A_2}g_2\,\d\mu
-    \leq\nu(A_1)+\nu(A_2)=\nu(A).
+    f(x):=\begin{cases}
+      \dfrac{h(x)}{1-h(x)},&h(x)<1,\\
+      0,&h(x)=1
+    \end{cases}
   \]
-
-  $s:=\sup_{g\in\mathcal{G}}\int_X g\,\d\mu\leq\nu(X)<\infty$ とおく．
-  $\int_X g_n\,\d\mu\to s$ となる $g_n\in\mathcal{G}$ を取り，
-  $\tilde g_n:=\max\{g_1,\dots,g_n\}$ とおくと，前段より $\tilde g_n\in\mathcal{G}$ であり，
-  $\tilde g_n$ は単調増加である．その各点極限を $g$ とすると，
-  単調収束定理（定理~\ref{thm:meas-mct}）より，すべての $A$ で
-  $\int_Ag\,\d\mu=\lim_n\int_A\tilde g_n\,\d\mu\leq\nu(A)$ となり，
-  $g\in\mathcal{G}$ かつ $\int_X g\,\d\mu=s$ である．
-  $\int_X g\,\d\mu<\infty$ より $\mu(\{g=\infty\})=0$ なので，
-  この零集合上で $g$ の値を $0$ に置き換えた関数を $f$ とすれば，
-  $f$ は実数値で，$f\in\mathcal{G}$，$\int_X f\,\d\mu=s$ である．
-
-  \textbf{2. 残りの測度が $0$ であることを示す．}
+  と定める．これは非負の有限値可測関数である．
+  $\int_Xg\,\d\nu=\int_Xgh\,\d(\mu+\nu)$ を整理すると
   \[
-    \beta(A):=\nu(A)-\int_Af\,\d\mu\qquad(A\in\Sigma)
+    \int_Xg(1-h)\,\d\nu=\int_Xgh\,\d\mu\qquad(g\in L^2(\pi))
   \]
-  とおくと，$f\in\mathcal{G}$ より $\beta\geq0$ であり，$\beta$ は有限測度である
-  （可算加法性は単調収束定理による）．$\beta(X)=0$ を示せばよい．
-
-  $\beta(X)>0$ と仮定する．
-  $t>0$ を $\beta(X)-t\,\mu(X)>0$ となるように取り，
-  補題~\ref{lem:rn-positive-set}を $\lambda:=\beta-t\mu$ に適用して $P$ を得る．
-  $P$ の可測部分集合 $C$ について $t\,\mu(C)\leq\beta(C)$ であるから，
-  任意の $A\in\Sigma$ で
+  を得る．$A\in\Sigma$ を固定する．$1/(1-h)$ は非有界になり得るので，
+  $G_n:=\{0\leq h\leq1-1/n\}$ で切り詰める．
+  この等式に
   \[
-    \int_A(f+t\mathbf{1}_P)\,\d\mu
-    =\int_Af\,\d\mu+t\,\mu(A\cap P)
-    \leq\int_Af\,\d\mu+\beta(A\cap P)
-    \leq\int_Af\,\d\mu+\beta(A)=\nu(A).
+    g_n(x):=\begin{cases}
+      \dfrac{1}{1-h(x)},&x\in A\cap G_n,\\
+      0,&x\notin A\cap G_n
+    \end{cases}
   \]
-  よって $f+t\mathbf{1}_P\in\mathcal{G}$ である．
-  一方，$\mu(P)=0$ なら $\nu\ll\mu$ から $\nu(P)=0$，したがって $\beta(P)=0$ となり，
-  $\lambda(P)=\beta(P)-t\mu(P)>0$ に反する．よって $\mu(P)>0$ であり，
+  を代入する．$0\leq g_n\leq n$ かつ $\pi(X)<\infty$ なので，$g_n\in L^2(\pi)$ である．よって
   \[
-    \int_X(f+t\mathbf{1}_P)\,\d\mu=s+t\,\mu(P)>s
+    \nu(A\cap G_n)=\int_{A\cap G_n}f\,\d\mu.
   \]
-  となって $s$ の定義に反する．したがって $\beta(X)=0$ であり，
-  すべての $A$ で $\nu(A)=\int_Af\,\d\mu$ が成り立つ．
+  $G_n\uparrow X\setminus B$，$\nu(B)=0$，かつ $B$ 上で $f=0$ なので，
+  単調収束定理（定理~\ref{thm:meas-mct}）より $\nu(A)=\int_Af\,\d\mu$ を得る．
+  特に $\int_Xf\,\d\mu=\nu(X)<\infty$ であり，$f$ は $\mu$-可積分である．
 
   \textbf{3. 一意性．}
   一般に，$\mu$-可積分な可測関数 $u,v\colon X\to\R$ がすべての $A\in\Sigma$ で
@@ -229,10 +205,12 @@ $\nu$ を超えない積分を与える密度の中から，積分値が最大�
   $s_nf\uparrow gf$ なので，両辺に単調収束定理（定理~\ref{thm:meas-mct}）を用いて一般の場合を得る．
 \end{proof}
 
-\section{Riesz の表現定理}
+\section{Riesz--Markov--Kakutani の表現定理}
 \label{sec:dis-riesz-representation}
 
-Riesz の表現定理は，連続関数に対する正の線形汎関数を，測度による積分として表す定理である．
+ここで示すのは測度論版の Riesz--Markov--Kakutani の表現定理であり，
+連続関数に対する正の線形汎関数を，測度による積分として表す．
+前節の Hilbert 空間版が汎関数を内積で表すのに対し，こちらは測度を構成する定理である．
 測度分解の証明では，Radon--Nikodym 微分から作った汎関数にこの定理を適用し，
 各 $y$ に対応する確率測度を得る．北別府の提供資料ではこの定理を引用している．
 ここでは，測度分解で用いる compact 距離空間の場合の証明を補う．
@@ -409,7 +387,7 @@ Carathéodory の定理で Borel 測度を得るため，次に開集合の可�
 \subsection{第1の空間が compact な場合}
 
 構成は二段階である．Radon--Nikodym の定理で連続関数の積分を $y$ の関数として表し，
-各 $y$ で得られる正の線形汎関数に Riesz の表現定理を適用する．
+各 $y$ で得られる正の線形汎関数に Riesz--Markov--Kakutani の表現定理を適用する．
 一般の場合への拡張に備え，ここでは有限測度を扱う．
 
 \begin{lemma}{compact な場合の分解}{dis-compact}
@@ -466,7 +444,7 @@ Carathéodory の定理で Borel 測度を得るため，次に開集合の可�
   Borel 可測性と積分公式は変わらず，$\mathbb{Q}$-線形性，正値性，$l_1=1$，
   $\abs{l_f}\leq\norm{f}_\infty$ がすべての $y$ で成り立つ．
 
-  \textbf{2. Riesz の表現定理による確率測度の構成．}
+  \textbf{2. 各 $y$ に対応する確率測度の構成．}
   $y\in\mathcal{Y}$ を固定する．$f\mapsto l_f(y)$ は $\mathcal{C}$ 上で $\mathbb{Q}$-線形であり，
   1 より $\abs{l_f(y)-l_g(y)}=\abs{l_{f-g}(y)}\leq\norm{f-g}_\infty$ をみたす．
   $f\in C(K)$ に対し，$\norm{f_k-f}_\infty\to0$ となる $f_k\in\mathcal{C}$ を取ると
@@ -489,7 +467,7 @@ Carathéodory の定理で Borel 測度を得るため，次に開集合の可�
   \[
     m_y(f)=m-m_y(m-f)\geq0.
   \]
-  したがって Riesz の表現定理（定理~\ref{thm:meas-riesz-representation}）により
+  したがって Riesz--Markov--Kakutani の表現定理（定理~\ref{thm:meas-riesz-representation}）により
   $m_y(f)=\int_Kf\,\d\lambda_y$（$f\in C(K)$）となる $\lambda_y\in\Prob(K)$ が得られる．
 
   \textbf{3. 連続関数に対する積分公式．}

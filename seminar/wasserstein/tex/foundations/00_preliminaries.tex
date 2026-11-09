@@ -1,7 +1,7 @@
 \chapter{距離空間と測度の準備}
 \label{ch:found-preliminaries}
 
-本編で用いる実数・距離空間・測度論の道具をまとめる．
+本編で用いる実数・距離空間・測度論の道具と，Radon--Nikodym の証明に必要な Hilbert 空間の結果をまとめる．
 本資料では，使う用語はすべて定義し，
 証明なしに用いる標準定理はステートメントを明示したうえで文献を挙げる
 （単調収束定理・Dynkin の定理・Tonelli の定理・
@@ -515,6 +515,118 @@ $f,g\colon\Omega\to\R$ を可測関数とする．
   （Hölder の不等式から従う標準的な結果．証明は省略する．
   例えば Dudley (2002) §5.1 参照．）
 \end{theorem}
+
+\section{Radon--Nikodym の証明に用いる Hilbert 空間}
+
+任意の有限測度 $\pi$ に対して $L^2(\pi)$ が実 Hilbert 空間となることと，
+Hilbert 空間版 Riesz の表現定理を証明する．
+これらを既知とする場合は，この節の証明を省略して本編を読み進められる．
+
+\begin{definition}{実 Hilbert 空間と有界線形汎関数}{rn-hilbert-space}
+  実ベクトル空間 $\mathcal{H}$ 上の\textbf{内積}とは，各変数について線形で，
+  $\langle u,v\rangle=\langle v,u\rangle$，$\langle u,u\rangle\geq0$ をみたし，
+  $\langle u,u\rangle=0$ が $u=0$ と同値になる写像
+  $\langle\cdot,\cdot\rangle\colon\mathcal{H}\times\mathcal{H}\to\R$ である．
+  $\norm{u}:=\langle u,u\rangle^{1/2}$ とおく．
+  距離 $d(u,v):=\norm{u-v}$ に関して完備な内積空間を\textbf{実 Hilbert 空間}という．
+
+  線形写像 $L\colon\mathcal{H}\to\R$ を\textbf{線形汎関数}という．
+  ある定数 $C\geq0$ が存在して
+  \[
+    \abs{L(u)}\leq C\norm{u}\qquad(u\in\mathcal{H})
+  \]
+  となるとき $L$ は\textbf{有界}であるという．
+  このとき $\abs{L(u)-L(v)}\leq C\norm{u-v}$ なので $L$ は連続である．
+\end{definition}
+
+内積から得られる基本公式を確認しておく．$v\neq0$ のとき
+$\norm{u-tv}^2\geq0$ に $t=\langle u,v\rangle/\norm{v}^2$ を代入すると，
+Cauchy--Schwarz の不等式 $\abs{\langle u,v\rangle}\leq\norm{u}\norm{v}$ が得られる
+（$v=0$ なら自明）．したがって
+$\norm{u+v}^2\leq(\norm{u}+\norm{v})^2$ であり，$\norm{\cdot}$ はノルムである．
+また，内積を展開すると\textbf{中線定理}
+\[
+  \norm{u+v}^2+\norm{u-v}^2=2\norm{u}^2+2\norm{v}^2
+\]
+が得られる．
+
+\begin{remark}{記法 $L^2(\pi)$}{rn-l2-notation}
+  $(X,\Sigma,\pi)$ を有限測度空間とする．
+  $L^2(\pi)$ は，$\int_X\abs{g}^2\,\d\pi<\infty$ をみたす可測関数 $g\colon X\to\R$ を，
+  $\pi$-a.e. に等しいもの同士で同一視した実ベクトル空間である．
+  同値類とその代表元を同じ記号 $g$ で書き，
+  \[
+    \langle g,h\rangle:=\int_Xgh\,\d\pi,\qquad
+    \norm{g}_{L^2(\pi)}:=\left(\int_X\abs{g}^2\,\d\pi\right)^{1/2}
+  \]
+  とおく．Minkowski の不等式より和も $L^2(\pi)$ に属し，
+  Hölder の不等式より積 $gh$ は可積分である．
+  積分は代表元によらず，$\int_Xg^2\,\d\pi=0$ と $g=0$ $\pi$-a.e. は同値なので，これは内積を定める．
+\end{remark}
+
+\begin{lemma}{$L^2$ の完備性（Riesz--Fischer）}{rn-l2-complete}
+  任意の有限測度空間 $(X,\Sigma,\pi)$ に対し，$L^2(\pi)$ は上の内積によって実 Hilbert 空間となる．
+\end{lemma}
+
+\begin{proof}
+  完備性を示せばよい．$(g_n)$ を $L^2(\pi)$ の Cauchy 列とする．
+  部分列 $(g_{n_k})$ を $\norm{g_{n_{k+1}}-g_{n_k}}_{L^2(\pi)}\leq2^{-k}$ となるように取り，
+  各項の可測な代表元を選ぶ．
+  \[
+    S_m:=\sum_{k=1}^m\abs{g_{n_{k+1}}-g_{n_k}},\qquad S:=\lim_m S_m
+  \]
+  とおくと，Minkowski の不等式より $\norm{S_m}_{L^2(\pi)}\leq\sum_{k=1}^m2^{-k}\leq1$ である．
+  $S_m^2\uparrow S^2$ に単調収束定理を用いて $\int_XS^2\,\d\pi\leq1$ を得るので，$S<\infty$ が $\pi$-a.e. に成り立つ．
+  したがって級数
+  \[
+    g:=g_{n_1}+\sum_{k=1}^{\infty}(g_{n_{k+1}}-g_{n_k})
+  \]
+  は $\{S<\infty\}$ 上で絶対収束する．$\{S=\infty\}$ 上では $g=0$ と定めれば可測であり，
+  $\abs{g}\leq\abs{g_{n_1}}+S$ が $\pi$-a.e. に成り立つので $g\in L^2(\pi)$ である．
+  同じ Minkowski の不等式と単調収束定理を級数の末尾に用いると
+  \[
+    \norm{g-g_{n_k}}_{L^2(\pi)}
+    \leq\left\|\sum_{j=k}^{\infty}\abs{g_{n_{j+1}}-g_{n_j}}\right\|_{L^2(\pi)}
+    \leq\sum_{j=k}^{\infty}2^{-j}=2^{1-k}\longrightarrow0.
+  \]
+  $(g_n)$ は Cauchy 列なので，三角不等式から全列も $g$ に収束する．
+\end{proof}
+
+\begin{theorem}{Hilbert 空間版 Riesz の表現定理}{rn-hilbert-riesz}
+  $\mathcal{H}$ を実 Hilbert 空間，$L\colon\mathcal{H}\to\R$ を有界線形汎関数とする．
+  このとき，ただ一つの $h\in\mathcal{H}$ が存在して
+  \[
+    L(u)=\langle u,h\rangle\qquad(u\in\mathcal{H})
+  \]
+  が成り立つ．
+\end{theorem}
+
+\begin{proof}
+  $L=0$ のときは $h=0$ とすればよい．以下 $L\neq0$ とする．
+  $C:=\{u\in\mathcal{H}\mid L(u)=1\}$ は空でなく，$L$ の連続性から閉集合である．
+  $d:=\inf_{u\in C}\norm{u}$ とおき，$u_n\in C$ を $\norm{u_n}\to d$ となるように取る．
+  $(u_n+u_m)/2\in C$ と中線定理から
+  \[
+    \norm{u_n-u_m}^2
+    =2\norm{u_n}^2+2\norm{u_m}^2-\norm{u_n+u_m}^2
+    \leq2\norm{u_n}^2+2\norm{u_m}^2-4d^2\longrightarrow0.
+  \]
+  よって $(u_n)$ は Cauchy 列であり，完備性と $C$ の閉性より，ある $z\in C$ に収束する．
+  ノルムの連続性から $\norm{z}=d$ である．
+
+  $L(v)=0$ なら任意の $t\in\R$ について $z+tv\in C$ なので，最小性から
+  \[
+    0\leq\norm{z+tv}^2-\norm{z}^2
+    =2t\langle z,v\rangle+t^2\norm{v}^2.
+  \]
+  これがすべての $t$ で成り立つためには $\langle z,v\rangle=0$ でなければならない．
+  任意の $u\in\mathcal{H}$ に対して $v:=u-L(u)z$ は $L(v)=0$ をみたすから
+  \[
+    \langle u,z\rangle=L(u)\norm{z}^2.
+  \]
+  $L(z)=1$ より $z\neq0$ なので，$h:=z/\norm{z}^2$ とすれば所望の表示を得る．
+  二つの表示元 $h,h'$ があれば，$u=h-h'$ を代入して $\norm{h-h'}^2=0$ を得るため，一意でもある．
+\end{proof}
 
 \section{像測度}
 
