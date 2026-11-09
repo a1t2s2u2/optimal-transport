@@ -524,10 +524,10 @@ Hilbert 空間版 Riesz の表現定理を証明する．
 
 \begin{definition}{実 Hilbert 空間と有界線形汎関数}{rn-hilbert-space}
   実ベクトル空間 $\mathcal{H}$ 上の\textbf{内積}とは，各変数について線形で，
-  $\langle u,v\rangle=\langle v,u\rangle$，$\langle u,u\rangle\geq0$ をみたし，
-  $\langle u,u\rangle=0$ が $u=0$ と同値になる写像
-  $\langle\cdot,\cdot\rangle\colon\mathcal{H}\times\mathcal{H}\to\R$ である．
-  $\norm{u}:=\langle u,u\rangle^{1/2}$ とおく．
+  $(u,v)=(v,u)$，$(u,u)\geq0$ をみたし，
+  $(u,u)=0$ が $u=0$ と同値になる写像
+  $(\cdot,\cdot)\colon\mathcal{H}\times\mathcal{H}\to\R$ である．
+  $\norm{u}:=(u,u)^{1/2}$ とおく．
   距離 $d(u,v):=\norm{u-v}$ に関して完備な内積空間を\textbf{実 Hilbert 空間}という．
 
   線形写像 $L\colon\mathcal{H}\to\R$ を\textbf{線形汎関数}という．
@@ -540,8 +540,8 @@ Hilbert 空間版 Riesz の表現定理を証明する．
 \end{definition}
 
 内積から得られる基本公式を確認しておく．$v\neq0$ のとき
-$\norm{u-tv}^2\geq0$ に $t=\langle u,v\rangle/\norm{v}^2$ を代入すると，
-Cauchy--Schwarz の不等式 $\abs{\langle u,v\rangle}\leq\norm{u}\norm{v}$ が得られる
+$\norm{u-tv}^2\geq0$ に $t=(u,v)/\norm{v}^2$ を代入すると，
+Cauchy--Schwarz の不等式 $\abs{(u,v)}\leq\norm{u}\norm{v}$ が得られる
 （$v=0$ なら自明）．したがって
 $\norm{u+v}^2\leq(\norm{u}+\norm{v})^2$ であり，$\norm{\cdot}$ はノルムである．
 また，内積を展開すると\textbf{中線定理}
@@ -556,7 +556,7 @@ $\norm{u+v}^2\leq(\norm{u}+\norm{v})^2$ であり，$\norm{\cdot}$ はノルム�
   $\pi$-a.e. に等しいもの同士で同一視した実ベクトル空間である．
   同値類とその代表元を同じ記号 $g$ で書き，
   \[
-    \langle g,h\rangle:=\int_Xgh\,\d\pi,\qquad
+    (g,h):=\int_Xgh\,\d\pi,\qquad
     \norm{g}_{L^2(\pi)}:=\left(\int_X\abs{g}^2\,\d\pi\right)^{1/2}
   \]
   とおく．Minkowski の不等式より和も $L^2(\pi)$ に属し，
@@ -596,7 +596,7 @@ $\norm{u+v}^2\leq(\norm{u}+\norm{v})^2$ であり，$\norm{\cdot}$ はノルム�
   $\mathcal{H}$ を実 Hilbert 空間，$L\colon\mathcal{H}\to\R$ を有界線形汎関数とする．
   このとき，ただ一つの $h\in\mathcal{H}$ が存在して
   \[
-    L(u)=\langle u,h\rangle\qquad(u\in\mathcal{H})
+    L(u)=(u,h)\qquad(u\in\mathcal{H})
   \]
   が成り立つ．
 \end{theorem}
@@ -617,12 +617,12 @@ $\norm{u+v}^2\leq(\norm{u}+\norm{v})^2$ であり，$\norm{\cdot}$ はノルム�
   $L(v)=0$ なら任意の $t\in\R$ について $z+tv\in C$ なので，最小性から
   \[
     0\leq\norm{z+tv}^2-\norm{z}^2
-    =2t\langle z,v\rangle+t^2\norm{v}^2.
+    =2t(z,v)+t^2\norm{v}^2.
   \]
-  これがすべての $t$ で成り立つためには $\langle z,v\rangle=0$ でなければならない．
+  これがすべての $t$ で成り立つためには $(z,v)=0$ でなければならない．
   任意の $u\in\mathcal{H}$ に対して $v:=u-L(u)z$ は $L(v)=0$ をみたすから
   \[
-    \langle u,z\rangle=L(u)\norm{z}^2.
+    (u,z)=L(u)\norm{z}^2.
   \]
   $L(z)=1$ より $z\neq0$ なので，$h:=z/\norm{z}^2$ とすれば所望の表示を得る．
   二つの表示元 $h,h'$ があれば，$u=h-h'$ を代入して $\norm{h-h'}^2=0$ を得るため，一意でもある．
