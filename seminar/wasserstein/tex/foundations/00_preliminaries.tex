@@ -4,9 +4,10 @@
 本編で用いる実数・距離空間・測度論の道具をまとめる．
 本資料では，使う用語はすべて定義し，
 証明なしに用いる標準定理はステートメントを明示したうえで文献を挙げる
-（単調収束定理・一致定理・Tonelli の定理・
+（単調収束定理・Dynkin の定理・Tonelli の定理・
 Prokhorov の定理など）．
 それ以外の主張にはすべて証明を付ける．
+付録は必要な箇所を参照するためのものであり，補足証明をすべて発表で扱う必要はない．
 証明を省略した定理については，
 例えば伊藤清三『ルベーグ積分入門』，
 Dudley \emph{Real Analysis and Probability} (2002)，
@@ -123,10 +124,16 @@ Villani \emph{Optimal Transport} (2009) 第1章を参照．
 \end{definition}
 
 \begin{remark}{compact 集合について前提とする事実}{meas-compact-facts}
-  次は距離空間の標準的事実であり，証明なしに用いる．
+  次は距離空間の基本的な事実として，証明なしに用いる
+  （Rudin \emph{Principles of Mathematical Analysis}，第3版，第2章・第4章参照）．
   \begin{itemize}
-    \item compact 集合の閉部分集合は compact である．
+    \item 距離空間の compact 集合は閉であり，その閉部分集合は compact である．
     \item 空でない compact 集合上の実数値連続関数は最大値と最小値をとる．特に有界である．
+    \item compact 距離空間上の実数値連続関数 $f$ は\textbf{一様連続}である．すなわち，
+      任意の $\varepsilon>0$ に対しある $\delta>0$ が存在して，
+      $d(x,y)<\delta$ ならば $\abs{f(x)-f(y)}<\varepsilon$ となる．
+    \item 距離空間の部分集合 $K$ が compact であることと，
+      $K$ 内の任意の点列が $K$ 内の点に収束する部分列をもつことは同値である．
   \end{itemize}
 \end{remark}
 
@@ -219,7 +226,8 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
   $\pi$-系 $\mathcal{C}$ が $\lambda$-系 $\mathcal{D}$ に含まれるならば，
   $\sigma(\mathcal{C})\subset\mathcal{D}$ である．
 
-  （標準的な結果．証明は省略する．）
+  （標準的な結果．証明は省略する．Billingsley \emph{Probability and Measure}
+  (3rd ed., 1995) §3 参照．）
 \end{theorem}
 
 \begin{theorem}{有限測度の一致定理}{meas-uniqueness}
@@ -228,9 +236,14 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
   $\mu(\Omega)=\nu(\Omega)$ かつ，すべての $A\in\mathcal{C}$ で
   $\mu(A)=\nu(A)$ ならば，$\sigma(\mathcal{C})$ 上で $\mu=\nu$ である．
 
-  （Dynkin の $\pi$-$\lambda$ 定理（定理~\ref{thm:meas-pi-lambda}）から従う
-  標準的な結果．証明は省略する．）
 \end{theorem}
+
+\begin{proof}
+  $\mathcal{D}:=\{A\in\sigma(\mathcal{C})\mid\mu(A)=\nu(A)\}$ とおく．
+  全測度の一致から $\Omega\in\mathcal{D}$ であり，有限性より補集合についても一致する．
+  可算加法性より，互いに素な可算合併についても一致するので，$\mathcal{D}$ は $\lambda$-系である．
+  $\mathcal{C}\subset\mathcal{D}$ と Dynkin の定理（定理~\ref{thm:meas-pi-lambda}）から結論を得る．
+\end{proof}
 
 \section{指示関数と a.e.}
 
@@ -280,7 +293,8 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
   \[
     \lim_{n\to\infty}\int_\Omega f_n\,\d\mu=\int_\Omega f\,\d\mu.
   \]
-  （Lebesgue 積分論の基本定理．証明は省略する．）
+  （Lebesgue 積分論の基本定理．証明は省略する．
+  Folland \emph{Real Analysis} (2nd ed., 1999) Theorem 2.14 参照．）
 \end{theorem}
 
 \begin{theorem}{有界収束定理}{meas-bounded-convergence}
@@ -334,7 +348,7 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
 \label{sec:meas-weak-tight}
 
 \begin{definition}{有界連続関数の空間}{meas-cb}
-  距離空間 $\mathcal{X}$ 上の有界連続関数 $f\colon \mathcal{X}\to\R$ 全体を
+  距離空間 $\mathcal{X}$ 上の\textbf{有界連続関数} $f\colon \mathcal{X}\to\R$ 全体を
   \[
     C_b(\mathcal{X})
     :=
@@ -437,6 +451,39 @@ $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く�
   Billingsley \emph{Convergence of Probability Measures}
   (2nd ed., 1999) Theorems 5.1, 5.2 にある．）
 \end{theorem}
+
+\subsection{補足：一つの確率測度の tightness}
+
+本編では Prokhorov の定理から得る性質について，可分性と完備性からの直接証明も記しておく．
+
+\begin{lemma}{Polish 空間上の一つの確率測度の tightness}{meas-single-tight}
+  Polish 空間 $\mathcal{X}$ 上の任意の $\mu\in\Prob(\mathcal{X})$ に対し，
+  $\{\mu\}$ は tight である．
+\end{lemma}
+
+\begin{proof}
+  $\varepsilon>0$ と，可算稠密集合 $\{x_1,x_2,\ldots\}\subset\mathcal{X}$ を取る．
+  各 $n\geq1$ について $\mathcal{X}=\bigcup_{j\geq1}B_{1/n}(x_j)$ なので，
+  単調収束定理を有限合併の指示関数に用いると，ある $m_n$ で
+  \[
+    \mu\left(\bigcup_{j=1}^{m_n}B_{1/n}(x_j)\right)>1-\varepsilon2^{-n}
+  \]
+  となる．閉集合
+  \[
+    F_n:=\bigcup_{j=1}^{m_n}\{x\in\mathcal{X}\mid d(x,x_j)\leq1/n\},
+    \qquad K:=\bigcap_{n\geq1}F_n
+  \]
+  を取れば，可算劣加法性より $\mu(\mathcal{X}\setminus K)\leq\sum_n\varepsilon2^{-n}=\varepsilon$ である．
+
+  $K$ が compact であることを確かめる．$K$ 内の任意の点列から，
+  $F_1$ を構成する一つの閉球に含まれる部分列を選び，
+  さらに $F_2$ を構成する一つの閉球に含まれる部分列を選ぶ，という操作を続ける．
+  第 $n$ 段階の部分列は半径 $1/n$ の一つの閉球に含まれる．
+  各段階から元の添字が増加するように一項ずつ取ると，得られる点列の第 $n$ 項以降の
+  二点の距離は $2/n$ 以下なので Cauchy 列である．
+  $\mathcal{X}$ の完備性より収束し，$K$ は閉なので極限も $K$ に属する．
+  したがって compact 性の点列による特徴付け（注意~\ref{rem:meas-compact-facts}）より $K$ は compact である．
+\end{proof}
 
 \section{積分不等式}
 
@@ -541,12 +588,19 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
 同様に $\max$ 距離を入れ，可分性・完備性は保たれる
 （2因子の場合の繰り返し）．
 
-\begin{remark}{直積空間の Borel $\sigma$-代数（前提とする事実）}{meas-borel-product}
+\begin{remark}{直積空間の Borel $\sigma$-代数}{meas-borel-product}
   $\mathcal{X},\mathcal{Y}$ が可分距離空間のとき，
   $\Borel(\mathcal{X}\times \mathcal{Y})$ は矩形集合
   $\{A\times B\mid A\in\Borel(\mathcal{X}),\,B\in\Borel(\mathcal{Y})\}$
   の生成する $\sigma$-代数
-  $\Borel(\mathcal{X})\otimes\Borel(\mathcal{Y})$ と一致する（証明は省略する）．
+  $\Borel(\mathcal{X})\otimes\Borel(\mathcal{Y})$ と一致する．
+  実際，補題~\ref{lem:meas-countable-generator}の証明で用いる可算な開球の族を各因子に取ると，
+  その直積からなる可算族の元の合併で，直積空間の任意の開集合を表せる．
+  したがって $\Borel(\mathcal{X}\times\mathcal{Y})\subset\Borel(\mathcal{X})\otimes\Borel(\mathcal{Y})$ である．
+  逆に，$(x,y)\mapsto x$，$(x,y)\mapsto y$ は連続なので，
+  $A\times\mathcal{Y}$ と $\mathcal{X}\times B$ は Borel 集合であり，
+  その共通部分 $A\times B$ も Borel 集合である．これで逆の包含も従う．
+
   なお矩形集合の族は
   $(A\times B)\cap(A'\times B')=(A\cap A')\times(B\cap B')$
   より $\pi$-系である．
@@ -622,7 +676,26 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
 
 \section{測度分解のための準備}
 
-第\ref{ch:disintegration}章で用いる事実をまとめる．
+第\ref{ch:disintegration}章で用いる補助結果と，既知として用いる Carathéodory の定理をまとめる．
+$C(K)$ の可分性や可算な Borel 生成族の構成は，本文では主張を用い，証明の詳細はここで確認する．
+
+\begin{remark}{絶対連続性の二つの定義}{rn-null-characterization}
+  有限測度 $\alpha,\nu$ について，定義~\ref{def:meas-absolute-continuity}の零集合による条件は，
+  北別府 p.~57 の次の条件と同値である：
+  任意の $\varepsilon>0$ に対しある $\delta>0$ が存在して，すべての可測集合 $B$ で
+  \[
+    \nu(B)<\delta\quad\Longrightarrow\quad\alpha(B)<\varepsilon.
+  \]
+  実際，この条件から零集合の条件は直ちに従う．逆に $\alpha\ll\nu$ なら，
+  Radon--Nikodym の定理（定理~\ref{thm:meas-radon-nikodym}）で $\alpha(B)=\int_Bh\,\d\nu$ と表せる．
+  $h\mathbf{1}_{\{h\leq n\}}\uparrow h$ と単調収束定理より，
+  $\int_{\{h>n\}}h\,\d\nu\to0$ である．これが $\varepsilon/2$ 未満となる $n\geq1$ を取り，
+  $\delta:=\varepsilon/(2n)$ とすれば，$\nu(B)<\delta$ のとき
+  \[
+    \alpha(B)\leq\int_{\{h>n\}}h\,\d\nu+n\nu(B)<\varepsilon
+  \]
+  を得る．
+\end{remark}
 
 \begin{remark}{記法：compact 空間上の連続関数}{meas-compact-continuous}
   空でない compact 距離空間 $K$ 上の実数値連続関数全体を $C(K)$ と書き，
@@ -642,10 +715,34 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
   $\mathcal{C}\subset C(K)$ が存在する
   （$\mathbb{Q}$ は有理数全体．可算稠密集合と $1$ の有理係数の有限線形結合の全体を取ればよい）．
 
-  （関数解析の標準的事実であり，証明は省略する．
-  例えば Stone--Weierstrass の定理から従う．
-  北別府，Theorem 5.3.1 の証明 Step 1 でも同じ事実が用いられている．）
 \end{theorem}
+
+\begin{proof}
+  各 $n\geq1$ について，compact 性により
+  $K=\bigcup_{j=1}^{m_n}B_{1/n}(x_{n,j})$ となる有限個の点 $x_{n,j}\in K$ を選ぶ．
+  これらの点の近くで正になる連続関数を，和が $1$ になるように正規化して
+  \[
+    \psi_{n,j}(x):=\max\{1/n-d(x,x_{n,j}),0\},\qquad
+    \varphi_{n,j}(x):=\frac{\psi_{n,j}(x)}{\sum_{i=1}^{m_n}\psi_{n,i}(x)}
+  \]
+  とおく．被覆の取り方から分母はすべての $x\in K$ で正であり，
+  $\varphi_{n,j}$ は連続で，$\varphi_{n,j}\geq0$，$\sum_j\varphi_{n,j}=1$ をみたす．
+  また $\varphi_{n,j}(x)>0$ ならば $d(x,x_{n,j})<1/n$ である．
+
+  $\mathcal{C}$ を，すべての $\varphi_{n,j}$ の有理係数の有限線形結合の全体とする．
+  関数 $\varphi_{n,j}$ は可算個なので $\mathcal{C}$ も可算であり，$1\in\mathcal{C}$ である．
+  稠密性を示すため，$f\in C(K)$ と $\varepsilon>0$ を取る．
+  $f$ の一様連続性（注意~\ref{rem:meas-compact-facts}）から，$n$ を十分大きく取れば
+  $d(x,z)<1/n$ のとき $\abs{f(x)-f(z)}<\varepsilon/2$ となる．
+  有理数 $q_j$ を $\abs{q_j-f(x_{n,j})}<\varepsilon/2$ となるように選び，
+  $g:=\sum_jq_j\varphi_{n,j}\in\mathcal{C}$ とおく．正の重みをもつ項だけを見れば，すべての $x$ で
+  \[
+    \abs{f(x)-g(x)}
+    \leq\sum_{j=1}^{m_n}\varphi_{n,j}(x)\,\abs{f(x)-q_j}
+    \leq\varepsilon
+  \]
+  となる．したがって $\norm{f-g}_\infty\leq\varepsilon$ であり，$\mathcal{C}$ は稠密である．
+\end{proof}
 
 \begin{lemma}{Borel 集合を生成する可算 $\pi$-系}{meas-countable-generator}
   可分距離空間 $\mathcal{X}$ には，$\Borel(\mathcal{X})$ を生成する可算な $\pi$-系が存在する．
@@ -662,12 +759,17 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
   $\mathcal{U}$ の元の有限個の共通部分の全体は可算な $\pi$-系であり，同じ $\sigma$-代数を生成する．
 \end{proof}
 
-\begin{remark}{閉部分空間の Borel 集合（前提とする事実）}{meas-subspace-borel}
+\begin{remark}{閉部分空間の Borel 集合}{meas-subspace-borel}
   距離空間 $\mathcal{X}$ の閉集合 $K$ に $d$ の制限を入れた距離空間を考えると，
   \[
     \Borel(K)=\{A\in\Borel(\mathcal{X})\mid A\subset K\}
   \]
-  が成り立つ（証明は省略する）．したがって $K$ 上の Borel 測度 $\rho$ は，
+  が成り立つ．実際，右辺は $K$ 上の $\sigma$-代数であり，
+  $K$ の開集合は $K\cap U$（$U$ は $\mathcal{X}$ の開集合）の形なので，すべて右辺に属する．
+  よって左辺は右辺に含まれる．逆に，包含写像 $i\colon K\to\mathcal{X}$ は連続なので Borel 可測であり，
+  $A\in\Borel(\mathcal{X})$，$A\subset K$ ならば $A=i^{-1}(A)\in\Borel(K)$ である．
+
+  したがって $K$ 上の Borel 測度 $\rho$ は，
   $A\in\Borel(\mathcal{X})$ に $\rho(A\cap K)$ を対応させることで
   $\mathcal{X}$ 上の Borel 測度に延長できる．
 \end{remark}

@@ -12,8 +12,8 @@ export default {
   landingTitle: "Wasserstein 距離",
   landingSubtitle: "定義から距離性の証明，測度分解定理まで",
   landingFooter: "参考文献: Villani (2009), 桑江ほか (2015)",
-  appendixHeading: "付録：前提知識",
-  appendixSubheading: "発表では省略した数学的前提を網羅した完全版．本編から参照される．",
+  appendixHeading: "付録：前提知識と補足証明",
+  appendixSubheading: "既知として用いる定理の主張と補助結果の証明．必要な箇所を本編から参照する．",
 
   // --- 章立て（tex は tex/ からの相対パス、md は site/content/ に出る）---
   chapters: [
