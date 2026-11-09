@@ -2,10 +2,12 @@
 \label{ch:disintegration}
 
 接着補題（補題~\ref{lem:wp-gluing}）で必要なのは，
-二変数の分布 $\pi$ を，変数 $y$ ごとの確率測度 $\pi_y$ に分け，
+二変数の分布 $\pi$ を，変数 $y$ ごとの確率測度 $\lambda_y$ に分け，
 その平均として元の分布を復元することである．
 北別府悠『最適輸送理論入門〜兼非標準的関数解析入門〜』Theorem 5.3.1 の
-証明に沿って，接着補題で使う形を示す．
+構成をもとに，接着補題で使う積空間上の形を示す．
+原資料は一般の Borel 可測写像に沿う分解を扱うが，本章では第2変数に沿う分解に限定する．
+分解測度 $\lambda_y$ と，その構成に用いる汎関数 $m_y$ の記号は原資料に合わせる．
 本章では，まず測度分解定理を述べ，その準備となる二つの定理を証明してから，測度分解の証明に進む．
 Radon--Nikodym の定理は有限測度，Riesz の表現定理は compact 距離空間の場合に限る．
 測度分解の証明に用いるのは，この二つの形である．
@@ -26,20 +28,20 @@ $C(K)$ の可分性や Borel 集合に関する補助結果には付録で証明
     \nu(B):=\pi(\mathcal{X}\times B)\qquad(B\in\Borel(\mathcal{Y}))
   \]
   で定める．
-  このとき，確率測度の族 $(\pi_y)_{y\in\mathcal{Y}}$，$\pi_y\in\Prob(\mathcal{X})$ で，
+  このとき，確率測度の族 $(\lambda_y)_{y\in\mathcal{Y}}$，$\lambda_y\in\Prob(\mathcal{X})$ で，
   次をみたすものが存在する．
   \begin{enumerate}
-    \item 各 Borel 集合 $A\in\Borel(\mathcal{X})$ に対して $y\mapsto\pi_y(A)$ は Borel 可測である．
+    \item 各 Borel 集合 $A\in\Borel(\mathcal{X})$ に対して $y\mapsto\lambda_y(A)$ は Borel 可測である．
     \item 任意の Borel 集合 $A\in\Borel(\mathcal{X})$，$B\in\Borel(\mathcal{Y})$ に対して
       \[
-        \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y).
+        \pi(A\times B)=\int_B\lambda_y(A)\,\d\nu(y).
       \]
   \end{enumerate}
-  さらに，$(\pi'_y)_{y\in\mathcal{Y}}$ も条件 1，2 をみたすならば，
-  $\nu(N)=0$ をみたす $N\in\Borel(\mathcal{Y})$ が存在して，$y\notin N$ ならば $\pi_y=\pi'_y$ である．
+  さらに，$(\lambda'_y)_{y\in\mathcal{Y}}$ も条件 1，2 をみたすならば，
+  $\nu(N)=0$ をみたす $N\in\Borel(\mathcal{Y})$ が存在して，$y\notin N$ ならば $\lambda_y=\lambda'_y$ である．
 \end{theorem}
 
-条件 1，2 をみたす族 $(\pi_y)$ を $\pi$ の $\nu$ に関する\textbf{分解}という．
+条件 1，2 をみたす族 $(\lambda_y)$ を $\pi$ の $\nu$ に関する\textbf{分解}という．
 一意性は，$A$ ごとに例外集合を取るだけでなく，
 一つの零集合の外で\emph{測度として一致する}ことを主張している．
 まず $\mathcal{X}=K$ が compact な場合を考える．連続関数 $f$ に対して
@@ -47,11 +49,11 @@ $\nu_f(B):=\int_{K\times B}f(x)\,\d\pi(x,y)$ とおくと，証明の流れは
 \[
   \nu_f(B)=\int_B l_f(y)\,\d\nu(y)
   \quad\longrightarrow\quad
-  L_y(f)=\int_K f\,\d\pi_y
+  m_y(f)=\int_K f\,\d\lambda_y
 \]
 となる．左の密度 $l_f$ を Radon--Nikodym の定理で作り，
-共通の零集合の外で $f\mapsto l_f(y)$ を正の線形汎関数 $L_y$ にまとめる．
-右の確率測度 $\pi_y$ を与えるのが Riesz の表現定理である．
+共通の零集合の外で $f\mapsto l_f(y)$ を正の線形汎関数 $m_y$ にまとめる．
+右の確率測度 $\lambda_y$ を与えるのが Riesz の表現定理である．
 $\nu_f$ は $f\geq0$ のとき測度になるので，まずこの場合を扱い，一般の $f$ は正部分・負部分に分ける．
 
 \section{Radon--Nikodym の定理}
@@ -60,65 +62,60 @@ $\nu_f$ は $f\geq0$ のとき測度になるので，まずこの場合を扱�
 Radon--Nikodym の定理は，一つの測度を別の測度に関する密度で表す定理である．
 測度分解の証明では，この密度を使って各 $y$ における積分の値を定める．
 有限測度の場合の主張は，北別府悠『最適輸送理論入門〜兼非標準的関数解析入門〜』
-Corollary 4.6.2（p.~57）に対応する．証明には，測度の差から正の部分を取り出す補題を用いる．
+Corollary 4.6.2（p.~57）に対応する．原資料の証明は $L^2$ と Lebesgue 分解定理を用いる．
+本節では，測度の差から正の部分を取り出す補題を用いて直接証明する．
 
-本節では，$(\Omega,\mathcal{A})$ を可測空間とする．
+本節では，北別府 p.~57 の記号に合わせ，$(X,\Sigma)$ を可測空間とする．
 
 \subsection{絶対連続性と定理の主張}
 
 \begin{definition}{測度の絶対連続性}{meas-absolute-continuity}
-  $(\Omega,\mathcal{A})$ 上の有限測度 $\nu,\alpha$ を考える．
-  $\alpha$ が $\nu$ に\textbf{絶対連続}であるとは，
+  $(X,\Sigma)$ 上の有限測度 $\mu,\nu$ を考える．
+  $\nu$ が $\mu$ に\textbf{絶対連続}であるとは，
   \[
-    \nu(B)=0\quad\Longrightarrow\quad\alpha(B)=0
-    \qquad(B\in\mathcal{A})
+    \mu(A)=0\quad\Longrightarrow\quad\nu(A)=0
+    \qquad(A\in\Sigma)
   \]
-  が成り立つことをいう．このとき $\alpha\ll\nu$ と書く．
+  が成り立つことをいう．このとき $\nu\ll\mu$ と書く．
   この定義は Folland (1999) §3.2 に従う．北別府 p.~57 の $\varepsilon$--$\delta$ による定義との
   同値性は，注意~\ref{rem:rn-null-characterization}で確認する．
 \end{definition}
 
 \begin{theorem}{Radon--Nikodym の定理（有限測度の場合；北別府 Cor 4.6.2）}{meas-radon-nikodym}
-  $(\Omega,\mathcal{A})$ 上の有限測度 $\nu,\alpha$ が $\alpha\ll\nu$ をみたすとする．
-  このとき，非負の $\nu$-可積分な可測関数 $h\colon\Omega\to[0,\infty)$ が存在して，
+  $(X,\Sigma)$ を可測空間とし，測度 $\mu,\nu\colon\Sigma\to[0,\infty]$ が
   \[
-    \alpha(B)=\int_Bh\,\d\nu\qquad(B\in\mathcal{A})
+    \mu(X)<\infty,\qquad\nu(X)<\infty,\qquad\nu\ll\mu
   \]
-  が成り立つ．$h$ は $\nu$-a.e. の意味で一意であり，
-  \textbf{Radon--Nikodym 微分}とよんで $\d\alpha/\d\nu$ と書く．
+  をみたすとする．
+  このとき，非負の $\mu$-可積分な可測関数 $f\colon X\to[0,\infty)$ が存在して，
+  \[
+    \nu(A)=\int_Af\,\d\mu\qquad(A\in\Sigma)
+  \]
+  が成り立つ．$f$ は $\mu$-a.e. の意味で一意である．この密度を
+  \textbf{Radon--Nikodym 微分}とよび，
+  \[
+    f=\frac{\d\nu}{\d\mu}
+  \]
+  と書く．
 \end{theorem}
 
-$\alpha$ を超えない積分を与える密度の中から，積分値が最大のものを取り，
-残りの測度が $0$ であることを示す．その準備として二つの補題を証明する．
+$\nu$ を超えない積分を与える密度の中から，積分値が最大のものを取り，
+残りの測度が $0$ であることを示す．
 
-\subsection{証明の準備}
-
-\begin{lemma}{密度の一意性}{rn-density-uniqueness}
-  $\nu$ を $(\Omega,\mathcal{A})$ 上の有限測度とし，
-  $h,k\colon\Omega\to\R$ を $\nu$-可積分な可測関数とする．すべての $B\in\mathcal{A}$ で
-  \[
-    \int_Bh\,\d\nu=\int_Bk\,\d\nu
-  \]
-  が成り立つならば，$h=k$ が $\nu$-a.e. に成り立つ．
-\end{lemma}
-
-\begin{proof}
-  $B:=\{h>k\}$ では $h-k>0$ である一方，$\int_B(h-k)\,\d\nu=0$ なので $\nu(B)=0$ である．
-  $h,k$ を入れ替えて $\nu(\{k>h\})=0$ も得る．
-\end{proof}
+\subsection{正集合の補題}
 
 残りの測度が正なら，ある集合 $P$ 上で密度に定数 $t>0$ を足せることを示したい．
-そのためには，$P$ のどの可測部分集合でも「残りの測度 $-\,t\nu$」が非負であればよい．
+そのためには，$P$ のどの可測部分集合でも「残りの測度 $-\,t\mu$」が非負であればよい．
 次の補題が，そのような $P$ を取り出す．
 値が負になる部分集合を順に取り除くことで証明する．
 これは Royden--Fitzpatrick \emph{Real Analysis}（第4版）の Hahn の補題の構成を，有限測度の差に用いたものである．
 
 \begin{lemma}{正集合の存在}{rn-positive-set}
-  $\alpha,\beta$ を $(\Omega,\mathcal{A})$ 上の有限測度とし，$\lambda:=\alpha-\beta$ とおく．
-  $\lambda(\Omega)>0$ ならば，ある $P\in\mathcal{A}$ で
+  $\mu,\nu$ を $(X,\Sigma)$ 上の有限測度とし，$\lambda:=\nu-\mu$ とおく．
+  $\lambda(X)>0$ ならば，ある $P\in\Sigma$ で
   \[
     \lambda(P)>0,\qquad
-    \lambda(C)\geq0\quad(C\in\mathcal{A},\ C\subset P)
+    \lambda(C)\geq0\quad(C\in\Sigma,\ C\subset P)
   \]
   をみたすものが存在する．
 \end{lemma}
@@ -126,23 +123,23 @@ $\alpha$ を超えない積分を与える密度の中から，積分値が最�
 \begin{proof}
   互いに素な可測集合 $C_k$ に対し
   \[
-    \sum_k\abs{\lambda(C_k)}\leq\alpha(\Omega)+\beta(\Omega)<\infty
+    \sum_k\abs{\lambda(C_k)}\leq\nu(X)+\mu(X)<\infty
   \]
   なので，$\lambda(\bigcup_kC_k)=\sum_k\lambda(C_k)$ が成り立つ．
 
-  $A_0:=\Omega$ とし，$A_{k-1}$ が定まったとき
+  $A_0:=X$ とし，$A_{k-1}$ が定まったとき
   \[
-    m_k:=\inf\{\lambda(C)\mid C\in\mathcal{A},\ C\subset A_{k-1}\}
+    m_k:=\inf\{\lambda(C)\mid C\in\Sigma,\ C\subset A_{k-1}\}
   \]
-  とおく．$-\beta(\Omega)\leq m_k\leq0$ である．
+  とおく．$-\mu(X)\leq m_k\leq0$ である．
   可測集合 $C_k\subset A_{k-1}$ を $\lambda(C_k)\leq m_k/2$ となるように取り，
   $A_k:=A_{k-1}\setminus C_k$ とする
   （$m_k<0$ なら下限の定義により選べ，$m_k=0$ なら $C_k:=\emptyset$ とすればよい）．
 
-  $P:=\Omega\setminus\bigcup_kC_k$ とおく．
+  $P:=X\setminus\bigcup_kC_k$ とおく．
   $C_k$ は互いに素なので
   \[
-    \lambda(P)=\lambda(\Omega)-\sum_k\lambda(C_k)\geq\lambda(\Omega)>0.
+    \lambda(P)=\lambda(X)-\sum_k\lambda(C_k)\geq\lambda(X)>0.
   \]
   また，絶対収束より $\lambda(C_k)\to0$ であり，$2\lambda(C_k)\leq m_k\leq0$ から $m_k\to0$ である．
   可測集合 $C\subset P$ はすべての $A_{k-1}$ に含まれるので，
@@ -154,73 +151,82 @@ $\alpha$ を超えない積分を与える密度の中から，積分値が最�
 \begin{proof}[定理~\ref{thm:meas-radon-nikodym}の証明]
   \textbf{1. 積分値が最大の密度を作る．}
   \[
-    \mathcal{G}:=\left\{g\colon\Omega\to[0,\infty]\ \middle|\
-    g\text{ は可測で，すべての }B\in\mathcal{A}\text{ について }\int_Bg\,\d\nu\leq\alpha(B)\right\}
+    \mathcal{G}:=\left\{g\colon X\to[0,\infty]\ \middle|\
+    g\text{ は可測で，すべての }A\in\Sigma\text{ について }\int_Ag\,\d\mu\leq\nu(A)\right\}
   \]
   とおく．$0\in\mathcal{G}$ である．
 
-  $g_1,g_2\in\mathcal{G}$ とし，$B\in\mathcal{A}$ を
-  $B_1:=B\cap\{g_1\geq g_2\}$，$B_2:=B\setminus B_1$ に分けると
+  $g_1,g_2\in\mathcal{G}$ とし，$A\in\Sigma$ を
+  $A_1:=A\cap\{g_1\geq g_2\}$，$A_2:=A\setminus A_1$ に分けると
   \[
-    \int_B\max\{g_1,g_2\}\,\d\nu
-    =\int_{B_1}g_1\,\d\nu+\int_{B_2}g_2\,\d\nu
-    \leq\alpha(B_1)+\alpha(B_2)=\alpha(B).
+    \int_A\max\{g_1,g_2\}\,\d\mu
+    =\int_{A_1}g_1\,\d\mu+\int_{A_2}g_2\,\d\mu
+    \leq\nu(A_1)+\nu(A_2)=\nu(A).
   \]
 
-  $s:=\sup_{g\in\mathcal{G}}\int_\Omega g\,\d\nu\leq\alpha(\Omega)<\infty$ とおく．
-  $\int_\Omega g_n\,\d\nu\to s$ となる $g_n\in\mathcal{G}$ を取り，
+  $s:=\sup_{g\in\mathcal{G}}\int_X g\,\d\mu\leq\nu(X)<\infty$ とおく．
+  $\int_X g_n\,\d\mu\to s$ となる $g_n\in\mathcal{G}$ を取り，
   $\tilde g_n:=\max\{g_1,\dots,g_n\}$ とおくと，前段より $\tilde g_n\in\mathcal{G}$ であり，
   $\tilde g_n$ は単調増加である．その各点極限を $g$ とすると，
-  単調収束定理（定理~\ref{thm:meas-mct}）より，すべての $B$ で
-  $\int_Bg\,\d\nu=\lim_n\int_B\tilde g_n\,\d\nu\leq\alpha(B)$ となり，
-  $g\in\mathcal{G}$ かつ $\int_\Omega g\,\d\nu=s$ である．
-  $\int_\Omega g\,\d\nu<\infty$ より $\nu(\{g=\infty\})=0$ なので，
-  この零集合上で $g$ の値を $0$ に置き換えた関数を $h$ とすれば，
-  $h$ は実数値で，$h\in\mathcal{G}$，$\int_\Omega h\,\d\nu=s$ である．
+  単調収束定理（定理~\ref{thm:meas-mct}）より，すべての $A$ で
+  $\int_Ag\,\d\mu=\lim_n\int_A\tilde g_n\,\d\mu\leq\nu(A)$ となり，
+  $g\in\mathcal{G}$ かつ $\int_X g\,\d\mu=s$ である．
+  $\int_X g\,\d\mu<\infty$ より $\mu(\{g=\infty\})=0$ なので，
+  この零集合上で $g$ の値を $0$ に置き換えた関数を $f$ とすれば，
+  $f$ は実数値で，$f\in\mathcal{G}$，$\int_X f\,\d\mu=s$ である．
 
   \textbf{2. 残りの測度が $0$ であることを示す．}
   \[
-    \beta(B):=\alpha(B)-\int_Bh\,\d\nu\qquad(B\in\mathcal{A})
+    \beta(A):=\nu(A)-\int_Af\,\d\mu\qquad(A\in\Sigma)
   \]
-  とおくと，$h\in\mathcal{G}$ より $\beta\geq0$ であり，$\beta$ は有限測度である
-  （可算加法性は単調収束定理による）．$\beta(\Omega)=0$ を示せばよい．
+  とおくと，$f\in\mathcal{G}$ より $\beta\geq0$ であり，$\beta$ は有限測度である
+  （可算加法性は単調収束定理による）．$\beta(X)=0$ を示せばよい．
 
-  $\beta(\Omega)>0$ と仮定する．
-  $t>0$ を $\beta(\Omega)-t\,\nu(\Omega)>0$ となるように取り，
-  補題~\ref{lem:rn-positive-set}を $\lambda:=\beta-t\nu$ に適用して $P$ を得る．
-  $P$ の可測部分集合 $C$ について $t\,\nu(C)\leq\beta(C)$ であるから，
-  任意の $B\in\mathcal{A}$ で
+  $\beta(X)>0$ と仮定する．
+  $t>0$ を $\beta(X)-t\,\mu(X)>0$ となるように取り，
+  補題~\ref{lem:rn-positive-set}を $\lambda:=\beta-t\mu$ に適用して $P$ を得る．
+  $P$ の可測部分集合 $C$ について $t\,\mu(C)\leq\beta(C)$ であるから，
+  任意の $A\in\Sigma$ で
   \[
-    \int_B(h+t\mathbf{1}_P)\,\d\nu
-    =\int_Bh\,\d\nu+t\,\nu(B\cap P)
-    \leq\int_Bh\,\d\nu+\beta(B\cap P)
-    \leq\int_Bh\,\d\nu+\beta(B)=\alpha(B).
+    \int_A(f+t\mathbf{1}_P)\,\d\mu
+    =\int_Af\,\d\mu+t\,\mu(A\cap P)
+    \leq\int_Af\,\d\mu+\beta(A\cap P)
+    \leq\int_Af\,\d\mu+\beta(A)=\nu(A).
   \]
-  よって $h+t\mathbf{1}_P\in\mathcal{G}$ である．
-  一方，$\nu(P)=0$ なら $\alpha\ll\nu$ から $\alpha(P)=0$，したがって $\beta(P)=0$ となり，
-  $\lambda(P)=\beta(P)-t\nu(P)>0$ に反する．よって $\nu(P)>0$ であり，
+  よって $f+t\mathbf{1}_P\in\mathcal{G}$ である．
+  一方，$\mu(P)=0$ なら $\nu\ll\mu$ から $\nu(P)=0$，したがって $\beta(P)=0$ となり，
+  $\lambda(P)=\beta(P)-t\mu(P)>0$ に反する．よって $\mu(P)>0$ であり，
   \[
-    \int_\Omega(h+t\mathbf{1}_P)\,\d\nu=s+t\,\nu(P)>s
+    \int_X(f+t\mathbf{1}_P)\,\d\mu=s+t\,\mu(P)>s
   \]
-  となって $s$ の定義に反する．したがって $\beta(\Omega)=0$ であり，
-  すべての $B$ で $\alpha(B)=\int_Bh\,\d\nu$ が成り立つ．
-  一意性は補題~\ref{lem:rn-density-uniqueness}による．
+  となって $s$ の定義に反する．したがって $\beta(X)=0$ であり，
+  すべての $A$ で $\nu(A)=\int_Af\,\d\mu$ が成り立つ．
+
+  \textbf{3. 一意性．}
+  一般に，$\mu$-可積分な可測関数 $u,v\colon X\to\R$ がすべての $A\in\Sigma$ で
+  \[
+    \int_Au\,\d\mu=\int_Av\,\d\mu
+  \]
+  をみたすとする．$A:=\{u>v\}$ では $u-v>0$ である一方，
+  $\int_A(u-v)\,\d\mu=0$ なので $\mu(A)=0$ である．
+  $u,v$ を入れ替えて $\mu(\{v>u\})=0$ も得るので，$u=v$ が $\mu$-a.e. に成り立つ．
+  特に，密度 $f$ の一意性が従う．
 \end{proof}
 
 \begin{corollary}{密度による積分の書き換え}{rn-density-integral}
-  定理~\ref{thm:meas-radon-nikodym}の密度を $h=\d\alpha/\d\nu$ とする．
-  任意の非負可測関数 $g\colon\Omega\to[0,\infty]$ に対し
+  定理~\ref{thm:meas-radon-nikodym}の密度を $f=\d\nu/\d\mu$ とする．
+  任意の非負可測関数 $g\colon X\to[0,\infty]$ に対し
   \[
-    \int_\Omega g\,\d\alpha=\int_\Omega g\,h\,\d\nu
+    \int_X g\,\d\nu=\int_X g\,f\,\d\mu
   \]
   が成り立つ．
 \end{corollary}
 
 \begin{proof}
-  $g=\mathbf{1}_B$ のときは密度の定義そのものである．
+  $g=\mathbf{1}_A$ のときは密度の定義そのものである．
   積分の線形性から非負単関数について成り立ち，
   非負単関数の列 $s_n\uparrow g$（注意~\ref{rem:meas-measurable-ops}）を取れば
-  $s_nh\uparrow gh$ なので，両辺に単調収束定理（定理~\ref{thm:meas-mct}）を用いて一般の場合を得る．
+  $s_nf\uparrow gf$ なので，両辺に単調収束定理（定理~\ref{thm:meas-mct}）を用いて一般の場合を得る．
 \end{proof}
 
 \section{Riesz の表現定理}
@@ -228,7 +234,8 @@ $\alpha$ を超えない積分を与える密度の中から，積分値が最�
 
 Riesz の表現定理は，連続関数に対する正の線形汎関数を，測度による積分として表す定理である．
 測度分解の証明では，Radon--Nikodym 微分から作った汎関数にこの定理を適用し，
-各 $y$ に対応する確率測度を得る．ここでは compact 距離空間の場合を扱う．
+各 $y$ に対応する確率測度を得る．北別府の提供資料ではこの定理を引用している．
+ここでは，測度分解で用いる compact 距離空間の場合の証明を補う．
 $C(K)$ と $\norm{\cdot}_\infty$ の記法は注意~\ref{rem:meas-compact-continuous}による．
 
 \subsection{定理の主張}
@@ -409,9 +416,9 @@ Carathéodory の定理で Borel 測度を得るため，次に開集合の可�
   $K$ を空でない compact 距離空間，$\mathcal{Y}$ を距離空間とし，
   $\pi$ を $K\times\mathcal{Y}$ 上の零でない有限 Borel 測度，
   $\nu(B):=\pi(K\times B)$ とする．
-  このとき，$\pi_y\in\Prob(K)$ の族で，各 $A\in\Borel(K)$ に対し $y\mapsto\pi_y(A)$ が Borel 可測となり，
+  このとき，$\lambda_y\in\Prob(K)$ の族で，各 $A\in\Borel(K)$ に対し $y\mapsto\lambda_y(A)$ が Borel 可測となり，
   \[
-    \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y)
+    \pi(A\times B)=\int_B\lambda_y(A)\,\d\nu(y)
     \qquad(A\in\Borel(K),\ B\in\Borel(\mathcal{Y}))
   \]
   をみたすものが存在する．
@@ -427,8 +434,9 @@ Carathéodory の定理で Borel 測度を得るため，次に開集合の可�
   とおく．単調収束定理より $\nu_g$ は有限測度であり，
   $\nu_g(B)\leq\norm{g}_\infty\nu(B)$ である．
   したがって $\nu_g\ll\nu$ であり，Radon--Nikodym の定理（定理~\ref{thm:meas-radon-nikodym}）から，
-  非負で $\nu$-可積分な Borel 可測関数 $l_g$ で
+  非負で $\nu$-可積分な Borel 可測関数 $l_g=\d\nu_g/\d\nu$ で
   $\nu_g(B)=\int_Bl_g\,\d\nu$ となるものを取る．
+  この適用では，定理の基準測度 $\mu$ が第2周辺分布 $\nu$ に当たる．
   $\nu_0=0$，$\nu_1=\nu$ なので $l_0:=0$，$l_1:=1$ と選び，
   一般の $f\in C(K)$ には $l_f:=l_{f^+}-l_{f^-}$ と定める
   （$f^\pm$ は注意~\ref{rem:meas-compact-continuous}）．
@@ -444,7 +452,7 @@ Carathéodory の定理で Borel 測度を得るため，次に開集合の可�
   （定理~\ref{thm:meas-ck-separable}）．
   $f,g\in\mathcal{C}$，$a,b\in\mathbb{Q}$ について，$l_{af+bg}$ と $al_f+bl_g$ は
   上の積分公式により任意の $B$ で同じ積分値をもつので，
-  密度の一意性（補題~\ref{lem:rn-density-uniqueness}）より $\nu$-a.e. に一致する．
+  一意性の議論（定理~\ref{thm:meas-radon-nikodym}の証明の3）より $\nu$-a.e. に一致する．
   条件は可算個なので，例外集合の合併は Borel 零集合 $N$ となり，$y\notin N$ で
   \[
     l_{af+bg}(y)=a\,l_f(y)+b\,l_g(y)\qquad(f,g\in\mathcal{C},\ a,b\in\mathbb{Q})
@@ -464,34 +472,34 @@ Carathéodory の定理で Borel 測度を得るため，次に開集合の可�
   $f\in C(K)$ に対し，$\norm{f_k-f}_\infty\to0$ となる $f_k\in\mathcal{C}$ を取ると
   $(l_{f_k}(y))_k$ は Cauchy 列なので，
   \[
-    L_y(f):=\lim_{k\to\infty}l_{f_k}(y)
+    m_y(f):=\lim_{k\to\infty}l_{f_k}(y)
   \]
   と定める．別の近似列 $g_k\to f$ に対しても
   \[
     \abs{l_{f_k}(y)-l_{g_k}(y)}\leq\norm{f_k-g_k}_\infty\to0
   \]
-  なので，極限は近似列によらない．$f\in\mathcal{C}$ なら $L_y(f)=l_f(y)$ であり，
-  極限を取ることで $\mathbb{Q}$-線形性と $\abs{L_y(f)-L_y(g)}\leq\norm{f-g}_\infty$ が保たれる．
+  なので，極限は近似列によらない．$f\in\mathcal{C}$ なら $m_y(f)=l_f(y)$ であり，
+  極限を取ることで $\mathbb{Q}$-線形性と $\abs{m_y(f)-m_y(g)}\leq\norm{f-g}_\infty$ が保たれる．
   実数 $a$ に有理数列 $q_j$ を近づけると，この連続性より
   \[
-    L_y(af)=\lim_jL_y(q_jf)=\lim_jq_jL_y(f)=aL_y(f)
+    m_y(af)=\lim_jm_y(q_jf)=\lim_jq_jm_y(f)=am_y(f)
   \]
-  となるので，$L_y$ は実線形である．また $L_y(1)=1$，$\abs{L_y(f)}\leq\norm{f}_\infty$ である．
+  となるので，$m_y$ は実線形である．また $m_y(1)=1$，$\abs{m_y(f)}\leq\norm{f}_\infty$ である．
   $f\geq0$ なら，$m:=\norm{f}_\infty$ とおくと $\norm{m-f}_\infty\leq m$ なので，
   \[
-    L_y(f)=m-L_y(m-f)\geq0.
+    m_y(f)=m-m_y(m-f)\geq0.
   \]
   したがって Riesz の表現定理（定理~\ref{thm:meas-riesz-representation}）により
-  $L_y(f)=\int_Kf\,\d\pi_y$（$f\in C(K)$）となる $\pi_y\in\Prob(K)$ が得られる．
+  $m_y(f)=\int_Kf\,\d\lambda_y$（$f\in C(K)$）となる $\lambda_y\in\Prob(K)$ が得られる．
 
   \textbf{3. 連続関数に対する積分公式．}
   $f\in C(K)$ と上の近似列 $f_k\in\mathcal{C}$ を取る．
-  すべての $y$ で $\int_Kf\,\d\pi_y=\lim_kl_{f_k}(y)$ なので，
-  $y\mapsto\int_Kf\,\d\pi_y$ は Borel 可測である．
-  さらに $\abs{\int_Kf\,\d\pi_y-l_{f_k}(y)}\leq\norm{f-f_k}_\infty$ は $y$ によらず $0$ に近づく．
+  すべての $y$ で $\int_Kf\,\d\lambda_y=\lim_kl_{f_k}(y)$ なので，
+  $y\mapsto\int_Kf\,\d\lambda_y$ は Borel 可測である．
+  さらに $\abs{\int_Kf\,\d\lambda_y-l_{f_k}(y)}\leq\norm{f-f_k}_\infty$ は $y$ によらず $0$ に近づく．
   $\nu,\pi$ は有限測度なので，この一様収束と $f_k\to f$ の一様収束から
   \[
-    \int_B\left(\int_Kf\,\d\pi_y\right)\d\nu(y)
+    \int_B\left(\int_Kf\,\d\lambda_y\right)\d\nu(y)
     =\lim_k\int_Bl_{f_k}\,\d\nu
     =\lim_k\int_{K\times B}f_k(x)\,\d\pi(x,y)
     =\int_{K\times B}f(x)\,\d\pi(x,y).
@@ -500,9 +508,9 @@ Carathéodory の定理で Borel 測度を得るため，次に開集合の可�
   \textbf{4. Borel 集合への拡張．}
   空でない閉集合 $A\subset K$ に対し，補題~\ref{lem:meas-closed-approx}の
   $\varphi_k\downarrow\mathbf{1}_A$ を 3 の $f$ として有界収束定理を用いると，
-  $y\mapsto\pi_y(A)$ は可測で，主張の積分公式が成り立つ（$A=\emptyset$ では明らか）．
+  $y\mapsto\lambda_y(A)$ は可測で，主張の積分公式が成り立つ（$A=\emptyset$ では明らか）．
   可測性とすべての $B$ に対する積分公式をみたす $A$ の全体は $\lambda$-系である．
-  実際，$K$ を含み，補集合については $\pi_y(K\setminus A)=1-\pi_y(A)$ を，
+  実際，$K$ を含み，補集合については $\lambda_y(K\setminus A)=1-\lambda_y(A)$ を，
   互いに素な可算合併については可算加法性と単調収束定理を使えばよい．
   閉集合の全体は $\Borel(K)$ を生成する $\pi$-系なので，
   Dynkin の定理（定理~\ref{thm:meas-pi-lambda}）によりすべての $A\in\Borel(K)$ で成り立つ．
@@ -544,22 +552,22 @@ Carathéodory の定理で Borel 測度を得るため，次に開集合の可�
   非負の Borel 可測な密度 $h_n:=\d\nu_n/\d\nu$ を取る．
   単調収束定理より $\int_B\sum_nh_n\,\d\nu=\sum_n\nu_n(B)=\nu(B)$ である．
   特に $\sum_nh_n$ は可積分である．零集合上の無限値を $0$ に置き換え，
-  密度の一意性（補題~\ref{lem:rn-density-uniqueness}）を適用すると，$\sum_nh_n=1$ が $\nu$-a.e. に成り立つ．
+  一意性の議論（定理~\ref{thm:meas-radon-nikodym}の証明の3）を適用すると，$\sum_nh_n=1$ が $\nu$-a.e. に成り立つ．
   Borel 零集合 $N_0:=\{\sum_nh_n\neq1\}$ を用いて
   \[
-    \pi_y(A):=
+    \lambda_y(A):=
     \begin{cases}
       \sum_nh_n(y)\,\rho_y^{(n)}(A) & (y\notin N_0),\\
       \delta_{x_0}(A) & (y\in N_0)
     \end{cases}
   \]
   と定める．$y\notin N_0$ では，確率測度を和が $1$ の非負の重みで足し合わせているので，
-  $\pi_y$ は確率測度である（可算加法性は非負二重級数の和の交換による）．
+  $\lambda_y$ は確率測度である（可算加法性は非負二重級数の和の交換による）．
   各項と $N_0$ の可測性から条件 1 が成り立つ．
   系~\ref{cor:rn-density-integral}と単調収束定理より
   \[
     \begin{aligned}
-      \int_B\pi_y(A)\,\d\nu(y)
+      \int_B\lambda_y(A)\,\d\nu(y)
       &=\sum_n\int_B\rho_y^{(n)}(A)\,h_n(y)\,\d\nu(y)
       =\sum_n\int_B\rho_y^{(n)}(A)\,\d\nu_n(y)\\
       &=\sum_n\pi((A\cap E_n)\times B)=\pi(A\times B).
@@ -571,15 +579,15 @@ Carathéodory の定理で Borel 測度を得るため，次に開集合の可�
 \subsection{一意性}
 
 \begin{proof}[定理~\ref{thm:meas-disintegration}の一意性の証明]
-  $(\pi_y)$，$(\pi'_y)$ がともに条件 1，2 をみたすとする．
-  $A\in\Borel(\mathcal{X})$ を固定すると，$\pi_y(A)$，$\pi'_y(A)$ は $y$ の有界可測関数であり，
+  $(\lambda_y)$，$(\lambda'_y)$ がともに条件 1，2 をみたすとする．
+  $A\in\Borel(\mathcal{X})$ を固定すると，$\lambda_y(A)$，$\lambda'_y(A)$ は $y$ の有界可測関数であり，
   条件 2 よりすべての $B$ で同じ積分値をもつ．
-  密度の一意性（補題~\ref{lem:rn-density-uniqueness}）より，
-  $N_A:=\{y\mid\pi_y(A)\neq\pi'_y(A)\}$ は Borel 零集合である．
+  一意性の議論（定理~\ref{thm:meas-radon-nikodym}の証明の3）より，
+  $N_A:=\{y\mid\lambda_y(A)\neq\lambda'_y(A)\}$ は Borel 零集合である．
 
   補題~\ref{lem:meas-countable-generator}により，
   $\Borel(\mathcal{X})$ を生成する可算な $\pi$-系 $\mathcal{E}$ を取り，
   $N:=\bigcup_{A\in\mathcal{E}}N_A$ とおく．$N$ は $\nu$-零集合である．
-  $y\notin N$ では $\pi_y,\pi'_y$ は $\mathcal{E}$ 上で一致する確率測度なので，
-  一致定理（定理~\ref{thm:meas-uniqueness}）より $\pi_y=\pi'_y$ である．
+  $y\notin N$ では $\lambda_y,\lambda'_y$ は $\mathcal{E}$ 上で一致する確率測度なので，
+  一致定理（定理~\ref{thm:meas-uniqueness}）より $\lambda_y=\lambda'_y$ である．
 \end{proof}

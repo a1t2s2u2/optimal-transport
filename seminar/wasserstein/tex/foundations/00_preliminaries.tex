@@ -680,19 +680,19 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
 $C(K)$ の可分性や可算な Borel 生成族の構成は，本文では主張を用い，証明の詳細はここで確認する．
 
 \begin{remark}{絶対連続性の二つの定義}{rn-null-characterization}
-  有限測度 $\alpha,\nu$ について，定義~\ref{def:meas-absolute-continuity}の零集合による条件は，
+  可測空間 $(X,\Sigma)$ 上の有限測度 $\mu,\nu$ について，定義~\ref{def:meas-absolute-continuity}の零集合による条件は，
   北別府 p.~57 の次の条件と同値である：
-  任意の $\varepsilon>0$ に対しある $\delta>0$ が存在して，すべての可測集合 $B$ で
+  任意の $\varepsilon>0$ に対しある $\delta>0$ が存在して，すべての $A\in\Sigma$ で
   \[
-    \nu(B)<\delta\quad\Longrightarrow\quad\alpha(B)<\varepsilon.
+    \mu(A)<\delta\quad\Longrightarrow\quad\nu(A)<\varepsilon.
   \]
-  実際，この条件から零集合の条件は直ちに従う．逆に $\alpha\ll\nu$ なら，
-  Radon--Nikodym の定理（定理~\ref{thm:meas-radon-nikodym}）で $\alpha(B)=\int_Bh\,\d\nu$ と表せる．
-  $h\mathbf{1}_{\{h\leq n\}}\uparrow h$ と単調収束定理より，
-  $\int_{\{h>n\}}h\,\d\nu\to0$ である．これが $\varepsilon/2$ 未満となる $n\geq1$ を取り，
-  $\delta:=\varepsilon/(2n)$ とすれば，$\nu(B)<\delta$ のとき
+  実際，この条件から零集合の条件は直ちに従う．逆に $\nu\ll\mu$ なら，
+  Radon--Nikodym の定理（定理~\ref{thm:meas-radon-nikodym}）で $\nu(A)=\int_Af\,\d\mu$ と表せる．
+  $f\mathbf{1}_{\{f\leq n\}}\uparrow f$ と単調収束定理より，
+  $\int_{\{f>n\}}f\,\d\mu\to0$ である．これが $\varepsilon/2$ 未満となる $n\geq1$ を取り，
+  $\delta:=\varepsilon/(2n)$ とすれば，$\mu(A)<\delta$ のとき
   \[
-    \alpha(B)\leq\int_{\{h>n\}}h\,\d\nu+n\nu(B)<\varepsilon
+    \nu(A)\leq\int_{\{f>n\}}f\,\d\mu+n\mu(A)<\varepsilon
   \]
   を得る．
 \end{remark}
@@ -801,13 +801,13 @@ $C(K)$ の可分性や可算な Borel 生成族の構成は，本文では主張
 \begin{theorem}{確率測度の族を平均した確率測度}{meas-kernel-composition}
   $\mathcal{X},\mathcal{Y},\mathcal{Z}$ を Polish 空間，$\nu\in\Prob(\mathcal{Y})$ とし，
   各 $y\in\mathcal{Y}$ に対して確率測度
-  $\pi_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ が与えられているとする．
+  $\lambda_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ が与えられているとする．
   任意の $A\in\Borel(\mathcal{X})$，$C\in\Borel(\mathcal{Z})$ について，
-  $y\mapsto\pi_y(A)$，$y\mapsto\sigma_y(C)$ は可測と仮定する．
+  $y\mapsto\lambda_y(A)$，$y\mapsto\sigma_y(C)$ は可測と仮定する．
   このとき $\gamma\in\Prob(\mathcal{X}\times\mathcal{Y}\times\mathcal{Z})$ で
   \[
     \gamma(A\times B\times C)
-    =\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y)
+    =\int_B\lambda_y(A)\,\sigma_y(C)\,\d\nu(y)
     \qquad(A\in\Borel(\mathcal{X}),\,B\in\Borel(\mathcal{Y}),\,C\in\Borel(\mathcal{Z}))
   \]
   をみたすものがただ一つ存在する．
@@ -815,15 +815,15 @@ $C(K)$ の可分性や可算な Borel 生成族の構成は，本文では主張
 
 \begin{proof}
   各 $y$ に対して，直積確率測度
-  $\lambda_y:=\pi_y\otimes\delta_y\otimes\sigma_y$ を考える
+  $\eta_y:=\lambda_y\otimes\delta_y\otimes\sigma_y$ を考える
   （$\delta_y(B):=\mathbf{1}_B(y)$）．矩形 $D=A\times B\times C$ について
-  $\lambda_y(D)=\pi_y(A)\mathbf{1}_B(y)\sigma_y(C)$ は $y$ の Borel 可測関数である．
-  $y\mapsto\lambda_y(D)$ が可測となる $D$ の全体は $\lambda$-系なので，
+  $\eta_y(D)=\lambda_y(A)\mathbf{1}_B(y)\sigma_y(C)$ は $y$ の Borel 可測関数である．
+  $y\mapsto\eta_y(D)$ が可測となる $D$ の全体は $\lambda$-系なので，
   Dynkin の定理（定理~\ref{thm:meas-pi-lambda}）と
   注意~\ref{rem:meas-borel-product}から，すべての Borel 集合 $D$ で可測となる．
   そこで
   \[
-    \gamma(D):=\int_{\mathcal{Y}}\lambda_y(D)\,\d\nu(y)
+    \gamma(D):=\int_{\mathcal{Y}}\eta_y(D)\,\d\nu(y)
   \]
   と定める．単調収束定理から可算加法性が従い，全質量は $1$ なので，
   $\gamma$ は求める確率測度である．
