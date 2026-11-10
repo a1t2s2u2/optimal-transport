@@ -212,13 +212,23 @@ $\norm{g}_{L^2(\pi)}=(\int_X\abs{g}^2\,\d\pi)^{1/2}$ により Hilbert 空間と
 連続関数に対する正の線形汎関数を，測度による積分として表す．
 前節の Hilbert 空間版が汎関数を内積で表すのに対し，こちらは測度を構成する定理である．
 測度分解の証明では，Radon--Nikodym 微分から作った汎関数にこの定理を適用し，
-各 $y$ に対応する確率測度を得る．北別府の提供資料ではこの定理を引用している．
-ここでは，測度分解で用いる compact 距離空間の場合の証明を補う．
-$C(K)$ と $\norm{\cdot}_\infty$ の記法は注意~\ref{rem:meas-compact-continuous}による．
+各 $y$ に対応する確率測度を得る．
+北別府 §5.2 の Theorem 5.2.5（p.~75）は符号付き測度に対する一般形を扱うが，
+本節では測度分解に必要な，正の汎関数と確率測度の場合を示す．
+証明は同節の Lemma 5.2.2，5.2.3，Proposition 5.2.4 に沿って構成する．
+$C(K)$ と連続関数の台 $\operatorname{supp}g$ の記法は注意~\ref{rem:meas-compact-continuous}による．
 
 \subsection{定理の主張}
 
-\begin{theorem}{Riesz--Markov--Kakutani の表現定理（compact 距離空間の場合）}{meas-riesz-representation}
+空でない compact 距離空間 $K$ 上の Borel 確率測度 $\rho$ が\textbf{正則}であるとは，
+任意の $A\in\Borel(K)$ と $\varepsilon>0$ に対し，閉集合 $F$ と開集合 $U$ が存在して
+\[
+  F\subset A\subset U,\qquad \rho(U\setminus F)<\varepsilon
+\]
+となることをいう．$K$ が compact なので $F$ も compact であり，
+これは開集合による外からの近似と compact 集合による内からの近似を同時に表している．
+
+\begin{theorem}{Riesz--Markov--Kakutani の表現定理（正の汎関数の場合；北別府 Thm 5.2.5）}{meas-riesz-representation}
   $K$ を空でない compact 距離空間とする．
   実線形写像 $L\colon C(K)\to\R$ が
   \[
@@ -228,30 +238,30 @@ $C(K)$ と $\norm{\cdot}_\infty$ の記法は注意~\ref{rem:meas-compact-contin
   \[
     L(f)=\int_Kf\,\d\rho\qquad(f\in C(K))
   \]
-  と表せる．条件 $f\geq0\Rightarrow L(f)\geq0$ をみたす実線形写像を
+  と表せる．さらに，$\rho$ は正則である．
+  条件 $f\geq0\Rightarrow L(f)\geq0$ をみたす実線形写像を
   \textbf{正の線形汎関数}という．
 \end{theorem}
 
-証明は Rudin \emph{Real and Complex Analysis}（第3版）Theorem 2.14 の方針に従う．
 開集合 $U$ の指示関数は一般に連続でないので，$L(\mathbf{1}_U)$ を直接定めることはできない．
-そこで，$\mathbf{1}_U$ 以下の連続関数に対する $L$ の値の上限を，$U$ の測度の候補とする．
-これを外測度に拡張し，Carathéodory の定理で Borel 測度を得た後，積分表示を確かめる．
+そこで，台が $U$ に含まれる連続関数に対する $L$ の値の上限を，$U$ の測度の候補とする．
+これを外測度に拡張して Borel 測度を作り，閉集合の指示関数との比較から積分表示を示す．
 以下では，$K,L$ は上の定理のとおりとする．
 
 $f\leq g$ ならば $L(g)-L(f)=L(g-f)\geq0$ なので，$L$ は単調である．
-特に $-\norm{f}_\infty\leq f\leq\norm{f}_\infty$ と $L(1)=1$ から
+特に，定数 $a,b\in\R$ に対して $L(1)=1$ と合わせると
 \[
-  \abs{L(f)}\leq\norm{f}_\infty
+  a\leq f\leq b\quad\Longrightarrow\quad a\leq L(f)\leq b
 \]
-を得る．
+を得る．以下の評価では，この単調性と正規化を用いる．
 
 \subsection{外測度の構成}
 
 開集合 $U\subset K$ に対し
 \[
-  \rho^*(U):=\sup\{L(g)\mid g\in C(K),\ 0\leq g\leq\mathbf{1}_U\}
+  \rho^*(U):=\sup\{L(g)\mid g\in C(K),\ 0\leq g\leq1,\ \operatorname{supp}g\subset U\}
 \]
-と定める．条件 $0\leq g\leq\mathbf{1}_U$ は，$0\leq g\leq1$ かつ $U$ の外で $g=0$ という意味である．
+と定める．$\operatorname{supp}g$ は compact なので，開被覆から有限個を選ぶことができる．
 一般の $E\subset K$ には，開集合で外から近似して
 \[
   \rho^*(E):=\inf\{\rho^*(U)\mid U\text{ は開集合で }E\subset U\}
@@ -261,34 +271,38 @@ $f\leq g$ ならば $L(g)-L(f)=L(g-f)\geq0$ なので，$L$ は単調である�
 開集合上で $\rho^*$ は単調なので，二つの定義は開集合上で一致する．
 一般の集合についても単調性が成り立ち，$0\leq\rho^*(E)\leq1$，
 $\rho^*(\emptyset)=0$，$\rho^*(K)=1$ である．
-外測度であることを確かめるには，可算劣加法性が残る．
-開集合の被覆に対し，まず compact 性で有限個に絞り，連続関数の和で評価する．
+次の補題は北別府 Lemma 5.2.2 に対応する．
+可算劣加法性は，台の compact 性と距離から作る有限個の連続関数を用いて示す．
 
-\begin{lemma}{$\rho^*$ は外測度である}{rz-is-outer-measure}
-  $\rho^*$ は $K$ 上の外測度（定義~\ref{def:meas-outer-measure}）である．
+\begin{lemma}{外測度と Borel 測度の構成（北別府 Lem 5.2.2）}{rz-is-outer-measure}
+  $\rho^*$ は $K$ 上の有限な外測度（定義~\ref{def:meas-outer-measure}）であり，
+  すべての Borel 集合は $\rho^*$-可測である．
 \end{lemma}
 
 \begin{proof}
-  \textbf{1. 開集合の場合．}
-  $U=\bigcup_nU_n$ とし，$g\in C(K)$，$0\leq g\leq\mathbf{1}_U$，$\varepsilon>0$ を取る．
-  $F:=\{g\geq\varepsilon\}$ は $U$ に含まれる compact 集合である．
-  $F=\emptyset$ なら $L(g)\leq\varepsilon$ なので，以下では $F\neq\emptyset$ とする．
+  \textbf{1. 開集合に対する可算劣加法性．}
+  $U=\bigcup_nU_n$ とし，$g\in C(K)$，$0\leq g\leq1$，$\operatorname{supp}g\subset U$ を取る．
+  $F:=\operatorname{supp}g$ とおく．$F=\emptyset$ なら $g=0$ なので，以下では $F\neq\emptyset$ とする．
   相異なる有限個 $n_1,\dots,n_m$ で $F\subset U_{n_1}\cup\cdots\cup U_{n_m}$ となる．
 
   各 $i$ に対し $\varphi_i(x):=d(x,K\setminus U_{n_i})$ とおく
   （$U_{n_i}=K$ なら $\varphi_i:=1$）．これは連続で，$U_{n_i}$ の内側で正，外側で $0$ である
   （補題~\ref{lem:meas-distance-to-set}）．$F$ 上では少なくとも一つが正なので，
   compact 性より $c:=\min_{x\in F}\max_{1\leq i\leq m}\varphi_i(x)>0$ である．
-  $g_i:=\min\{1,\varphi_i/c\}$ とおけば，$0\leq g_i\leq\mathbf{1}_{U_{n_i}}$ で，
-  $F$ 上では少なくとも一つの $g_i$ が $1$ になる．したがって，$K$ 全体で
-  $g\leq\varepsilon+\sum_ig_i$ となり，
   \[
-    L(g)\leq\varepsilon+\sum_{i=1}^mL(g_i)
-    \leq\varepsilon+\sum_{i=1}^m\rho^*(U_{n_i})\leq\varepsilon+\sum_n\rho^*(U_n).
+    g_i:=\min\{1,\max\{2\varphi_i/c-1,0\}\}
   \]
-  $\varepsilon\to0$ として $g$ について上限を取ると，$\rho^*(U)\leq\sum_n\rho^*(U_n)$ を得る．
+  とおくと，$0\leq g_i\leq1$ で，
+  $\operatorname{supp}g_i\subset\{\varphi_i\geq c/2\}\subset U_{n_i}$ である．
+  $F$ 上では少なくとも一つの $\varphi_i$ が $c$ 以上なので，その $g_i$ は $1$ となる．
+  $F$ の外では $g=0$ だから，$K$ 全体で $g\leq\sum_ig_i$ であり，
+  \[
+    L(g)\leq\sum_{i=1}^mL(g_i)
+    \leq\sum_{i=1}^m\rho^*(U_{n_i})\leq\sum_n\rho^*(U_n).
+  \]
+  $g$ について上限を取ると，$\rho^*(U)\leq\sum_n\rho^*(U_n)$ を得る．
 
-  \textbf{2. 一般の集合の場合．}
+  \textbf{2. 一般の集合に対する可算劣加法性．}
   一般の $E=\bigcup_nE_n$ に対しては，$\varepsilon>0$ を取り，
   各 $n$ について開集合 $U_n\supset E_n$ を
   $\rho^*(U_n)\leq\rho^*(E_n)+\varepsilon2^{-n}$ となるように選ぶ．開集合での結果より
@@ -297,34 +311,24 @@ $\rho^*(\emptyset)=0$，$\rho^*(K)=1$ である．
     \leq\sum_n\rho^*(E_n)+\varepsilon.
   \]
   $\varepsilon\to0$ として可算劣加法性を得る．
-\end{proof}
 
-Carathéodory の定理で Borel 測度を得るため，次に開集合の可測性を示す．
-開集合 $W,U$ に対し，$W\cap U$ の測度を近似する連続関数を少し切り落とすと，
-残った部分を避けて $W\setminus U$ の側を近似できる．
-
-\begin{lemma}{開集合の可測性}{rz-open-measurable}
-  任意の開集合 $U\subset K$ は $\rho^*$-可測である．
-\end{lemma}
-
-\begin{proof}
-  任意の $E\subset K$ について $\rho^*(E)\geq\rho^*(E\cap U)+\rho^*(E\setminus U)$ を示せばよい．
+  \textbf{3. 開集合の可測性．}
+  開集合 $U$ と任意の $E\subset K$ について，
+  $\rho^*(E)\geq\rho^*(E\cap U)+\rho^*(E\setminus U)$ を示す．
 
   \emph{$E=W$ が開集合の場合．}
-  $\varepsilon>0$ とし，$g\in C(K)$，$0\leq g\leq\mathbf{1}_{W\cap U}$ を
+  $\varepsilon>0$ とし，$g\in C(K)$，$0\leq g\leq1$，$\operatorname{supp}g\subset W\cap U$ を
   $L(g)\geq\rho^*(W\cap U)-\varepsilon$ となるように取る．
-  $g_\varepsilon:=\max\{g-\varepsilon,0\}$，$F:=\{g\geq\varepsilon\}$ とおく．
-  $F\subset W\cap U$ は閉集合であり，$g_\varepsilon$ は $F$ の外で $0$ である．
-  また $0\leq g-g_\varepsilon\leq\varepsilon$ より $L(g_\varepsilon)\geq L(g)-\varepsilon$ である．
+  $F:=\operatorname{supp}g\subset W\cap U$ とおく．
   $W\setminus F$ は $W\setminus U$ を含む開集合なので，
-  $k\in C(K)$，$0\leq k\leq\mathbf{1}_{W\setminus F}$ を
+  $k\in C(K)$，$0\leq k\leq1$，$\operatorname{supp}k\subset W\setminus F$ を
   $L(k)\geq\rho^*(W\setminus F)-\varepsilon$ となるように取れる．
-  $g_\varepsilon$ と $k$ が正になる点は重ならず，$0\leq g_\varepsilon+k\leq\mathbf{1}_W$ なので，
+  $g$ と $k$ の台は交わらないので，$0\leq g+k\leq1$，$\operatorname{supp}(g+k)\subset W$ である．よって
   \[
     \begin{aligned}
-      \rho^*(W)&\geq L(g_\varepsilon)+L(k)\\
-      &\geq\rho^*(W\cap U)+\rho^*(W\setminus F)-3\varepsilon\\
-      &\geq\rho^*(W\cap U)+\rho^*(W\setminus U)-3\varepsilon.
+      \rho^*(W)&\geq L(g)+L(k)\\
+      &\geq\rho^*(W\cap U)+\rho^*(W\setminus F)-2\varepsilon\\
+      &\geq\rho^*(W\cap U)+\rho^*(W\setminus U)-2\varepsilon.
     \end{aligned}
   \]
   $\varepsilon\to0$ として主張を得る．
@@ -335,49 +339,84 @@ Carathéodory の定理で Borel 測度を得るため，次に開集合の可�
     \rho^*(W)\geq\rho^*(W\cap U)+\rho^*(W\setminus U)
     \geq\rho^*(E\cap U)+\rho^*(E\setminus U).
   \]
-  $W$ について下限を取ればよい．
+  $W$ について下限を取れば $U$ の可測性を得る．
+  Carathéodory の定理（定理~\ref{thm:meas-caratheodory}）より可測集合の全体は $\sigma$-代数なので，
+  開集合が生成するすべての Borel 集合も $\rho^*$-可測である．
 \end{proof}
 
 \subsection{表現定理の証明}
 
 \begin{proof}[定理~\ref{thm:meas-riesz-representation}の証明]
-  \textbf{1. 測度の構成．}
+  \textbf{1. 正則な確率測度の構成．}
   補題~\ref{lem:rz-is-outer-measure}と Carathéodory の定理（定理~\ref{thm:meas-caratheodory}）より，
-  $\rho^*$-可測集合の全体 $\mathcal{M}$ は $\sigma$-代数であり，$\rho^*$ は $\mathcal{M}$ 上の測度である．
-  補題~\ref{lem:rz-open-measurable}より $\Borel(K)\subset\mathcal{M}$ なので，
   $\rho:=\rho^*|_{\Borel(K)}$ は $\rho(K)=1$ をみたす Borel 確率測度である．
+  また，外測度の定義から
+  \[
+    \rho(A)=\inf\{\rho(U)\mid A\subset U,\ U\text{ は開集合}\}\qquad(A\in\Borel(K))
+  \]
+  が成り立つ．$\varepsilon>0$ とし，$A$ と $K\setminus A$ をそれぞれ含む開集合 $U,V$ を
+  \[
+    \rho(U)<\rho(A)+\varepsilon/2,\qquad
+    \rho(V)<\rho(K\setminus A)+\varepsilon/2
+  \]
+  となるように取る．$F:=K\setminus V$ とおくと $F\subset A\subset U$ であり，
+  $\rho(U\setminus F)=\rho(U)+\rho(V)-1<\varepsilon$ なので，$\rho$ は正則である．
 
-  \textbf{2. 積分表示．}
-  まず $f\in C(K)$，$0\leq f\leq1$ とする．$n\in\N$，$k=1,\dots,n$ に対し
-  開集合 $U_k:=\{f>k/n\}$ を取る．$f$ を高さ $1/n$ 刻みで下から近似すると，各点で
+  \textbf{2. 閉集合の指示関数との比較（北別府 Lemma 5.2.3）．}
+  閉集合 $F\subset K$ と $g\in C(K)$ について
   \[
-    f-\frac1n\leq\frac1n\sum_{k=1}^n\mathbf{1}_{U_k}\leq f
+    g\geq\mathbf{1}_F\ \Longrightarrow\ L(g)\geq\rho(F),\qquad
+    0\leq g\leq\mathbf{1}_F\ \Longrightarrow\ L(g)\leq\rho(F)
   \]
-  が成り立つ．各 $k$ について $g_k\in C(K)$ を
-  \[
-    0\leq g_k\leq\mathbf{1}_{U_k},\qquad L(g_k)\geq\rho(U_k)-\frac1n
-  \]
-  となるように選ぶ．$\frac1n\sum_kg_k\leq f$ と $L$ の単調性より
-  \[
-    L(f)\geq\frac1n\sum_{k=1}^nL(g_k)
-    \geq\frac1n\sum_{k=1}^n\rho(U_k)-\frac1n
-    \geq\int_Kf\,\d\rho-\frac2n.
-  \]
-  $n\to\infty$ として $L(f)\geq\int_Kf\,\d\rho$ を得る．
-  $1-f$ にも適用すると，$L(1)=\rho(K)=1$ より逆向きの不等式も従う．
-  一般の $f\in C(K)$ については，$m:=\norm{f}_\infty>0$ ならば
-  $g:=(f+m)/(2m)$ にこの等式を適用し，線形性から結論を得る．$m=0$ の場合は明らかである．
+  を示す．後者では $\operatorname{supp}g\subset F$ なので，任意の開集合 $U\supset F$ に対して
+  $L(g)\leq\rho(U)$ である．$U$ について下限を取ればよい．
 
-  \textbf{3. 一意性．}
+  前者では，$0<\varepsilon<1$ に対して $U:=\{g>1-\varepsilon\}$ とおくと $F\subset U$ である．
+  $h\in C(K)$，$0\leq h\leq1$，$\operatorname{supp}h\subset U$ ならば
+  $(1-\varepsilon)h\leq g$ が $K$ 全体で成り立つから，$L(g)\geq(1-\varepsilon)L(h)$ である．
+  $h$ について上限を取ると
+  \[
+    L(g)\geq(1-\varepsilon)\rho(U)\geq(1-\varepsilon)\rho(F).
+  \]
+  $\varepsilon\to0$ として主張を得る．
+
+  \textbf{3. 積分表示（北別府 Proposition 5.2.4）．}
+  まず $f\in C(K)$，$0\leq f\leq1$ とする．$n\in\N$ に対し，閉集合
+  \[
+    A_k:=\{f\geq k/n\}\qquad(k=0,\dots,n)
+  \]
+  と，連続関数
+  \[
+    f_k(x):=\min\{1,\max\{nf(x)-k+1,0\}\}\qquad(k=1,\dots,n)
+  \]
+  を取る．$f_k$ は $f\leq(k-1)/n$ で $0$，$f\geq k/n$ で $1$ となり，その間を線形につなぐ．
+  各点で
+  \[
+    \mathbf{1}_{A_k}\leq f_k\leq\mathbf{1}_{A_{k-1}},\qquad
+    f=\frac1n\sum_{k=1}^nf_k
+  \]
+  が成り立つ．実際，$f(x)$ が隣り合う二つの高さの間にあるとき，
+  $f_k(x)$ は，その高さより下の項では $1$，上の項では $0$ となり，残る一項が端数を表す．
+  そこで $h_n:=\frac1n\sum_{k=1}^n\mathbf{1}_{A_k}$ とおくと，前段の比較と線形性から
+  \[
+    \int_Kh_n\,\d\rho
+    \leq L(f)
+    \leq\frac1n\sum_{k=1}^n\rho(A_{k-1})
+    =\int_Kh_n\,\d\rho+\frac{\rho(A_0)-\rho(A_n)}n
+    \leq\int_Kh_n\,\d\rho+\frac1n.
+  \]
+  一方，$h_n\leq f\leq h_n+1/n$ なので $\int_Kf\,\d\rho$ も同じ上下限の間にある．したがって
+  \[
+    \abs{L(f)-\int_Kf\,\d\rho}\leq\frac1n.
+  \]
+  $n\to\infty$ として $L(f)=\int_Kf\,\d\rho$ を得る．
+  一般の $f\in C(K)$ については，$\abs{f}\leq M$ となる定数 $M>0$ を選び，
+  $g:=(f+M)/(2M)$ にこの等式を適用すれば，線形性から結論を得る．
+
+  \textbf{4. 一意性．}
   $\rho'\in\Prob(K)$ も同じ表示をみたすとする．
-  空でない閉集合 $F$ について補題~\ref{lem:meas-closed-approx}の $\varphi_k$ を取ると，
-  有界収束定理（定理~\ref{thm:meas-bounded-convergence}）より
-  \[
-    \rho(F)=\lim_k\int_K\varphi_k\,\d\rho=\lim_kL(\varphi_k)
-    =\lim_k\int_K\varphi_k\,\d\rho'=\rho'(F).
-  \]
-  閉集合全体は $\Borel(K)$ を生成する $\pi$-系なので，
-  一致定理（定理~\ref{thm:meas-uniqueness}）より $\rho=\rho'$ である．
+  $K$ は compact なので $C_b(K)=C(K)$ であり，
+  すべての有界連続関数の積分が一致するから，定理~\ref{thm:meas-cb-determines}より $\rho=\rho'$ である．
 \end{proof}
 
 \section{測度分解定理の証明}
