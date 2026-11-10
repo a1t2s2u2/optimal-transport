@@ -11,12 +11,13 @@
 本章では，まず測度分解定理を述べ，その準備となる二つの定理を証明してから，測度分解の証明に進む．
 Radon--Nikodym の定理は有限測度，Riesz--Markov--Kakutani の表現定理は compact 距離空間の場合に限る．
 測度分解の証明に用いるのは，この二つの形である．
-積分の基本性質・単調収束定理・Dynkin の定理と距離空間の基本事項は既知とし，
-測度を表現する後者の証明では Carathéodory の定理（定理~\ref{thm:meas-caratheodory}）を用いる．
-一般の Polish 空間への拡張では，第\ref{ch:wasserstein-metrics}章で用いた Prokhorov の定理を再利用する．
+積分の基本性質・単調収束定理・Dynkin の定理と距離空間の基本事項は既知とする．
+Radon--Nikodym の準備として Riesz--Fréchet の表現定理を述べ，その証明は付録に置く．
+Riesz--Markov--Kakutani の証明と一般の Polish 空間への拡張では，
+第\ref{ch:wasserstein-metrics}章で用いた Prokhorov の定理を再利用する．
 
 発表では，二つの定理の証明から測度分解の構成・一意性へ進む流れを軸とする．
-$L^2$ の完備性と Hilbert 空間版 Riesz の表現定理，
+$L^2$ の完備性と Riesz--Fréchet の表現定理，
 $C(K)$ の可分性や Borel 集合に関する補助結果には付録で証明を付け，
 本文の参照先から必要に応じて確認できるようにした．
 
@@ -69,6 +70,22 @@ Corollary 4.6.2（p.~57）に対応する．原資料では，$L^2$ を用いて
 
 本節では，北別府 p.~57 の記号に合わせ，$(X,\Sigma)$ を可測空間とする．
 
+\subsection{準備：Riesz--Fréchet の表現定理}
+
+有界線形汎関数を Hilbert 空間の内積で表す定理を用いる．
+実 Hilbert 空間・有界線形汎関数の定義は定義~\ref{def:rn-hilbert-space}による．
+
+\begin{theorem}{Riesz--Fréchet の表現定理（実 Hilbert 空間）}{rn-hilbert-riesz}
+  $\mathcal{H}$ を実 Hilbert 空間，$L\colon\mathcal{H}\to\R$ を有界線形汎関数とする．
+  このとき，ただ一つの $h\in\mathcal{H}$ が存在して
+  \[
+    L(g)=(h,g)\qquad(g\in\mathcal{H})
+  \]
+  が成り立つ．
+\end{theorem}
+
+この定理は Hilbert 空間版 Riesz の表現定理ともよばれる．証明は付録に記す．
+
 \subsection{絶対連続性と定理の主張}
 
 \begin{definition}{測度の絶対連続性}{meas-absolute-continuity}
@@ -113,12 +130,9 @@ $f=h/(1-h)$ を得る．補助関数 $h$ と，求める密度 $f=\d\nu/\d\mu$ �
 
 ここで用いる $L^2(\pi)$ は，$\int_X\abs{g}^2\,\d\pi<\infty$ をみたす実数値可測関数を，
 $\pi$-a.e. に等しいもの同士で同一視した空間である．
-内積 $(g,h)=\int_Xgh\,\d\pi$ とノルム
+内積 $(g,h)_\pi=\int_Xgh\,\d\pi$ とノルム
 $\norm{g}_{L^2(\pi)}=(\int_X\abs{g}^2\,\d\pi)^{1/2}$ により Hilbert 空間となる
 （補題~\ref{lem:rn-l2-complete}）．
-\textbf{Hilbert 空間版 Riesz の表現定理}は，その上の有界線形汎関数 $L$ が
-ある $h\in L^2(\pi)$ を用いて $L(g)=(g,h)$（$g\in L^2(\pi)$）と一意に表されるという定理である．
-定義と証明は付録の定義~\ref{def:rn-hilbert-space}・定理~\ref{thm:rn-hilbert-riesz}にまとめた．
 
 \begin{proof}[定理~\ref{thm:meas-radon-nikodym}の証明]
   \textbf{1. $\pi=\mu+\nu$ に関する表示を作る．}
@@ -133,10 +147,10 @@ $\norm{g}_{L^2(\pi)}=(\int_X\abs{g}^2\,\d\pi)^{1/2}$ により Hilbert 空間と
     \leq\nu(X)^{1/2}\left(\int_X\abs{g}^2\,\d\nu\right)^{1/2}
     \leq\nu(X)^{1/2}\norm{g}_{L^2(\pi)}.
   \]
-  したがって $L$ は有界であり，Hilbert 空間版 Riesz の表現定理
+  したがって $L$ は有界であり，Riesz--Fréchet の表現定理
   （定理~\ref{thm:rn-hilbert-riesz}）から，ある $h\in L^2(\pi)$ について
   \[
-    \int_Xg\,\d\nu=\int_Xgh\,\d\pi\qquad(g\in L^2(\pi))
+    \int_Xg\,\d\nu=(h,g)_\pi=\int_Xgh\,\d\pi\qquad(g\in L^2(\pi))
   \]
   と表される．$\pi$ が有限なので，任意の $A\in\Sigma$ について $\mathbf{1}_A\in L^2(\pi)$ であり，
   \[
@@ -149,7 +163,7 @@ $\norm{g}_{L^2(\pi)}=(\int_X\abs{g}^2\,\d\pi)^{1/2}$ により Hilbert 空間と
 
   \textbf{2. $\mu$ に関する密度 $f$ を取り出す．}
   $B:=\{h=1\}$ とおくと，前段の表示から $\mu(B)=0$ であり，
-  $\nu\ll\mu$ により $\nu(B)=0$ でもある．そこで
+  $\nu\ll\mu$ により $\nu(B)=0$，したがって $\pi(B)=0$ でもある．そこで
   \[
     f(x):=\begin{cases}
       \dfrac{h(x)}{1-h(x)},&h(x)<1,\\
@@ -157,25 +171,21 @@ $\norm{g}_{L^2(\pi)}=(\int_X\abs{g}^2\,\d\pi)^{1/2}$ により Hilbert 空間と
     \end{cases}
   \]
   と定める．これは非負の有限値可測関数である．
-  $\int_Xg\,\d\nu=\int_Xgh\,\d(\mu+\nu)$ を整理すると
+  ここで，集合上の表示 $\mu(A)=\int_A(1-h)\,\d\pi$ から，任意の非負可測関数 $u$ に対して
   \[
-    \int_Xg(1-h)\,\d\nu=\int_Xgh\,\d\mu\qquad(g\in L^2(\pi))
+    \int_Xu\,\d\mu=\int_Xu(1-h)\,\d\pi
   \]
-  を得る．$A\in\Sigma$ を固定する．$1/(1-h)$ は非有界になり得るので，
-  $G_n:=\{0\leq h\leq1-1/n\}$ で切り詰める．
-  この等式に
+  が従う．実際，指示関数については表示そのものであり，線形性から非負単関数について成り立つ．
+  非負単関数の列 $s_n\uparrow u$ を取り，両辺に単調収束定理を用いればよい．
+  この議論は集合上の表示だけから従い，Radon--Nikodym の定理を前提としない．
+
+  $f(1-h)=h$ は $X\setminus B$ 上で成り立ち，$\pi(B)=0$ である．
+  したがって，上の書き換えを $u=\mathbf{1}_A f$ に適用すると
   \[
-    g_n(x):=\begin{cases}
-      \dfrac{1}{1-h(x)},&x\in A\cap G_n,\\
-      0,&x\notin A\cap G_n
-    \end{cases}
+    \int_Af\,\d\mu=\int_Af(1-h)\,\d\pi=\int_Ah\,\d\pi=\nu(A)
+    \qquad(A\in\Sigma)
   \]
-  を代入する．$0\leq g_n\leq n$ かつ $\pi(X)<\infty$ なので，$g_n\in L^2(\pi)$ である．よって
-  \[
-    \nu(A\cap G_n)=\int_{A\cap G_n}f\,\d\mu.
-  \]
-  $G_n\uparrow X\setminus B$，$\nu(B)=0$，かつ $B$ 上で $f=0$ なので，
-  単調収束定理（定理~\ref{thm:meas-mct}）より $\nu(A)=\int_Af\,\d\mu$ を得る．
+  を得る．
   特に $\int_Xf\,\d\mu=\nu(X)<\infty$ であり，$f$ は $\mu$-可積分である．
 
   \textbf{3. 一意性．}
@@ -208,25 +218,11 @@ $\norm{g}_{L^2(\pi)}=(\int_X\abs{g}^2\,\d\pi)^{1/2}$ により Hilbert 空間と
 \section{Riesz--Markov--Kakutani の表現定理}
 \label{sec:dis-riesz-representation}
 
-ここで示すのは測度論版の Riesz--Markov--Kakutani の表現定理であり，
 連続関数に対する正の線形汎関数を，測度による積分として表す．
-前節の Hilbert 空間版が汎関数を内積で表すのに対し，こちらは測度を構成する定理である．
-測度分解の証明では，Radon--Nikodym 微分から作った汎関数にこの定理を適用し，
-各 $y$ に対応する確率測度を得る．
-北別府 §5.2 の Theorem 5.2.5（p.~75）は符号付き測度に対する一般形を扱うが，
-本節では測度分解に必要な，正の汎関数と確率測度の場合を示す．
-証明は同節の Lemma 5.2.2，5.2.3，Proposition 5.2.4 に沿って構成する．
-$C(K)$ と連続関数の台 $\operatorname{supp}g$ の記法は注意~\ref{rem:meas-compact-continuous}による．
-
-\subsection{定理の主張}
-
-空でない compact 距離空間 $K$ 上の Borel 確率測度 $\rho$ が\textbf{正則}であるとは，
-任意の $A\in\Borel(K)$ と $\varepsilon>0$ に対し，閉集合 $F$ と開集合 $U$ が存在して
-\[
-  F\subset A\subset U,\qquad \rho(U\setminus F)<\varepsilon
-\]
-となることをいう．$K$ が compact なので $F$ も compact であり，
-これは開集合による外からの近似と compact 集合による内からの近似を同時に表している．
+前節の Riesz--Fréchet の表現定理が Hilbert 空間の元を与えるのに対し，こちらは測度を構成する定理である．
+主張は北別府 Theorem 5.2.5（p.~75）のうち，測度分解に必要な正の汎関数と確率測度の場合に対応する．
+証明は発表ノートに沿い，離散的な確率測度を作り，既知とする Prokhorov の定理で極限を取る．
+$C(K)$ と一様ノルムの記法は注意~\ref{rem:meas-compact-continuous}による．
 
 \begin{theorem}{Riesz--Markov--Kakutani の表現定理（正の汎関数の場合；北別府 Thm 5.2.5）}{meas-riesz-representation}
   $K$ を空でない compact 距離空間とする．
@@ -238,185 +234,70 @@ $C(K)$ と連続関数の台 $\operatorname{supp}g$ の記法は注意~\ref{rem:
   \[
     L(f)=\int_Kf\,\d\rho\qquad(f\in C(K))
   \]
-  と表せる．さらに，$\rho$ は正則である．
+  と表せる．さらに，$\rho$ は正則である
+  （正則性の定義と証明は補題~\ref{lem:meas-compact-regular}）．
   条件 $f\geq0\Rightarrow L(f)\geq0$ をみたす実線形写像を
   \textbf{正の線形汎関数}という．
 \end{theorem}
 
-開集合 $U$ の指示関数は一般に連続でないので，$L(\mathbf{1}_U)$ を直接定めることはできない．
-そこで，台が $U$ に含まれる連続関数に対する $L$ の値の上限を，$U$ の測度の候補とする．
-これを外測度に拡張して Borel 測度を作り，閉集合の指示関数との比較から積分表示を示す．
-以下では，$K,L$ は上の定理のとおりとする．
-
-$f\leq g$ ならば $L(g)-L(f)=L(g-f)\geq0$ なので，$L$ は単調である．
-特に，定数 $a,b\in\R$ に対して $L(1)=1$ と合わせると
+正値性から $f\leq g$ ならば $L(f)\leq L(g)$ である．特に $L(1)=1$ より
 \[
   a\leq f\leq b\quad\Longrightarrow\quad a\leq L(f)\leq b
+  \qquad(a,b\in\R)
 \]
-を得る．以下の評価では，この単調性と正規化を用いる．
-
-\subsection{外測度の構成}
-
-開集合 $U\subset K$ に対し
-\[
-  \rho^*(U):=\sup\{L(g)\mid g\in C(K),\ 0\leq g\leq1,\ \operatorname{supp}g\subset U\}
-\]
-と定める．$\operatorname{supp}g$ は compact なので，開被覆から有限個を選ぶことができる．
-一般の $E\subset K$ には，開集合で外から近似して
-\[
-  \rho^*(E):=\inf\{\rho^*(U)\mid U\text{ は開集合で }E\subset U\}
-\]
-と定める．
-
-開集合上で $\rho^*$ は単調なので，二つの定義は開集合上で一致する．
-一般の集合についても単調性が成り立ち，$0\leq\rho^*(E)\leq1$，
-$\rho^*(\emptyset)=0$，$\rho^*(K)=1$ である．
-次の補題は北別府 Lemma 5.2.2 に対応する．
-可算劣加法性は，台の compact 性と距離から作る有限個の連続関数を用いて示す．
-
-\begin{lemma}{外測度と Borel 測度の構成（北別府 Lem 5.2.2）}{rz-is-outer-measure}
-  $\rho^*$ は $K$ 上の有限な外測度（定義~\ref{def:meas-outer-measure}）であり，
-  すべての Borel 集合は $\rho^*$-可測である．
-\end{lemma}
-
-\begin{proof}
-  \textbf{1. 開集合に対する可算劣加法性．}
-  $U=\bigcup_nU_n$ とし，$g\in C(K)$，$0\leq g\leq1$，$\operatorname{supp}g\subset U$ を取る．
-  $F:=\operatorname{supp}g$ とおく．$F=\emptyset$ なら $g=0$ なので，以下では $F\neq\emptyset$ とする．
-  相異なる有限個 $n_1,\dots,n_m$ で $F\subset U_{n_1}\cup\cdots\cup U_{n_m}$ となる．
-
-  各 $i$ に対し $\varphi_i(x):=d(x,K\setminus U_{n_i})$ とおく
-  （$U_{n_i}=K$ なら $\varphi_i:=1$）．これは連続で，$U_{n_i}$ の内側で正，外側で $0$ である
-  （補題~\ref{lem:meas-distance-to-set}）．$F$ 上では少なくとも一つが正なので，
-  compact 性より $c:=\min_{x\in F}\max_{1\leq i\leq m}\varphi_i(x)>0$ である．
-  \[
-    g_i:=\min\{1,\max\{2\varphi_i/c-1,0\}\}
-  \]
-  とおくと，$0\leq g_i\leq1$ で，
-  $\operatorname{supp}g_i\subset\{\varphi_i\geq c/2\}\subset U_{n_i}$ である．
-  $F$ 上では少なくとも一つの $\varphi_i$ が $c$ 以上なので，その $g_i$ は $1$ となる．
-  $F$ の外では $g=0$ だから，$K$ 全体で $g\leq\sum_ig_i$ であり，
-  \[
-    L(g)\leq\sum_{i=1}^mL(g_i)
-    \leq\sum_{i=1}^m\rho^*(U_{n_i})\leq\sum_n\rho^*(U_n).
-  \]
-  $g$ について上限を取ると，$\rho^*(U)\leq\sum_n\rho^*(U_n)$ を得る．
-
-  \textbf{2. 一般の集合に対する可算劣加法性．}
-  一般の $E=\bigcup_nE_n$ に対しては，$\varepsilon>0$ を取り，
-  各 $n$ について開集合 $U_n\supset E_n$ を
-  $\rho^*(U_n)\leq\rho^*(E_n)+\varepsilon2^{-n}$ となるように選ぶ．開集合での結果より
-  \[
-    \rho^*(E)\leq\rho^*\left(\bigcup_nU_n\right)\leq\sum_n\rho^*(U_n)
-    \leq\sum_n\rho^*(E_n)+\varepsilon.
-  \]
-  $\varepsilon\to0$ として可算劣加法性を得る．
-
-  \textbf{3. 開集合の可測性．}
-  開集合 $U$ と任意の $E\subset K$ について，
-  $\rho^*(E)\geq\rho^*(E\cap U)+\rho^*(E\setminus U)$ を示す．
-
-  \emph{$E=W$ が開集合の場合．}
-  $\varepsilon>0$ とし，$g\in C(K)$，$0\leq g\leq1$，$\operatorname{supp}g\subset W\cap U$ を
-  $L(g)\geq\rho^*(W\cap U)-\varepsilon$ となるように取る．
-  $F:=\operatorname{supp}g\subset W\cap U$ とおく．
-  $W\setminus F$ は $W\setminus U$ を含む開集合なので，
-  $k\in C(K)$，$0\leq k\leq1$，$\operatorname{supp}k\subset W\setminus F$ を
-  $L(k)\geq\rho^*(W\setminus F)-\varepsilon$ となるように取れる．
-  $g$ と $k$ の台は交わらないので，$0\leq g+k\leq1$，$\operatorname{supp}(g+k)\subset W$ である．よって
-  \[
-    \begin{aligned}
-      \rho^*(W)&\geq L(g)+L(k)\\
-      &\geq\rho^*(W\cap U)+\rho^*(W\setminus F)-2\varepsilon\\
-      &\geq\rho^*(W\cap U)+\rho^*(W\setminus U)-2\varepsilon.
-    \end{aligned}
-  \]
-  $\varepsilon\to0$ として主張を得る．
-
-  \emph{一般の場合．}
-  $E\subset W$ となる開集合 $W$ について，前段と単調性より
-  \[
-    \rho^*(W)\geq\rho^*(W\cap U)+\rho^*(W\setminus U)
-    \geq\rho^*(E\cap U)+\rho^*(E\setminus U).
-  \]
-  $W$ について下限を取れば $U$ の可測性を得る．
-  Carathéodory の定理（定理~\ref{thm:meas-caratheodory}）より可測集合の全体は $\sigma$-代数なので，
-  開集合が生成するすべての Borel 集合も $\rho^*$-可測である．
-\end{proof}
-
-\subsection{表現定理の証明}
+となる．この評価から $L$ の一様収束に関する連続性も従うため，連続性を別に仮定する必要はない．
 
 \begin{proof}[定理~\ref{thm:meas-riesz-representation}の証明]
-  \textbf{1. 正則な確率測度の構成．}
-  補題~\ref{lem:rz-is-outer-measure}と Carathéodory の定理（定理~\ref{thm:meas-caratheodory}）より，
-  $\rho:=\rho^*|_{\Borel(K)}$ は $\rho(K)=1$ をみたす Borel 確率測度である．
-  また，外測度の定義から
+  \textbf{1. 近似する確率測度を作る．}
+  $n\in\N$ に対し $r_n:=1/(4n)$ とおく．compact 性により，有限個の点 $x_{n,1},\dots,x_{n,m_n}\in K$ で
   \[
-    \rho(A)=\inf\{\rho(U)\mid A\subset U,\ U\text{ は開集合}\}\qquad(A\in\Borel(K))
+    K=\bigcup_{i=1}^{m_n}B_{r_n}(x_{n,i})
   \]
-  が成り立つ．$\varepsilon>0$ とし，$A$ と $K\setminus A$ をそれぞれ含む開集合 $U,V$ を
+  となるものを選べる．次のように連続関数を作り，和が $1$ になるように正規化する：
   \[
-    \rho(U)<\rho(A)+\varepsilon/2,\qquad
-    \rho(V)<\rho(K\setminus A)+\varepsilon/2
+    \psi_{n,i}(x):=\max\{r_n-d(x,x_{n,i}),0\},\qquad
+    \varphi_{n,i}(x):=\frac{\psi_{n,i}(x)}{\sum_{j=1}^{m_n}\psi_{n,j}(x)}.
   \]
-  となるように取る．$F:=K\setminus V$ とおくと $F\subset A\subset U$ であり，
-  $\rho(U\setminus F)=\rho(U)+\rho(V)-1<\varepsilon$ なので，$\rho$ は正則である．
+  開球による被覆から分母は各点で正であり，$\varphi_{n,i}\in C(K)$，$\varphi_{n,i}\geq0$，
+  $\sum_i\varphi_{n,i}=1$ である．また，$\varphi_{n,i}(x)>0$ ならば $d(x,x_{n,i})<r_n$ である．
+  Dirac 測度（注意~\ref{rem:meas-dirac}）を用いて
+  \[
+    \rho_n:=\sum_{i=1}^{m_n}L(\varphi_{n,i})\,\delta_{x_{n,i}}
+  \]
+  とおく．各係数は非負で，その和は $L(\sum_i\varphi_{n,i})=L(1)=1$ なので，$\rho_n\in\Prob(K)$ である．
 
-  \textbf{2. 閉集合の指示関数との比較（北別府 Lemma 5.2.3）．}
-  閉集合 $F\subset K$ と $g\in C(K)$ について
+  \textbf{2. 積分が $L(f)$ に近づくことを示す．}
+  $f\in C(K)$ を固定し，
   \[
-    g\geq\mathbf{1}_F\ \Longrightarrow\ L(g)\geq\rho(F),\qquad
-    0\leq g\leq\mathbf{1}_F\ \Longrightarrow\ L(g)\leq\rho(F)
+    M_n:=\sup\{\abs{f(x)-f(z)}\mid x,z\in K,\ d(x,z)\leq r_n\}
   \]
-  を示す．後者では $\operatorname{supp}g\subset F$ なので，任意の開集合 $U\supset F$ に対して
-  $L(g)\leq\rho(U)$ である．$U$ について下限を取ればよい．
+  とおく．$f$ は一様連続なので $M_n\to0$ である．
+  $\varphi_{n,i}(x)>0$ となる項だけを見れば，すべての $x\in K$ で
+  \[
+    \left|f(x)-\sum_{i=1}^{m_n}f(x_{n,i})\varphi_{n,i}(x)\right|
+    \leq\sum_{i=1}^{m_n}M_n\varphi_{n,i}(x)=M_n.
+  \]
+  線形性と冒頭の評価より
+  \[
+    \left|L(f)-\int_Kf\,\d\rho_n\right|
+    =\left|L\left(f-\sum_{i=1}^{m_n}f(x_{n,i})\varphi_{n,i}\right)\right|
+    \leq M_n\longrightarrow0.
+  \]
 
-  前者では，$0<\varepsilon<1$ に対して $U:=\{g>1-\varepsilon\}$ とおくと $F\subset U$ である．
-  $h\in C(K)$，$0\leq h\leq1$，$\operatorname{supp}h\subset U$ ならば
-  $(1-\varepsilon)h\leq g$ が $K$ 全体で成り立つから，$L(g)\geq(1-\varepsilon)L(h)$ である．
-  $h$ について上限を取ると
+  \textbf{3. Prokhorov の定理で極限を取る．}
+  compact 距離空間 $K$ は Polish 空間である（注意~\ref{rem:meas-compact-facts}）．
+  さらに，$K$ 自身が compact で $\rho_n(K)=1$ なので，族 $\{\rho_n\mid n\in\N\}$ は tight である．
+  Prokhorov の定理（定理~\ref{thm:meas-prokhorov}）より，ある部分列 $(\rho_{n_j})$ と
+  $\rho\in\Prob(K)$ が存在して $\rho_{n_j}\weakto\rho$ となる．この部分列は $f$ に依存せずに選ぶ．
+  任意の $f\in C(K)=C_b(K)$ に対して，前段の収束と弱収束の定義から
   \[
-    L(g)\geq(1-\varepsilon)\rho(U)\geq(1-\varepsilon)\rho(F).
+    L(f)=\lim_j\int_Kf\,\d\rho_{n_j}=\int_Kf\,\d\rho.
   \]
-  $\varepsilon\to0$ として主張を得る．
-
-  \textbf{3. 積分表示（北別府 Proposition 5.2.4）．}
-  まず $f\in C(K)$，$0\leq f\leq1$ とする．$n\in\N$ に対し，閉集合
-  \[
-    A_k:=\{f\geq k/n\}\qquad(k=0,\dots,n)
-  \]
-  と，連続関数
-  \[
-    f_k(x):=\min\{1,\max\{nf(x)-k+1,0\}\}\qquad(k=1,\dots,n)
-  \]
-  を取る．$f_k$ は $f\leq(k-1)/n$ で $0$，$f\geq k/n$ で $1$ となり，その間を線形につなぐ．
-  各点で
-  \[
-    \mathbf{1}_{A_k}\leq f_k\leq\mathbf{1}_{A_{k-1}},\qquad
-    f=\frac1n\sum_{k=1}^nf_k
-  \]
-  が成り立つ．実際，$f(x)$ が隣り合う二つの高さの間にあるとき，
-  $f_k(x)$ は，その高さより下の項では $1$，上の項では $0$ となり，残る一項が端数を表す．
-  そこで $h_n:=\frac1n\sum_{k=1}^n\mathbf{1}_{A_k}$ とおくと，前段の比較と線形性から
-  \[
-    \int_Kh_n\,\d\rho
-    \leq L(f)
-    \leq\frac1n\sum_{k=1}^n\rho(A_{k-1})
-    =\int_Kh_n\,\d\rho+\frac{\rho(A_0)-\rho(A_n)}n
-    \leq\int_Kh_n\,\d\rho+\frac1n.
-  \]
-  一方，$h_n\leq f\leq h_n+1/n$ なので $\int_Kf\,\d\rho$ も同じ上下限の間にある．したがって
-  \[
-    \abs{L(f)-\int_Kf\,\d\rho}\leq\frac1n.
-  \]
-  $n\to\infty$ として $L(f)=\int_Kf\,\d\rho$ を得る．
-  一般の $f\in C(K)$ については，$\abs{f}\leq M$ となる定数 $M>0$ を選び，
-  $g:=(f+M)/(2M)$ にこの等式を適用すれば，線形性から結論を得る．
+  また，補題~\ref{lem:meas-compact-regular}より $\rho$ は正則である．
 
   \textbf{4. 一意性．}
-  $\rho'\in\Prob(K)$ も同じ表示をみたすとする．
-  $K$ は compact なので $C_b(K)=C(K)$ であり，
-  すべての有界連続関数の積分が一致するから，定理~\ref{thm:meas-cb-determines}より $\rho=\rho'$ である．
+  $\rho'\in\Prob(K)$ も同じ表示をみたすなら，すべての $f\in C(K)=C_b(K)$ の積分が一致する．
+  定理~\ref{thm:meas-cb-determines}より $\rho=\rho'$ である．
 \end{proof}
 
 \section{測度分解定理の証明}

@@ -134,6 +134,9 @@ Villani \emph{Optimal Transport} (2009) 第1章を参照．
       $d(x,y)<\delta$ ならば $\abs{f(x)-f(y)}<\varepsilon$ となる．
     \item 距離空間の部分集合 $K$ が compact であることと，
       $K$ 内の任意の点列が $K$ 内の点に収束する部分列をもつことは同値である．
+    \item compact 距離空間は Polish 空間である．可分性は，各 $n\geq1$ で半径 $1/n$ の
+      有限個の球による被覆を取り，その中心をすべて集めれば従う．
+      また，Cauchy 列は収束部分列をもち，三角不等式から全列も同じ極限に収束するので完備である．
   \end{itemize}
 \end{remark}
 
@@ -195,6 +198,14 @@ $\Borel(\mathcal{X})$ 上の測度を Borel 測度といい，
 $\mu(\Omega)<\infty$ の測度を\textbf{有限測度}という
 （このとき $(\Omega,\mathcal{A},\mu)$ を有限測度空間という）．
 $\mathcal{X}$ 上の Borel 確率測度全体を $\Prob(\mathcal{X})$ と書く．
+
+\begin{remark}{記法：Dirac 測度}{meas-dirac}
+  距離空間 $\mathcal{X}$ と $x\in\mathcal{X}$ に対し，
+  $\delta_x(A):=\mathbf{1}_A(x)$（$A\in\Borel(\mathcal{X})$）で定まる測度を
+  $x$ における\textbf{Dirac 測度}という．
+  互いに素な可測集合族では $x$ を含む集合が高々一つなので可算加法性をみたし，
+  $\delta_x(\mathcal{X})=1$ より $\delta_x\in\Prob(\mathcal{X})$ である．
+\end{remark}
 
 \begin{remark}{可測関数の基本操作（前提とする事実）}{meas-measurable-ops}
   次はいずれも測度論の標準的な事実であり，本資料では証明なしに用いる．
@@ -519,7 +530,7 @@ $f,g\colon\Omega\to\R$ を可測関数とする．
 \section{Radon--Nikodym の証明に用いる Hilbert 空間}
 
 任意の有限測度 $\pi$ に対して $L^2(\pi)$ が実 Hilbert 空間となることと，
-Hilbert 空間版 Riesz の表現定理を証明する．
+Riesz--Fréchet の表現定理を証明する．
 これらを既知とする場合は，この節の証明を省略して本編を読み進められる．
 
 \begin{definition}{実 Hilbert 空間と有界線形汎関数}{rn-hilbert-space}
@@ -556,7 +567,7 @@ $\norm{u+v}^2\leq(\norm{u}+\norm{v})^2$ であり，$\norm{\cdot}$ はノルム�
   $\pi$-a.e. に等しいもの同士で同一視した実ベクトル空間である．
   同値類とその代表元を同じ記号 $g$ で書き，
   \[
-    (g,h):=\int_Xgh\,\d\pi,\qquad
+    (g,h)_\pi:=\int_Xgh\,\d\pi,\qquad
     \norm{g}_{L^2(\pi)}:=\left(\int_X\abs{g}^2\,\d\pi\right)^{1/2}
   \]
   とおく．Minkowski の不等式より和も $L^2(\pi)$ に属し，
@@ -592,16 +603,9 @@ $\norm{u+v}^2\leq(\norm{u}+\norm{v})^2$ であり，$\norm{\cdot}$ はノルム�
   $(g_n)$ は Cauchy 列なので，三角不等式から全列も $g$ に収束する．
 \end{proof}
 
-\begin{theorem}{Hilbert 空間版 Riesz の表現定理}{rn-hilbert-riesz}
-  $\mathcal{H}$ を実 Hilbert 空間，$L\colon\mathcal{H}\to\R$ を有界線形汎関数とする．
-  このとき，ただ一つの $h\in\mathcal{H}$ が存在して
-  \[
-    L(u)=(u,h)\qquad(u\in\mathcal{H})
-  \]
-  が成り立つ．
-\end{theorem}
+\subsection{Riesz--Fréchet の表現定理の証明}
 
-\begin{proof}
+\begin{proof}[定理~\ref{thm:rn-hilbert-riesz}の証明]
   $L=0$ のときは $h=0$ とすればよい．以下 $L\neq0$ とする．
   $C:=\{u\in\mathcal{H}\mid L(u)=1\}$ は空でなく，$L$ の連続性から閉集合である．
   $d:=\inf_{u\in C}\norm{u}$ とおき，$u_n\in C$ を $\norm{u_n}\to d$ となるように取る．
@@ -622,7 +626,7 @@ $\norm{u+v}^2\leq(\norm{u}+\norm{v})^2$ であり，$\norm{\cdot}$ はノルム�
   これがすべての $t$ で成り立つためには $(z,v)=0$ でなければならない．
   任意の $u\in\mathcal{H}$ に対して $v:=u-L(u)z$ は $L(v)=0$ をみたすから
   \[
-    (u,z)=L(u)\norm{z}^2.
+    (z,u)=L(u)\norm{z}^2.
   \]
   $L(z)=1$ より $z\neq0$ なので，$h:=z/\norm{z}^2$ とすれば所望の表示を得る．
   二つの表示元 $h,h'$ があれば，$u=h-h'$ を代入して $\norm{h-h'}^2=0$ を得るため，一意でもある．
@@ -788,7 +792,7 @@ $\mathcal{X},\mathcal{Y}$ が Polish 空間なら $\mathcal{X}\times \mathcal{Y}
 
 \section{測度分解のための準備}
 
-第\ref{ch:disintegration}章で用いる補助結果と，既知として用いる Carathéodory の定理をまとめる．
+第\ref{ch:disintegration}章で用いる補助結果をまとめる．
 $C(K)$ の可分性や可算な Borel 生成族の構成は，本文では主張を用い，証明の詳細はここで確認する．
 
 \begin{remark}{絶対連続性の二つの定義}{rn-null-characterization}
@@ -818,12 +822,6 @@ $C(K)$ の可分性や可算な Borel 生成族の構成は，本文では主張
   $\norm{f_n-f}_\infty\to0$ を\textbf{一様収束}という．
   $f\in C(K)$ に対し $f^+:=\max\{f,0\}$，$f^-:=\max\{-f,0\}$ とおけば，
   $f^\pm\in C(K)$，$f^\pm\geq0$，$f=f^+-f^-$ である．
-  また，$g\in C(K)$ の\textbf{台}を
-  \[
-    \operatorname{supp}g:=\overline{\{x\in K\mid g(x)\neq0\}}
-  \]
-  と書く．これは $K$ の閉集合なので compact である．
-  $\operatorname{supp}g\subset U$ ならば $U$ の外で $g=0$ である．
 \end{remark}
 
 \begin{theorem}{$C(K)$ の可分性}{meas-ck-separable}
@@ -892,29 +890,44 @@ $C(K)$ の可分性や可算な Borel 生成族の構成は，本文では主張
   $\mathcal{X}$ 上の Borel 測度に延長できる．
 \end{remark}
 
-\begin{definition}{外測度と可測集合}{meas-outer-measure}
-  集合 $\Omega$ のすべての部分集合に対して定義された関数
-  $\rho^*\colon2^\Omega\to[0,\infty]$ が\textbf{外測度}であるとは，
-  \begin{enumerate}
-    \item $\rho^*(\emptyset)=0$，
-    \item $E\subset F$ ならば $\rho^*(E)\leq\rho^*(F)$（単調性），
-    \item $\rho^*\left(\bigcup_nE_n\right)\leq\sum_n\rho^*(E_n)$（可算劣加法性）
-  \end{enumerate}
-  をみたすことをいう．
-  $A\subset\Omega$ が \textbf{$\rho^*$-可測}であるとは，任意の $E\subset\Omega$ に対して
+\begin{lemma}{compact 距離空間上の有限 Borel 測度の正則性}{meas-compact-regular}
+  compact 距離空間 $K$ 上の有限 Borel 測度 $\mu$ に対し，
+  任意の $A\in\Borel(K)$ と $\varepsilon>0$ について，閉集合 $F$ と開集合 $U$ が存在して
   \[
-    \rho^*(E)=\rho^*(E\cap A)+\rho^*(E\setminus A)
+    F\subset A\subset U,\qquad \mu(U\setminus F)<\varepsilon
   \]
-  が成り立つことをいう．劣加法性から「$\leq$」はつねに成り立つ．
-\end{definition}
+  となる．このように開集合で外から，compact 集合で内から近似できる測度を\textbf{正則}という．
+  $K$ は compact なので，その閉集合 $F$ も compact である．
+\end{lemma}
 
-\begin{theorem}{Carathéodory の定理}{meas-caratheodory}
-  $\rho^*$ を集合 $\Omega$ 上の外測度とする．
-  $\rho^*$-可測集合の全体 $\mathcal{M}$ は $\sigma$-代数であり，
-  $\rho^*$ の $\mathcal{M}$ への制限は測度である．
-  （標準的な結果．証明は省略する．Folland \emph{Real Analysis} (2nd ed., 1999) Theorem 1.11 参照．）
-\end{theorem}
+\begin{proof}
+  各 $\varepsilon>0$ に対して上の近似ができる Borel 集合の全体を $\mathcal{R}$ とする．
+  まず，空でない閉集合 $F$ に対し $U_n:=\{x\in K\mid d(x,F)<1/n\}$ とおくと，$U_n\downarrow F$ である．
+  $\mu(K)<\infty$ と単調収束定理を補集合の指示関数に適用して，$\mu(U_n\setminus F)\to0$ を得る．
+  空集合も明らかに $\mathcal{R}$ に属するので，すべての閉集合が $\mathcal{R}$ に属する．
+  また，$F\subset A\subset U$ の補集合を取ると
+  $K\setminus U\subset K\setminus A\subset K\setminus F$ となり，近似の誤差は変わらない．
+  したがって $\mathcal{R}$ は補集合について閉じている．
 
+  $A_j\in\mathcal{R}$，$A:=\bigcup_{j\geq1}A_j$ とする．
+  $\varepsilon>0$ を固定し，閉集合 $F_j\subset A_j$ と開集合 $U_j\supset A_j$ を
+  $\mu(U_j\setminus F_j)<\varepsilon2^{-j-2}$ となるように取る．
+  $A^{(m)}:=\bigcup_{j=1}^mA_j\uparrow A$ なので，有限性と単調収束定理から
+  $\mu(A\setminus A^{(m)})<\varepsilon/2$ となる $m$ を選べる．
+  $F:=\bigcup_{j=1}^mF_j$，$U:=\bigcup_{j\geq1}U_j$ とおけば，$F\subset A\subset U$ であり，
+  \[
+    \begin{aligned}
+      \mu(U\setminus F)
+      &\leq\mu(U\setminus A)+\mu(A\setminus A^{(m)})
+        +\sum_{j=1}^m\mu(A_j\setminus F_j)\\
+      &\leq\sum_{j\geq1}\mu(U_j\setminus F_j)+\mu(A\setminus A^{(m)})
+        +\sum_{j=1}^m\mu(U_j\setminus F_j)\\
+      &<\varepsilon/4+\varepsilon/2+\varepsilon/4=\varepsilon.
+    \end{aligned}
+  \]
+  よって $\mathcal{R}$ は可算合併についても閉じている．
+  $\mathcal{R}$ は閉集合を含む $\sigma$-代数なので，$\mathcal{R}=\Borel(K)$ である．
+\end{proof}
 
 \begin{theorem}{確率測度の族を平均した確率測度}{meas-kernel-composition}
   $\mathcal{X},\mathcal{Y},\mathcal{Z}$ を Polish 空間，$\nu\in\Prob(\mathcal{Y})$ とし，
