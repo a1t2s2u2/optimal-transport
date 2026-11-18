@@ -91,7 +91,7 @@ Riesz–Markov–Kakutani の主張は北別府 Theorem 5.2.5（p.75）の正の
 | RN の証明 | $L^2$ 上の表現定理から Lebesgue 分解定理を経る | 同じ $L^2(\mu+\nu)$ の構成を絶対連続の場合に絞り，密度を直接構成 |
 | Hilbert 空間版 Riesz | p.56 で引用．提供写真にこの表現定理自体の証明はない | 本文で Riesz–Fréchet として述べ，$L^2$ の完備性とともに付録に証明を補う |
 | 測度分解の主張 | Borel 可測写像 $T:X\to Y$ に沿う分解，逆像への集中と積分公式 | 積空間上の分布 $\pi$ を第2変数に沿って分解し，矩形上の積分公式と本質的一意性を示す |
-| 測度分解の主要な記号 | $\pi,\nu,\nu_f,l_f,m_y,\lambda_y$ | 同じ記号を使用 |
+| 測度分解の主要な記号 | $\pi,\nu,\nu_f,l_f,m_y,\lambda_y$ | 発表ノートに合わせ $\pi,\nu,\nu_f,l_f,L_y,\pi_y$ |
 | 空間・関数族・共通の例外集合 | $X,Y$，$C\subset C(X)$，$Y_C$ | 本編の記法に合わせて $\mathcal{X},\mathcal{Y}$，compact な場合は $K$，$\mathcal{C}\subset C(K)$，$\mathcal{Y}\setminus N$ |
 | 指示関数・像測度 | $\chi_A$，$T_\sharp\mu$ | 本編の記法に合わせて $\mathbf{1}_A$，$\mu\circ T^{-1}$ |
 | 密度から汎関数への構成 | 符号付きの RN を用い，可算な関数族上で共通の零集合を除いてから延長 | 非負の場合の RN と正部分・負部分を用いる．共通の零集合上の値を先に定め直してから延長 |
