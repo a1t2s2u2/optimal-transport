@@ -2,13 +2,13 @@
 \label{ch:disintegration}
 
 接着補題（補題~\ref{lem:wp-gluing}）で必要なのは，
-二変数の分布 $\pi$ を，変数 $y$ ごとの確率測度 $\pi_y$ に分け，
+二変数の分布 $\pi$ を，変数 $y$ ごとの確率測度 $\lambda_y$ に分け，
 その平均として元の分布を復元することである．
 北別府悠『最適輸送理論入門〜兼非標準的関数解析入門〜』Theorem 5.3.1 の
 構成をもとに，接着補題で使う積空間上の形を示す．
 原資料は一般の Borel 可測写像に沿う分解を扱うが，本章では第2変数に沿う分解に限定する．
-記号と証明の流れは発表ノートに合わせ，分解測度を $\pi_y$，その構成に用いる汎関数を $L_y$ と書く
-（原資料ではそれぞれ $\lambda_y$，$m_y$）．
+記号と証明の流れは発表ノート（2026年11月25日版）に合わせ，
+分解測度を $\lambda_y$，その構成に用いる汎関数を $m_y$ と書く（原資料と同じ記号）．
 本章では，まず測度分解定理を述べ，その準備となる二つの定理を証明してから，測度分解の証明に進む．
 Radon--Nikodym の定理は有限測度，Riesz--Markov--Kakutani の表現定理は compact 距離空間の場合に限る．
 測度分解の証明に用いるのは，この二つの形である．
@@ -31,29 +31,33 @@ $C(K)$ の可分性や Borel 集合に関する補助結果には付録で証明
     \nu(B):=\pi(\mathcal{X}\times B)\qquad(B\in\Borel(\mathcal{Y}))
   \]
   で定める．
-  このとき，確率測度の族 $(\pi_y)_{y\in\mathcal{Y}}$，$\pi_y\in\Prob(\mathcal{X})$ で，
+  このとき，確率測度の族 $(\lambda_y)_{y\in\mathcal{Y}}$，$\lambda_y\in\Prob(\mathcal{X})$ で，
   次をみたすものが存在する．
   \begin{enumerate}
-    \item 各 Borel 集合 $A\in\Borel(\mathcal{X})$ に対して $y\mapsto\pi_y(A)$ は Borel 可測である．
+    \item 各 Borel 集合 $A\in\Borel(\mathcal{X})$ に対して $y\mapsto\lambda_y(A)$ は Borel 可測である．
     \item 任意の Borel 集合 $A\in\Borel(\mathcal{X})$，$B\in\Borel(\mathcal{Y})$ に対して
       \[
-        \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y).
+        \pi(A\times B)=\int_B\lambda_y(A)\,\d\nu(y).
       \]
   \end{enumerate}
+  さらに，この族は $\nu$-a.e. の意味で一意である．すなわち，別の族 $(\lambda'_y)$ も
+  条件 1，2 をみたすならば，ある Borel 集合 $N$ が存在して，
+  $\nu(N)=0$ かつすべての $y\notin N$ で $\lambda_y=\lambda'_y$ となる．
 \end{theorem}
 
-条件 1，2 をみたす族 $(\pi_y)$ を $\pi$ の $\nu$ に関する\textbf{分解}という．
-分解は $\nu$-零集合の外で一意に定まる（命題~\ref{prop:meas-disintegration-unique}）．
+条件 1，2 をみたす族 $(\lambda_y)$ を $\pi$ の $\nu$ に関する\textbf{分解}という．
+一意性では，一つの $\nu$-零集合の外で測度として一致することを要求する．
 まず $\mathcal{X}$ が compact な場合を考える．連続関数 $f$ に対して
 $\nu_f(B):=\int_{\mathcal{X}\times B}f(x)\,\d\pi(x,y)$ とおくと，証明の流れは
 \[
   \nu_f(B)=\int_B l_f(y)\,\d\nu(y)
   \quad\longrightarrow\quad
-  L_y(f)=\int_{\mathcal{X}} f\,\d\pi_y
+  m_y(f)=\int_{\mathcal{X}} f\,\d\lambda_y
 \]
 となる．左の密度 $l_f$ を Radon--Nikodym の定理で作り，
-共通の零集合の外で $f\mapsto l_f(y)$ を正の線形汎関数 $L_y$ にまとめる．
-右の確率測度 $\pi_y$ を与えるのが Riesz--Markov--Kakutani の表現定理である．
+可算稠密な関数族上で共通の零集合を除き，$f\mapsto l_f(y)$ を
+$C(\mathcal{X})$ 上の正の線形汎関数 $m_y$ に延長する．
+右の確率測度 $\lambda_y$ を与えるのが Riesz--Markov--Kakutani の表現定理である．
 本原稿の Radon--Nikodym の定理は非負の測度についての定理なので，
 $\nu_f$ には $f$ の正部分・負部分に分けて適用する．
 
@@ -326,29 +330,29 @@ $C(K)$ と一様ノルムの記法は注意~\ref{rem:meas-compact-continuous}に
 各 $y$ で得られる正の線形汎関数に Riesz--Markov--Kakutani の表現定理を適用する．
 一般の場合への拡張に備え，ここでは有限測度を扱う．
 
-$C(\mathcal{X})$，$\norm{f}_\infty$，$f^\pm$ の記法は注意~\ref{rem:meas-compact-continuous}による．
+$C(K)$，$\norm{f}_\infty$，$f^\pm$ の記法は注意~\ref{rem:meas-compact-continuous}による．
 
 \begin{lemma}{compact な場合の分解}{dis-compact}
-  $\mathcal{X}$ を空でない compact 距離空間，$\mathcal{Y}$ を距離空間とし，
-  $\pi$ を $\mathcal{X}\times\mathcal{Y}$ 上の零でない有限 Borel 測度，
-  $\nu(B):=\pi(\mathcal{X}\times B)$ とする．
-  このとき，$\pi_y\in\Prob(\mathcal{X})$ の族で，各 $A\in\Borel(\mathcal{X})$ に対し $y\mapsto\pi_y(A)$ が Borel 可測となり，
+  $K$ を空でない compact 距離空間，$\mathcal{Y}$ を距離空間とし，
+  $\pi$ を $K\times\mathcal{Y}$ 上の零でない有限 Borel 測度，
+  $\nu(B):=\pi(K\times B)$ とする．
+  このとき，$\lambda_y\in\Prob(K)$ の族で，各 $A\in\Borel(K)$ に対し $y\mapsto\lambda_y(A)$ が Borel 可測となり，
   \[
-    \pi(A\times B)=\int_B\pi_y(A)\,\d\nu(y)
-    \qquad(A\in\Borel(\mathcal{X}),\ B\in\Borel(\mathcal{Y}))
+    \pi(A\times B)=\int_B\lambda_y(A)\,\d\nu(y)
+    \qquad(A\in\Borel(K),\ B\in\Borel(\mathcal{Y}))
   \]
   をみたすものが存在する．
 \end{lemma}
 
 \begin{proof}
   \textbf{1. Radon--Nikodym の定理による $l_f$ の構成．}
-  $f\in C(\mathcal{X})$ に対し
+  $f\in C(K)$ に対し
   \[
-    \nu_f(B):=\int_{\mathcal{X}\times B}f(x)\,\d\pi(x,y)
+    \nu_f(B):=\int_{K\times B}f(x)\,\d\pi(x,y)
     \qquad(B\in\Borel(\mathcal{Y}))
   \]
   とおく．$f$ は有界で $\pi$ は有限測度なので，$\nu_f(B)$ は有限値である．
-  $-\norm{f}_\infty\leq f\leq\norm{f}_\infty$ と $\pi(\mathcal{X}\times B)=\nu(B)$ より
+  $-\norm{f}_\infty\leq f\leq\norm{f}_\infty$ と $\pi(K\times B)=\nu(B)$ より
   \[
     -\norm{f}_\infty\,\nu(B)\leq\nu_f(B)\leq\norm{f}_\infty\,\nu(B)
     \qquad(B\in\Borel(\mathcal{Y})).\tag{1}
@@ -356,8 +360,10 @@ $C(\mathcal{X})$，$\norm{f}_\infty$，$f^\pm$ の記法は注意~\ref{rem:meas-
   $f\geq0$ ならば，単調収束定理より $\nu_f$ は有限測度であり，
   (1) から $\nu(B)=0$ ならば $\nu_f(B)=0$，すなわち $\nu_f\ll\nu$ である．
   Radon--Nikodym の定理（定理~\ref{thm:meas-radon-nikodym}）を，
-  基準測度 $\mu$ を $\nu$ として適用し，非負で $\nu$-可積分な Borel 可測関数 $l_f=\d\nu_f/\d\nu$ を取る．
-  一般の $f\in C(\mathcal{X})$ では $\nu_f=\nu_{f^+}-\nu_{f^-}$ なので，$l_f:=l_{f^+}-l_{f^-}$ とおけば
+  基準測度 $\mu$ を $\nu$ として適用し，非負で $\nu$-可積分な
+  有限値 Borel 可測関数 $l_f=\d\nu_f/\d\nu$ を一つずつ選ぶ．
+  特に零関数に対しては $l_0=0$ を選ぶ．
+  一般の $f\in C(K)$ では $\nu_f=\nu_{f^+}-\nu_{f^-}$ なので，$l_f:=l_{f^+}-l_{f^-}$ とおけば
   \[
     \nu_f(B)=\int_Bl_f(y)\,\d\nu(y)\qquad(B\in\Borel(\mathcal{Y}))\tag{2}
   \]
@@ -366,7 +372,7 @@ $C(\mathcal{X})$，$\norm{f}_\infty$，$f^\pm$ の記法は注意~\ref{rem:meas-
   （定理~\ref{thm:meas-radon-nikodym}の証明の3）．
 
   \textbf{2. $f\mapsto l_f$ の性質．}
-  $f,g\in C(\mathcal{X})$，$a,b\in\R$ に対し，次が $\nu$-a.e. に成り立つ．
+  $f,g\in C(K)$，$a,b\in\R$ に対し，次が $\nu$-a.e. に成り立つ．
   \begin{enumerate}
     \item[(a)] 線形性：$l_{af+bg}=a\,l_f+b\,l_g$．
     \item[(b)] 定数関数の値：$l_1=1$．
@@ -376,7 +382,7 @@ $C(\mathcal{X})$，$\norm{f}_\infty$，$f^\pm$ の記法は注意~\ref{rem:meas-
   (a) 積分の線形性から $\nu_{af+bg}=a\nu_f+b\nu_g$ である．
   したがって $l_{af+bg}$ と $al_f+bl_g$ はすべての $B$ で同じ積分値をもち，
   1 の一意性から $\nu$-a.e. に一致する．
-  (b) $\nu_1(B)=\pi(\mathcal{X}\times B)=\nu(B)=\int_B1\,\d\nu$ なので，同じく一意性による．
+  (b) $\nu_1(B)=\pi(K\times B)=\nu(B)=\int_B1\,\d\nu$ なので，同じく一意性による．
   (c) $n\in\N$ に対し $A_n:=\{y\mid l_f(y)\geq\norm{f}_\infty+1/n\}$ とおく．
   $\nu(A_n)>0$ と仮定すると，(2) より
   \[
@@ -393,91 +399,152 @@ $C(\mathcal{X})$，$\norm{f}_\infty$，$f^\pm$ の記法は注意~\ref{rem:meas-
 
   \textbf{3. 可算稠密集合と共通の零集合．}
   (a)--(d) の例外集合は関数に依存するので，関数を可算個に絞る．
-  定理~\ref{thm:meas-ck-separable}により，$C(\mathcal{X})$ の可算稠密集合 $D$ を取る．
+  定理~\ref{thm:meas-ck-separable}により，$C(K)$ の可算稠密集合 $S=\{f_i\mid i\in\N\}$ を取る．
   $\mathbb{Q}$ を有理数全体とし，
   \[
-    \mathcal{C}_0:=\Bigl\{a_0+\sum_{i=1}^ma_if_i\Bigm| m\in\N,\ a_0,\dots,a_m\in\mathbb{Q},\ f_1,\dots,f_m\in D\Bigr\}
+    D:=\Bigl\{q_0\,1+\sum_{i=1}^nq_if_i\Bigm| n\in\N,\ q_0,\dots,q_n\in\mathbb{Q}\Bigr\}
   \]
-  とおく．さらに $n\geq0$ に対し
-  \[
-    \mathcal{C}_{n+1}:=\mathcal{C}_n
-    \cup\{af+bg\mid f,g\in\mathcal{C}_n,\ a,b\in\mathbb{Q}\}
-    \cup\{\max\{f,g\}\mid f,g\in\mathcal{C}_n\}
-    \cup\{\min\{f,g\}\mid f,g\in\mathcal{C}_n\}
-  \]
-  と定め，$\mathcal{C}:=\bigcup_{n\geq0}\mathcal{C}_n$ とおく．
-  各 $\mathcal{C}_n$ は可算なので $\mathcal{C}$ も可算であり，$D\subset\mathcal{C}$ より $\mathcal{C}$ は $C(\mathcal{X})$ で稠密である．
-  また $\mathcal{C}$ は定数関数 $0,1$ を含み，有理係数の線形結合と各点ごとの最大・最小で閉じている．
+  とおく．各 $n$ で係数の選び方は可算個なので $D$ は可算であり，
+  $S\subset D\subset C(K)$ より $D$ は稠密である．
+  また，$D$ は定数関数 $0,1$ を含み，有理係数の線形結合について閉じている．
 
-  (a) を $f,g\in\mathcal{C}$，$a,b\in\mathbb{Q}$ について，(b) を一度，(c)，(d) を $f\in\mathcal{C}$ について考えると，
-  条件は可算個である．それぞれの例外集合は Borel 集合なので，その合併を $N$ とおくと，
-  $N\in\Borel(\mathcal{Y})$ であり，可算劣加法性から $\nu(N)=0$ である．
-  $y\in\mathcal{Y}\setminus N$ では，(a)--(d) が $\mathcal{C}$ 上で同時に成り立つ．
+  $f,g\in D$，$a,b\in\mathbb{Q}$ に対して，例外集合を
+  \[
+    \begin{aligned}
+      N^{(a)}_{f,g,a,b}&:=\{y\mid l_{af+bg}(y)\neq a\,l_f(y)+b\,l_g(y)\},\\
+      N^{(b)}&:=\{y\mid l_1(y)\neq1\},\\
+      N^{(c)}_f&:=\{y\mid\abs{l_f(y)}>\norm{f}_\infty\},\\
+      N^{(d)}_f&:=\{y\mid l_f(y)<0\}\qquad(f\geq0)
+    \end{aligned}
+  \]
+  と定める．これらは $l_f$ の Borel 可測性から Borel 集合であり，2 より $\nu$-零集合である．
+  \[
+    N:=\bigcup_{\substack{f,g\in D\\a,b\in\mathbb{Q}}}N^{(a)}_{f,g,a,b}
+      \cup N^{(b)}\cup\bigcup_{f\in D}N^{(c)}_f
+      \cup\bigcup_{\substack{f\in D\\f\geq0}}N^{(d)}_f
+  \]
+  は可算個の Borel 零集合の合併なので，$N\in\Borel(\mathcal{Y})$，$\nu(N)=0$ である．
+  したがって，$y\notin N$ では (a)--(d) が $D$ 上で同時に成り立つ．
 
-  \textbf{4. 線形汎関数 $L_y$ の構成と $C(\mathcal{X})$ 全体への拡張．}
-  $y\in\mathcal{Y}\setminus N$ を固定し，$L_y\colon\mathcal{C}\to\R$ を $L_y(f):=l_f(y)$ で定める．
-  (a) より $L_y$ は有理係数について線形であり，(c) より
+  \textbf{4. 線形汎関数 $m_y$ の構成と $C(K)$ 全体への拡張．}
+  $y\in\mathcal{Y}\setminus N$ を固定し，$m_y\colon D\to\R$ を $m_y(f):=l_f(y)$ で定める．
+  (a) より $m_y$ は有理係数について線形であり，(c) より
   \[
-    \abs{L_y(f)}\leq\norm{f}_\infty\qquad(f\in\mathcal{C}).\tag{3}
+    \abs{m_y(f)}\leq\norm{f}_\infty\qquad(f\in D).\tag{3}
   \]
-  $f\in C(\mathcal{X})$ に対し，$\norm{f_k-f}_\infty\to0$ となる $f_k\in\mathcal{C}$ を取る．
-  $f_k-f_j\in\mathcal{C}$ なので，(3) と三角不等式より
+  $f\in C(K)$ に対し，$\norm{f_k-f}_\infty\to0$ となる $f_k\in D$ を取る．
+  $f_k-f_j\in D$ なので，(3) と三角不等式より
   \[
-    \abs{L_y(f_k)-L_y(f_j)}=\abs{L_y(f_k-f_j)}\leq\norm{f_k-f}_\infty+\norm{f-f_j}_\infty\longrightarrow0
+    \abs{m_y(f_k)-m_y(f_j)}=\abs{m_y(f_k-f_j)}\leq\norm{f_k-f}_\infty+\norm{f-f_j}_\infty\longrightarrow0
   \]
-  となる．したがって $(L_y(f_k))_k$ は $\R$ の Cauchy 列であり，$\R$ の完備性から収束する．そこで
+  となる．したがって $(m_y(f_k))_k$ は $\R$ の Cauchy 列であり，$\R$ の完備性から収束する．そこで
   \[
-    L_y(f):=\lim_{k\to\infty}L_y(f_k)
+    m_y(f):=\lim_{k\to\infty}m_y(f_k)
   \]
   と定める．別の近似列 $g_k\to f$ に対しても
-  $\abs{L_y(f_k)-L_y(g_k)}\leq\norm{f_k-f}_\infty+\norm{f-g_k}_\infty\to0$ なので，
-  極限は近似列によらない．$f\in\mathcal{C}$ なら定数列を取れるので，元の値と一致する．
+  $\abs{m_y(f_k)-m_y(g_k)}\leq\norm{f_k-f}_\infty+\norm{f-g_k}_\infty\to0$ なので，
+  極限は近似列によらない．$f\in D$ なら定数列を取れるので，元の値と一致する．
   極限を取ることで，有理係数についての線形性と
-  $\abs{L_y(f)-L_y(g)}\leq\norm{f-g}_\infty$（$f,g\in C(\mathcal{X})$）が保たれる．
+  $\abs{m_y(f)-m_y(g)}\leq\norm{f-g}_\infty$（$f,g\in C(K)$）が保たれる．
   実数 $a$ に有理数列 $q_j\to a$ を取れば
-  $\abs{L_y(af)-q_jL_y(f)}=\abs{L_y(af)-L_y(q_jf)}\leq\abs{a-q_j}\norm{f}_\infty\to0$ なので，
-  $L_y\colon C(\mathcal{X})\to\R$ は実線形である．
+  $\abs{m_y(af)-q_jm_y(f)}=\abs{m_y(af)-m_y(q_jf)}\leq\abs{a-q_j}\norm{f}_\infty\to0$ なので，
+  $m_y\colon C(K)\to\R$ は実線形である．
 
-  $L_y$ が正値であることを示す．$f\in C(\mathcal{X})$，$f\geq0$ とし，
-  $\norm{g_k-f}_\infty\to0$ となる $g_k\in\mathcal{C}$ を取る．
-  $h_k:=\max\{g_k,0\}$ とおくと，$\mathcal{C}$ は各点ごとの最大で閉じているので $h_k\in\mathcal{C}$ であり，$h_k\geq0$ である．
-  $f\geq0$ より各点で $\abs{h_k(x)-f(x)}\leq\abs{g_k(x)-f(x)}$ なので，$\norm{h_k-f}_\infty\to0$ である．
-  (d) より $L_y(h_k)=l_{h_k}(y)\geq0$ なので，$L_y(f)=\lim_kL_y(h_k)\geq0$ である．
-  さらに (b) より $L_y(1)=l_1(y)=1$ である．
+  (b) より $m_y(1)=l_1(y)=1$ であり，(3) の極限から
+  $\abs{m_y(f)}\leq\norm{f}_\infty$ はすべての $f\in C(K)$ で成り立つ．
+  $f\geq0$ として $M:=\norm{f}_\infty$ とおくと，$0\leq M\,1-f\leq M\,1$ なので，
+  \[
+    m_y(f)=M-m_y(M\,1-f)\geq M-\norm{M\,1-f}_\infty\geq0.
+  \]
+  よって $m_y$ は正値である．この議論では $D$ が最大・最小について閉じている必要はない．
 
-  以上より，$L_y$ は $C(\mathcal{X})$ 上の正の線形汎関数で $L_y(1)=1$ をみたす．
+  \textbf{5. Riesz--Markov--Kakutani の表現定理による測度の構成．}
+  以上より，$m_y$ は $C(K)$ 上の正の線形汎関数で $m_y(1)=1$ をみたす．
   Riesz--Markov--Kakutani の表現定理（定理~\ref{thm:meas-riesz-representation}）により，
   \[
-    L_y(f)=\int_{\mathcal{X}}f\,\d\pi_y\qquad(f\in C(\mathcal{X}))
+    m_y(f)=\int_{K}f\,\d\lambda_y\qquad(f\in C(K))
   \]
-  となる $\pi_y\in\Prob(\mathcal{X})$ がただ一つ存在する．
-  $y\in N$ に対しては，$x_0\in\mathcal{X}$ を一つ固定して $\pi_y:=\delta_{x_0}$ と定める．
+  となる $\lambda_y\in\Prob(K)$ がただ一つ存在する．
+  $y\in N$ に対しては，$x_0\in K$ を一つ固定して $\lambda_y:=\delta_{x_0}$ と定める．
 
-  残りは，この族 $(\pi_y)$ が補題の二つの条件をみたすことの確認である．
+  ここで $m_y(f)=l_f(y)$ を $y\notin N$ のすべてで使えるのは，まず $f\in D$ に限る．
+  一般の $f\in C(K)$ について，最初に選んだ $l_f$ との一致を同じ $N$ の外で仮定してはならない．
+  残りは，この族 $(\lambda_y)$ が補題の二つの条件をみたすことの確認である．
 
-  \textbf{5. 連続関数に対する積分公式．}
-  $f\in C(\mathcal{X})$ と 4 の近似列 $f_k\in\mathcal{C}$ を取る．
-  $y\notin N$ では $\int_{\mathcal{X}}f\,\d\pi_y=\lim_kl_{f_k}(y)$，$y\in N$ では $\int_{\mathcal{X}}f\,\d\pi_y=f(x_0)$ である．
-  $l_{f_k}$ と $N$ は Borel 可測なので，$y\mapsto\int_{\mathcal{X}}f\,\d\pi_y$ は Borel 可測である．
-  さらに $y\notin N$ では $\abs{\int_{\mathcal{X}}f\,\d\pi_y-l_{f_k}(y)}\leq\norm{f-f_k}_\infty$ である．
-  $\nu(N)=0$ と (2)，(1) を $f-f_k$ に用いると，
+  \textbf{6. 連続関数に対する可測性と積分公式．}
+  まず $f\in D$ ならば
   \[
-    \int_B\left(\int_{\mathcal{X}}f\,\d\pi_y\right)\d\nu(y)
-    =\lim_k\int_Bl_{f_k}\,\d\nu
-    =\lim_k\nu_{f_k}(B)
-    =\nu_f(B)
-    =\int_{\mathcal{X}\times B}f(x)\,\d\pi(x,y).
+    \int_Kf\,\d\lambda_y=
+    \begin{cases}
+      l_f(y)&(y\notin N),\\
+      f(x_0)&(y\in N).
+    \end{cases}
+  \]
+  $l_f$ と $N$ の Borel 可測性から左辺は $y$ の Borel 可測関数であり，
+  $\nu(N)=0$ と (2) より
+  \[
+    \int_B\left(\int_K f\,\d\lambda_y\right)\d\nu(y)
+    =\nu_f(B)=\int_{K\times B}f(x)\,\d\pi(x,y).
+  \]
+  次に $f\in C(K)$ に対し，$f_k\in D$，$\norm{f_k-f}_\infty\to0$ を取る．
+  すべての $y$ で $\lambda_y(K)=1$ なので，
+  \[
+    \left|\int_K f_k\,\d\lambda_y-\int_Kf\,\d\lambda_y\right|
+    \leq\norm{f_k-f}_\infty.
+  \]
+  よって $y\mapsto\int_Kf\,\d\lambda_y$ は可測関数の各点極限として Borel 可測である．
+  任意の $B\in\Borel(\mathcal{Y})$ について，さらに
+  \[
+    \begin{aligned}
+      \left|\int_B\left(\int_K(f_k-f)\,\d\lambda_y\right)\d\nu(y)\right|
+      &\leq\norm{f_k-f}_\infty\,\nu(B)\longrightarrow0,\\
+      \left|\int_{K\times B}(f_k(x)-f(x))\,\d\pi(x,y)\right|
+      &\leq\norm{f_k-f}_\infty\,\nu(B)\longrightarrow0.
+    \end{aligned}
+  \]
+  ここでは $\nu(B)<\infty$ を用いた．したがって
+  \[
+    \int_B\left(\int_Kf\,\d\lambda_y\right)\d\nu(y)
+    =\int_{K\times B}f(x)\,\d\pi(x,y).
   \]
 
-  \textbf{6. Borel 集合への拡張．}
-  空でない閉集合 $A\subset\mathcal{X}$ に対し，補題~\ref{lem:meas-closed-approx}の
-  $\varphi_k\downarrow\mathbf{1}_A$ を 5 の $f$ として有界収束定理を用いると，
-  $y\mapsto\pi_y(A)$ は可測で，主張の積分公式が成り立つ（$A=\emptyset$ では明らか）．
-  可測性とすべての $B$ に対する積分公式をみたす $A$ の全体は $\lambda$-系である．
-  実際，$\mathcal{X}$ を含み，補集合については $\pi_y(\mathcal{X}\setminus A)=1-\pi_y(A)$ を，
-  互いに素な可算合併については可算加法性と単調収束定理を使えばよい．
-  閉集合の全体は $\Borel(\mathcal{X})$ を生成する $\pi$-系なので，
-  Dynkin の定理（定理~\ref{thm:meas-pi-lambda}）によりすべての $A\in\Borel(\mathcal{X})$ で成り立つ．
+  \textbf{7. 閉集合と Borel 集合への拡張．}
+  空でない閉集合 $A\subset K$ に対して
+  \[
+    u_n(x):=\max\{1-n\,d(x,A),0\}
+  \]
+  とおく．補題~\ref{lem:meas-closed-approx}より $u_n\in C(K)$，
+  $0\leq u_n\leq1$，$u_n\downarrow\mathbf{1}_A$ である．
+  $\lambda_y(K)=1$ なので有界収束定理から
+  $\int_Ku_n\,\d\lambda_y\to\lambda_y(A)$ となり，$y\mapsto\lambda_y(A)$ は Borel 可測である．
+  6 の積分公式に $f=u_n$ を代入し，
+  $\pi(K\times B)=\nu(B)<\infty$ と $0\leq\int_Ku_n\,\d\lambda_y\leq1$ を用いて
+  両辺で再び有界収束定理を適用すれば
+  \[
+    \pi(A\times B)=\int_B\lambda_y(A)\,\d\nu(y)
+  \]
+  を得る．$A=\emptyset$ では可測性もこの等式も明らかである．
+
+  可測性とすべての $B$ に対する積分公式をみたす $A\in\Borel(K)$ の全体を $\mathcal{D}$ とする．
+  $\lambda_y(K)=1$ と $\pi(K\times B)=\nu(B)$ より $K\in\mathcal{D}$ である．
+  $A\in\mathcal{D}$ ならば $\lambda_y(K\setminus A)=1-\lambda_y(A)$ は可測であり，
+  \[
+    \pi((K\setminus A)\times B)
+    =\nu(B)-\pi(A\times B)=\int_B(1-\lambda_y(A))\,\d\nu(y)
+  \]
+  より $K\setminus A\in\mathcal{D}$ である．
+  互いに素な $A_n\in\mathcal{D}$ に対し，
+  $\lambda_y(\bigcup_nA_n)=\sum_n\lambda_y(A_n)$ は可測であり，可算加法性と単調収束定理より
+  \[
+    \pi\left(\left(\bigcup_nA_n\right)\times B\right)
+    =\sum_n\int_B\lambda_y(A_n)\,\d\nu(y)
+    =\int_B\lambda_y\left(\bigcup_nA_n\right)\,\d\nu(y).
+  \]
+  したがって $\mathcal{D}$ は $\lambda$-系（Dynkin 系）である．
+  閉集合の族 $\mathcal{F}$ は有限共通部分について閉じているので $\pi$-系であり，
+  $\sigma(\mathcal{F})=\Borel(K)$ である．前段より $\mathcal{F}\subset\mathcal{D}$ だから，
+  Dynkin の定理（定理~\ref{thm:meas-pi-lambda}）により
+  $\Borel(K)=\sigma(\mathcal{F})\subset\mathcal{D}\subset\Borel(K)$ を得る．
 \end{proof}
 
 \subsection{一般の Polish 空間の場合}
@@ -501,39 +568,46 @@ $C(\mathcal{X})$，$\norm{f}_\infty$，$f^\pm$ の記法は注意~\ref{rem:meas-
   \textbf{2. 各部分での分解．}
   $\nu_n\neq0$ の各 $n$ では，$\pi$ の $E_n\times\mathcal{Y}$ への制限
   $C\mapsto\pi(C\cap(E_n\times\mathcal{Y}))$ を $K_n\times\mathcal{Y}$ 上の有限測度とみて，
-  補題~\ref{lem:dis-compact}を $\mathcal{X}$ を $K_n$ として適用する．得た確率測度を $K_n$ の外で $0$ として
-  $\mathcal{X}$ 上に延長し，$\pi_y^{(n)}$ と書く
-  （注意~\ref{rem:meas-subspace-borel}）．このとき
-  $y\mapsto\pi_y^{(n)}(A)$ は Borel 可測で，
+  補題~\ref{lem:dis-compact}を $K=K_n$ として適用する．
+  $E_n$ 自身は compact とは限らないので，測度を載せる空間には $K_n$ を使う．
+  この補題は有限測度について示したので，正規化は不要である．
+  得た $K_n$ 上の確率測度を $\widetilde{\lambda}_y^{(n)}$ とし，
+  $\lambda_y^{(n)}(A):=\widetilde{\lambda}_y^{(n)}(A\cap K_n)$ によって
+  $\mathcal{X}$ 上に延長する（注意~\ref{rem:meas-subspace-borel}）．このとき
+  $y\mapsto\lambda_y^{(n)}(A)$ は Borel 可測で，
   \[
-    \pi((A\cap E_n)\times B)=\int_B\pi_y^{(n)}(A)\,\d\nu_n(y)
+    \pi((A\cap E_n)\times B)=\int_B\lambda_y^{(n)}(A)\,\d\nu_n(y)
     \qquad(A\in\Borel(\mathcal{X}),\ B\in\Borel(\mathcal{Y}))
   \]
-  である．$\nu_n=0$ の $n$ では $\pi_y^{(n)}:=\delta_{x_0}$ とすれば，上式は両辺 $0$ で成り立つ．
+  である．$\nu_n=0$ の $n$ では $\lambda_y^{(n)}:=\delta_{x_0}$ とすれば，上式は両辺 $0$ で成り立つ．
 
   \textbf{3. 重みを付けて足し合わせる．}
   $\nu_n(B)\leq\nu(B)$ なので，Radon--Nikodym の定理（定理~\ref{thm:meas-radon-nikodym}）から
   非負の Borel 可測な密度 $h_n:=\d\nu_n/\d\nu$ を取る．
   単調収束定理より $\int_B\sum_nh_n\,\d\nu=\sum_n\nu_n(B)=\nu(B)$ である．
-  特に $\sum_nh_n$ は可積分である．零集合上の無限値を $0$ に置き換え，
-  一意性の議論（定理~\ref{thm:meas-radon-nikodym}の証明の3）を適用すると，$\sum_nh_n=1$ が $\nu$-a.e. に成り立つ．
-  Borel 零集合 $N_0:=\{\sum_nh_n\neq1\}$ を用いて
+  $s:=\sum_nh_n$ とおくと，特に $\int_{\mathcal{Y}}s\,\d\nu=1$ なので
+  $N_\infty:=\{s=\infty\}$ は Borel 零集合である．
+  $N_\infty$ 上だけ値を $0$ にした有限値関数 $\widetilde{s}$ についても
+  $\int_B\widetilde{s}\,\d\nu=\nu(B)=\int_B1\,\d\nu$ である．
+  一意性の議論（定理~\ref{thm:meas-radon-nikodym}の証明の3）より $\widetilde{s}=1$ が $\nu$-a.e. に成り立つ．
+  したがって，元の和についても $s=1$ が $\nu$-a.e. に成り立つ．
+  Borel 零集合 $N_0:=\{s\neq1\}$ を用いて
   \[
-    \pi_y(A):=
+    \lambda_y(A):=
     \begin{cases}
-      \sum_nh_n(y)\,\pi_y^{(n)}(A) & (y\notin N_0),\\
+      \sum_nh_n(y)\,\lambda_y^{(n)}(A) & (y\notin N_0),\\
       \delta_{x_0}(A) & (y\in N_0)
     \end{cases}
   \]
   と定める．$y\notin N_0$ では，確率測度を和が $1$ の非負の重みで足し合わせているので，
-  $\pi_y$ は確率測度である（可算加法性は非負二重級数の和の交換による）．
+  $\lambda_y$ は確率測度である（可算加法性は非負二重級数の和の交換による）．
   各項と $N_0$ の可測性から条件 1 が成り立つ．
-  系~\ref{cor:rn-density-integral}と単調収束定理より
+  $\nu(N_0)=0$，系~\ref{cor:rn-density-integral}と単調収束定理より
   \[
     \begin{aligned}
-      \int_B\pi_y(A)\,\d\nu(y)
-      &=\sum_n\int_B\pi_y^{(n)}(A)\,h_n(y)\,\d\nu(y)
-      =\sum_n\int_B\pi_y^{(n)}(A)\,\d\nu_n(y)\\
+      \int_B\lambda_y(A)\,\d\nu(y)
+      &=\sum_n\int_B\lambda_y^{(n)}(A)\,h_n(y)\,\d\nu(y)
+      =\sum_n\int_B\lambda_y^{(n)}(A)\,\d\nu_n(y)\\
       &=\sum_n\pi((A\cap E_n)\times B)=\pi(A\times B).
     \end{aligned}
   \]
@@ -542,25 +616,18 @@ $C(\mathcal{X})$，$\norm{f}_\infty$，$f^\pm$ の記法は注意~\ref{rem:meas-
 
 \subsection{一意性}
 
-$A$ ごとに例外集合を取るだけでなく，一つの零集合の外で\emph{測度として一致する}ことを主張している．
-発表ノートの定理の主張には含まれないが，北別府 Theorem 5.3.1 に合わせて示しておく．
+$A$ ごとに例外集合を取るだけでなく，一つの零集合の外で\emph{測度として一致する}ことを示す．
 
-\begin{proposition}{分解の本質的一意性}{meas-disintegration-unique}
-  定理~\ref{thm:meas-disintegration}の設定で，$(\pi_y)_{y\in\mathcal{Y}}$，$(\pi'_y)_{y\in\mathcal{Y}}$ が
-  ともに条件 1，2 をみたすならば，$\nu(N)=0$ をみたす $N\in\Borel(\mathcal{Y})$ が存在して，
-  $y\notin N$ ならば $\pi_y=\pi'_y$ である．
-\end{proposition}
-
-\begin{proof}
-  $(\pi_y)$，$(\pi'_y)$ がともに条件 1，2 をみたすとする．
-  $A\in\Borel(\mathcal{X})$ を固定すると，$\pi_y(A)$，$\pi'_y(A)$ は $y$ の有界可測関数であり，
+\begin{proof}[定理~\ref{thm:meas-disintegration}の一意性の証明]
+  $(\lambda_y)$，$(\lambda'_y)$ がともに条件 1，2 をみたすとする．
+  $A\in\Borel(\mathcal{X})$ を固定すると，$\lambda_y(A)$，$\lambda'_y(A)$ は $y$ の有界可測関数であり，
   条件 2 よりすべての $B$ で同じ積分値をもつ．
   一意性の議論（定理~\ref{thm:meas-radon-nikodym}の証明の3）より，
-  $N_A:=\{y\mid\pi_y(A)\neq\pi'_y(A)\}$ は Borel 零集合である．
+  $N_A:=\{y\mid\lambda_y(A)\neq\lambda'_y(A)\}$ は Borel 零集合である．
 
   補題~\ref{lem:meas-countable-generator}により，
   $\Borel(\mathcal{X})$ を生成する可算な $\pi$-系 $\mathcal{E}$ を取り，
-  $N:=\bigcup_{A\in\mathcal{E}}N_A$ とおく．$N$ は $\nu$-零集合である．
-  $y\notin N$ では $\pi_y,\pi'_y$ は $\mathcal{E}$ 上で一致する確率測度なので，
-  一致定理（定理~\ref{thm:meas-uniqueness}）より $\pi_y=\pi'_y$ である．
+  $N:=\bigcup_{A\in\mathcal{E}}N_A$ とおく．$\mathcal{E}$ は可算なので $N$ は Borel 零集合である．
+  $y\notin N$ では $\lambda_y,\lambda'_y$ は $\mathcal{E}$ 上で一致する確率測度なので，
+  一致定理（定理~\ref{thm:meas-uniqueness}）より $\lambda_y=\lambda'_y$ である．
 \end{proof}

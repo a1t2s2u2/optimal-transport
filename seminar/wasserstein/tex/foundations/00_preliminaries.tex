@@ -932,13 +932,13 @@ $C(K)$ の可分性や可算な Borel 生成族の構成は，本文では主張
 \begin{theorem}{確率測度の族を平均した確率測度}{meas-kernel-composition}
   $\mathcal{X},\mathcal{Y},\mathcal{Z}$ を Polish 空間，$\nu\in\Prob(\mathcal{Y})$ とし，
   各 $y\in\mathcal{Y}$ に対して確率測度
-  $\pi_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ が与えられているとする．
+  $\lambda_y\in\Prob(\mathcal{X})$，$\sigma_y\in\Prob(\mathcal{Z})$ が与えられているとする．
   任意の $A\in\Borel(\mathcal{X})$，$C\in\Borel(\mathcal{Z})$ について，
-  $y\mapsto\pi_y(A)$，$y\mapsto\sigma_y(C)$ は可測と仮定する．
+  $y\mapsto\lambda_y(A)$，$y\mapsto\sigma_y(C)$ は可測と仮定する．
   このとき $\gamma\in\Prob(\mathcal{X}\times\mathcal{Y}\times\mathcal{Z})$ で
   \[
     \gamma(A\times B\times C)
-    =\int_B\pi_y(A)\,\sigma_y(C)\,\d\nu(y)
+    =\int_B\lambda_y(A)\,\sigma_y(C)\,\d\nu(y)
     \qquad(A\in\Borel(\mathcal{X}),\,B\in\Borel(\mathcal{Y}),\,C\in\Borel(\mathcal{Z}))
   \]
   をみたすものがただ一つ存在する．
@@ -946,9 +946,9 @@ $C(K)$ の可分性や可算な Borel 生成族の構成は，本文では主張
 
 \begin{proof}
   各 $y$ に対して，直積確率測度
-  $\eta_y:=\pi_y\otimes\delta_y\otimes\sigma_y$ を考える
+  $\eta_y:=\lambda_y\otimes\delta_y\otimes\sigma_y$ を考える
   （$\delta_y(B):=\mathbf{1}_B(y)$）．矩形 $D=A\times B\times C$ について
-  $\eta_y(D)=\pi_y(A)\mathbf{1}_B(y)\sigma_y(C)$ は $y$ の Borel 可測関数である．
+  $\eta_y(D)=\lambda_y(A)\mathbf{1}_B(y)\sigma_y(C)$ は $y$ の Borel 可測関数である．
   $y\mapsto\eta_y(D)$ が可測となる $D$ の全体は $\lambda$-系なので，
   Dynkin の定理（定理~\ref{thm:meas-pi-lambda}）と
   注意~\ref{rem:meas-borel-product}から，すべての Borel 集合 $D$ で可測となる．

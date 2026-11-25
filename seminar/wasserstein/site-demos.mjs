@@ -41,13 +41,13 @@ ${GLUING_STYLE}
     <span class="note common">共通の周辺分布</span>
     <div class="card middle"><span class="symbol">y ∼ ν</span><span class="detail">一度だけ選んで共有する</span></div>
     <span class="note conditional">y が決まったもとで選ぶ</span>
-    <div class="card x"><span class="symbol">π<sub>y</sub></span><span class="detail">y のもとでの x の分布</span></div>
+    <div class="card x"><span class="symbol">λ<sub>y</sub></span><span class="detail">y のもとでの x の分布</span></div>
     <div class="card z"><span class="symbol">σ<sub>y</sub></span><span class="detail">y のもとでの z の分布</span></div>
     <span class="note marginal">二つの周辺分布を保つ</span>
     <div class="card gamma"><span class="symbol">γ</span><span class="detail">(x, y, z) の分布</span></div>
   </div>
   <figcaption style="text-align:center;font-size:.9em;color:var(--ink-muted,#52606d)">
-    共通の y のもとで π<sub>y</sub> と σ<sub>y</sub> を掛け合わせて γ を作る。
+    共通の y のもとで λ<sub>y</sub> と σ<sub>y</sub> を掛け合わせて γ を作る。
   </figcaption>
 </figure>`;
 }
